@@ -89,3 +89,13 @@ def test_add_account_from_the_gui(gui, home, monkeypatch):
     assert slots == [ONE, "three@example.com", TWO]
     assert call(srv, "DELETE", "/api/accounts/three@example.com", token=app.token)[0] == 200
     assert call(srv, "DELETE", "/api/accounts/..", token=app.token)[0] == 400
+
+
+def test_a_new_sign_in_link_replaces_the_old_one(gui):
+    srv, app = gui
+    first = json.loads(call(srv, "POST", "/api/accounts/login", {}, app.token)[1])["id"]
+    second = json.loads(call(srv, "POST", "/api/accounts/login", {}, app.token)[1])["id"]
+    state = json.loads(call(srv, "GET", f"/api/accounts/login/{first}", token=app.token)[1])
+    assert state["state"] == "failed" and "newer sign-in" in state["error"]
+    assert call(srv, "POST", f"/api/accounts/login/{first}", {"code": "good-code"}, app.token)[0] == 400
+    assert json.loads(call(srv, "POST", f"/api/accounts/login/{second}", {"code": "good-code"}, app.token)[1])["state"] == "done"

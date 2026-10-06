@@ -291,7 +291,7 @@ class Login:
     """
 
     def __init__(self):
-        self.name, self.url, self.error = None, None, None
+        self.name, self.url, self.error, self.cancelled = None, None, None, None
         slots_dir = os.path.join(base(), "slots")
         os.makedirs(slots_dir, mode=0o700, exist_ok=True)
         self.tmp = tempfile.mkdtemp(prefix=".login-", dir=slots_dir)
@@ -343,7 +343,8 @@ class Login:
     def state(self):
         return "waiting" if not self.ended.is_set() else ("failed" if self.error else "done")
 
-    def cancel(self):
+    def cancel(self, why="cancelled"):
+        self.cancelled = why
         if self.proc.poll() is None:
             self.proc.kill()
         self.ended.wait(5)
@@ -359,8 +360,14 @@ class Login:
         try:
             q = parse_quota(json.loads("".join(self.out)))
         except (ValueError, KeyError, TypeError):
-            lines = [ln.strip() for ln in self.err if ln.strip() and not SIGNIN_URL.search(ln)]
-            self.error = (lines[-1] if lines else "") or "sign-in failed or timed out"
+            # agy's own error line, never one of its prompts; a killed agy prints none.
+            errors = [ln.strip() for ln in self.err if re.match(r"\s*error", ln, re.I)]
+            self.error = self.cancelled or (errors[-1] if errors else "the sign-in ended before it finished")
+            try:  # keep the evidence: sign-in failures are hard to reproduce
+                with open(state("failures", f"signin-{int(time.time())}.log"), "w") as f:
+                    f.write(f"error={self.error}\n--- stderr\n" + "".join(ln for ln in self.err if not SIGNIN_URL.search(ln)))
+            except OSError:
+                pass
             shutil.rmtree(self.tmp, ignore_errors=True)
             self.ended.set()
             return

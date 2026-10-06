@@ -105,9 +105,10 @@ class App:
         self.engine.publish(None, {"t": "accounts", "accounts": self.accounts()})
 
     def start_login(self):
-        for k, lg in list(self.logins.items()):  # forget finished sign-ins
-            if lg.ended.is_set():
-                del self.logins[k]
+        for k, lg in list(self.logins.items()):  # one sign-in at a time: a new link replaces the old
+            if not lg.ended.is_set():
+                lg.cancel("replaced by a newer sign-in link (only the newest one works)")
+            del self.logins[k]
         lg = a.Login()
         url = lg.wait_url(20)
         if not url:
@@ -286,14 +287,19 @@ class Handler(BaseHTTPRequestHandler):
             case ("POST", ["accounts", "login"]):
                 return app.start_login()
             case ("GET", ["accounts", "login", lid]):
+                if lid not in app.logins:
+                    return {"state": "failed", "error": "replaced by a newer sign-in link (only the newest one works)"}
                 lg = app.logins[lid]
                 return {"state": lg.state, "error": lg.error, "name": lg.name}
             case ("POST", ["accounts", "login", lid]):
+                if lid not in app.logins:
+                    raise ValueError("this sign-in was replaced by a newer link; use the newest one")
                 lg = app.logins[lid]
                 lg.submit(str(b.get("code", "")))
                 return {"state": lg.state, "error": lg.error, "name": lg.name}
             case ("DELETE", ["accounts", "login", lid]):
-                app.logins.pop(lid).cancel()
+                if lid in app.logins:
+                    app.logins.pop(lid).cancel()
                 return {"ok": True}
             case ("DELETE", ["accounts", name]):
                 a.remove(name)
