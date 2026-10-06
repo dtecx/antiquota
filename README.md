@@ -38,6 +38,23 @@ Run the prober every 10 minutes so walls lift on time:
 */10 * * * * cd /path/to/agy-loop && python3 -m agyloop probe >> ~/.agyloop/state/probe.log 2>&1
 ```
 
+## Shared stack fixes
+
+agy CLI loads skills only from `~/.gemini/config/skills` and hooks only from
+`hooks.json`. Two gaps were fixed in the global stack (so every account gets
+them):
+
+- `gitnexus-*` skills are linked from `~/.gemini/antigravity/skills` into
+  `~/.gemini/config/skills`.
+- [`stack/gitnexus-agy-hook.cjs`](stack/gitnexus-agy-hook.cjs) bridges agy hooks
+  to the GitNexus Gemini-CLI hook. agy's `PostToolUse` may only answer `{}`, so
+  the bridge parks GitNexus context after a search and injects it through
+  `PreInvocation` before the next model call. Installed at
+  `~/.gemini/config/hooks/gitnexus-agy/hook.cjs`.
+
+`agyloop doctor` asks agy itself (`/skills`, `/hooks`, no tokens) what each
+account loads and fails if any account differs from `main`.
+
 ## Development
 
 ```sh

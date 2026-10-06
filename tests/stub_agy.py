@@ -32,6 +32,16 @@ if args[:2] == ["-p", "/quota"]:
     print(json.dumps(d))
     sys.exit(0)
 
+if args[:2] in (["-p", "/skills"], ["-p", "/hooks"]):  # read through HOME, like agy
+    cfg = os.path.join(home, ".gemini/config")
+    if args[1] == "/skills":
+        items = sorted(os.listdir(os.path.join(cfg, "skills")))
+    else:
+        items = sorted(json.load(open(os.path.join(cfg, "hooks.json"))))
+    key = args[1][1:]
+    print(json.dumps({"command": {"name": key, "data": {key: [{"name": n} for n in items]}}}))
+    sys.exit(0)
+
 print(f"ran on {name}: {' '.join(args)}")
 if os.environ.get("STUB_SAY"):
     print(os.environ["STUB_SAY"])

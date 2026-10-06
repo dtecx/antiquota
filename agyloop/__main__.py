@@ -52,21 +52,17 @@ def cmd_doctor():
     def names(p):
         return sorted(n for n in os.listdir(p) if not n.startswith(".")) if os.path.isdir(p) else []
 
-    def keys(p, inner=None):
-        try:
-            with open(p) as f:
-                d = json.load(f)
-        except (OSError, ValueError):
-            return []
-        return sorted((d.get(inner, d) if inner else d) or {})
-
-    skills = names(os.path.join(cfg, "skills"))
-    print(f"stack in {cfg}:")
-    print(f"  skills ({len(skills)}): {', '.join(skills)}")
-    print(f"  plugins: {', '.join(names(os.path.join(cfg, 'plugins')))}")
-    print(f"  hooks:   {', '.join(keys(os.path.join(cfg, 'hooks.json')))}")
-    print(f"  mcp:     {', '.join(keys(os.path.join(cfg, 'mcp_config.json'), 'mcpServers'))}")
-    ide_only = sorted(set(names(os.path.join(h, ".gemini/antigravity/skills"))) - set(skills))
+    try:
+        with open(os.path.join(cfg, "mcp_config.json")) as f:
+            mcp = sorted(json.load(f).get("mcpServers", {}))
+    except (OSError, ValueError):
+        mcp = []
+    ref = a.loaded("main")
+    print("stack as agy reports it for main:")
+    print(f"  skills ({len(ref['skills'] or [])}): {', '.join(ref['skills'] or ['<unreadable>'])}")
+    print(f"  hooks:   {', '.join(ref['hooks'] or ['<unreadable>'])}")
+    print(f"  mcp:     {', '.join(mcp)}")
+    ide_only = sorted(set(names(os.path.join(h, ".gemini/antigravity/skills"))) - set(ref["skills"] or []))
     if ide_only:
         print(f"  warn: {len(ide_only)} skills live only in ~/.gemini/antigravity/skills, "
               f"which agy CLI does not load: {', '.join(ide_only)}")
@@ -82,7 +78,10 @@ def cmd_doctor():
         auth = os.path.join(sh, a.AUTH)
         if os.path.islink(auth) or (os.path.exists(main_auth) and os.path.samefile(auth, main_auth)):
             bad.append(a.AUTH + " (must be private)")
-        print(f"{s}: " + ("ok, whole stack shared, auth private" if not bad else "NOT shared: " + ", ".join(bad)))
+        got = a.loaded(s)
+        bad += [f"agy {k} differ" for k in ref if got[k] != ref[k]]
+        print(f"{s}: " + ("ok, agy loads the same skills and hooks, auth private" if not bad
+                          else "PROBLEM: " + ", ".join(bad)))
         problems += len(bad)
     return 1 if problems else 0
 

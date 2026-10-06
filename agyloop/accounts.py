@@ -107,6 +107,20 @@ def unshared(slot_dir, real=None, rel=""):
     return bad
 
 
+def loaded(slot):
+    """Skill and hook names agy itself reports under this slot (metadata turns, no tokens)."""
+    out = {}
+    for cmd, key in (("/skills", "skills"), ("/hooks", "hooks")):
+        try:
+            r = subprocess.run([agy_bin(), "-p", cmd, "--output-format", "json"],
+                               env={**os.environ, "HOME": slot_home(slot)},
+                               capture_output=True, text=True, timeout=90)
+            out[key] = sorted(x["name"] for x in json.loads(r.stdout)["command"]["data"][key])
+        except (subprocess.TimeoutExpired, ValueError, KeyError, TypeError):
+            out[key] = None
+    return out
+
+
 def login(name):
     if name == "main" or not re.fullmatch(r"[A-Za-z0-9_-]+", name):
         sys.exit("agyloop: slot name must be letters, digits, - or _ ('main' is your real HOME)")
