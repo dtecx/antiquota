@@ -1,63 +1,77 @@
 # agyloop
 
 Long-running agent loops on the Antigravity CLI (`agy`), spread over several
-Google accounts that all share one stack of skills, hooks, plugins and MCP
-servers.
-
-Status: the multi-account layer works. The loop engine (goal mode, builder and
-verifier roles, process watcher) and the GUI come next.
-
-## Accounts
+Google accounts. agy-loop runs agy with its own copy of your agy setup, so your
+agy CLI and the Antigravity IDE are never changed by it.
 
 ```sh
-agyloop login b        # sign in a second Google account as slot "b"
-agyloop probe          # read /quota per account (no model tokens), wall spent ones
-agyloop accounts       # quota, walls and leases per account
-agyloop doctor         # prove every account sees the same stack
-agyloop run --model gemini-3.8-flash-high -p "..."   # agy on the first account with quota left
+python3 -m agyloop gui          # web GUI on http://127.0.0.1:8765
+python3 -m agyloop goal "all tests pass" --check "pytest -q" --cwd ~/code/app
 ```
 
-- `main` is your real HOME and its existing agy sign-in.
-- A slot is a fake HOME in `~/.agyloop/slots/<name>`. Its only private files are
-  agy's auth state and per-process state (logs, cache, installation id). Every
-  other entry links back to the real HOME, so `~/.gemini/config` (skills, hooks,
-  plugins, MCP), `GEMINI.md`, claude-mem, gitnexus, git and ssh are shared.
-- Sign-in runs under an empty HOME, so it cannot write into the shared stack.
-  Whatever else it created is kept in `<slot>/.agyloop-login` for inspection.
-- Accounts are used in order (main, then slots by name): one account drains
-  before the next takes over. Gemini and Claude/GPT quotas are walled separately.
-- One agy process per account at a time (`flock` lease); others wait or move on.
-- A quota error is read only from agy's own error channels (stderr on failure,
-  JSON error/status fields), never from model text. It walls the account until
-  the reset time on the quota panel and exits 75.
-- Raw failures are kept in `~/.agyloop/state/failures/` to learn real error shapes.
+## GUI
 
-Run the prober every 10 minutes so walls lift on time:
+- Sessions per project folder, a streamed transcript with tool steps, file
+  diffs, markdown, and a composer with model, effort and permission mode.
+- **Goal mode**: the agent keeps working until it ends with `GOAL_COMPLETE`
+  *and* an optional check command exits 0 *and* an independent verifier (by
+  default Claude Sonnet, on the separate Claude/GPT quota) answers
+  `VERDICT: DONE`. Otherwise the reason goes back to the agent as the next
+  prompt. When every account is out of quota it sleeps until the first reset.
+- **Accounts by email**: *Add account* opens Google sign-in; paste the code it
+  shows (agy allows 60 seconds). Accounts are used in order; a quota error
+  passes the turn to the next account in the same conversation.
+- **Settings** (⌘,): edit agy-loop's own rules (GEMINI.md, rules/), skills,
+  hooks, MCP servers, plugins, permissions and session defaults. Each item shows
+  whether it matches your agy CLI or the IDE, with one-click copy from either.
+- Slash commands: `/goal`, `/stop`, `/model`, `/mode`, `/login`, `/settings`, ...
+
+The server binds to 127.0.0.1 only and every API call needs a per-launch token
+and a localhost Host header.
+
+## Accounts and the stack
+
+```
+~/.agyloop/
+  stack/.gemini/          agy-loop's copy of ~/.gemini: rules, skills, hooks, MCP, plugins, settings
+  slots/<email>/          one fake HOME per account
+  sessions/<id>/          meta.json + events.jsonl per session
+  state/                  quota walls, leases, probe snapshots, raw failures
+```
+
+- On first use the whole `~/.gemini` is cloned into the stack, except identity
+  (`*_state.pbtxt`, `installation_id`), per-process state and history. Absolute
+  `~/.gemini` paths in `hooks.json`/`mcp_config.json` are pointed at the copy.
+  The IDE folder (`~/.gemini/antigravity`) is not cloned; copy items from it in
+  Settings.
+- A slot links `.gemini` from the stack and every other HOME entry (git, ssh,
+  gitnexus and claude-mem data, Library) from the real HOME. Its only private
+  files are agy's auth and per-process state. All slots share one conversation
+  store, so a turn can continue on another account.
+- One agy process per account at a time (`flock` lease). Gemini and Claude/GPT
+  quotas are walled separately from `/quota` (no model tokens).
+
+## CLI
 
 ```sh
-*/10 * * * * cd /path/to/agy-loop && python3 -m agyloop probe >> ~/.agyloop/state/probe.log 2>&1
+agyloop login                  # add a Google account (link + paste code)
+agyloop accounts               # quota, walls and leases per account
+agyloop probe                  # refresh quota walls (cron every 10 min if no GUI runs)
+agyloop doctor                 # every account loads the stack's skills and hooks?
+agyloop stack [reseed]         # stack folder; reseed re-copies config from ~/.gemini
+agyloop run -- -p "..."        # agy on the first account with quota left; exit 75 if none
+agyloop goal "objective" ...   # headless goal run; the session also shows in the GUI
 ```
 
 ## Shared stack fixes
 
-agy CLI loads skills only from `~/.gemini/config/skills` and hooks only from
-`hooks.json`. Two gaps were fixed in the global stack (so every account gets
-them):
-
-- `gitnexus-*` skills are linked from `~/.gemini/antigravity/skills` into
-  `~/.gemini/config/skills`.
-- [`stack/gitnexus-agy-hook.cjs`](stack/gitnexus-agy-hook.cjs) bridges agy hooks
-  to the GitNexus Gemini-CLI hook. agy's `PostToolUse` may only answer `{}`, so
-  the bridge parks GitNexus context after a search and injects it through
-  `PreInvocation` before the next model call. Installed at
-  `~/.gemini/config/hooks/gitnexus-agy/hook.cjs`.
-
-`agyloop doctor` asks agy itself (`/skills`, `/hooks`, no tokens) what each
-account loads and fails if any account differs from `main`.
+[`stack/gitnexus-agy-hook.cjs`](stack/gitnexus-agy-hook.cjs) bridges agy hooks
+to the GitNexus Gemini-CLI hook: agy's `PostToolUse` may only answer `{}`, so
+the bridge parks GitNexus context after a search and injects it through
+`PreInvocation` before the next model call.
 
 ## Development
 
 ```sh
 python3 -m pytest tests -q      # stub agy, no account, no quota
-pip install -e .                # or: uv tool install -e .
 ```
