@@ -203,12 +203,14 @@ function gauge(letter, acct, bucket) {
 function renderRelay() {
   const rows = $('#relay-rows');
   rows.replaceChildren();
-  if (!S.accounts.length) rows.append(h('div', { class: 'relay-empty' }, 'No signed-in account.'));
+  if (!S.accounts.length) rows.append(h('button', { class: 'primary relay-cta', onclick: () => openAcct() }, 'Add Google account'));
   for (const acct of S.accounts) {
     rows.append(h('div', { class: 'acct', title: acct.busy ? acct.slot + ' is running a call' : acct.slot },
       h('span', { class: 'name' + (acct.busy ? ' busy' : '') }, who(acct.slot)),
       gauge('gemini', acct, 'gemini'), gauge('claude', acct, 'cg')));
   }
+  const blank = $('#transcript > .blank');
+  if (blank && !!$('.note.wall', blank) === !!S.accounts.length) (cur() ? blank.replaceWith(blankFor(cur())) : renderBlank());
   const probed = Math.max(0, ...S.accounts.map(x => x.probed || 0));
   $('#relay-hint').textContent = probed ? 'probed ' + ago(probed) : '';
   if (S.drawer && S.tab === 'accounts') renderPane();
@@ -227,7 +229,7 @@ function renderHeader() {
   const m = cur();
   const busy = m && m.status !== 'idle';
   $('#title').textContent = m ? (m.title || 'Untitled') : 'agyloop';
-  $('#cwd').textContent = m ? m.cwd.replace(/^\/Users\/[^/]+/, '~') : '';
+  $('#cwd').textContent = m ? '\u200e' + m.cwd.replace(/^\/Users\/[^/]+/, '~') + '\u200e' : '';
   $('#cwd').title = m ? m.cwd : '';
   const st = $('#status');
   st.hidden = !busy;
@@ -289,8 +291,15 @@ function scrollEnd() {
   const s = $('#scroll');
   s.scrollTop = s.scrollHeight;
 }
+function needAccount() {
+  return !S.accounts.length && h('div', { class: 'note wall' },
+    h('span', { class: 'k' }, 'No account yet'),
+    'agy-loop signs in its own Google accounts, separate from your agy CLI. Add at least one to start.',
+    h('div', { class: 'acts' }, h('button', { class: 'primary btn small', onclick: () => openAcct() }, 'Add Google account')));
+}
 function blankFor(m) {
   return h('div', { class: 'blank' },
+    needAccount(),
     h('h2', {}, 'What should agy work on?'),
     h('p', {}, `Runs headless in ${m.cwd.replace(/^\/Users\/[^/]+/, '~')} on the first account with quota left. `
       + 'Goal mode keeps the agent going until it is done and your checks agree, passing the work between accounts as quota runs out.'),
@@ -304,6 +313,7 @@ function blankFor(m) {
 }
 function renderBlank() {
   $('#transcript').replaceChildren(h('div', { class: 'blank' },
+    needAccount(),
     h('h2', {}, 'Start a session'),
     h('p', {}, 'Pick a working folder and a model. Every account you sign in with agyloop shares one stack of skills, hooks and MCP servers.'),
     h('div', { class: 'row' }, h('button', { class: 'primary', onclick: openNew }, 'New session'))));
@@ -394,6 +404,9 @@ function noticeNode(ev) {
       return h('div', { class: 'handoff' }, h('span', {}, '⇢ ' + ev.text), h('span', { class: 'fill' }));
     case 'wall':
       return h('div', { class: 'note wall' }, h('span', { class: 'k' }, 'Out of quota'), ev.text);
+    case 'noaccount':
+      return h('div', { class: 'note wall' }, h('span', { class: 'k' }, 'No account'), ev.text,
+        h('div', { class: 'acts' }, h('button', { class: 'primary btn small', onclick: () => openAcct() }, 'Add Google account')));
     case 'goal':
       return h('div', { class: 'goalline' + (d.met ? ' met' : '') }, h('span', { class: 'g' }, d.met ? '✓' : '◎'), ev.text);
     case 'check': {
@@ -1150,6 +1163,7 @@ function wire() {
   $('#new-btn').addEventListener('click', () => openNew());
   $('#search').addEventListener('input', renderSessions);
   $('#relay-head').addEventListener('click', () => showDrawer('accounts'));
+  $('#relay-add').addEventListener('click', () => openAcct());
   $('#drawer-btn').addEventListener('click', () => (S.drawer ? hideDrawer() : showDrawer()));
   $$('.tabs button').forEach(b => b.addEventListener('click', () => showDrawer(b.dataset.tab)));
   $('#side-open').addEventListener('click', () => $('#side').classList.add('open'));

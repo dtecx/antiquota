@@ -285,6 +285,9 @@ class Engine:
     def _turn(self, s, prompt):
         """Run one turn, failing over between accounts. Returns (ok, final_text)."""
         m = s.meta
+        if not a.slots():
+            self.notice(s, "noaccount", "No Google account is signed in to agy-loop yet. Add one, then send again.")
+            return False, ""
         bucket = a.bucket_of(["--model", m["model"]])
         pool = a.BUCKETS[bucket]
         failovers = 0

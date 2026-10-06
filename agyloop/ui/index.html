@@ -24,9 +24,12 @@
     <input class="search" id="search" type="search" placeholder="Filter sessions" aria-label="Filter sessions">
     <nav class="sessions" id="sessions" aria-label="Sessions"></nav>
     <section class="relay" id="relay" aria-label="Accounts">
-      <button class="relay-head" id="relay-head" title="Open accounts panel">
-        <span>Accounts</span><span class="relay-hint" id="relay-hint"></span>
-      </button>
+      <div class="relay-top">
+        <button class="relay-head" id="relay-head" title="Open accounts panel">
+          <span>Accounts</span><span class="relay-hint" id="relay-hint"></span>
+        </button>
+        <button class="relay-add" id="relay-add" title="Add a Google account" aria-label="Add a Google account">+</button>
+      </div>
       <div id="relay-rows"></div>
     </section>
     <button class="set-open" id="set-open" title="Settings (⌘,)">

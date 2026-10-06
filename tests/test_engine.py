@@ -139,3 +139,13 @@ def test_verdict_line_is_parsed_from_free_text():
     v = parse_verdict("- no tests\n* README missing\nVERDICT: NOT_DONE\n")
     assert v["done"] is False and v["missing"] == ["no tests", "README missing"]
     assert parse_verdict("I think it is done.") is None
+
+
+def test_no_account_says_so(home, work):
+    for s in a.slots():
+        a.remove(s)
+    eng = Engine()
+    sid = eng.create(str(work), "gemini-3.8-flash-low")["id"]
+    eng.send(sid, "hi")
+    finish(eng, sid)
+    assert kinds(eng, sid) == ["noaccount"]

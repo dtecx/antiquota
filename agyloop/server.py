@@ -31,10 +31,27 @@ def settings_path():
     return os.path.join(a.stack_home(), ".gemini/antigravity-cli/settings.json")
 
 
+def gui_token():
+    """Per-install token, kept across restarts so an open tab survives a server restart."""
+    p = a.state("gui-token")
+    try:
+        with open(p) as f:
+            tok = f.read().strip()
+        if len(tok) >= 32:
+            return tok
+    except OSError:
+        pass
+    tok = secrets.token_urlsafe(24)
+    fd = os.open(p, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w") as f:
+        f.write(tok)
+    return tok
+
+
 class App:
     def __init__(self, port):
         self.port = port
-        self.token = secrets.token_urlsafe(24)
+        self.token = gui_token()
         self.engine = Engine()
         self.models = []
         self.stack = None
