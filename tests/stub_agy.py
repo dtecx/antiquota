@@ -38,6 +38,9 @@ if args[:2] == ["-p", "/quota"] and not os.path.exists(auth):  # unsigned: agy's
         f.write(f"I1006 server_oauth.go:203] OAuth: authenticated successfully as {os.environ.get('STUB_EMAIL', 'acct@example.com')}\n")
 
 if args[:2] == ["-p", "/quota"]:
+    if "--log-file" in args and os.environ.get("SSH_CONNECTION"):  # file token storage: HOME's own token
+        with open(args[args.index("--log-file") + 1], "a") as f:
+            f.write(f"I1006 server_oauth.go:203] OAuth: authenticated successfully as {name}\n")
     d = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "quota_sample.json")))
     spent = os.environ.get("STUB_SPENT") == name
     for g in d["command"]["data"]["groups"]:

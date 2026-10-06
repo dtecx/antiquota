@@ -58,14 +58,22 @@ class App:
         self.logins = {}
         threading.Thread(target=self._background, daemon=True).start()
 
-    def _background(self):
+    def _models(self):
+        """Model list as an agy-loop account sees it (your own agy CLI is never asked)."""
+        if self.models or not a.slots():
+            return
         try:
-            out = subprocess.run([a.agy_bin(), "models"], capture_output=True, text=True, timeout=60).stdout
+            cmd, env = a.agy_cmd(a.slot_home(a.slots()[0]), ["models"])
+            out = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=60,
+                                 stdin=subprocess.DEVNULL).stdout
             self.models = [dict(zip(("id", "label"), line.split("\t", 1))) for line in out.splitlines() if "\t" in line]
         except (OSError, subprocess.TimeoutExpired, SystemExit):
             pass
+
+    def _background(self):
         while True:  # keep walls honest while the GUI runs; cron covers the rest of the time
             self.probe()
+            self._models()
             threading.Event().wait(PROBE_EVERY)
 
     def accounts(self):
@@ -93,6 +101,7 @@ class App:
                 a.probe_slot(s)
             finally:
                 os.close(fd)
+        self._models()
         self.engine.publish(None, {"t": "accounts", "accounts": self.accounts()})
 
     def start_login(self):

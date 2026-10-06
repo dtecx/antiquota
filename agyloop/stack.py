@@ -104,8 +104,8 @@ def agy_in_stack(*args):
     """Run an agy subcommand against agy-loop's stack (never against your own ~/.gemini)."""
     h = a.probe_home()
     a.sync(h)
-    return subprocess.run([a.agy_bin(), *args], env={**os.environ, "HOME": h}, capture_output=True,
-                          text=True, timeout=60, stdin=subprocess.DEVNULL)
+    cmd, env = a.agy_cmd(h, list(args))
+    return subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=60, stdin=subprocess.DEVNULL)
 
 
 def _mcp_status():

@@ -67,6 +67,7 @@ def cmd_doctor():
     print(f"  skills ({len(ref['skills'] or [])}): {', '.join(ref['skills'] or ['<unreadable>'])}")
     print(f"  hooks:   {', '.join(ref['hooks'] or ['<unreadable>'])}")
     print(f"  mcp:     {', '.join(mcp)}")
+    print("sign-in tokens: one file per account (agy file storage), never your OS keyring")
     problems = 0
     real_auth = os.path.join(a.home(), a.AUTH)
     for s in a.slots():
@@ -78,7 +79,10 @@ def cmd_doctor():
             bad.append(a.AUTH + " (must be private)")
         got = a.loaded(s)
         bad += [f"agy {k} differ" for k in ref if got[k] != ref[k]]
-        print(f"{s}: " + ("ok, agy loads the stack's skills and hooks, auth private" if not bad
+        me = a.whoami(s)
+        if me != s:
+            bad.append(f"signs in as {me or 'nobody'}: its credential store is not its own")
+        print(f"{s}: " + ("ok: signs in as itself, loads the stack's skills and hooks" if not bad
                           else "PROBLEM: " + ", ".join(bad)))
         problems += len(bad)
     return 1 if problems else 0

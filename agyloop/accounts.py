@@ -1,20 +1,24 @@
 """Several Google accounts behind agy CLI, sharing agy-loop's own stack.
 
-A slot is a fake HOME for one account, named by its email. Its only private
-files are agy's auth and per-process state. Its .gemini comes from agy-loop's
-own stack (<base>/stack/.gemini, seeded once from ~/.gemini), so skills, hooks,
-plugins, MCP config and permissions are the same for every account yet separate
-from your own agy CLI and the Antigravity IDE. Every other HOME entry (git, ssh,
-gitnexus and claude-mem data, Library) links to the real HOME.
+A slot is a fake HOME for one account, named by its email. agy normally keeps
+its sign-in token in the OS keyring, which belongs to the OS user, not to HOME.
+But when it sees an SSH session it stores the token in a file instead
+("Using file-based token storage because SSH session detected"): in
+.gemini/antigravity-cli/jetski_state.pbtxt under its HOME. agy-loop runs every agy
+call that way, so each account's token is a plain file in its own slot, on
+macOS, Linux and Windows alike, headless or not, and your own agy CLI's keyring
+entry is never read or written. A slot is portable: copy the folder to another
+machine and the account comes with it.
+
+A slot's .gemini comes from agy-loop's own stack (<base>/stack/.gemini, cloned
+from ~/.gemini), so skills, hooks, plugins, MCP config and permissions are the
+same for every account yet separate from your agy CLI and the Antigravity IDE.
+Every other HOME entry (git, ssh, gitnexus and claude-mem data) links to the real HOME.
 """
-import fcntl
 import fnmatch
 import json
 import os
-import pty
-import pwd
 import re
-import select
 import shutil
 import signal
 import subprocess
@@ -24,12 +28,22 @@ import threading
 import time
 from datetime import datetime
 
+try:  # POSIX
+    import fcntl
+    import pty
+    import pwd
+except ImportError:  # Windows
+    fcntl = pty = pwd = None
+    import msvcrt
+
 AUTH = ".gemini/antigravity-cli/jetski_state.pbtxt"
 # Rebuilt per slot as real directories; their entries are linked one by one.
 FARM_DIRS = {".gemini", ".gemini/antigravity-cli", ".gemini/antigravity"}
 # Per-account or per-process entries inside FARM_DIRS: never linked.
 PRIVATE = ("*_state.pbtxt", "installation_id", "log", "cli.log", "crashes", "cache",
            "presence", "updater", "last_check.timestamp")
+# agy picks file token storage when it sees an SSH session; the value itself is not used.
+FILE_TOKENS = {"SSH_CONNECTION": "127.0.0.1 0 127.0.0.1 0"}
 BUCKETS = {"gemini": "Gemini", "cg": "Claude/GPT"}
 WALL_FRACTION = 0.02          # calibration knob: wall a basket at or below 2% left
 FALLBACK_WALL = 5 * 3600 + 600
@@ -38,8 +52,10 @@ QUOTA_RE = re.compile(r"RESOURCE_EXHAUSTED|quota|\b429\b|rate.?limit|usage limit
 
 
 def home():
-    # Not $HOME: inside a slot $HOME is the fake one.
-    return os.environ.get("AGYLOOP_HOME") or pwd.getpwuid(os.getuid()).pw_dir
+    # Not $HOME on POSIX: inside a slot $HOME is the fake one.
+    if os.environ.get("AGYLOOP_HOME"):
+        return os.environ["AGYLOOP_HOME"]
+    return pwd.getpwuid(os.getuid()).pw_dir if pwd else os.path.expanduser("~")
 
 
 def base():
@@ -59,6 +75,29 @@ def agy_bin():
     if not found:
         sys.exit("agyloop: real agy binary not found; set AGYLOOP_AGY")
     return found
+
+
+def agy_cmd(home_dir, args, env=None):
+    """(cmd, env) to run agy as the account in home_dir, its token kept in that folder."""
+    env = {**(env or os.environ), **FILE_TOKENS, "HOME": home_dir, "USERPROFILE": home_dir}
+    return [agy_bin(), *args], env
+
+
+def link(src, dst):
+    """Symlink; on Windows without symlink rights a junction (folders) or hard link (files)."""
+    try:
+        os.symlink(src, dst, target_is_directory=os.path.isdir(src))
+    except OSError:
+        if os.name != "nt":
+            raise
+        if os.path.isdir(src):
+            import _winapi
+            _winapi.CreateJunction(src, dst)
+        else:
+            try:
+                os.link(src, dst)
+            except OSError:
+                shutil.copy2(src, dst)
 
 
 def slot_home(name):
@@ -155,9 +194,13 @@ def seed_stack(force=False):
         clone_stack()
 
 
+def _join(rel, name):
+    return f"{rel}/{name}" if rel else name
+
+
 def _src(rel):
     """Where a slot entry comes from: the stack for .gemini, the real HOME for the rest."""
-    return os.path.join(stack_home() if rel.split("/")[0] == ".gemini" else home(), rel)
+    return os.path.join(stack_home() if rel.split("/")[0] == ".gemini" else home(), *rel.split("/"))
 
 
 def _entries(rel):
@@ -170,23 +213,23 @@ def _entries(rel):
 
 def _private(rel, name):
     return (rel in FARM_DIRS and any(fnmatch.fnmatch(name, p) for p in PRIVATE)) or (
-        os.path.realpath(_src(os.path.join(rel, name))) == os.path.realpath(base()))
+        os.path.realpath(_src(_join(rel, name))) == os.path.realpath(base()))
 
 
 def sync(slot_dir, rel=""):
     """Link the stack (.gemini) and the real HOME (the rest) into a slot, minus per-account state."""
     seed_stack()
-    here = os.path.join(slot_dir, rel)
+    here = os.path.join(slot_dir, *rel.split("/")) if rel else slot_dir
     if os.path.islink(here):          # never write links through into the stack or the real HOME
         os.unlink(here)
     os.makedirs(here, exist_ok=True)
     for name in _entries(rel):
-        sub = os.path.join(rel, name)
-        src, f = _src(sub), os.path.join(slot_dir, sub)
+        sub = _join(rel, name)
+        src, f = _src(sub), os.path.join(here, name)
         if sub in FARM_DIRS and os.path.isdir(src):
             sync(slot_dir, sub)
         elif not _private(rel, name) and not os.path.lexists(f):
-            os.symlink(src, f)
+            link(src, f)
     for name in os.listdir(here):     # drop links whose target is gone
         f = os.path.join(here, name)
         if os.path.islink(f) and not os.path.exists(f):
@@ -197,10 +240,10 @@ def unshared(slot_dir, rel=""):
     """Entries the slot does not resolve to the stack or the real HOME."""
     bad = []
     for name in _entries(rel):
-        sub = os.path.join(rel, name)
+        sub = _join(rel, name)
         if sub in FARM_DIRS and os.path.isdir(_src(sub)):
             bad += unshared(slot_dir, sub)
-        elif not _private(rel, name) and os.path.realpath(os.path.join(slot_dir, sub)) != os.path.realpath(_src(sub)):
+        elif not _private(rel, name) and os.path.realpath(os.path.join(slot_dir, *sub.split("/"))) != os.path.realpath(_src(sub)):
             bad.append(sub)
     return bad
 
@@ -217,8 +260,8 @@ def loaded(slot=None):
     out = {}
     for cmd, key in (("/skills", "skills"), ("/hooks", "hooks")):
         try:
-            r = subprocess.run([agy_bin(), "-p", cmd, "--output-format", "json"], env={**os.environ, "HOME": h},
-                               capture_output=True, text=True, timeout=90, stdin=subprocess.DEVNULL)
+            c, env = agy_cmd(h, ["-p", cmd, "--output-format", "json"])
+            r = subprocess.run(c, env=env, capture_output=True, text=True, timeout=90, stdin=subprocess.DEVNULL)
             out[key] = sorted(x["name"] for x in json.loads(r.stdout)["command"]["data"][key])
         except (subprocess.TimeoutExpired, ValueError, KeyError, TypeError):
             out[key] = None
@@ -253,12 +296,15 @@ class Login:
         os.makedirs(slots_dir, mode=0o700, exist_ok=True)
         self.tmp = tempfile.mkdtemp(prefix=".login-", dir=slots_dir)
         self.log = os.path.join(self.tmp, "signin.log")
-        self.pty, tty = pty.openpty()
-        self.proc = subprocess.Popen([agy_bin(), "-p", "/quota", "--output-format", "json", "--log-file", self.log],
-                                     env={**os.environ, "HOME": self.tmp}, cwd=self.tmp, stdin=tty,
+        # agy reads the pasted code only from a terminal. Without a pty module (Windows) it
+        # still finishes by itself once the browser sign-in completes.
+        self.pty, tty = pty.openpty() if pty else (None, subprocess.DEVNULL)
+        cmd, env = agy_cmd(self.tmp, ["-p", "/quota", "--output-format", "json", "--log-file", self.log])
+        self.proc = subprocess.Popen(cmd, env=env, cwd=self.tmp, stdin=tty,
                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-                                     start_new_session=True)
-        os.close(tty)
+                                     start_new_session=os.name != "nt")
+        if self.pty is not None:
+            os.close(tty)
         self.out, self.err = [], []
         self.seen_url = threading.Event()
         self.ended = threading.Event()
@@ -287,6 +333,8 @@ class Login:
             raise ValueError("paste the single-line code Google showed after sign-in")
         if self.ended.is_set():
             raise ValueError(self.error or "this sign-in already finished")
+        if self.pty is None:
+            raise ValueError("on this system agy finishes sign-in by itself; just complete it in the browser")
         os.write(self.pty, (code + "\n").encode())
         self.ended.wait(timeout)
         return self.state
@@ -304,7 +352,8 @@ class Login:
         self.proc.wait()
         time.sleep(0.2)  # let the pumps drain
         try:
-            os.close(self.pty)
+            if self.pty is not None:
+                os.close(self.pty)
         except OSError:
             pass
         try:
@@ -349,14 +398,16 @@ def login():
     except Exception:
         pass
     print("Paste the code Google shows after sign-in, then press Enter (agy allows 60 seconds):")
-    while not lg.ended.is_set():
-        if select.select([sys.stdin], [], [], 0.5)[0]:
-            line = sys.stdin.readline()
-            if not line:  # stdin closed: only agy noticing the sign-in itself can finish now
-                lg.ended.wait()
-                break
+    lines = []
+
+    def read():  # a thread, not select(): works on Windows consoles too
+        for line in sys.stdin:
+            lines.append(line)
+    threading.Thread(target=read, daemon=True).start()
+    while not lg.ended.wait(0.5):
+        while lines:
             try:
-                lg.submit(line)
+                lg.submit(lines.pop(0))
             except ValueError as e:
                 print(e)
     if lg.error:
@@ -409,7 +460,10 @@ def try_lease(slot):
     """Exclusive per-slot lock; concurrent agy on one HOME races the token refresh."""
     fd = os.open(state("leases", slot + ".lock"), os.O_RDWR | os.O_CREAT, 0o600)
     try:
-        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        if fcntl:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        else:
+            msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
         return fd
     except OSError:
         os.close(fd)
@@ -467,9 +521,8 @@ def parse_quota(d):
 def probe_slot(slot):
     """Read /quota (no model tokens), set or clear walls from it. None if unreadable."""
     try:
-        r = subprocess.run([agy_bin(), "-p", "/quota", "--output-format", "json"],
-                           env={**os.environ, "HOME": slot_home(slot)},
-                           capture_output=True, text=True, timeout=90)
+        cmd, env = agy_cmd(slot_home(slot), ["-p", "/quota", "--output-format", "json"])
+        r = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=90, stdin=subprocess.DEVNULL)
         q = parse_quota(json.loads(r.stdout))
     except (subprocess.TimeoutExpired, ValueError, KeyError, TypeError):
         return None
@@ -482,6 +535,21 @@ def probe_slot(slot):
         else:
             clear_wall(slot, bucket)
     return q
+
+
+def whoami(slot):
+    """The email agy actually signs in as for this slot (checks that its credential store is its own)."""
+    log = state("whoami", slot + ".log")
+    if os.path.exists(log):
+        os.remove(log)
+    cmd, env = agy_cmd(slot_home(slot), ["-p", "/quota", "--output-format", "json", "--log-file", log])
+    try:
+        subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=90, stdin=subprocess.DEVNULL)
+        with open(log, errors="replace") as f:
+            found = SIGNED_IN_AS.findall(f.read())
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    return found[-1].rstrip(".,;") if found else None
 
 
 def probe():
@@ -545,7 +613,7 @@ def run(args, pin=None):
         sys.exit("agyloop: no signed-in account; run: agyloop login")
     if pin and pin not in slots():
         sys.exit(f"agyloop: no signed-in slot '{pin}'")
-    agy, bucket = agy_bin(), bucket_of(args)
+    bucket = bucket_of(args)
     slot, fd = acquire(bucket, pin)
     if slot is None:
         nxt = min(walled_until(s, bucket) for s in ([pin] if pin else slots()))
@@ -554,17 +622,17 @@ def run(args, pin=None):
         return TEMPFAIL
     try:
         sync(slot_home(slot))
-        env = {**os.environ, "HOME": slot_home(slot), "AGYLOOP_SLOT": slot}
+        cmd, env = agy_cmd(slot_home(slot), args, {**os.environ, "AGYLOOP_SLOT": slot})
         t0 = time.time()
         if sys.stdout.isatty():  # interactive: agy needs the real terminal, no capture
             old = signal.signal(signal.SIGINT, signal.SIG_IGN)
             try:
-                rc = subprocess.run([agy, *args], env=env).returncode
+                rc = subprocess.run(cmd, env=env).returncode
             finally:
                 signal.signal(signal.SIGINT, old)
             out = err = ""
         else:
-            rc, out, err = _tee([agy, *args], env)
+            rc, out, err = _tee(cmd, env)
         walled = is_quota_error(rc, out, err)
         if walled:
             wall_after_quota_error(slot, bucket)

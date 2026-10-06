@@ -105,3 +105,10 @@ def test_parse_real_quota_output():
         q = a.parse_quota(json.load(f))
     assert set(q) == {"gemini", "cg"} and set(q["gemini"]) == {"5h", "weekly"}
     assert all(0 <= frac <= 1 and reset > 0 for w in q.values() for frac, reset in w.values())
+
+
+def test_every_agy_call_keeps_the_token_in_the_account_folder(home):
+    cmd, env = a.agy_cmd(str(home / ".agyloop/slots" / ONE), ["-p", "hi"])
+    assert env["HOME"] == env["USERPROFILE"] == str(home / ".agyloop/slots" / ONE)
+    assert env["SSH_CONNECTION"]  # agy: "Using file-based token storage because SSH session detected"
+    assert a.whoami(ONE) == ONE and a.whoami(TWO) == TWO

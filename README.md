@@ -34,22 +34,34 @@ and a localhost Host header.
 ```
 ~/.agyloop/
   stack/.gemini/          agy-loop's copy of ~/.gemini: rules, skills, hooks, MCP, plugins, settings
-  slots/<email>/          one fake HOME per account
+  slots/<email>/          one fake HOME per account; its sign-in token is a file in it
   sessions/<id>/          meta.json + events.jsonl per session
   state/                  quota walls, leases, probe snapshots, raw failures
 ```
 
-- On first use the whole `~/.gemini` is cloned into the stack, except identity
-  (`*_state.pbtxt`, `installation_id`), per-process state and history. Absolute
-  `~/.gemini` paths in `hooks.json`/`mcp_config.json` are pointed at the copy.
-  The IDE folder (`~/.gemini/antigravity`) is not cloned; copy items from it in
-  Settings.
+- **Tokens are files, on every OS.** agy normally keeps its token in the OS
+  keyring (Keychain, Secret Service, Credential Manager), which belongs to the
+  OS user, so a second account would overwrite the first and your own agy CLI.
+  When agy sees an SSH session it uses file storage instead (its log:
+  `Using file-based token storage because SSH session detected`). agy-loop sets
+  `SSH_CONNECTION` (and `HOME`/`USERPROFILE`) on every agy call, so each token
+  lives in `slots/<email>/.gemini/antigravity-cli/jetski_state.pbtxt`. Same on
+  macOS, Linux and Windows, headless or not; your keyring is never touched. A
+  slot folder can be copied to another machine. `agyloop doctor` checks that
+  every account really signs in as its own email.
+- On first use the whole `~/.gemini` is cloned into the stack, except identity,
+  per-process state and history. Absolute `~/.gemini` paths in `hooks.json` and
+  `mcp_config.json` are pointed at the copy. The IDE folder
+  (`~/.gemini/antigravity`) is not cloned; copy items from it in Settings.
 - A slot links `.gemini` from the stack and every other HOME entry (git, ssh,
-  gitnexus and claude-mem data, Library) from the real HOME. Its only private
-  files are agy's auth and per-process state. All slots share one conversation
+  gitnexus and claude-mem data) from the real HOME. On Windows without symlink
+  rights it uses junctions and hard links. All slots share one conversation
   store, so a turn can continue on another account.
-- One agy process per account at a time (`flock` lease). Gemini and Claude/GPT
+- One agy process per account at a time (file lock). Gemini and Claude/GPT
   quotas are walled separately from `/quota` (no model tokens).
+- Sign-in: agy prints a Google URL and reads the code from a terminal, so
+  agy-loop gives it a pseudo-terminal (macOS, Linux). On Windows agy finishes
+  sign-in by itself once the browser step completes.
 
 ## CLI
 

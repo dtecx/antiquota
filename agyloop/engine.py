@@ -333,17 +333,17 @@ class Engine:
     def _run_agy(self, s, slot, prompt):
         m, sid = s.meta, s.meta["id"]
         resumed = bool(m.get("conversation_id"))
-        cmd = [a.agy_bin(), "-p", prompt, "--output-format", "stream-json", "--model", m["model"],
-               *(["--effort", m["effort"]] if m.get("effort") else []), *MODES[m["mode"]],
-               *(["--conversation", m["conversation_id"]] if resumed else [])]
+        args = ["-p", prompt, "--output-format", "stream-json", "--model", m["model"],
+                *(["--effort", m["effort"]] if m.get("effort") else []), *MODES[m["mode"]],
+                *(["--conversation", m["conversation_id"]] if resumed else [])]
         a.sync(a.slot_home(slot))
         m["turns"] += 1
         turn, m["last_slot"] = m["turns"], slot
         self.status(s, "running")
         self.publish(sid, {"t": "turn_start", "turn": turn, "slot": slot, "model": m["model"]}, persist=True)
         t0 = time.time()
-        proc = subprocess.Popen(cmd, cwd=m["cwd"], env={**os.environ, "HOME": a.slot_home(slot), "AGYLOOP_SLOT": slot},
-                                stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        cmd, env = a.agy_cmd(a.slot_home(slot), args, {**os.environ, "AGYLOOP_SLOT": slot})
+        proc = subprocess.Popen(cmd, cwd=m["cwd"], env=env, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                 text=True, bufsize=1)
         s.proc = proc
         err = []
@@ -502,9 +502,9 @@ class Engine:
                   "VERDICT: DONE if the objective is fully achieved, or VERDICT: NOT_DONE otherwise.")
         try:
             a.sync(a.slot_home(slot))
-            proc = subprocess.Popen([a.agy_bin(), "-p", prompt, "--output-format", "json", "--model", model],
-                                    cwd=m["cwd"], env={**os.environ, "HOME": a.slot_home(slot), "AGYLOOP_SLOT": slot},
-                                    stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            cmd, env = a.agy_cmd(a.slot_home(slot), ["-p", prompt, "--output-format", "json", "--model", model],
+                                 {**os.environ, "AGYLOOP_SLOT": slot})
+            proc = subprocess.Popen(cmd, cwd=m["cwd"], env=env, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             s.proc = proc
             out, err = proc.communicate()
             s.proc = None
