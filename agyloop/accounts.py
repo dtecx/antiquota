@@ -305,7 +305,7 @@ class Login:
     """
 
     def __init__(self):
-        self.name, self.url, self.error, self.cancelled = None, None, None, None
+        self.name, self.url, self.error, self.cancelled, self.verify_url = None, None, None, None, None
         slots_dir = os.path.join(base(), "slots")
         os.makedirs(slots_dir, mode=0o700, exist_ok=True)
         self.tmp = tempfile.mkdtemp(prefix=".login-", dir=slots_dir)
@@ -353,15 +353,17 @@ class Login:
         self.ended.wait(timeout)
         return self.state
 
-    @property
-    def state(self):
-        return "waiting" if not self.ended.is_set() else ("failed" if self.error else "done")
-
     def cancel(self, why="cancelled"):
         self.cancelled = why
         if self.proc.poll() is None:
             self.proc.kill()
         self.ended.wait(5)
+
+    @property
+    def state(self):
+        if not self.ended.is_set():
+            return "waiting"
+        return "verify" if self.verify_url else "failed" if self.error else "done"
 
     def _finish(self):
         self.proc.wait()
@@ -374,9 +376,24 @@ class Login:
         out = "".join(self.out)
         try:  # agy may print more than the JSON after a fresh sign-in
             d = json.loads(out[out.index("{"): out.rindex("}") + 1])
-            if d.get("status") != "SUCCESS":
-                raise ValueError(d.get("error") or "no success")
-        except (ValueError, KeyError, TypeError, AttributeError):
+        except ValueError:
+            d = {}
+        try:
+            with open(self.log, errors="replace") as f:
+                found = SIGNED_IN_AS.findall(f.read())
+        except OSError:
+            found = []
+        email = found[-1].rstrip(".,;") if found else None
+        if d.get("status") == "SUCCESS":
+            self._adopt(email or f"account-{int(time.time())}", d)
+        elif email and os.path.exists(os.path.join(self.tmp, AUTH)) and VERIFY_URL.search(str(d.get("error"))):
+            # Signed in, but Google wants this account verified before Antigravity serves it.
+            # The token is good: keep the account, parked until the verification is done.
+            self.verify_url = VERIFY_URL.search(d["error"]).group(0)
+            self.error = d["error"].split("\n")[0]
+            self._adopt(email, None)
+            mark_verify(email, self.verify_url)
+        else:
             # agy's own error line, never one of its prompts; a killed agy prints none.
             errors = [ln.strip() for ln in self.err if re.match(r"\s*error", ln, re.I)]
             self.error = self.cancelled or (errors[-1] if errors else "the sign-in ended before it finished")
@@ -387,15 +404,12 @@ class Login:
             except OSError:
                 pass
             shutil.rmtree(self.tmp, ignore_errors=True)
-            self.ended.set()
-            return
-        try:
-            with open(self.log, errors="replace") as f:
-                found = SIGNED_IN_AS.findall(f.read())
-        except OSError:
-            found = []
-        self.name = found[-1].rstrip(".,;") if found else f"account-{int(time.time())}"
-        dst = slot_home(self.name)
+        self.ended.set()
+
+    def _adopt(self, name, result):
+        """Move the signed-in account from the temporary HOME into its slot."""
+        self.name = name
+        dst = slot_home(name)
         os.makedirs(os.path.dirname(os.path.join(dst, AUTH)), exist_ok=True)
         for rel in ACCOUNT_FILES:
             if os.path.exists(os.path.join(self.tmp, rel)):
@@ -406,14 +420,42 @@ class Login:
         os.replace(self.tmp, leftover)
         sync(dst)
         for b in BUCKETS:
-            clear_wall(self.name, b)
+            clear_wall(name, b)
+        clear_verify(name)
         try:  # a quota snapshot is a bonus; the sign-in already succeeded
-            q = parse_quota(d)
-            with open(state("quota", self.name + ".json"), "w") as f:
+            q = parse_quota(result)
+            with open(state("quota", name + ".json"), "w") as f:
                 json.dump({"at": time.time(), "quota": q}, f)
-        except (ValueError, KeyError, TypeError):
+        except (ValueError, KeyError, TypeError, AttributeError):
             pass
-        self.ended.set()
+
+
+# --- accounts Google wants verified first -----------------------------------------
+
+VERIFY_URL = re.compile(r"https://accounts\.google\.com/signin/continue\S+")
+
+
+def mark_verify(slot, url):
+    """Park an account that must be verified with Google: walled until a probe succeeds."""
+    with open(state("verify", slot + ".json"), "w") as f:
+        json.dump({"url": url, "since": time.time()}, f)
+    for b in BUCKETS:
+        set_wall(slot, b, time.time() + 30 * 86400, "verify the account with Google")
+
+
+def needs_verify(slot):
+    try:
+        with open(state("verify", slot + ".json")) as f:
+            return json.load(f).get("url")
+    except (OSError, ValueError):
+        return None
+
+
+def clear_verify(slot):
+    try:
+        os.remove(state("verify", slot + ".json"))
+    except FileNotFoundError:
+        pass
 
 
 def login():
@@ -557,11 +599,16 @@ def probe_slot(slot):
     try:
         cmd, env = agy_cmd(slot_home(slot), ["-p", "/quota", "--output-format", "json"])
         r = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=90, stdin=subprocess.DEVNULL)
+        url = VERIFY_URL.search(r.stdout + r.stderr)
+        if url and "eligib" in (r.stdout + r.stderr).lower():
+            mark_verify(slot, url.group(0))
+            return None
         q = parse_quota(json.loads(r.stdout))
     except (subprocess.TimeoutExpired, ValueError, KeyError, TypeError):
         return None
     with open(state("quota", slot + ".json"), "w") as f:
         json.dump({"at": time.time(), "quota": q}, f)
+    clear_verify(slot)  # agy answered: Google is happy with this account now
     for bucket, windows in q.items():
         spent = [reset for frac, reset in windows.values() if frac <= WALL_FRACTION]
         resets = [r for r in spent if r] or [r for _, r in windows.values() if r]

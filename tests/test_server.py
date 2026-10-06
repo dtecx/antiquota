@@ -84,7 +84,7 @@ def test_add_account_from_the_gui(gui, home, monkeypatch):
     assert json.loads(call(srv, "GET", f"/api/accounts/login/{lid}", token=app.token)[1])["state"] == "waiting"
     assert call(srv, "POST", f"/api/accounts/login/{lid}", {"code": "a\nb"}, app.token)[0] == 400
     code, body = call(srv, "POST", f"/api/accounts/login/{lid}", {"code": "good-code"}, app.token)
-    assert json.loads(body) == {"state": "done", "error": None, "name": "three@example.com"}
+    assert json.loads(body) == {"state": "done", "error": None, "name": "three@example.com", "verify_url": None}
     slots = [x["slot"] for x in json.loads(call(srv, "GET", "/api/accounts", token=app.token)[1])]
     assert slots == [ONE, "three@example.com", TWO]
     assert call(srv, "DELETE", "/api/accounts/three@example.com", token=app.token)[0] == 200

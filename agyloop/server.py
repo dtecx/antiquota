@@ -88,8 +88,24 @@ class App:
             if fd is not None:
                 os.close(fd)
             out.append({"slot": s, "busy": fd is None, "probed": q.get("at"), "quota": q.get("quota", {}),
-                        "walls": {b: a.walled_until(s, b) for b in a.BUCKETS}})
+                        "walls": {b: a.walled_until(s, b) for b in a.BUCKETS}, "verify": a.needs_verify(s)})
         return out
+
+    def check(self, name):
+        """Probe one account now (e.g. right after verifying it with Google)."""
+        if name not in a.slots():
+            raise KeyError(name)
+        fd = a.try_lease(name)
+        if fd is None:
+            raise ValueError(f"{name} is running a call; it is checked when that ends")
+        try:
+            a.sync(a.slot_home(name))
+            a.probe_slot(name)
+        finally:
+            os.close(fd)
+        accts = self.accounts()
+        self.engine.publish(None, {"t": "accounts", "accounts": accts})
+        return accts
 
     def probe(self):
         for s in a.slots():
@@ -119,7 +135,7 @@ class App:
 
         def announce():
             lg.ended.wait()
-            if lg.state == "done":
+            if lg.state in ("done", "verify"):
                 self.probe()
         threading.Thread(target=announce, daemon=True).start()
         return {"id": lid, "url": url, "seconds": 60}
@@ -290,17 +306,19 @@ class Handler(BaseHTTPRequestHandler):
                 if lid not in app.logins:
                     return {"state": "failed", "error": "replaced by a newer sign-in link (only the newest one works)"}
                 lg = app.logins[lid]
-                return {"state": lg.state, "error": lg.error, "name": lg.name}
+                return {"state": lg.state, "error": lg.error, "name": lg.name, "verify_url": lg.verify_url}
             case ("POST", ["accounts", "login", lid]):
                 if lid not in app.logins:
                     raise ValueError("this sign-in was replaced by a newer link; use the newest one")
                 lg = app.logins[lid]
                 lg.submit(str(b.get("code", "")))
-                return {"state": lg.state, "error": lg.error, "name": lg.name}
+                return {"state": lg.state, "error": lg.error, "name": lg.name, "verify_url": lg.verify_url}
             case ("DELETE", ["accounts", "login", lid]):
                 if lid in app.logins:
                     app.logins.pop(lid).cancel()
                 return {"ok": True}
+            case ("POST", ["accounts", name, "check"]):
+                return app.check(name)
             case ("DELETE", ["accounts", name]):
                 a.remove(name)
                 threading.Thread(target=app.probe, daemon=True).start()

@@ -126,3 +126,16 @@ def test_parse_quota_when_weekly_is_spent_and_5h_disabled(home):
         del os.environ["STUB_PANEL"]
     assert a.walled_until(ONE, "gemini") == weekly_reset + 120  # walled until the weekly reset
     assert not a.walled_until(ONE, "cg")
+
+
+def test_an_account_google_wants_verified_is_kept_and_parked(home, monkeypatch):
+    monkeypatch.setenv("STUB_INELIGIBLE", "new@example.com")
+    lg = sign_in("new@example.com", monkeypatch=monkeypatch)
+    assert lg.state == "verify" and lg.name == "new@example.com"
+    assert lg.verify_url.startswith("https://accounts.google.com/signin/continue")
+    assert "new@example.com" in a.slots() and a.needs_verify("new@example.com") == lg.verify_url
+    assert a.walled_until("new@example.com", "gemini") and a.walled_until("new@example.com", "cg")
+    assert a.probe_slot("new@example.com") is None  # still not verified: stays parked
+    monkeypatch.delenv("STUB_INELIGIBLE")            # the user verified it with Google
+    assert a.probe_slot("new@example.com") is not None
+    assert not a.needs_verify("new@example.com") and not a.walled_until("new@example.com", "gemini")

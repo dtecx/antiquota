@@ -9,7 +9,8 @@ With -p <prompt> --output-format stream-json it plays one agent turn in the
 current folder: edits notes.txt, streams a reply, and logs its argv to
 .stub_calls.jsonl. The reply ends with GOAL_COMPLETE from turn STUB_DONE_AFTER
 (default 1). STUB_FLAG_AT=<n> creates the file "flag" on turn n. STUB_SLEEP
-pauses mid-turn. STUB_STALE_ERROR=1 ends with agy's stale conversation error. Asked for a VERDICT it is the verifier: STUB_VERDICT=done|no.
+pauses mid-turn. STUB_STALE_ERROR=1 ends with agy's stale conversation error. STUB_INELIGIBLE=<email>
+makes Google's eligibility check fail for that account. Asked for a VERDICT it is the verifier: STUB_VERDICT=done|no.
 """
 import json
 import os
@@ -20,6 +21,9 @@ name = os.path.basename(home)
 args = sys.argv[1:]
 
 auth = os.path.join(home, ".gemini/antigravity-cli/antigravity-oauth-token")
+INELIGIBLE = ("Eligibility check failed: Your current account is not eligible for Antigravity. Verify your account to continue."
+              "\n\nPlease verify your account in your browser to continue:\n"
+              "https://accounts.google.com/signin/continue?sarp=1&scc=1&continue=https://developers.google.com/x&authuser=2")
 if args[:2] == ["-p", "/quota"] and not os.path.exists(auth):  # unsigned: agy's headless sign-in
     print("Authentication required. Please visit the URL to log in:", file=sys.stderr)
     print("  https://accounts.google.com/o/oauth2/auth?client_id=stub&state=stub", file=sys.stderr, flush=True)
@@ -36,6 +40,13 @@ if args[:2] == ["-p", "/quota"] and not os.path.exists(auth):  # unsigned: agy's
     open(auth, "w").write(os.environ.get("STUB_ACCOUNT", "acct"))
     with open(log, "a") as f:
         f.write(f"I1006 server_oauth.go:203] OAuth: authenticated successfully as {os.environ.get('STUB_EMAIL', 'acct@example.com')}\n")
+    if os.environ.get("STUB_INELIGIBLE") == os.environ.get("STUB_EMAIL"):
+        print(json.dumps({"status": "ERROR", "error": INELIGIBLE}))
+        sys.exit(1)
+
+if args[:2] == ["-p", "/quota"] and os.environ.get("STUB_INELIGIBLE") == name:
+    print(json.dumps({"status": "ERROR", "error": INELIGIBLE}))
+    sys.exit(1)
 
 if args[:2] == ["-p", "/quota"]:
     if "--log-file" in args and os.environ.get("SSH_CONNECTION"):  # file token storage: HOME's own token
