@@ -357,15 +357,19 @@ class Login:
                 os.close(self.pty)
         except OSError:
             pass
-        try:
-            q = parse_quota(json.loads("".join(self.out)))
-        except (ValueError, KeyError, TypeError):
+        out = "".join(self.out)
+        try:  # agy may print more than the JSON after a fresh sign-in
+            d = json.loads(out[out.index("{"): out.rindex("}") + 1])
+            if d.get("status") != "SUCCESS":
+                raise ValueError(d.get("error") or "no success")
+        except (ValueError, KeyError, TypeError, AttributeError):
             # agy's own error line, never one of its prompts; a killed agy prints none.
             errors = [ln.strip() for ln in self.err if re.match(r"\s*error", ln, re.I)]
             self.error = self.cancelled or (errors[-1] if errors else "the sign-in ended before it finished")
             try:  # keep the evidence: sign-in failures are hard to reproduce
                 with open(state("failures", f"signin-{int(time.time())}.log"), "w") as f:
-                    f.write(f"error={self.error}\n--- stderr\n" + "".join(ln for ln in self.err if not SIGNIN_URL.search(ln)))
+                    f.write(f"error={self.error}\nrc={self.proc.returncode}\n--- stdout\n{out[-4000:]}\n--- stderr\n"
+                            + "".join(ln for ln in self.err if not SIGNIN_URL.search(ln)))
             except OSError:
                 pass
             shutil.rmtree(self.tmp, ignore_errors=True)
@@ -387,8 +391,12 @@ class Login:
         sync(dst)
         for b in BUCKETS:
             clear_wall(self.name, b)
-        with open(state("quota", self.name + ".json"), "w") as f:
-            json.dump({"at": time.time(), "quota": q}, f)
+        try:  # a quota snapshot is a bonus; the sign-in already succeeded
+            q = parse_quota(d)
+            with open(state("quota", self.name + ".json"), "w") as f:
+                json.dump({"at": time.time(), "quota": q}, f)
+        except (ValueError, KeyError, TypeError):
+            pass
         self.ended.set()
 
 
@@ -515,12 +523,15 @@ def bucket_of(args):
 # --- quota --------------------------------------------------------------------
 
 def parse_quota(d):
-    """{bucket: {window: (remaining_fraction, reset_epoch)}} from `agy -p /quota --output-format json`."""
+    """{bucket: {window: (remaining_fraction, reset_epoch or None)}} from `agy -p /quota --output-format json`.
+
+    A window agy reports as disabled (e.g. the 5-hour one while the weekly one is spent)
+    has no fraction and no reset: it counts as empty, and its wall follows the other window."""
     out = {}
     for g in d["command"]["data"]["groups"]:
         bucket = "gemini" if g["name"].startswith("Gemini") else "cg"
-        out[bucket] = {b["window"]: (float(b["remaining_fraction"]),
-                                     datetime.fromisoformat(b["reset_time"]).timestamp())
+        out[bucket] = {b["window"]: (float(b.get("remaining_fraction") or 0),
+                                     datetime.fromisoformat(b["reset_time"]).timestamp() if b.get("reset_time") else None)
                        for b in g["buckets"]}
     return out
 
@@ -537,8 +548,9 @@ def probe_slot(slot):
         json.dump({"at": time.time(), "quota": q}, f)
     for bucket, windows in q.items():
         spent = [reset for frac, reset in windows.values() if frac <= WALL_FRACTION]
+        resets = [r for r in spent if r] or [r for _, r in windows.values() if r]
         if spent:
-            set_wall(slot, bucket, max(spent) + 120, "quota panel")
+            set_wall(slot, bucket, (max(resets) if resets else time.time() + FALLBACK_WALL) + 120, "quota panel")
         else:
             clear_wall(slot, bucket)
     return q

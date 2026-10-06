@@ -713,7 +713,7 @@ async function renderPane() {
           h('span', {}, (acct.busy ? 'running · ' : '') + (acct.probed ? 'probed ' + ago(acct.probed) : 'not probed'))),
         Object.entries({ gemini: 'Gemini', cg: 'Claude / GPT' }).map(([b, label]) => h('div', { class: 'pool' },
           h('div', { class: 'pool-name' }, h('span', {}, label), acct.walls[b] ? h('em', {}, 'walled until ' + clock(acct.walls[b])) : null),
-          Object.entries(acct.quota[b] || {}).map(([w, [frac, reset]]) => h('div', { class: 'win', title: 'resets ' + new Date(reset * 1000).toLocaleString() },
+          Object.entries(acct.quota[b] || {}).map(([w, [frac, reset]]) => h('div', { class: 'win', title: reset ? 'resets ' + new Date(reset * 1000).toLocaleString() : 'disabled until the other window resets' },
             h('span', {}, winLabel(w)),
             h('div', { class: 'bar' + (frac <= .02 ? ' wall' : frac < .2 ? ' low' : '') }, h('i', { style: `width:${Math.max(2, frac * 100)}%` })),
             h('span', { class: 'pct' }, Math.round(frac * 100) + '%'))))),

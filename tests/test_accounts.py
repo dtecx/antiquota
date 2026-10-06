@@ -112,3 +112,17 @@ def test_every_agy_call_keeps_the_token_in_the_account_folder(home):
     assert env["HOME"] == env["USERPROFILE"] == str(home / ".agyloop/slots" / ONE)
     assert env["SSH_CONNECTION"]  # agy: "Using file-based token storage because SSH session detected"
     assert a.whoami(ONE) == ONE and a.whoami(TWO) == TWO
+
+
+def test_parse_quota_when_weekly_is_spent_and_5h_disabled(home):
+    with open(os.path.join(HERE, "quota_sample_spent.json")) as f:
+        q = a.parse_quota(json.load(f))
+    weekly_reset = q["gemini"]["weekly"][1]
+    assert q["gemini"]["weekly"][0] == 0 and q["gemini"]["5h"] == (0.0, None)
+    os.environ["STUB_PANEL"] = os.path.join(HERE, "quota_sample_spent.json")
+    try:
+        assert a.probe_slot(ONE) is not None
+    finally:
+        del os.environ["STUB_PANEL"]
+    assert a.walled_until(ONE, "gemini") == weekly_reset + 120  # walled until the weekly reset
+    assert not a.walled_until(ONE, "cg")

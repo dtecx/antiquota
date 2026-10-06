@@ -42,6 +42,9 @@ if args[:2] == ["-p", "/quota"]:
         with open(args[args.index("--log-file") + 1], "a") as f:
             f.write(f"I1006 server_oauth.go:203] OAuth: authenticated successfully as {name}\n")
     d = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "quota_sample.json")))
+    if os.environ.get("STUB_PANEL"):  # a captured panel, as is
+        print(open(os.environ["STUB_PANEL"]).read())
+        sys.exit(0)
     spent = os.environ.get("STUB_SPENT") == name
     for g in d["command"]["data"]["groups"]:
         for b in g["buckets"]:
