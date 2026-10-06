@@ -19,7 +19,7 @@ def home(tmp_path, monkeypatch):
         ".gemini/antigravity-cli/mcp/gitnexus/state": "",
         ".gemini/antigravity-cli/settings.json": '{"permissions": {"allow": ["command(ls)"]}}',
         ".gemini/antigravity-cli/installation_id": "id",
-        a.AUTH: "your-own-agy-sign-in",
+        a.AUTH: "your-own-agy-sign-in",  # as if your agy CLI had used file mode once
         ".gitconfig": "[user]",
         ".gitnexus/registry.json": "{}",
     }

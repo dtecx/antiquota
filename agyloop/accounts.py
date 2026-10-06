@@ -4,7 +4,7 @@ A slot is a fake HOME for one account, named by its email. agy normally keeps
 its sign-in token in the OS keyring, which belongs to the OS user, not to HOME.
 But when it sees an SSH session it stores the token in a file instead
 ("Using file-based token storage because SSH session detected"): in
-.gemini/antigravity-cli/jetski_state.pbtxt under its HOME. agy-loop runs every agy
+.gemini/antigravity-cli/antigravity-oauth-token under its HOME. agy-loop runs every agy
 call that way, so each account's token is a plain file in its own slot, on
 macOS, Linux and Windows alike, headless or not, and your own agy CLI's keyring
 entry is never read or written. A slot is portable: copy the folder to another
@@ -36,11 +36,13 @@ except ImportError:  # Windows
     fcntl = pty = pwd = None
     import msvcrt
 
-AUTH = ".gemini/antigravity-cli/jetski_state.pbtxt"
+# agy's file token storage (SSH mode); jetski_state.pbtxt next to it is per-account state too.
+AUTH = ".gemini/antigravity-cli/antigravity-oauth-token"
+ACCOUNT_FILES = (AUTH, ".gemini/antigravity-cli/jetski_state.pbtxt")
 # Rebuilt per slot as real directories; their entries are linked one by one.
 FARM_DIRS = {".gemini", ".gemini/antigravity-cli", ".gemini/antigravity"}
 # Per-account or per-process entries inside FARM_DIRS: never linked.
-PRIVATE = ("*_state.pbtxt", "installation_id", "log", "cli.log", "crashes", "cache",
+PRIVATE = ("antigravity-oauth-token*", "*_state.pbtxt", "installation_id", "log", "cli.log", "crashes", "cache",
            "presence", "updater", "last_check.timestamp")
 # agy picks file token storage when it sees an SSH session; the value itself is not used.
 FILE_TOKENS = {"SSH_CONNECTION": "127.0.0.1 0 127.0.0.1 0"}
@@ -249,13 +251,25 @@ def unshared(slot_dir, rel=""):
 
 
 def probe_home():
-    """An unsigned slot for asking agy about the stack itself (/skills, mcp list, ...)."""
+    """Where to ask agy about the stack itself (/skills, mcp list, ...): a signed-in account if
+    there is one, since in file-token mode an unsigned agy stops to wait for a sign-in."""
+    if slots():
+        return slot_home(slots()[0])
     return os.path.join(base(), "slots", ".stack-probe")
 
 
 def loaded(slot=None):
     """Skill and hook names agy itself reports for a slot, or for the bare stack (no tokens, no sign-in)."""
     h = slot_home(slot) if slot else probe_home()
+    if not slot and not slots():  # nobody to ask: read the stack's own folders instead
+        cfg = os.path.join(stack_home(), ".gemini/config")
+        try:
+            with open(os.path.join(cfg, "hooks.json")) as f:
+                hooks = sorted(json.load(f))
+        except (OSError, ValueError):
+            hooks = []
+        skills = os.path.join(cfg, "skills")
+        return {"skills": sorted(os.listdir(skills)) if os.path.isdir(skills) else [], "hooks": hooks}
     sync(h)
     out = {}
     for cmd, key in (("/skills", "skills"), ("/hooks", "hooks")):
@@ -383,7 +397,9 @@ class Login:
         self.name = found[-1].rstrip(".,;") if found else f"account-{int(time.time())}"
         dst = slot_home(self.name)
         os.makedirs(os.path.dirname(os.path.join(dst, AUTH)), exist_ok=True)
-        os.replace(os.path.join(self.tmp, AUTH), os.path.join(dst, AUTH))
+        for rel in ACCOUNT_FILES:
+            if os.path.exists(os.path.join(self.tmp, rel)):
+                os.replace(os.path.join(self.tmp, rel), os.path.join(dst, rel))
         # Keep what else sign-in created: it shows which files are per-account.
         leftover = os.path.join(dst, ".agyloop-login")
         shutil.rmtree(leftover, ignore_errors=True)

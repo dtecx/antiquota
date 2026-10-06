@@ -19,13 +19,13 @@ home = os.environ["HOME"]
 name = os.path.basename(home)
 args = sys.argv[1:]
 
-auth = os.path.join(home, ".gemini/antigravity-cli/jetski_state.pbtxt")
+auth = os.path.join(home, ".gemini/antigravity-cli/antigravity-oauth-token")
 if args[:2] == ["-p", "/quota"] and not os.path.exists(auth):  # unsigned: agy's headless sign-in
     print("Authentication required. Please visit the URL to log in:", file=sys.stderr)
     print("  https://accounts.google.com/o/oauth2/auth?client_id=stub&state=stub", file=sys.stderr, flush=True)
     print("Or, paste the authorization code here and press Enter:", file=sys.stderr, flush=True)
     os.makedirs(os.path.dirname(auth), exist_ok=True)
-    open(auth, "w").write("")  # agy writes an empty state before sign-in
+    open(os.path.join(os.path.dirname(auth), "jetski_state.pbtxt"), "w").write("")  # written before sign-in
     os.makedirs(os.path.join(home, ".gemini/config"), exist_ok=True)
     open(os.path.join(home, ".gemini/config/config.json"), "w").write("{}")
     log = args[args.index("--log-file") + 1] if "--log-file" in args else os.devnull

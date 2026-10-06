@@ -45,7 +45,7 @@ and a localhost Host header.
   When agy sees an SSH session it uses file storage instead (its log:
   `Using file-based token storage because SSH session detected`). agy-loop sets
   `SSH_CONNECTION` (and `HOME`/`USERPROFILE`) on every agy call, so each token
-  lives in `slots/<email>/.gemini/antigravity-cli/jetski_state.pbtxt`. Same on
+  lives in `slots/<email>/.gemini/antigravity-cli/antigravity-oauth-token`. Same on
   macOS, Linux and Windows, headless or not; your keyring is never touched. A
   slot folder can be copied to another machine. `agyloop doctor` checks that
   every account really signs in as its own email.
