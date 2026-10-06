@@ -149,3 +149,14 @@ def test_no_account_says_so(home, work):
     eng.send(sid, "hi")
     finish(eng, sid)
     assert kinds(eng, sid) == ["noaccount"]
+
+
+def test_a_reply_wins_over_the_resumed_conversations_old_error(home, work, monkeypatch):
+    monkeypatch.setenv("STUB_STALE_ERROR", "1")
+    eng = Engine()
+    sid = eng.create(str(work), "gemini-3.8-flash-low")["id"]
+    eng.send(sid, "hi")
+    finish(eng, sid)
+    assert [e["status"] for e in eng.events(sid) if e["t"] == "turn_end"] == ["SUCCESS"]
+    assert not a.walled_until(ONE, "gemini") and kinds(eng, sid) == []
+    assert eng.sessions[sid].meta["usage"] == {"input": 100, "output": 10}  # this turn only

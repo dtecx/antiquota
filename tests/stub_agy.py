@@ -9,7 +9,7 @@ With -p <prompt> --output-format stream-json it plays one agent turn in the
 current folder: edits notes.txt, streams a reply, and logs its argv to
 .stub_calls.jsonl. The reply ends with GOAL_COMPLETE from turn STUB_DONE_AFTER
 (default 1). STUB_FLAG_AT=<n> creates the file "flag" on turn n. STUB_SLEEP
-pauses mid-turn. Asked for a VERDICT it is the verifier: STUB_VERDICT=done|no.
+pauses mid-turn. STUB_STALE_ERROR=1 ends with agy's stale conversation error. Asked for a VERDICT it is the verifier: STUB_VERDICT=done|no.
 """
 import json
 import os
@@ -107,7 +107,13 @@ if args[:1] == ["-p"] and "--output-format" in args and not args[1].startswith("
         emit(event="step_update", step_update={"conversation_id": conv, "step_index": 4, "state": "ACTIVE",
                                                "step_type": "agent_response", "text_delta": part})
     emit(event="step_update", step_update={"conversation_id": conv, "step_index": 4, "state": "DONE",
-                                           "step_type": "agent_response", "text_delta": ""})
+                                           "step_type": "agent_response", "text_delta": "",
+                                           "usage": {"input_tokens": 100, "output_tokens": 10, "total_tokens": 110}})
+    if os.environ.get("STUB_STALE_ERROR"):  # agy reports a resumed conversation's old error
+        emit(event="result", result={"conversation_id": conv, "status": "ERROR", "response": reply,
+                                     "error": "Individual quota reached. Resets in 110h50m31s.",
+                                     "usage": {"input_tokens": 9999, "output_tokens": 999, "total_tokens": 9999}})
+        sys.exit(0)
     emit(event="result", result={"conversation_id": conv, "status": "SUCCESS", "response": reply,
                                  "usage": {"input_tokens": 100, "output_tokens": 10, "total_tokens": 110}})
     sys.exit(0)

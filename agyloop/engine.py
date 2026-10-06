@@ -350,6 +350,8 @@ class Engine:
         reader = threading.Thread(target=lambda: err.append(proc.stderr.read()), daemon=True)
         reader.start()
         texts, before, tail, result, denied = {}, {}, [], {}, []
+        last = None                       # (step_type, state) of this turn's latest step
+        usage = {"input_tokens": 0, "output_tokens": 0, "total_tokens": 0}
         for line in proc.stdout:
             try:
                 d = json.loads(line)
@@ -361,7 +363,11 @@ class Engine:
                     m["conversation_id"] = d["conversation_id"]
                     self.save(s)
             elif ev == "step_update":
-                self._step(s, turn, d.get("step_update") or {}, texts, before, denied)
+                su = d.get("step_update") or {}
+                self._step(s, turn, su, texts, before, denied)
+                last = (su.get("step_type"), su.get("state"))
+                for k in usage:  # per step: agy's result totals the whole conversation
+                    usage[k] += (su.get("usage") or {}).get(k, 0) if su.get("state") == "DONE" else 0
             else:
                 tail.append(line)
                 if ev == "result":
@@ -371,11 +377,14 @@ class Engine:
         s.proc = None
         err = "".join(err).strip()
         stopped = s.stop.is_set()
-        quota = not stopped and a.is_quota_error(proc.returncode, "".join(tail), err)
-        ok = not stopped and not quota and proc.returncode == 0 and result.get("status") == "SUCCESS"
+        # In a resumed conversation agy's result keeps the last error of the conversation, e.g. a
+        # quota error from the account that failed before this one. A turn that ends with a
+        # finished reply worked, whatever that result says.
+        replied = last == ("agent_response", "DONE")
+        quota = not stopped and not replied and a.is_quota_error(proc.returncode, "".join(tail), err)
+        ok = not stopped and not quota and (replied or (proc.returncode == 0 and result.get("status") == "SUCCESS"))
         conv_lost = (resumed and not ok and not quota and not stopped
                      and bool(re.search(r"conversation", err + json.dumps(result), re.I)))
-        usage = result.get("usage") or {}
         m["usage"]["input"] += usage.get("input_tokens", 0)
         m["usage"]["output"] += usage.get("output_tokens", 0)
         if result.get("denied_actions") or denied:
@@ -383,12 +392,12 @@ class Engine:
                         actions=result.get("denied_actions") or [], commands=denied)
         elif err and not ok and not quota and not stopped and not conv_lost:
             self.notice(s, "error", err[-4000:])
-        status = ("stopped" if stopped else "quota" if quota else
+        status = ("stopped" if stopped else "quota" if quota else "SUCCESS" if ok else
                   result.get("status") or f"exit {proc.returncode}")
         self.publish(sid, {"t": "turn_end", "turn": turn, "slot": slot, "status": status, "usage": usage,
                            "secs": round(time.time() - t0, 1)}, persist=True)
         self.save(s)
-        final = result.get("response") or (texts[max(texts)] if texts else "")
+        final = (texts[max(texts)] if texts else "") or result.get("response") or ""
         return {"ok": ok, "quota": quota, "conv_lost": conv_lost, "text": final}
 
     def _step(self, s, turn, su, texts, before, denied):

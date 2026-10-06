@@ -29,7 +29,8 @@ def home(tmp_path, monkeypatch):
     monkeypatch.setenv("AGYLOOP_HOME", str(h))
     monkeypatch.setenv("AGYLOOP_DIR", str(h / ".agyloop"))
     monkeypatch.setenv("AGYLOOP_AGY", os.path.join(HERE, "stub_agy.py"))
-    for k in ("STUB_429", "STUB_SPENT", "STUB_SAY", "STUB_DONE_AFTER", "STUB_VERDICT", "STUB_SLEEP", "STUB_FLAG_AT"):
+    for k in ("STUB_429", "STUB_SPENT", "STUB_SAY", "STUB_DONE_AFTER", "STUB_VERDICT", "STUB_SLEEP", "STUB_FLAG_AT",
+              "STUB_STALE_ERROR", "STUB_PANEL"):
         monkeypatch.delenv(k, raising=False)
     sign_in(ONE, monkeypatch=monkeypatch)
     sign_in(TWO, monkeypatch=monkeypatch)
