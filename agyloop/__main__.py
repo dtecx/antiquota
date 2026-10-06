@@ -142,8 +142,7 @@ def cmd_goal(rest):
     p = argparse.ArgumentParser(prog="agyloop goal", description="Work on an objective until it is verified done.")
     p.add_argument("objective")
     p.add_argument("--cwd", default=".")
-    p.add_argument("--model", default="gemini-3.8-flash-high")
-    p.add_argument("--effort", default="")
+    p.add_argument("--model", default="gemini-3.8-flash-high", help="a model id from `agy models`; effort is part of it")
     p.add_argument("--mode", default="accept-edits", choices=list(MODES))
     p.add_argument("--check", default="", help="shell command that must exit 0 when the goal is met")
     p.add_argument("--no-verifier", action="store_true", help="skip the independent verifier")
@@ -151,7 +150,7 @@ def cmd_goal(rest):
     p.add_argument("--max-rounds", type=int, default=20)
     o = p.parse_args(rest)
     eng = Engine()
-    meta = eng.create(o.cwd, o.model, o.effort, o.mode, title=o.objective[:60])
+    meta = eng.create(o.cwd, o.model, "", o.mode, title=o.objective[:60])
     sid, q = meta["id"], eng.subscribe()
     eng.set_goal(sid, o.objective, o.check, not o.no_verifier, o.verifier_model, o.max_rounds)
     s = eng.sessions[sid]

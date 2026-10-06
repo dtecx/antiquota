@@ -65,11 +65,8 @@
         <textarea id="input" rows="1" placeholder="Ask agy, or type / for commands" aria-label="Message"></textarea>
         <div class="tools">
           <label class="pick"><span>model</span><select id="model"></select></label>
-          <label class="pick"><span>effort</span>
-            <select id="effort">
-              <option value="">auto</option><option>low</option><option>medium</option>
-              <option>high</option><option>xhigh</option><option>max</option>
-            </select>
+          <label class="pick" title="Gemini models come in effort variants; Claude and GPT-OSS models have a fixed one"><span>effort</span>
+            <select id="effort"></select>
           </label>
           <label class="pick" title="default: headless agy denies anything not in your allow rules · accept edits: file edits allowed · plan: read-only · bypass: everything allowed"><span>mode</span>
             <select id="mode">
@@ -107,7 +104,7 @@
     <div class="row3">
       <label class="field"><span>Model</span><select id="new-model"></select></label>
       <label class="field"><span>Effort</span>
-        <select id="new-effort"><option value="">auto</option><option>low</option><option>medium</option><option>high</option><option>xhigh</option><option>max</option></select>
+        <select id="new-effort"></select>
       </label>
       <label class="field"><span>Mode</span>
         <select id="new-mode"><option value="default">default</option><option value="accept-edits">accept edits</option><option value="plan">plan</option><option value="bypass">bypass</option></select>

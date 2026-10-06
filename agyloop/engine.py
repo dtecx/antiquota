@@ -334,7 +334,7 @@ class Engine:
         m, sid = s.meta, s.meta["id"]
         resumed = bool(m.get("conversation_id"))
         args = ["-p", prompt, "--output-format", "stream-json", "--model", m["model"],
-                *(["--effort", m["effort"]] if m.get("effort") else []), *MODES[m["mode"]],
+                *MODES[m["mode"]],  # effort is part of the model id (gemini-3.8-flash-high/-medium/-low)
                 *(["--conversation", m["conversation_id"]] if resumed else [])]
         a.sync(a.slot_home(slot))
         m["turns"] += 1

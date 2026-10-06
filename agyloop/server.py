@@ -252,7 +252,7 @@ class Handler(BaseHTTPRequestHandler):
                 return app.state()
             case ("POST", ["sessions"]):
                 d = stack.defaults()
-                return e.create(b.get("cwd") or a.home(), b.get("model") or d["model"], b.get("effort", d["effort"]),
+                return e.create(b.get("cwd") or a.home(), b.get("model") or d["model"], "",
                                 b.get("mode") or d["mode"], b.get("title", ""))
             case ("GET", ["sessions", sid]):
                 return {"meta": e.sessions[sid].meta, "events": e.events(sid)}

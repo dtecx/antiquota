@@ -239,9 +239,7 @@ function renderHeader() {
   }
   $('#tokens').textContent = m && (m.usage.input || m.usage.output) ? `${fmtK(m.usage.input)} in · ${fmtK(m.usage.output)} out` : '';
   if (m) {
-    ensureOption($('#model'), m.model);
-    $('#model').value = m.model;
-    $('#effort').value = m.effort || '';
+    setPicker($('#model'), $('#effort'), m.model);
     $('#mode').value = m.mode;
   }
   const q = m ? m.queue.length : 0;
@@ -541,7 +539,12 @@ async function open(sid) {
 
 /* ---------- live events ---------- */
 function handle(m) {
-  if (m.t === 'accounts') { S.accounts = m.accounts; renderRelay(); return; }
+  if (m.t === 'accounts') {
+    S.accounts = m.accounts;
+    renderRelay();
+    if (!S.models.length) api('GET', 'state').then(st => { S.models = st.models; if (S.models.length) { fillModels(); renderHeader(); } }).catch(() => {});
+    return;
+  }
   if (m.t === 'turn_start' || m.t === 'turn_end') refreshAccounts();
   if (m.t === 'meta') {
     S.sessions.set(m.sid, m.meta);
@@ -573,13 +576,59 @@ function connect() {
 function ensureOption(sel, value) {
   if (value && ![...sel.options].some(o => o.value === value)) sel.append(h('option', { value }, value));
 }
-function fillModels() {
-  const list = S.models.length ? S.models : [{ id: S.defaults.model, label: S.defaults.model }];
-  for (const sel of [$('#model'), $('#new-model'), $('#goal-vmodel')]) {
-    const v = sel.value;
-    sel.replaceChildren(...list.map(m => h('option', { value: m.id, title: m.label }, m.id)));
-    if (v) { ensureOption(sel, v); sel.value = v; }
+/* Models as agy lists them: "Gemini 3.8 Flash (High)" is family "Gemini 3.8 Flash", effort
+   "high". Gemini families come in effort variants; Claude and GPT-OSS have one fixed model. */
+const POOL = id => /^(claude|gpt)/.test(id) ? 'cg' : 'gemini';
+const POOL_LABEL = { gemini: 'Gemini quota', cg: 'Claude / GPT quota' };
+function families(extraId) {
+  const list = [...S.models];
+  if (extraId && !list.some(m => m.id === extraId)) list.push({ id: extraId, label: extraId });
+  const fams = new Map();
+  for (const m of list) {
+    const mm = m.label.match(/^(.*?)\s*\(([^)]+)\)\s*$/);
+    const name = mm ? mm[1] : m.label;
+    if (!fams.has(name)) fams.set(name, { name, pool: POOL(m.id), variants: [] });
+    fams.get(name).variants.push({ id: m.id, effort: (mm ? mm[2] : '').toLowerCase() });
   }
+  return [...fams.values()];
+}
+const familyOf = (id, fams = families(id)) => fams.find(f => f.variants.some(v => v.id === id));
+const effortOf = id => familyOf(id)?.variants.find(v => v.id === id)?.effort || '';
+function groupedOptions(fams, value, text) {
+  return ['gemini', 'cg'].map(pool => {
+    const g = fams.filter(f => f.pool === pool);
+    return g.length ? h('optgroup', { label: POOL_LABEL[pool] }, g.map(f => h('option', { value: value(f) }, text(f)))) : null;
+  }).filter(Boolean);
+}
+/* A model picker is two selects: family (grouped by quota pool), then that family's efforts. */
+function setPicker(famSel, effSel, id) {
+  const fams = families(id), fam = familyOf(id, fams);
+  famSel.replaceChildren(...groupedOptions(fams, f => f.name, f => f.name));
+  famSel.value = fam.name;
+  effSel.replaceChildren(...fam.variants.map(v => h('option', { value: v.id }, v.effort || 'default')));
+  effSel.value = id;
+  effSel.disabled = fam.variants.length < 2;
+  effSel.title = fam.variants.length < 2 ? 'This model has one fixed effort' : '';
+}
+function pickFamily(famSel, effSel, prevId) {
+  const fam = families(prevId).find(f => f.name === famSel.value);
+  const want = effortOf(prevId);
+  const v = fam.variants.find(x => x.effort === want) || fam.variants.find(x => x.effort === 'high') || fam.variants[0];
+  setPicker(famSel, effSel, v.id);
+  return v.id;
+}
+function setModelSelect(sel, id) {  // one concrete model id, e.g. the goal verifier
+  const fams = families(id);
+  sel.replaceChildren(...['gemini', 'cg'].map(pool => {
+    const g = fams.filter(f => f.pool === pool);
+    return g.length ? h('optgroup', { label: POOL_LABEL[pool] },
+      g.flatMap(f => f.variants.map(v => h('option', { value: v.id }, f.name + (v.effort ? ` · ${v.effort}` : ''))))) : null;
+  }).filter(Boolean));
+  sel.value = id;
+}
+function fillModels() {
+  const m = cur();
+  setPicker($('#model'), $('#effort'), m ? m.model : S.defaults.model);
 }
 function autosize() {
   const t = $('#input');
@@ -612,7 +661,7 @@ const SLASH = [
   ['/cleargoal', 'remove the goal'],
   ['/new', 'new session'],
   ['/model', 'switch model: /model <id>'],
-  ['/effort', 'reasoning effort: low · medium · high · xhigh · max'],
+  ['/effort', 'effort for Gemini models: low · medium · high'],
   ['/mode', 'permissions: default · accept-edits · plan · bypass'],
   ['/rename', 'rename this session'],
   ['/quota', 'probe quota on every account now'],
@@ -662,7 +711,13 @@ async function slash(text) {
       case '/cleargoal': need(); return api('DELETE', `sessions/${m.id}/goal`);
       case '/new': return openNew();
       case '/model': need(); await patch({ model: arg }); return toast('Model: ' + arg);
-      case '/effort': need(); await patch({ effort: arg === 'auto' ? '' : arg }); return toast('Effort: ' + (arg || 'auto'));
+      case '/effort': {
+        need();
+        const v = familyOf(m.model)?.variants.find(x => x.effort === arg.toLowerCase());
+        if (!v) return toast(`${familyOf(m.model)?.name || m.model} has no effort "${arg}"`);
+        await patch({ model: v.id });
+        return toast('Model: ' + v.id);
+      }
       case '/mode': need(); await patch({ mode: arg }); return toast('Mode: ' + arg);
       case '/rename': need(); return patch({ title: arg });
       case '/quota': await api('POST', 'accounts/probe'); return toast('Probing accounts…');
@@ -763,10 +818,8 @@ function openNew(text) {
   pendingText = typeof text === 'string' ? text : '';
   const m = cur();
   $('#new-cwd').value = m ? m.cwd : S.defaults.cwd;
-  for (const [id, v] of [['#new-model', m ? m.model : S.defaults.model], ['#new-effort', m ? m.effort : ''], ['#new-mode', m ? m.mode : 'default']]) {
-    ensureOption($(id), v);
-    $(id).value = v;
-  }
+  setPicker($('#new-model'), $('#new-effort'), m ? m.model : S.defaults.model);
+  $('#new-mode').value = m ? m.mode : (S.defaults.mode || 'default');
   browse('');
   $('#new-dlg').showModal();
   $('#new-cwd').select();
@@ -774,7 +827,7 @@ function openNew(text) {
 async function createFromDialog() {
   try {
     const meta = await api('POST', 'sessions', {
-      cwd: $('#new-cwd').value.trim(), model: $('#new-model').value, effort: $('#new-effort').value, mode: $('#new-mode').value,
+      cwd: $('#new-cwd').value.trim(), model: $('#new-effort').value, mode: $('#new-mode').value,
     });
     S.sessions.set(meta.id, meta);
     await open(meta.id);
@@ -788,9 +841,7 @@ function openGoal() {
   $('#goal-objective').value = g.objective || $('#input').value.trim();
   $('#goal-check').value = g.check || '';
   $('#goal-verifier').checked = g.verifier ?? true;
-  const vm = g.verifier_model || S.defaults.verifier_model;
-  ensureOption($('#goal-vmodel'), vm);
-  $('#goal-vmodel').value = vm;
+  setModelSelect($('#goal-vmodel'), g.verifier_model || S.defaults.verifier_model);
   $('#goal-rounds').value = g.max_rounds || 20;
   $('#goal-dlg').showModal();
 }
@@ -1004,30 +1055,25 @@ function list(kind, rows, sources) {
 }
 const openNewItem = async (key) => { SET.open = key; await reload(); };
 function defaultsForm(df) {
-  const sel = (id, opts, v) => {
-    const el = h('select', { id }, opts.map(([val, text]) => h('option', { value: val }, text)));
-    ensureOption(el, v);
-    el.value = v;
-    return el;
-  };
-  const models = (S.models.length ? S.models : [{ id: df.model }]).map(m => [m.id, m.id]);
-  const f = {
-    model: sel('df-model', models, df.model),
-    effort: sel('df-effort', [['', 'auto'], ['low', 'low'], ['medium', 'medium'], ['high', 'high'], ['xhigh', 'xhigh'], ['max', 'max']], df.effort),
-    mode: sel('df-mode', [['default', 'default'], ['accept-edits', 'accept edits'], ['plan', 'plan'], ['bypass', 'bypass']], df.mode),
-    verifier_model: sel('df-vmodel', models, df.verifier_model),
-  };
+  const fam = h('select', { id: 'df-family' }), eff = h('select', { id: 'df-effort' });
+  const mode = h('select', { id: 'df-mode' }, [['default', 'default'], ['accept-edits', 'accept edits'], ['plan', 'plan'], ['bypass', 'bypass']]
+    .map(([v, t]) => h('option', { value: v }, t)));
+  const ver = h('select', { id: 'df-vmodel' });
+  setPicker(fam, eff, df.model);
+  fam.addEventListener('change', () => pickFamily(fam, eff, eff.value));
+  mode.value = df.mode;
+  setModelSelect(ver, df.verifier_model);
   return h('div', { class: 'set-block' },
     h('h3', {}, 'New sessions'),
     h('div', { class: 'row3 row4' },
-      h('label', { class: 'field' }, h('span', {}, 'Model'), f.model),
-      h('label', { class: 'field' }, h('span', {}, 'Effort'), f.effort),
-      h('label', { class: 'field' }, h('span', {}, 'Mode'), f.mode),
-      h('label', { class: 'field' }, h('span', {}, 'Goal verifier'), f.verifier_model)),
+      h('label', { class: 'field' }, h('span', {}, 'Model'), fam),
+      h('label', { class: 'field' }, h('span', {}, 'Effort'), eff),
+      h('label', { class: 'field' }, h('span', {}, 'Mode'), mode),
+      h('label', { class: 'field' }, h('span', {}, 'Goal verifier'), ver)),
     h('div', { class: 'add-row' }, h('button', {
       class: 'primary', onclick: async () => {
         try {
-          S.defaults = { ...S.defaults, ...await api('PUT', 'settings/defaults', Object.fromEntries(Object.entries(f).map(([k, el]) => [k, el.value]))) };
+          S.defaults = { ...S.defaults, ...await api('PUT', 'settings/defaults', { model: eff.value, mode: mode.value, verifier_model: ver.value }) };
           toast('Defaults saved');
         } catch (e) { fail(e); }
       },
@@ -1150,8 +1196,9 @@ function wire() {
     if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); submit(); }
   });
   input.addEventListener('blur', () => setTimeout(closeSlash, 100));
-  $('#model').addEventListener('change', e => patch({ model: e.target.value }));
-  $('#effort').addEventListener('change', e => patch({ effort: e.target.value }));
+  $('#model').addEventListener('change', () => patch({ model: pickFamily($('#model'), $('#effort'), cur()?.model || S.defaults.model) }));
+  $('#effort').addEventListener('change', e => patch({ model: e.target.value }));
+  $('#new-model').addEventListener('change', () => pickFamily($('#new-model'), $('#new-effort'), $('#new-effort').value));
   $('#mode').addEventListener('change', e => {
     if (e.target.value === 'bypass' && !confirm('Bypass lets the agent run any command and edit any file without asking. Continue?')) {
       e.target.value = cur()?.mode || 'default';
