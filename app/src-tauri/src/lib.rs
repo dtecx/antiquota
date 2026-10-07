@@ -137,7 +137,11 @@ pub fn request_quit(app: AppHandle) {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| show_main(app)))
-        .plugin(tauri_plugin_window_state::Builder::default().build())
+        .plugin(tauri_plugin_window_state::Builder::default()
+            .with_state_flags(tauri_plugin_window_state::StateFlags::SIZE
+                | tauri_plugin_window_state::StateFlags::POSITION
+                | tauri_plugin_window_state::StateFlags::MAXIMIZED)
+            .build())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
@@ -153,6 +157,7 @@ pub fn run() {
                 .title("antiquota")
                 .inner_size(1280.0, 820.0)
                 .min_inner_size(720.0, 480.0)
+                .center() // the fallback when the saved monitor is no longer connected
                 .background_color(tauri::window::Color(14, 15, 17, 255))
                 .disable_drag_drop_handler() // HTML5 drag and drop reaches the page (attachments)
                 .visible(!std::env::args().any(|a| a == "--hidden"));

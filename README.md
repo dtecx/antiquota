@@ -2,8 +2,7 @@
 
 Long-running agent loops on the Antigravity CLI (`agy`), spread over several
 Google accounts. antiquota runs agy with its own copy of your agy setup, so your
-agy CLI and the Antigravity IDE are never changed by it. (It was called agy-loop;
-`~/.agyloop` moves to `~/.antiquota` on first start.)
+agy CLI and the Antigravity IDE are never changed by it.
 
 ```sh
 python3 -m antiquota gui          # web GUI on http://127.0.0.1:8765
@@ -142,16 +141,6 @@ Switching the hook off gives back agy's own headless behaviour.
 
 The server binds to 127.0.0.1 only; every API call needs the install's token and
 a localhost Host header.
-
-## Usage on Hacklab
-
-`hacklab sync` runs `ccusage session --json`, whose Antigravity reader takes
-token usage from agy's conversation databases in a few fixed folders
-(`~/.gemini/antigravity`, `antigravity-cli`, `antigravity-ide`,
-`antigravity-backup`, `~/.config/antigravity`). antiquota links the unused
-`~/.config/antigravity` to its own conversation store, so usage from every
-antiquota account syncs as ordinary **Antigravity** usage, with no extra agent or
-collector. `antiquota doctor` reports whether the link is in place.
 
 ## Accounts and the stack
 
