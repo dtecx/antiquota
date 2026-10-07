@@ -179,6 +179,23 @@ class App:
         os.replace(settings_path() + ".tmp", settings_path())
         return perms
 
+    SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv", ".mypy_cache", ".pytest_cache",
+                 "dist", "build", ".next", ".gitnexus", ".idea", ".vscode"}
+
+    def files(self, cwd, q):
+        """Project files for @-mentions: best matches for q, at most 30."""
+        q, hits = q.lower(), []
+        for d, dirs, names in os.walk(cwd):
+            dirs[:] = sorted(x for x in dirs if x not in self.SKIP_DIRS and not x.startswith("."))
+            for n in sorted(names):
+                rel = os.path.relpath(os.path.join(d, n), cwd)
+                if not q or q in rel.lower():
+                    hits.append(rel)
+            if len(hits) > 400:
+                break
+        hits.sort(key=lambda r: (not os.path.basename(r).lower().startswith(q), len(r)))
+        return hits[:30]
+
     def listdir(self, path):
         home = os.path.realpath(a.home())
         p = os.path.realpath(os.path.expanduser(path or home))
@@ -282,6 +299,16 @@ class Handler(BaseHTTPRequestHandler):
                 if not str(b.get("text", "")).strip():
                     raise ValueError("empty message")
                 return {"result": e.send(sid, b["text"])}
+            case ("POST", ["sessions", sid, "rewind"]):
+                return {"files": e.rewind(sid, int(b.get("turn", 0)))}
+            case ("POST", ["sessions", sid, "clear"]):
+                e.clear(sid)
+                return {"ok": True}
+            case ("POST", ["sessions", sid, "compact"]):
+                e.compact(sid)
+                return {"ok": True}
+            case ("GET", ["sessions", sid, "files"]):
+                return app.files(e.sessions[sid].meta["cwd"], (qs.get("q") or [""])[0])
             case ("POST", ["sessions", sid, "stop"]):
                 e.stop(sid)
                 return {"ok": True}

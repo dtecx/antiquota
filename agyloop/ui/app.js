@@ -490,6 +490,10 @@ function noticeNode(ev) {
     }
     case 'error':
       return h('div', { class: 'note error' }, h('span', { class: 'k' }, 'Error'), h('pre', {}, ev.text));
+    case 'rewind':
+      return h('div', { class: 'note' }, h('span', { class: 'k' }, '↶ Rewind'), ev.text,
+        h('ul', {}, (d.files || []).map(f => h('li', {}, h('code', { class: 'path' }, f),
+          (d.outside || []).includes(f) ? ' (it had changed after the agent\'s last edit)' : ''))));
     default:
       return h('div', { class: 'note' }, ev.text);
   }
@@ -511,6 +515,21 @@ function paint(st) {
     st.node.innerHTML = md(st.text);
   });
 }
+async function rewindTo(turn) {
+  const m = cur();
+  if (!m || !turn) return toast('Which turn? /rewind <turn number>');
+  if (!confirm(`Put every file the agent changed in turn ${turn} and later back as it was before turn ${turn}?`)) return;
+  try {
+    const r = await api('POST', `sessions/${m.id}/rewind`, { turn });
+    toast(`Rewound ${r.files.length} file${r.files.length > 1 ? 's' : ''}`);
+  } catch (e) { fail(e); }
+}
+function copyButton(getText) {
+  return h('button', {
+    class: 'copy-msg', type: 'button', title: 'Copy', 'aria-label': 'Copy message',
+    onclick: e => { e.stopPropagation(); navigator.clipboard.writeText(getText()).then(() => toast('Copied')); },
+  }, '⧉');
+}
 function renderEvent(ev, live) {
   const tr = $('#transcript');
   const stick = nearBottom();
@@ -522,7 +541,11 @@ function renderEvent(ev, live) {
     case 'turn_start':
       $$('.turn.live', tr).forEach(n => n.classList.remove('live'));
       tr.append(h('div', { class: 'turn' + (live ? ' live' : '') },
-        h('span', { class: 'acc', title: ev.slot }, ev.slot), h('span', {}, ev.model), h('span', { class: 'fill' }), h('span', {}, clock(ev.ts))));
+        h('span', { class: 'tn' }, '#' + ev.turn),
+        h('span', { class: 'acc', title: ev.slot }, ev.slot), h('span', {}, ev.model), h('span', { class: 'fill' }),
+        h('button', { class: 'rewind', type: 'button', title: `Put files back as they were before turn ${ev.turn}`,
+          onclick: () => rewindTo(ev.turn) }, '↶ rewind'),
+        h('span', {}, clock(ev.ts))));
       break;
     case 'delta': {
       const key = ev.turn + ':' + ev.step;
@@ -546,6 +569,7 @@ function renderEvent(ev, live) {
       node.classList.remove('live');
       node.innerHTML = md(ev.text);
       addCopy(node);
+      node.append(copyButton(() => ev.text));
       break;
     }
     case 'tool': {
@@ -565,11 +589,14 @@ function renderEvent(ev, live) {
       break;
     }
     case 'turn_end':
+      if (live && ev.status !== 'quota') notify(`${cur()?.title || 'agyloop'}: turn ${ev.turn} ${ev.status === 'SUCCESS' ? 'done' : ev.status}`, `${ev.slot} · ${secs(ev.secs)}`);
       $$('.turn.live', tr).forEach(n => n.classList.remove('live'));
       for (const [k, st] of S.live) { st.node.classList.remove('live'); S.live.delete(k); }
       tr.append(turnEnd(ev));
       break;
     case 'notice':
+      if (live && ev.kind === 'goal' && (ev.data || {}).met) notify('Goal met', cur()?.title || '');
+      if (live && ev.kind === 'wall') notify('Out of quota', ev.text);
       tr.append(noticeNode(ev));
       break;
   }
@@ -589,6 +616,8 @@ async function open(sid) {
   tr.replaceChildren();
   if (!events.length) tr.append(blankFor(meta));
   S.events = events;
+  HIST.list = events.filter(e => e.t === 'user' && e.kind === 'user').map(e => e.text);
+  HIST.pos = -1;
   for (const ev of events) renderEvent(ev, false);
   renderSessions();
   renderHeader();
@@ -706,6 +735,9 @@ async function submit() {
   if (!text) { if (m && m.status !== 'idle') stop(); return; }
   if (text.startsWith('/')) { t.value = ''; autosize(); closeSlash(); return slash(text); }
   if (!m) return openNew(text);
+  HIST.list.push(text);
+  HIST.pos = -1;
+  if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().catch(() => {});
   t.value = '';
   autosize();
   syncSend();
@@ -722,6 +754,10 @@ const patch = fields => S.cur && api('PATCH', 'sessions/' + S.cur, fields).catch
 /* ---------- slash commands ---------- */
 const SLASH = [
   ['/goal', 'set a goal; empty opens the goal panel'],
+  ['/clear', 'start a fresh agy conversation (the transcript stays)'],
+  ['/compact', 'fresh conversation that starts from a summary of this one'],
+  ['/rewind', 'put files back as they were before a turn: /rewind <turn>'],
+  ['/export', 'download this transcript as markdown'],
   ['/stop', 'stop the running turn, pause the goal'],
   ['/resume', 'resume a paused goal'],
   ['/cleargoal', 'remove the goal'],
@@ -738,28 +774,80 @@ const SLASH = [
   ['/permissions', 'edit agy-loop allow rules'],
   ['/delete', 'delete this session'],
 ];
-let slashIdx = 0;
-function openSlashMenu() {
-  const v = $('#input').value;
+/* One popup for both slash commands and @-mentions. Items are [label, detail, apply()]. */
+let slashIdx = 0, menuItems = [], mentionSeq = 0;
+function showMenu(items) {
+  menuItems = items;
   const box = $('#slash');
-  if (!v.startsWith('/') || /\s/.test(v)) return closeSlash();
-  const hits = SLASH.filter(([c]) => c.startsWith(v.toLowerCase()));
-  if (!hits.length) return closeSlash();
-  slashIdx = Math.min(slashIdx, hits.length - 1);
-  box.replaceChildren(...hits.map(([c, d], i) => h('button', {
+  if (!items.length) return closeSlash();
+  slashIdx = Math.min(slashIdx, items.length - 1);
+  box.replaceChildren(...items.map(([label, detail, apply], i) => h('button', {
     type: 'button', class: i === slashIdx ? 'on' : '', role: 'option',
-    onmousedown: e => { e.preventDefault(); pickSlash(c); },
-  }, h('b', {}, c), h('span', {}, d))));
+    onmousedown: e => { e.preventDefault(); apply(); closeSlash(); syncSend(); },
+  }, h('b', {}, label), h('span', {}, detail))));
   box.hidden = false;
 }
-function closeSlash() { $('#slash').hidden = true; slashIdx = 0; }
-function pickSlash(c) {
-  const t = $('#input');
-  t.value = c + ' ';
-  t.focus();
-  closeSlash();
-  syncSend();
+function openSlashMenu() {
+  const t = $('#input'), v = t.value;
+  if (v.startsWith('/') && !/\s/.test(v)) {
+    return showMenu(SLASH.filter(([c]) => c.startsWith(v.toLowerCase()))
+      .map(([c, d]) => [c, d, () => { t.value = c + ' '; t.focus(); }]));
+  }
+  const before = v.slice(0, t.selectionStart), m = before.match(/(^|\s)@([\w./~-]*)$/);
+  if (!m || !cur()) return closeSlash();
+  const q = m[2], seq = ++mentionSeq;
+  api('GET', `sessions/${S.cur}/files?q=${encodeURIComponent(q)}`).then(files => {
+    if (seq !== mentionSeq) return;  // a newer keystroke already asked
+    showMenu(files.map(f => [f, 'file', () => {
+      const start = before.length - q.length;
+      t.value = v.slice(0, start) + f + ' ' + v.slice(t.selectionStart);
+      t.selectionStart = t.selectionEnd = start + f.length + 1;
+      t.focus();
+    }]));
+  }).catch(() => {});
 }
+function closeSlash() { $('#slash').hidden = true; slashIdx = 0; menuItems = []; }
+
+/* ---------- prompt history (↑ / ↓ in an empty or untouched composer) ---------- */
+const HIST = { list: [], pos: -1, draft: '' };
+function historyStep(dir) {
+  const t = $('#input');
+  if (!HIST.list.length) return false;
+  if (HIST.pos === -1) HIST.draft = t.value;
+  HIST.pos = Math.max(-1, Math.min(HIST.list.length - 1, HIST.pos + dir));
+  t.value = HIST.pos === -1 ? HIST.draft : HIST.list[HIST.list.length - 1 - HIST.pos];
+  autosize();
+  syncSend();
+  return true;
+}
+
+/* ---------- desktop notifications for long runs ---------- */
+function notify(title, body) {
+  if (!document.hidden || !('Notification' in window) || Notification.permission !== 'granted') return;
+  try { new Notification(title, { body, tag: 'agyloop' }); } catch {}
+}
+
+/* ---------- export the transcript as markdown ---------- */
+async function exportTranscript() {
+  const m = cur();
+  if (!m) return;
+  const { events } = await api('GET', 'sessions/' + m.id);
+  const out = [`# ${m.title || 'Untitled'}`, '', `${m.cwd} · ${m.model}`, ''];
+  for (const e of events) {
+    if (e.t === 'user') out.push(`## ${WHO[e.kind] || 'you'}`, '', e.text, '');
+    else if (e.t === 'assistant') out.push(e.text, '');
+    else if (e.t === 'thinking') out.push('<details><summary>Thought</summary>', '', e.text, '', '</details>', '');
+    else if (e.t === 'tool') out.push(`- \`${e.name}\` ${toolInfo(e)[1] || ''}${e.state === 'error' ? ' (error)' : ''}`);
+    else if (e.t === 'turn_start') out.push('', `---`, `*turn ${e.turn} · ${e.slot} · ${e.model}*`, '');
+    else if (e.t === 'notice') out.push(`> **${e.kind}**: ${e.text}`, '');
+  }
+  const a = h('a', { href: URL.createObjectURL(new Blob([out.join('\n')], { type: 'text/markdown' })),
+    download: (m.title || 'session').replace(/[^\w.-]+/g, '-').slice(0, 60) + '.md' });
+  document.body.append(a);
+  a.click();
+  a.remove();
+}
+
 async function slash(text) {
   const [cmd, ...rest] = text.split(/\s+/);
   const arg = text.slice(cmd.length).trim();
@@ -773,6 +861,10 @@ async function slash(text) {
         await api('POST', `sessions/${m.id}/goal`, { objective: arg, verifier: true, verifier_model: S.defaults.verifier_model });
         return toast('Goal started');
       case '/stop': return stop();
+      case '/clear': need(); await api('POST', `sessions/${m.id}/clear`); return toast('Fresh conversation from the next message');
+      case '/compact': need(); await api('POST', `sessions/${m.id}/compact`); return toast('Compacted');
+      case '/rewind': return rewindTo(+arg || 0);
+      case '/export': return exportTranscript();
       case '/resume': need(); return api('POST', `sessions/${m.id}/goal/resume`);
       case '/cleargoal': need(); return api('DELETE', `sessions/${m.id}/goal`);
       case '/new': return openNew();
@@ -1341,21 +1433,29 @@ async function load() {
 function wire() {
   const input = $('#input');
   $('#composer').addEventListener('submit', e => { e.preventDefault(); submit(); });
-  input.addEventListener('input', () => { autosize(); openSlashMenu(); syncSend(); });
+  input.addEventListener('input', () => { HIST.pos = -1; autosize(); openSlashMenu(); syncSend(); });
   input.addEventListener('keydown', e => {
-    const menu = !$('#slash').hidden;
+    const menu = !$('#slash').hidden && menuItems.length;
     if (menu && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
       e.preventDefault();
-      const n = $$('#slash button').length;
+      const n = menuItems.length;
       slashIdx = (slashIdx + (e.key === 'ArrowDown' ? 1 : n - 1)) % n;
-      openSlashMenu();
+      showMenu(menuItems);
       return;
     }
-    if (menu && (e.key === 'Tab' || (e.key === 'Enter' && !/\s/.test(input.value)))) {
-      e.preventDefault();
-      const b = $$('#slash button')[slashIdx];
-      if (b) pickSlash($('b', b).textContent);
-      return;
+    if (menu && (e.key === 'Tab' || e.key === 'Enter')) {
+      const isSlashWithArgs = input.value.startsWith('/') && /\s/.test(input.value);
+      if (!isSlashWithArgs) {
+        e.preventDefault();
+        menuItems[slashIdx]?.[2]();
+        closeSlash();
+        syncSend();
+        return;
+      }
+    }
+    if (!menu && (e.key === 'ArrowUp' || e.key === 'ArrowDown') && !e.shiftKey
+        && (input.value === '' || HIST.pos !== -1 || (e.key === 'ArrowUp' && input.selectionStart === 0))) {
+      if (historyStep(e.key === 'ArrowUp' ? 1 : -1)) { e.preventDefault(); return; }
     }
     if (e.key === 'Escape') {
       if (menu) return closeSlash();

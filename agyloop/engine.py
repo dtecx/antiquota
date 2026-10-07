@@ -35,7 +35,7 @@ VERDICT_RE = re.compile(r"^\W*VERDICT:\s*(DONE|NOT[_ ]DONE)\W*$", re.I | re.M)
 META_KEYS = {"id": "", "title": "", "cwd": "", "model": "", "effort": "", "mode": "default", "created": 0,
              "updated": 0, "status": "idle", "status_until": None, "conversation_id": None, "turns": 0,
              "queue": [], "goal": None, "last_slot": None, "usage": {"input": 0, "output": 0, "thinking": 0},
-             "context": 0}
+             "context": 0, "pending_note": ""}
 DENIED_NOTE = ("These commands were denied: headless agy cannot ask for permission, so the turn ended. "
                "Do not retry them or reword them; carry on without them: {cmds}")
 AUTO_CONTINUES = 2  # follow-ups after denials per user message, so a stuck agent cannot loop forever
@@ -65,6 +65,21 @@ def parse_verdict(text):
     done = m.group(1).upper() == "DONE"
     missing = [] if done else [ln.strip()[2:] for ln in body.splitlines() if ln.strip().startswith(("- ", "* "))]
     return {"done": done, "reason": body[-1500:], "missing": missing[:20]}
+
+
+MENTION = re.compile(r"(?<![\w`])@([\w./~-]+[\w/])")
+
+
+def expand_mentions(text, cwd):
+    """`@path` mentions that name real files or folders get their absolute paths listed for agy."""
+    found = []
+    for m in MENTION.finditer(text):
+        p = os.path.normpath(os.path.join(cwd, os.path.expanduser(m.group(1))))
+        if os.path.exists(p) and p not in found:
+            found.append(p)
+    if not found:
+        return text
+    return text + "\n\nReferenced " + ("files" if len(found) > 1 else "file") + ":\n" + "\n".join(f"- {p}" for p in found)
 
 
 def _read(path):
@@ -265,7 +280,10 @@ class Engine:
                 if not m["title"] and kind == "user":
                     m["title"] = text.strip().splitlines()[0][:60]
                 self.publish(m["id"], {"t": "user", "text": text, "kind": kind}, persist=True)
-                ok, reply, denied = self._turn(s, text)
+                prompt = expand_mentions(text, m["cwd"])
+                if m.get("pending_note"):  # a rewind or compact happened since the last turn
+                    prompt, m["pending_note"] = m["pending_note"] + "\n\n" + prompt, ""
+                ok, reply, denied = self._turn(s, prompt)
                 text = None
                 note = DENIED_NOTE.format(cmds=", ".join(f"`{c}`" for c in denied)) if denied else ""
                 if kind == "user":
@@ -470,6 +488,7 @@ class Engine:
                     b = s.files[path]
                 ev["diff"] = _diff(path, b, after, s.meta["cwd"])
                 self._remember(s, path, after)
+                self._checkpoint(s, turn, path, b, after)
             self.publish(sid, ev, persist=True)
 
     def _thinking(self, s, turn, step, tokens=0):
@@ -480,6 +499,81 @@ class Engine:
             self.publish(s.meta["id"], {"t": "thinking", "turn": turn, "step": step, "text": text, "tokens": tokens},
                          persist=True)
         return bool(text)
+
+    @staticmethod
+    def _checkpoint(s, turn, path, before, after):
+        """Remember a file's content before this turn first touched it, for rewinds."""
+        if before is None or after is None:
+            return
+        p = os.path.join(s.dir, "checkpoints", f"{turn}.json")
+        os.makedirs(os.path.dirname(p), exist_ok=True)
+        try:
+            with open(p) as f:
+                cp = json.load(f)
+        except (OSError, ValueError):
+            cp = {}
+        cp.setdefault(path, {"before": before})["after"] = after
+        with open(p + ".tmp", "w") as f:
+            json.dump(cp, f)
+        os.replace(p + ".tmp", p)
+
+    def rewind(self, sid, turn):
+        """Put every file the agent changed in `turn` and later back as it was before `turn`."""
+        s = self.sessions[sid]
+        if s.busy:
+            raise ValueError("stop the running turn first")
+        d = os.path.join(s.dir, "checkpoints")
+        turns = sorted(int(n[:-5]) for n in (os.listdir(d) if os.path.isdir(d) else []) if n.endswith(".json"))
+        restore, latest = {}, {}
+        for t in turns:
+            if t < int(turn):
+                continue
+            with open(os.path.join(d, f"{t}.json")) as f:
+                for path, c in json.load(f).items():
+                    restore.setdefault(path, c["before"])
+                    latest[path] = c["after"]
+        if not restore:
+            raise ValueError(f"no file changes from turn {turn} on")
+        outside = []
+        for path, content in restore.items():
+            if _read(path) != latest[path]:
+                outside.append(path)  # changed after the agent's last edit: still restored, but said so
+            if content == "":
+                if os.path.exists(path):
+                    os.remove(path)
+            else:
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+                with open(path, "w", encoding="utf-8") as f:
+                    f.write(content)
+            s.files.pop(path, None)
+        for t in turns:
+            if t >= int(turn):
+                os.remove(os.path.join(d, f"{t}.json"))
+        rel = sorted(os.path.relpath(p, s.meta["cwd"]) for p in restore)
+        s.meta["pending_note"] = (f"Files were rewound to how they were before turn {turn}: {', '.join(rel)}. "
+                                  "Re-read them before editing.")
+        self.save(s)
+        self.notice(s, "rewind", f"Rewound {len(rel)} file{'s' if len(rel) > 1 else ''} to before turn {turn}.",
+                    files=rel, outside=[os.path.relpath(p, s.meta["cwd"]) for p in outside], turn=int(turn))
+        return rel
+
+    def clear(self, sid):
+        """Start a fresh agy conversation; the transcript stays."""
+        s = self.sessions[sid]
+        if s.busy:
+            raise ValueError("stop the running turn first")
+        s.meta.update(conversation_id=None, context=0, pending_note="")
+        self.save(s)
+        self.notice(s, "info", "New conversation: agy starts fresh from the next message.")
+
+    def compact(self, sid):
+        """A fresh agy conversation that starts from a summary of this one."""
+        s = self.sessions[sid]
+        if s.busy:
+            raise ValueError("stop the running turn first")
+        s.meta.update(conversation_id=None, context=0, pending_note=self._handoff(s, "(the next message follows)"))
+        self.save(s)
+        self.notice(s, "info", "Compacted: the next message starts a fresh conversation from a summary of this one.")
 
     @staticmethod
     def _remember(s, path, content):

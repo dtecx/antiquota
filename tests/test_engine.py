@@ -172,3 +172,36 @@ def test_a_denied_command_gets_one_follow_up_that_names_it(home, work, monkeypat
     assert [u["kind"] for u in users] == ["user", "nudge"]
     assert "`git status`" in users[1]["text"] and "Do not retry" in users[1]["text"]
     assert kinds(eng, sid) == ["denied"]
+
+
+def test_rewind_puts_files_back_and_tells_the_agent(home, work):
+    eng = Engine()
+    sid = eng.create(str(work), "gemini-3.8-flash-low")["id"]
+    for msg in ("one", "two"):
+        eng.send(sid, msg)
+        finish(eng, sid)
+    assert (work / "notes.txt").read_text() == "turn 1\nturn 2\n"
+    assert eng.rewind(sid, 2) == ["notes.txt"]
+    assert (work / "notes.txt").read_text() == "turn 1\n"
+    eng.send(sid, "three")
+    finish(eng, sid)
+    assert "rewound to how they were before turn 2" in calls(work)[-1]["args"][1]
+    eng.rewind(sid, 1)
+    assert not (work / "notes.txt").exists()  # it did not exist before turn 1
+
+
+def test_mentions_clear_and_compact(home, work):
+    from agyloop.engine import expand_mentions
+    (work / "app.py").write_text("x")
+    assert expand_mentions("look at @app.py and @nope.py", str(work)).endswith(f"- {work / 'app.py'}")
+    assert expand_mentions("mail me@example.com", str(work)) == "mail me@example.com"
+    eng = Engine()
+    sid = eng.create(str(work), "gemini-3.8-flash-low")["id"]
+    eng.send(sid, "first")
+    finish(eng, sid)
+    eng.compact(sid)
+    assert eng.sessions[sid].meta["conversation_id"] is None
+    eng.send(sid, "second")
+    finish(eng, sid)
+    last = calls(work)[-1]["args"]
+    assert "--conversation" not in last and "taking over work" in last[1] and last[1].rstrip().endswith("second")
