@@ -211,7 +211,7 @@ class App:
         from . import __version__
         return {"sessions": sorted((s.meta for s in e.sessions.values()), key=lambda m: -m["updated"]),
                 "accounts": self.accounts(), "models": self.models, "modes": list(MODES),
-                "defaults": {**stack.defaults(), "cwd": a.home()},
+                "defaults": {**stack.defaults(), "cwd": os.path.expanduser(stack.defaults()["default_cwd"]) or a.home()},
                 "engine": {"version": __version__, "agy": a.find_agy(), "busy": e.busy_count()}}
 
 
@@ -331,6 +331,19 @@ class Handler(BaseHTTPRequestHandler):
                 return accts
             case ("POST", ["sessions", sid, "steer"]):
                 return e.steer(sid)
+            case ("GET", ["engine"]):
+                from . import __version__
+                info = running_info()
+                return {"version": __version__, "pid": os.getpid(), "url": info.get("url"), "by": info.get("by"),
+                        "started": info.get("started"), "base": a.base(), "stack": a.stack_home(),
+                        "log": a.state("engine.log"), "hook": stack.hook_enabled(), "agy": a.find_agy(),
+                        "sessions": len(e.sessions), "accounts": len(a.slots())}
+            case ("GET", ["engine", "log"]):
+                try:
+                    with open(a.state("engine.log"), errors="replace") as f:
+                        return {"text": "".join(f.readlines()[-400:])}
+                except OSError:
+                    return {"text": "(no engine log: this engine was started from a terminal)"}
             case ("POST", ["shutdown"]):
                 srv = getattr(Handler, "server_ref", None)
                 if srv:
@@ -522,6 +535,14 @@ def make_server(port):
     srv.daemon_threads = True
     Handler.app = App(srv.server_address[1])  # port 0 picks a free one
     return srv
+
+
+def running_info():
+    try:
+        with open(a.state("engine.json")) as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {}
 
 
 def running_engine():

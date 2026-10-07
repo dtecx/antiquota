@@ -55,13 +55,27 @@ function h(tag, attrs = {}, ...kids) {
 
 const S = {
   sessions: new Map(), cur: null, accounts: [], models: [], defaults: {},
-  nodes: new Map(), live: new Map(), drawer: false, tab: 'accounts', stack: null, detail: 'detailed', events: [],
+  nodes: new Map(), live: new Map(), drawer: false, tab: 'changes', stack: null, detail: 'detailed', events: [],
+};
+const PREF = {  // per-device preferences (Settings → General / Appearance)
+  zoom: 1, view: 'grouped', stamps: true, notify: { turn: true, goal: true, approval: true, job: true, quota: true }, focused: false,
 };
 try {
   S.drawer = localStorage.getItem('antiquota.drawer') === '1';
-  S.tab = localStorage.getItem('antiquota.tab') || 'accounts';
+  const tab = localStorage.getItem('antiquota.tab');
+  S.tab = ['changes', 'files', 'terminal'].includes(tab) ? tab : 'changes';
   S.detail = localStorage.getItem('antiquota.detail') || 'detailed';
+  Object.assign(PREF, JSON.parse(localStorage.getItem('antiquota.prefs') || '{}'));
 } catch {}
+function savePrefs() { remember('prefs', JSON.stringify(PREF)); }
+/* UI scale: ⌘= ⌘- ⌘0 (and View menu in the app), 70–160%. */
+function setZoom(z) {
+  PREF.zoom = Math.round(Math.min(1.6, Math.max(0.7, z)) * 100) / 100;
+  document.documentElement.style.zoom = PREF.zoom === 1 ? '' : PREF.zoom;
+  savePrefs();
+}
+const zoomBy = d => { setZoom(d ? PREF.zoom + d : 1); toast(`Zoom ${Math.round(PREF.zoom * 100)}%`); };
+if (PREF.zoom !== 1) document.documentElement.style.zoom = PREF.zoom;
 function remember(k, v) { try { localStorage.setItem('antiquota.' + k, v); } catch {} }
 
 async function api(method, path, body) {
@@ -294,25 +308,28 @@ function gauge(letter, acct, bucket) {
     h('div', { class: 'bar' + (wall ? ' wall' : frac != null && frac < .2 ? ' low' : '') },
       h('i', { style: `width:${frac == null ? 0 : Math.max(2, frac * 100)}%` })));
 }
+/* Bottom-left: one compact row for every account (a quota strip, how many are free, the
+   serving account), like Claude Code's account chip. It opens Settings → Usage. */
 function renderRelay() {
-  const rows = $('#relay-rows');
-  rows.replaceChildren();
-  if (!S.accounts.length) rows.append(h('button', { class: 'primary relay-cta', onclick: () => openAcct() }, 'Add Google account'));
-  for (const acct of S.accounts) {
-    rows.append(acct.verify
-      ? h('div', { class: 'acct verify', title: `${acct.slot}: Google wants this account verified before Antigravity serves it` },
-        h('span', { class: 'name' }, who(acct.slot)),
-        h('button', { class: 'verify-chip', onclick: () => showDrawer('accounts') }, 'needs verification'))
-      : h('div', { class: 'acct' + (acct.paused ? ' paused' : ''), title: acct.paused ? acct.slot + ' is paused' : acct.busy ? acct.slot + ' is running a call' : acct.slot },
-        h('span', { class: 'name' + (acct.busy ? ' busy' : '') }, who(acct.slot)),
-        gauge('gemini', acct, 'gemini'), gauge('claude', acct, 'cg')));
-  }
+  const accts = S.accounts, m = cur(), pool = m ? POOL(m.model) : 'gemini';
+  const usable = x => !x.walls[pool] && !x.verify && !x.paused;
+  const free = accts.filter(usable).length;
+  const attention = accts.filter(x => x.verify || /^signed out/.test((x.why || {})[pool] || ''));
+  $('#ap-strip').replaceChildren(...accts.map(x => {
+    const f = minFrac(x.quota[pool]), state = x.verify || x.paused ? 'off' : x.walls[pool] ? 'wall' : f != null && f < .2 ? 'low' : 'ok';
+    return h('i', { class: state, style: `--f:${x.walls[pool] || x.verify ? 0.12 : f == null ? 0.5 : Math.max(0.12, f)}` });
+  }));
+  const serving = accts.find(x => x.slot === m?.last_slot);
+  const left = serving ? minFrac(serving.quota[pool]) : null;
+  $('#ap-main').textContent = accts.length ? `${free} of ${accts.length} accounts free` : 'Add a Google account';
+  $('#ap-sub').textContent = !accts.length ? 'signs in separately from your agy CLI'
+    : serving ? `${who(serving.slot)} · ${pool === 'cg' ? 'Claude/GPT' : 'Gemini'} ${left == null ? '–' : Math.round(left * 100) + '%'}`
+    : attention.length ? `${attention.length} need${attention.length === 1 ? 's' : ''} attention` : 'usage and accounts';
+  $('#ap-dot').hidden = !attention.length;
   const blank = $('#transcript > .blank');
   if (blank && !!$('.note.wall', blank) === !!S.accounts.length) (cur() ? blank.replaceWith(blankFor(cur())) : renderBlank());
   renderMeter();
-  const probed = Math.max(0, ...S.accounts.map(x => x.probed || 0));
-  $('#relay-hint').textContent = probed ? 'probed ' + ago(probed) : '';
-  if (S.drawer && S.tab === 'accounts') renderPane();
+  if (!$('#settings').hidden && SET.section === 'accounts') { const box = $('#acct-cards'); if (box) box.replaceChildren(...acctCards()); }
 }
 let acctTimer;
 function refreshAccounts() {
@@ -796,7 +813,7 @@ function renderEvent(ev, live) {
       break;
     }
     case 'turn_end':
-      if (live && ev.status !== 'quota') notify(`${cur()?.title || 'antiquota'}: turn ${ev.turn} ${ev.status === 'SUCCESS' ? 'done' : ev.status}`, `${ev.slot} · ${secs(ev.secs)}`);
+      if (live && ev.status !== 'quota') notify(`${cur()?.title || 'antiquota'}: turn ${ev.turn} ${ev.status === 'SUCCESS' ? 'done' : ev.status}`, `${ev.slot} · ${secs(ev.secs)}`, 'turn');
       $$('.turn.live', tr).forEach(n => n.classList.remove('live'));
       for (const [k, st] of S.live) { st.node.classList.remove('live'); S.live.delete(k); }
       tr.append(turnEnd(ev));
@@ -809,18 +826,18 @@ function renderEvent(ev, live) {
       if (old) old.replaceWith(node); else tr.append(node);
       S.nodes.set(key, node);
       if (live && ev.state === 'pending') {
-        notify('Approval needed', (ev.args || {}).CommandLine || (ev.args || {}).TargetFile || ev.tool);
+        notify('Approval needed', (ev.args || {}).CommandLine || (ev.args || {}).TargetFile || ev.tool, 'approval');
         if (NATIVE) NATIVE.window.getCurrentWindow().requestUserAttention(1).catch(() => {});
       }
       break;
     }
     case 'job':
       tr.append(jobNode(ev));
-      if (live && ev.phase === 'ended') notify(`Job finished: ${ev.job.cmd}`, cur()?.title || '');
+      if (live && ev.phase === 'ended') notify(`Job finished: ${ev.job.cmd}`, cur()?.title || '', 'job');
       break;
     case 'notice':
-      if (live && ev.kind === 'goal' && (ev.data || {}).met) notify('Goal met', cur()?.title || '');
-      if (live && ev.kind === 'wall') notify('Out of quota', ev.text);
+      if (live && ev.kind === 'goal' && (ev.data || {}).met) notify('Goal met', cur()?.title || '', 'goal');
+      if (live && ev.kind === 'wall') notify('Out of quota', ev.text, 'quota');
       tr.append(noticeNode(ev));
       break;
   }
@@ -1034,6 +1051,7 @@ const SLASH = [
   ['/mode', 'permissions: default · accept-edits · plan · bypass'],
   ['/rename', 'rename this session'],
   ['/quota', 'probe quota on every account now'],
+  ['/usage', 'token usage by day, account and model'],
   ['/accounts', 'show accounts'],
   ['/login', 'add a Google account'],
   ['/settings', 'rules, skills, hooks, MCP, plugins, permissions'],
@@ -1157,8 +1175,9 @@ function historyStep(dir) {
 }
 
 /* ---------- desktop notifications for long runs ---------- */
-async function notify(title, body) {
-  if (!document.hidden && document.hasFocus()) return;
+async function notify(title, body, kind) {
+  if (kind && PREF.notify[kind] === false) return;
+  if (!PREF.focused && !document.hidden && document.hasFocus()) return;
   if (NATIVE) {
     try {
       const n = NATIVE.notification;
@@ -1254,7 +1273,8 @@ async function slash(text) {
       case '/mode': need(); await patch({ mode: arg }); return toast('Mode: ' + arg);
       case '/rename': need(); return patch({ title: arg });
       case '/quota': await api('POST', 'accounts/probe'); return toast('Probing accounts…');
-      case '/accounts': return showDrawer('accounts');
+      case '/accounts': return openSettings('accounts');
+      case '/usage': return openSettings('usage');
       case '/login': return openAcct();
       case '/stack': return showDrawer('stack');
       case '/skills': return openSettings('skills');
@@ -1274,18 +1294,21 @@ async function slash(text) {
 }
 
 /* ---------- keyboard shortcuts and commands (⌘/ or /help) ---------- */
-const KEYS = [['⌘N', 'new session'], ['⌘K', 'find a session or message'], ['⌘J', 'focus the message box'],
+const KEYS = [['⌘= ⌘− ⌘0', 'interface larger / smaller / actual size'], ['⌘N', 'new session'], ['⌘K', 'find a session or message'], ['⌘J', 'focus the message box'],
   ['⌘⇧[  ⌘⇧]', 'previous / next session'], ['⌘B', 'show or hide the side panel'], ['⌘.', 'stop the running turn'],
   ['⌘,', 'settings'], ['⌘/', 'this sheet'], ['Enter', 'send · ⇧Enter new line'], ['↑ ↓', 'earlier messages (empty box)'],
   ['Esc', 'stop the running turn'], ['@', 'mention a file'], ['!', 'run a shell command'], ['#', 'add a note to GEMINI.md']];
-function showShortcuts() {
+function shortcutsGrid() {
   const mac = /Mac/.test(navigator.platform), k = s => mac ? s : s.replace(/⌘/g, 'Ctrl+').replace(/⇧/g, 'Shift+');
+  return h('div', { class: 'keys-grid' },
+    h('div', {}, h('h3', {}, 'Keys'), h('dl', {}, ...KEYS.flatMap(([a, b]) => [h('dt', {}, h('kbd', {}, k(a))), h('dd', {}, b)]))),
+    h('div', {}, h('h3', {}, 'Commands'), h('dl', {}, ...SLASH.flatMap(([c, d]) => [h('dt', {}, h('code', {}, c)), h('dd', {}, d)]))));
+}
+function showShortcuts() {
   const dlg = h('dialog', { class: 'dlg keys-dlg', 'aria-label': 'Keyboard shortcuts' },
     h('form', { method: 'dialog' },
       h('h2', {}, 'Shortcuts and commands'),
-      h('div', { class: 'keys-grid' },
-        h('div', {}, h('h3', {}, 'Keys'), h('dl', {}, ...KEYS.flatMap(([a, b]) => [h('dt', {}, h('kbd', {}, k(a))), h('dd', {}, b)]))),
-        h('div', {}, h('h3', {}, 'Commands'), h('dl', {}, ...SLASH.flatMap(([c, d]) => [h('dt', {}, h('code', {}, c)), h('dd', {}, d)])))),
+      shortcutsGrid(),
       h('div', { class: 'actions' }, h('button', { class: 'primary' }, 'Close'))));
   dlg.addEventListener('close', () => dlg.remove());
   document.body.append(dlg);
@@ -1410,13 +1433,13 @@ function verifyBlock(email, url) {
       }, 'Check again')));
 }
 /* Tokens per day through antiquota (one series: magnitude over time), today in the accent.
-   Hover a day for the split by account; the table below holds the same numbers per account. */
-function renderUsage(u) {
-  const box = $('#usage');
-  if (!box) return;
+   Hover a day for the split by account; the tables below hold the same numbers. */
+function renderUsage(box, u) {
+  if (!box.isConnected && box.parentNode) return;
   const days = u.days, max = Math.max(1, ...days.map(d => d.total));
   const total = days.reduce((s, d) => s + d.total, 0), turns = days.reduce((s, d) => s + d.turns, 0);
-  const W = 336, H = 72, gap = 2, bw = (W - gap * (days.length - 1)) / days.length;
+  const today = days[days.length - 1] || { total: 0, turns: 0 };
+  const W = 640, H = 120, gap = days.length > 20 ? 2 : 4, bw = (W - gap * (days.length - 1)) / days.length;
   const NS = 'http://www.w3.org/2000/svg', svg = document.createElementNS(NS, 'svg');
   svg.setAttribute('viewBox', `0 0 ${W} ${H + 1}`);
   svg.setAttribute('class', 'ubars');
@@ -1424,38 +1447,49 @@ function renderUsage(u) {
   svg.setAttribute('aria-label', `Tokens per day, last ${days.length} days; total ${fmtK(total)}`);
   const tip = h('div', { class: 'utip', hidden: '' });
   const el = (tag, attrs) => { const n = document.createElementNS(NS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); return n; };
+  for (const f of [0.5, 1]) svg.append(el('line', { x1: 0, x2: W, y1: H - f * (H - 6) + .5, y2: H - f * (H - 6) + .5, class: 'ugrid' }));
   svg.append(el('line', { x1: 0, x2: W, y1: H + .5, y2: H + .5, class: 'ubase' }));
   days.forEach((d, i) => {
-    const x = i * (bw + gap), hgt = d.total ? Math.max(3, d.total / max * (H - 4)) : 0, today = i === days.length - 1;
+    const x = i * (bw + gap), hgt = d.total ? Math.max(3, d.total / max * (H - 6)) : 0, isToday = i === days.length - 1;
     if (hgt) {  // 4px rounded top, square base on the baseline
       const r = Math.min(4, bw / 2, hgt), y = H - hgt;
-      svg.append(el('path', { class: 'ubar' + (today ? ' today' : ''),
+      svg.append(el('path', { class: 'ubar' + (isToday ? ' today' : ''),
         d: `M${x},${H} V${y + r} Q${x},${y} ${x + r},${y} H${x + bw - r} Q${x + bw},${y} ${x + bw},${y + r} V${H} Z` }));
     }
-    const hit = el('rect', { x, y: 0, width: bw + gap, height: H, class: 'uhit' });
+    const hit = el('rect', { x: x - gap / 2, y: 0, width: bw + gap, height: H, class: 'uhit' });
     hit.addEventListener('mouseenter', () => {
       const by = Object.entries(d.by).sort((a, b) => b[1] - a[1]);
       tip.replaceChildren(h('b', {}, new Date(d.date + 'T12:00').toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })),
         h('div', {}, `${fmtK(d.total)} tokens · ${d.turns} turn${d.turns === 1 ? '' : 's'}`),
         ...by.map(([slot, n]) => h('div', { class: 'ur' }, h('span', {}, short(slot)), h('span', {}, fmtK(n)))));
       tip.hidden = false;
-      tip.style.left = Math.min(Math.max(0, (x + bw / 2) / W * 100), 100) + '%';
+      const frac = (x + bw / 2) / W;  // keep the tooltip inside the chart: anchor left, centre or right
+      tip.dataset.side = frac < .2 ? 'left' : frac > .8 ? 'right' : 'mid';
+      tip.style.left = frac * 100 + '%';
     });
     hit.addEventListener('mouseleave', () => { tip.hidden = true; });
     svg.append(hit);
   });
   const fmtDay = s => new Date(s + 'T12:00').toLocaleDateString([], { month: 'short', day: 'numeric' });
   const accts = Object.entries(u.accounts).sort((a, b) => b[1].tokens - a[1].tokens);
+  const models = Object.entries(u.models || {}).sort((a, b) => b[1] - a[1]);
+  const stat = (label, v, sub) => h('div', { class: 'ustat' }, h('span', {}, label), h('b', {}, v), sub ? h('small', {}, sub) : null);
   box.replaceChildren(
-    h('div', { class: 'uhero' }, h('b', {}, fmtK(total)), h('span', {}, ` tokens · ${turns} turn${turns === 1 ? '' : 's'}`),
-      h('span', { class: 'umax' }, 'peak ' + fmtK(max === 1 ? 0 : max) + '/day')),
+    h('div', { class: 'ustats' },
+      stat(`${days.length} days`, fmtK(total), `${turns} turn${turns === 1 ? '' : 's'}`),
+      stat('Today', fmtK(today.total), `${today.turns} turn${today.turns === 1 ? '' : 's'}`),
+      stat('Peak day', fmtK(max === 1 ? 0 : max), ''),
+      stat('Per turn', turns ? fmtK(total / turns) : '–', 'average')),
     h('div', { class: 'uplot' }, svg, tip),
-    h('div', { class: 'uaxis' }, h('span', {}, fmtDay(days[0].date)), h('span', {}, 'today')),
-    accts.length ? h('table', { class: 'utable' },
-      h('thead', {}, h('tr', {}, h('th', {}, 'Account'), h('th', {}, '14 days'), h('th', {}, 'Today'), h('th', {}, 'Turns'))),
-      h('tbody', {}, accts.map(([slot, t]) => h('tr', {}, h('td', { title: slot }, short(slot)), h('td', {}, fmtK(t.tokens)),
-        h('td', {}, t.today ? fmtK(t.today) : '–'), h('td', {}, String(t.turns))))))
-      : h('p', { class: 'cap' }, 'No turns in this period yet.'));
+    h('div', { class: 'uaxis' }, h('span', {}, fmtDay(days[0].date)), h('span', {}, fmtDay(days[Math.floor(days.length / 2)].date)), h('span', {}, 'today')),
+    h('div', { class: 'utables' },
+      accts.length ? h('table', { class: 'utable' },
+        h('thead', {}, h('tr', {}, h('th', {}, 'Account'), h('th', {}, `${days.length} days`), h('th', {}, 'Today'), h('th', {}, 'Turns'))),
+        h('tbody', {}, accts.map(([slot, t]) => h('tr', {}, h('td', { title: slot }, short(slot)), h('td', {}, fmtK(t.tokens)),
+          h('td', {}, t.today ? fmtK(t.today) : '–'), h('td', {}, String(t.turns)))))) : h('p', { class: 'cap' }, 'No turns in this period yet.'),
+      models.length ? h('table', { class: 'utable' },
+        h('thead', {}, h('tr', {}, h('th', {}, 'Model'), h('th', {}, 'Tokens'), h('th', {}, 'Share'))),
+        h('tbody', {}, models.map(([id, n]) => h('tr', {}, h('td', {}, id), h('td', {}, fmtK(n)), h('td', {}, Math.round(n / Math.max(1, total) * 100) + '%'))))) : null));
 }
 const ROTATION_CAP = {
   perishable: 'Rotation spends the allowance that resets soonest first, so no quota expires unused.',
@@ -1465,13 +1499,8 @@ const ROTATION_CAP = {
 const short = s => (s || '').split('@')[0];
 const shortWhy = w => !w ? 'walled' : /^rate limited/.test(w) ? 'resting' : /^signed out/.test(w) ? 'signed out' : /verify/.test(w) ? 'verify' : /errors/.test(w) ? 'resting' : 'walled';
 function winLabel(w) { return w === '5h' ? '5 hour' : w; }
-async function renderPane() {
-  const pane = $('#pane');
-  if (S.tab === 'accounts') {
-    pane.replaceChildren(...[
-      h('p', { class: 'cap' }, ROTATION_CAP[S.defaults.rotation || 'perishable'] + ' A session stays on its account while it has headroom; below 3% it moves on before failing mid-turn. A spent pool is walled until its reset; a short rate limit only rests the account.'),
-      !S.accounts.length && h('p', { class: 'cap' }, 'No account yet. Add one: antiquota signs it in separately from your agy CLI.'),
-      ...S.accounts.map(acct => h('div', { class: 'card' + (acct.verify ? ' verify' : '') },
+function acctCards() {
+  return S.accounts.map(acct => h('div', { class: 'card' + (acct.verify ? ' verify' : '') },
         h('div', { class: 'card-head' }, h('b', {}, acct.slot, acct.paused ? h('em', { class: 'paused-tag' }, 'paused') : null),
           h('span', {}, (acct.busy ? 'running · ' : '') + (acct.probed ? 'probed ' + ago(acct.probed) : 'not probed'))),
         acct.verify && verifyBlock(acct.slot, acct.verify),
@@ -1494,19 +1523,11 @@ async function renderPane() {
             class: 'btn small', onclick: async () => await ask('Your agy CLI keeps its own sign-in. You can add the account again later.',
               { title: `Remove ${acct.slot}?`, ok: 'Remove', danger: true })
               && api('DELETE', 'accounts/' + encodeURIComponent(acct.slot)).then(() => toast('Removed ' + acct.slot)).catch(fail),
-          }, 'Remove')))),
-      h('div', { class: 'add-row' },
-        h('button', { class: 'primary', onclick: () => openAcct() }, 'Add account'),
-        h('button', { class: 'btn', onclick: () => api('POST', 'accounts/probe').then(() => toast('Probing accounts…')).catch(fail) }, 'Probe now')),
-      h('h3', {}, 'Usage · last 14 days'),
-      h('div', { class: 'usage', id: 'usage' }, h('p', { class: 'cap' }, 'Loading…')),
-      h('h3', {}, 'Routing'),
-      h('div', { class: 'routing', id: 'routing' }, h('p', { class: 'cap' }, 'Loading…')),
-    ].filter(Boolean));
-    api('GET', 'usage?days=14').then(renderUsage).catch(() => {});
-    api('GET', 'routing?n=40').then(rows => {
-      const box = $('#routing');
-      if (!box) return;
+          }, 'Remove'))));
+}
+function renderRouting(box) {
+  api('GET', 'routing?n=60').then(rows => {
+      if (!box.isConnected) return;
       const title = sid => S.sessions.get(sid)?.title || sid;
       const line = e => ({
         pick: [`→ ${short(e.slot)}`, `serves ${title(e.session)}` + (e.previous ? ` (was ${short(e.previous)})` : '')],
@@ -1522,6 +1543,14 @@ async function renderPane() {
         return h('div', { class: 'rt ' + e.event, title: e.why || '' }, h('span', { class: 't' }, clock(e.ts)), h('span', { class: 'k' }, k), h('span', {}, text));
       }) : [h('p', { class: 'cap' }, 'No routing decisions yet.')]));
     }).catch(() => {});
+}
+function renderTerminal(pane) {
+  pane.replaceChildren(h('p', { class: 'cap' }, 'Terminal: coming up.'));
+}
+async function renderPane() {
+  const pane = $('#pane');
+  if (S.tab === 'terminal') {
+    renderTerminal(pane);
   } else if (S.tab === 'files') {
     const m = cur();
     if (!m) return pane.replaceChildren(h('p', { class: 'cap' }, 'Open a session to browse its folder.'));
@@ -1553,20 +1582,6 @@ async function renderPane() {
         }, { once: false });
         return row;
       }) : [h('p', { class: 'cap' }, 'No file edits yet.')]));
-  } else {
-    pane.replaceChildren(h('p', { class: 'cap' }, 'Loading what agy reports…'));
-    try {
-      S.stack = S.stack || await api('GET', 'stack');
-    } catch (e) { pane.replaceChildren(h('p', { class: 'cap' }, e.message)); return; }
-    const st = S.stack;
-    pane.replaceChildren(
-      h('p', { class: 'cap' }, 'antiquota runs on its own copy of your agy setup. Every account loads it; your agy CLI and the IDE are never changed.'),
-      h('h3', {}, `Skills · ${(st.skills || []).length}`), h('div', { class: 'chips' }, (st.skills || []).map(x => h('span', { class: 'chip' }, x))),
-      h('h3', {}, 'Hooks'), h('div', { class: 'chips' }, (st.hooks || []).map(x => h('span', { class: 'chip' }, x))),
-      h('h3', {}, 'MCP servers'), h('div', { class: 'chips' }, (st.mcp || []).map(x => h('span', { class: 'chip' }, x))),
-      h('div', { class: 'add-row' },
-        h('button', { class: 'primary', onclick: () => openSettings() }, 'Open settings'),
-        h('button', { class: 'btn', onclick: async () => { S.stack = null; S.stack = await api('GET', 'stack?refresh=1').catch(fail); renderPane(); } }, 'Refresh')));
   }
 }
 
@@ -1734,9 +1749,15 @@ async function finishLogin() {
 }
 
 /* ---------- settings: antiquota's own copy of your agy setup ---------- */
-const SET = { data: null, section: 'general', open: null };
-const SECTIONS = [['general', 'General'], ['rules', 'Rules'], ['skills', 'Skills'], ['hooks', 'Hooks'],
-  ['mcp', 'MCP servers'], ['plugins', 'Plugins'], ['permissions', 'Permissions']];
+const SET = { data: null, section: 'general', open: null, days: 14 };
+const SECTION_GROUPS = [
+  ['App', [['general', 'General'], ['appearance', 'Appearance'], ['keyboard', 'Keyboard']]],
+  ['Accounts', [['accounts', 'Accounts'], ['usage', 'Usage']]],
+  ['Agents', [['agents', 'Agents & goals'], ['permissions', 'Permissions']]],
+  ['agy stack', [['rules', 'Rules'], ['skills', 'Skills'], ['hooks', 'Hooks'], ['mcp', 'MCP servers'], ['plugins', 'Plugins']]],
+  ['System', [['engine', 'Engine']]],
+];
+const SECTIONS = SECTION_GROUPS.flatMap(([, items]) => items);
 const LIST = { rules: 'rules', skills: 'skills', hooks: 'hooks', mcp: 'mcps', plugins: 'plugins' };
 const SRC = { cli: 'agy CLI', ide: 'IDE' };
 const TEMPLATE = {
@@ -1750,20 +1771,27 @@ async function openSettings(section) {
   if (typeof section === 'string') SET.section = section;
   SET.open = null;
   $('#settings').hidden = false;
+  if (SET.data) renderSettings();  // the last reading right away; fresh numbers follow
+  else $('#set-body').replaceChildren(h('div', { class: 'set-inner' }, h('p', { class: 'cap' }, 'Reading antiquota\'s setup…')));
   await loadSettings();
 }
 function closeSettings() { $('#settings').hidden = true; SET.open = null; }
 async function loadSettings() {
+  const section = SET.section;
   try { SET.data = await api('GET', 'settings'); } catch (e) { return fail(e); }
   S.defaults = { ...S.defaults, ...SET.data.defaults };
-  renderSettings();
+  // do not redraw over something the user is typing or editing in the meantime
+  if (!$('#settings').hidden && (section !== SET.section || !SET.open) && !$('#set-body').contains(document.activeElement)) renderSettings();
 }
 function renderSettings() {
   const d = SET.data;
-  $('#set-sections').replaceChildren(...SECTIONS.map(([id, label]) => h('button', {
-    class: 'set-tab' + (id === SET.section ? ' on' : ''),
-    onclick: () => { SET.section = id; SET.open = null; renderSettings(); },
-  }, h('span', {}, label), LIST[id] && h('span', { class: 'n' }, d[LIST[id]].filter(r => r.here).length))));
+  if (!SECTIONS.some(([id]) => id === SET.section)) SET.section = 'general';
+  $('#set-sections').replaceChildren(...SECTION_GROUPS.flatMap(([group, items]) => [h('div', { class: 'set-group' }, group),
+    ...items.map(([id, label]) => h('button', {
+      class: 'set-tab' + (id === SET.section ? ' on' : ''),
+      onclick: () => { SET.section = id; SET.open = null; renderSettings(); },
+    }, h('span', {}, label), LIST[id] && h('span', { class: 'n' }, d[LIST[id]].filter(r => r.here).length),
+      id === 'accounts' && S.accounts.some(x => x.verify) ? h('span', { class: 'ap-dot' }) : null))]));
   $('#set-path').textContent = 'stack: ' + d.path.replace(/^\/Users\/[^/]+/, '~');
   $('#set-body').replaceChildren(h('div', { class: 'set-inner' }, ...RENDER[SET.section](d)));
 }
@@ -1858,42 +1886,78 @@ function autostartRow() {
     .catch(() => row.remove());
   return row;
 }
+async function saveDefault(values, msg) {
+  try {
+    S.defaults = { ...S.defaults, ...await api('PUT', 'settings/defaults', values) };
+    if (msg) toast(msg);
+    return true;
+  } catch (e) { fail(e); return false; }
+}
+function toggleRow(on, title, cap, set) {
+  return h('div', { class: 'set-toggle' }, switchBtn(on, set),
+    h('div', {}, h('b', {}, title), cap ? h('p', { class: 'cap' }, cap) : null));
+}
+function numField(label, value, unit, min, max, key, cap) {
+  const input = h('input', { type: 'number', min, max, value, 'aria-label': label });
+  input.addEventListener('change', () => saveDefault({ [key]: input.value }, `${label}: ${input.value}${unit ? ' ' + unit : ''}`));
+  return h('label', { class: 'field num' }, h('span', {}, label), h('span', { class: 'numrow' }, input, unit ? h('em', {}, unit) : null),
+    cap ? h('small', {}, cap) : null);
+}
 function defaultsForm(df) {
   const fam = h('select', { id: 'df-family' }), eff = h('select', { id: 'df-effort' });
   const mode = h('select', { id: 'df-mode' }, [['default', 'default'], ['accept-edits', 'accept edits'], ['plan', 'plan'], ['bypass', 'bypass']]
     .map(([v, t]) => h('option', { value: v }, t)));
-  const ver = h('select', { id: 'df-vmodel' });
+  setPicker(fam, eff, df.model);
+  fam.addEventListener('change', () => { pickFamily(fam, eff, eff.value); saveDefault({ model: eff.value }, 'Default model: ' + eff.value); });
+  eff.addEventListener('change', () => saveDefault({ model: eff.value }, 'Default model: ' + eff.value));
+  mode.value = df.mode;
+  mode.addEventListener('change', () => saveDefault({ mode: mode.value }, 'Default mode: ' + mode.value));
+  const cwd = h('input', { value: df.default_cwd || '', placeholder: '~ (your home folder)', spellcheck: 'false', 'aria-label': 'Default folder' });
+  cwd.addEventListener('change', () => saveDefault({ default_cwd: cwd.value.trim() }, cwd.value.trim() ? 'New sessions start in ' + cwd.value.trim() : 'New sessions start in your home folder'));
+  return h('div', { class: 'set-block' },
+    h('h3', {}, 'New sessions'),
+    h('div', { class: 'row3' },
+      h('label', { class: 'field' }, h('span', {}, 'Model'), fam),
+      h('label', { class: 'field' }, h('span', {}, 'Effort'), eff),
+      h('label', { class: 'field' }, h('span', {}, 'Mode'), mode)),
+    h('label', { class: 'field' }, h('span', {}, 'Folder'), cwd),
+    toggleRow((df.worktree_default || 'off') === 'on', 'Separate git worktree by default',
+      'New sessions in a git repository get their own branch and folder; you can still untick it per session.',
+      on => saveDefault({ worktree_default: on ? 'on' : 'off' })));
+}
+function rotationForm(df) {
   const rot = h('select', { id: 'df-rotation' }, [['perishable', 'soonest reset first'], ['sticky', 'one by one'], ['round-robin', 'round robin']]
     .map(([v, t]) => h('option', { value: v }, t)));
   rot.value = df.rotation || 'perishable';
-  setPicker(fam, eff, df.model);
-  fam.addEventListener('change', () => pickFamily(fam, eff, eff.value));
-  mode.value = df.mode;
-  setModelSelect(ver, df.verifier_model);
+  rot.addEventListener('change', () => saveDefault({ rotation: rot.value }, 'Rotation: ' + rot.selectedOptions[0].textContent));
   return h('div', { class: 'set-block' },
-    h('h3', {}, 'New sessions'),
-    h('div', { class: 'row3 row4' },
-      h('label', { class: 'field' }, h('span', {}, 'Model'), fam),
-      h('label', { class: 'field' }, h('span', {}, 'Effort'), eff),
-      h('label', { class: 'field' }, h('span', {}, 'Mode'), mode),
-      h('label', { class: 'field' }, h('span', {}, 'Goal verifier'), ver)),
-    h('h3', {}, 'Accounts'),
-    h('div', { class: 'row3' }, h('label', { class: 'field' }, h('span', {}, 'Rotation'), rot)),
-    h('p', { class: 'cap' }, 'Sessions keep their account while it has headroom; rotation decides which account a session moves to.'),
-    h('h3', {}, 'This computer'),
-    h('div', { class: 'set-toggle' },
-      switchBtn((df.keep_awake || 'on') === 'on', on => api('PUT', 'settings/defaults', { keep_awake: on ? 'on' : 'off' })
-        .then(d => { S.defaults = { ...S.defaults, ...d }; }).catch(fail)),
-      h('div', {}, h('b', {}, 'Keep awake while agents work'), h('p', { class: 'cap' }, 'The computer does not sleep while a session or background job runs. The display may still turn off.'))),
-    NATIVE && autostartRow(),
-    h('div', { class: 'add-row' }, h('button', {
-      class: 'primary', onclick: async () => {
-        try {
-          S.defaults = { ...S.defaults, ...await api('PUT', 'settings/defaults', { model: eff.value, mode: mode.value, verifier_model: ver.value, rotation: rot.value }) };
-          toast('Defaults saved');
-        } catch (e) { fail(e); }
-      },
-    }, 'Save defaults')));
+    h('h3', {}, 'Rotation'),
+    h('div', { class: 'row3' },
+      h('label', { class: 'field' }, h('span', {}, 'Next account'), rot),
+      numField('Reserve', df.reserve || 3, '%', 0, 50, 'reserve', 'leave an account below this'),
+      numField('Quota check', df.quota_poll || 10, 'min', 2, 240, 'quota_poll', 'idle accounts, no tokens')),
+    h('p', { class: 'cap' }, ROTATION_CAP[df.rotation || 'perishable'] + ' A session keeps its account while it has headroom. A spent pool is walled until its reset; a short rate limit only rests the account.'));
+}
+function agentsForm(df) {
+  const ver = h('select', { id: 'df-vmodel' });
+  setModelSelect(ver, df.verifier_model);
+  ver.addEventListener('change', () => saveDefault({ verifier_model: ver.value }, 'Verifier: ' + ver.value));
+  return h('div', {},
+    h('div', { class: 'set-block' },
+      h('h3', {}, 'Goals'),
+      h('div', { class: 'row3' },
+        h('label', { class: 'field' }, h('span', {}, 'Verifier model'), ver),
+        numField('Rounds', df.max_rounds || 20, '', 1, 500, 'max_rounds', 'before a goal gives up')),
+      h('p', { class: 'cap' }, 'A goal is met when agy says GOAL_COMPLETE, your check command passes, and an independent verifier agrees. Claude/GPT verifiers fall back to the session model when their small quota runs out.')),
+    h('div', { class: 'set-block' },
+      h('h3', {}, 'Approvals and denials'),
+      h('div', { class: 'row3' },
+        numField('Approval wait', df.approval_timeout || 15, 'min', 1, 240, 'approval_timeout', 'then agy hears "no"'),
+        numField('Retries after a denial', df.auto_continue || 2, '', 0, 10, 'auto_continue', 'per message')),
+      h('p', { class: 'cap' }, 'Commands, edits and MCP tools that your rules do not allow wait for you in the transcript. Unattended runs: use accept edits or bypass mode, or allow the commands you expect.')),
+    h('div', { class: 'set-block' },
+      h('h3', {}, 'Plan mode'),
+      h('p', { class: 'cap' }, 'In plan mode agy investigates and proposes a numbered plan; edits are refused. When the plan is ready, a bar offers to execute it.')));
 }
 function permList(kind, d) {
   const rules = d.permissions[kind];
@@ -1908,16 +1972,103 @@ function permList(kind, d) {
 }
 const RENDER = {
   general: d => [
-    head('General', 'Defaults for new sessions, and the copy of your agy setup that antiquota runs on.'),
+    head('General', 'How new sessions start, this computer, and what antiquota tells you about.'),
     defaultsForm(d.defaults),
     h('div', { class: 'set-block' },
-      h('h3', {}, 'antiquota stack'),
-      h('p', { class: 'cap' }, `Every antiquota account runs with ${d.path.replace(/^\/Users\/[^/]+/, '~')}: your rules, skills, hooks, MCP servers, plugins and permissions, copied. Edits here never touch ~/.gemini (your agy CLI) or the Antigravity IDE, and theirs only arrive when you copy them.`),
-      h('div', { class: 'add-row' }, h('button', {
-        class: 'btn', onclick: async () => await ask('Edits made here are lost; conversations stay.',
-          { title: "Replace antiquota's config with a fresh copy of your agy CLI setup?", ok: 'Replace', danger: true }) && doCopy('cli', 'everything'),
-      }, 'Copy everything again from agy CLI'))),
+      h('h3', {}, 'This computer'),
+      toggleRow((d.defaults.keep_awake || 'on') === 'on', 'Keep awake while agents work',
+        'The computer does not sleep while a session or background job runs. The display may still turn off.',
+        on => saveDefault({ keep_awake: on ? 'on' : 'off' })),
+      NATIVE && autostartRow()),
+    h('div', { class: 'set-block' },
+      h('h3', {}, 'Notifications'),
+      h('p', { class: 'cap' }, 'Desktop notifications for long runs. ' + (NATIVE ? '' : 'The browser asks for permission the first time.')),
+      ...[['turn', 'A turn finishes'], ['goal', 'A goal is met'], ['approval', 'agy needs your approval'], ['job', 'A background job finishes'],
+        ['quota', 'Every account is out of quota']].map(([k, label]) =>
+        toggleRow(PREF.notify[k] !== false, label, '', on => { PREF.notify[k] = on; savePrefs(); })),
+      toggleRow(PREF.focused, 'Also while antiquota is in front', 'Off: only when the window is hidden or another app is active.',
+        on => { PREF.focused = on; savePrefs(); })),
   ],
+  appearance: () => {
+    const scales = [0.8, 0.9, 1, 1.1, 1.25, 1.4];
+    return [
+      head('Appearance', 'Saved on this device.'),
+      h('div', { class: 'set-block' },
+        h('h3', {}, 'Interface size'),
+        h('div', { class: 'seg-ctl', role: 'radiogroup', 'aria-label': 'Interface size' }, scales.map(z => h('button', {
+          class: Math.abs(PREF.zoom - z) < .01 ? 'on' : '', role: 'radio', 'aria-checked': String(Math.abs(PREF.zoom - z) < .01),
+          onclick: () => { setZoom(z); renderSettings(); },
+        }, Math.round(z * 100) + '%'))),
+        h('p', { class: 'cap' }, `Now ${Math.round(PREF.zoom * 100)}%. Keys: ⌘= larger, ⌘− smaller, ⌘0 actual size.`)),
+      h('div', { class: 'set-block' },
+        h('h3', {}, 'Transcript'),
+        h('div', { class: 'seg-ctl', role: 'radiogroup', 'aria-label': 'Transcript view' },
+          [['grouped', 'Grouped steps'], ['steps', 'Every step']].map(([v, t]) => h('button', {
+            class: PREF.view === v ? 'on' : '', role: 'radio', 'aria-checked': String(PREF.view === v),
+            onclick: () => { PREF.view = v; savePrefs(); renderSettings(); if (S.cur) openSession(S.cur); },
+          }, t))),
+        h('p', { class: 'cap' }, 'Grouped: between replies, agy\'s steps fold into one line ("Ran 3 commands, edited 2 files"); expand it for the list, and each step for its output. Every step: each step is its own row.'),
+        toggleRow(S.detail === 'detailed', 'Previews and thinking', 'Show the last lines of each step and agy\'s reasoning blocks.',
+          on => setDetail(on ? 'detailed' : 'compact')),
+        toggleRow(PREF.stamps, 'Times on turns', 'Clock time at the right of each turn.', on => {
+          PREF.stamps = on; savePrefs(); document.body.classList.toggle('no-stamps', !on);
+        })),
+    ];
+  },
+  keyboard: () => [
+    head('Keyboard', 'Shortcuts and slash commands. ⌘ is Ctrl on Windows and Linux.'),
+    shortcutsGrid(),
+  ],
+  accounts: d => [
+    head('Accounts', 'Google accounts antiquota signs in separately from your agy CLI. Gemini and Claude/GPT quotas run out separately.',
+      h('button', { class: 'btn small', onclick: () => api('POST', 'accounts/probe').then(() => toast('Probing accounts…')).catch(fail) }, 'Probe now'),
+      h('button', { class: 'primary btn small', onclick: () => openAcct() }, 'Add account')),
+    h('div', { class: 'acct-grid', id: 'acct-cards' }, ...acctCards()),
+    rotationForm(d.defaults),
+    h('div', { class: 'set-block' }, h('h3', {}, 'Routing log'),
+      h('p', { class: 'cap' }, 'Which account served what, walls, cooldowns and retries, newest first.'),
+      (() => { const box = h('div', { class: 'routing' }, h('p', { class: 'cap' }, 'Loading…')); renderRouting(box); return box; })()),
+  ],
+  usage: () => {
+    const box = h('div', { class: 'usage-set' }, h('p', { class: 'cap' }, 'Loading…'));
+    api('GET', `usage?days=${SET.days}`).then(u => renderUsage(box, u)).catch(fail);
+    return [
+      head('Usage', 'Tokens antiquota spent through agy, from its own ledger.',
+        h('div', { class: 'seg-ctl small' }, [7, 14, 30].map(n => h('button', {
+          class: SET.days === n ? 'on' : '', onclick: () => { SET.days = n; renderSettings(); },
+        }, n + ' days')))),
+      box,
+    ];
+  },
+  agents: d => [
+    head('Agents & goals', 'How goals are judged, how long approvals wait, and how persistent agy is.'),
+    agentsForm(d.defaults),
+  ],
+  engine: () => {
+    const box = h('div', {}, h('p', { class: 'cap' }, 'Loading…'));
+    api('GET', 'engine').then(e => box.replaceChildren(
+      h('dl', { class: 'kv' },
+        h('dt', {}, 'Version'), h('dd', {}, e.version),
+        h('dt', {}, 'Engine'), h('dd', {}, `${e.url} · pid ${e.pid}` + (e.by === 'app' ? ' · started by the app' : '')),
+        h('dt', {}, 'Data'), h('dd', {}, h('code', {}, e.base)),
+        h('dt', {}, 'Stack'), h('dd', {}, h('code', {}, e.stack)),
+        h('dt', {}, 'agy'), h('dd', {}, e.agy ? h('code', {}, e.agy) : h('b', { class: 'bad' }, 'not found')),
+        h('dt', {}, 'Permissions'), h('dd', {}, e.hook ? 'antiquota decides each tool call (hook on)' : 'agy\'s own headless rules (hook off)'),
+        h('dt', {}, 'Sessions'), h('dd', {}, `${e.sessions} · ${e.accounts} account${e.accounts === 1 ? '' : 's'}`)),
+      h('div', { class: 'add-row' },
+        h('button', { class: 'btn', onclick: () => api('GET', 'engine/log').then(r => showFile({ rel: 'engine log', path: e.log, text: r.text })).catch(fail) }, 'Engine log'),
+        NATIVE && h('button', { class: 'btn', onclick: () => NATIVE.opener.revealItemInDir(e.base).catch(fail) }, 'Show data folder'),
+        h('button', { class: 'btn', onclick: async () => await ask('Running turns stop (goals pause); background jobs keep running. The app starts it again by itself.',
+          { title: 'Restart the engine?', ok: 'Restart' }) && api('POST', 'shutdown').then(() => toast('Engine restarting…')).catch(fail) }, 'Restart engine')),
+      h('div', { class: 'set-block' },
+        h('h3', {}, 'antiquota stack'),
+        h('p', { class: 'cap' }, `Every account runs with ${e.stack.replace(/^\/Users\/[^/]+/, '~')}/.gemini: your rules, skills, hooks, MCP servers, plugins and permissions, copied. Edits here never touch ~/.gemini (your agy CLI) or the IDE.`),
+        h('div', { class: 'add-row' }, h('button', {
+          class: 'btn', onclick: async () => await ask('Edits made here are lost; conversations stay.',
+            { title: "Replace antiquota's config with a fresh copy of your agy CLI setup?", ok: 'Replace', danger: true }) && doCopy('cli', 'everything'),
+        }, 'Copy everything again from agy CLI'))))).catch(fail);
+    return [head('Engine', 'The background process that runs sessions, accounts and jobs.'), box];
+  },
   rules: d => [
     head('Rules', 'GEMINI.md is always loaded. Files in rules/ load by their trigger (always_on, model_decision, glob).',
       d.gemini_md.cli === 'differs' && h('button', { class: 'btn small', onclick: () => doCopy('cli', 'gemini_md') }, 'GEMINI.md from agy CLI'),
@@ -1963,7 +2114,7 @@ const RENDER = {
     ...list('plugin', d.plugins, ['cli']),
   ],
   permissions: d => [
-    head('Permissions', 'Headless agy cannot ask: anything not allowed is denied and ends the turn. These rules apply to every antiquota account, not to your agy CLI.',
+    head('Permissions', 'Shell commands and MCP tools these rules allow run without asking; deny rules always block. Everything else waits for your approval in the transcript. The rules apply to every antiquota account, not to your agy CLI.',
       d.permissions.cli === 'differs' && h('button', { class: 'btn small', onclick: () => doCopy('cli', 'permissions') }, 'Copy from agy CLI')),
     ...permList('allow', d), ...permList('deny', d),
   ],
@@ -2075,8 +2226,7 @@ function wire() {
   $('#goal-btn').addEventListener('click', openGoal);
   $('#new-btn').addEventListener('click', () => openNew());
   $('#search').addEventListener('input', renderSessions);
-  $('#relay-head').addEventListener('click', () => showDrawer('accounts'));
-  $('#relay-add').addEventListener('click', () => openAcct());
+  $('#acct-pill').addEventListener('click', () => S.accounts.length ? openSettings('usage') : openAcct());
   $('#drawer-btn').addEventListener('click', () => (S.drawer ? hideDrawer() : showDrawer()));
   $$('.tabs button').forEach(b => b.addEventListener('click', () => showDrawer(b.dataset.tab)));
   $('#side-open').addEventListener('click', () => $('#side').classList.add('open'));
@@ -2173,6 +2323,9 @@ function wire() {
     if (mod && e.key === '.') { e.preventDefault(); stop(); }
     if (mod && e.key === ',') { e.preventDefault(); openSettings(); }
     if (mod && e.key === '/') { e.preventDefault(); showShortcuts(); }
+    if (mod && (e.key === '=' || e.key === '+')) { e.preventDefault(); zoomBy(0.1); }
+    if (mod && (e.key === '-' || e.key === '_')) { e.preventDefault(); zoomBy(-0.1); }
+    if (mod && e.key === '0') { e.preventDefault(); zoomBy(0); }
     if (mod && e.key.toLowerCase() === 'k') { e.preventDefault(); $('#search').focus(); $('#search').select(); }
     if (mod && e.key.toLowerCase() === 'j') { e.preventDefault(); $('#input').focus(); }
     if (mod && e.key.toLowerCase() === 'b' && !e.shiftKey) { e.preventDefault(); $('#drawer-btn').click(); }
@@ -2190,5 +2343,6 @@ function wire() {
 
 wire();
 setDetail(S.detail);
+document.body.classList.toggle('no-stamps', !PREF.stamps);
 if (S.drawer) showDrawer();
 load().then(connect).catch(fail);

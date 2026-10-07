@@ -553,7 +553,7 @@ class Engine:
                         self.notice(s, "goal", f"The turn failed; retrying in {30 * errors}s ({errors}/3).")
                         if not s.stop.wait(30 * errors):
                             text, kind = "Continue working toward the objective: " + g["objective"], "nudge"
-                elif ok and note and continues < AUTO_CONTINUES and not s.stop.is_set():
+                elif ok and note and continues < stack.number("auto_continue") and not s.stop.is_set():
                     continues += 1
                     text, kind = note + "\n\nContinue the task.", "nudge"
                 with s.lock:  # decide under the lock, so a message sent right now is never stranded
@@ -611,7 +611,7 @@ class Engine:
                 outcome = a.wall_after_quota_error(slot, bucket) if r["fail"] == "quota" else None
                 if r["fail"] == "auth":
                     a.mark_signed_out(slot)
-                elif r["ok"] and time.time() - a.probed_at(slot) > a.QUOTA_FRESH:
+                elif r["ok"] and time.time() - a.probed_at(slot) > a.quota_fresh():
                     # Still holding the lease: a fresh reading keeps rotation and the reserve honest.
                     a.probe_slot(slot)
                     self.publish(None, {"t": "accounts", "accounts": a.overview()})
@@ -997,7 +997,7 @@ class Engine:
                 self.awake.hold()
             else:
                 self.awake.release()
-            if time.time() - polled > a.QUOTA_FRESH:  # idle accounts: keep their gauges and walls current
+            if time.time() - polled > a.quota_fresh():  # idle accounts: keep their gauges and walls current
                 polled = time.time()
                 threading.Thread(target=self._poll_quota, daemon=True).start()
             for sid, s in list(self.sessions.items()):
@@ -1008,7 +1008,7 @@ class Engine:
                     self.send(sid, lp["prompt"], kind="loop")
 
     def _poll_quota(self):
-        changed = [s for s in a.slots() if a.refresh(s, max_age=a.QUOTA_FRESH)]
+        changed = [s for s in a.slots() if a.refresh(s, max_age=a.quota_fresh())]
         if changed:
             self.publish(None, {"t": "accounts", "accounts": a.overview()})
 
@@ -1039,7 +1039,7 @@ class Engine:
         keep = {k: (v[:4000] if isinstance(v, str) else v) for k, v in (args or {}).items()
                 if isinstance(v, (str, int, float, bool))}
         ap = {"id": uuid.uuid4().hex[:10], "session": sid, "tool": tool, "args": keep, "rule": rule,
-              "state": "pending", "why": "", "ts": time.time(), "deadline": time.time() + APPROVAL_WAIT}
+              "state": "pending", "why": "", "ts": time.time(), "deadline": time.time() + stack.number("approval_timeout") * 60}
         with self.approval_cv:
             self.approvals[ap["id"]] = ap
         self.publish(sid, {"t": "approval", **ap}, persist=True)
@@ -1062,7 +1062,7 @@ class Engine:
                 if left <= 0:
                     return {"pending": aid}
                 self.approval_cv.wait(left)
-        return self.approval_answer(aid, "deny", why=f"No answer from the user within {APPROVAL_WAIT // 60} minutes. "
+        return self.approval_answer(aid, "deny", why=f"No answer from the user within {int(stack.number('approval_timeout'))} minutes. "
                                                      "Continue without it, or explain what you need.")
 
     def approval_answer(self, aid, decision, always=False, why=""):

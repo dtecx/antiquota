@@ -68,8 +68,8 @@ def cmd_doctor():
     print(f"  hooks:   {', '.join(ref['hooks'] or ['<unreadable>'])}")
     print(f"  mcp:     {', '.join(mcp)}")
     print("sign-in tokens: one file per account (agy file storage), never your OS keyring")
-    print("usage for ccusage / hacklab sync: " + (f"visible via {a.usage_link()}" if a.expose_usage()
-          else f"NOT visible: {a.usage_link()} belongs to something else"))
+    print("conversation store link: " + (f"{a.usage_link()} -> antiquota" if a.expose_usage()
+          else f"not set: {a.usage_link()} belongs to something else"))
     problems = 0
     real_auth = os.path.join(a.home(), a.AUTH)
     for s in a.slots():

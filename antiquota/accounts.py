@@ -261,9 +261,8 @@ def usage_link():
 
 
 def expose_usage():
-    """Let usage tools see antiquota's conversations: ccusage (and so `hacklab sync`) reads
-    Antigravity token usage from a few fixed folders, ~/.config/antigravity among them, and
-    nothing uses that one. Point it at antiquota's conversation store. True if it is in place."""
+    """Link ~/.config/antigravity to antiquota's conversation store, unless something else
+    owns that path. True if the link is in place."""
     link_path, target = usage_link(), os.path.join(stack_home(), ".gemini", "antigravity-cli")
     if os.environ.get("ANTIQUOTA_NO_USAGE_LINK"):
         return False
@@ -871,6 +870,14 @@ def setting(key, default):
         return default
 
 
+def quota_fresh():
+    """Seconds a quota reading counts as fresh (Settings → Accounts)."""
+    try:
+        return max(120.0, float(setting("quota_poll", QUOTA_FRESH / 60)) * 60)
+    except (TypeError, ValueError):
+        return QUOTA_FRESH
+
+
 def headroom(slot, bucket):
     """(usable fraction now, weekly reset epoch) from the last quota probe; (None, None) unknown."""
     try:
@@ -893,6 +900,7 @@ def rank(bucket, prefer=None, strategy=None):
     mid-turn), and the session's previous account stays first while it has headroom: its
     conversation is warm there."""
     strategy = strategy or setting("rotation", "perishable")
+    reserve = float(setting("reserve", RESERVE * 100)) / 100
     order = slots()
     live = [s for s in order if not walled_until(s, bucket) and not paused(s)]
     used = {}
@@ -903,7 +911,7 @@ def rank(bucket, prefer=None, strategy=None):
 
     def key(s):
         rem, reset = headroom(s, bucket)
-        low = rem is not None and rem < RESERVE
+        low = rem is not None and rem < reserve
         if strategy == "sticky":
             k = (order.index(s),)
         elif strategy == "round-robin":
@@ -1037,7 +1045,7 @@ def usage_history(days=14):
     today = datetime.now().date()
     first = today - timedelta(days=days - 1)
     rows = {(first + timedelta(days=i)).isoformat(): {"total": 0, "turns": 0, "by": {}} for i in range(days)}
-    accts = {}
+    accts, models = {}, {}
     try:
         with open(state("usage.jsonl")) as f:
             for line in f:
@@ -1053,6 +1061,7 @@ def usage_history(days=14):
                 r["total"] += n
                 r["turns"] += 1
                 r["by"][u["slot"]] = r["by"].get(u["slot"], 0) + n
+                models[u.get("model") or "?"] = models.get(u.get("model") or "?", 0) + n
                 t = accts.setdefault(u["slot"], {"tokens": 0, "turns": 0, "today": 0, "input": 0, "output": 0})
                 t["tokens"] += n
                 t["turns"] += 1
@@ -1062,7 +1071,7 @@ def usage_history(days=14):
                     t["today"] += n
     except OSError:
         pass
-    return {"days": [{"date": d, **r} for d, r in rows.items()], "accounts": accts}
+    return {"days": [{"date": d, **r} for d, r in rows.items()], "accounts": accts, "models": models}
 
 
 def probe():

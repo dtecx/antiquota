@@ -311,8 +311,17 @@ def write_file(rel, text):
 # --- antiquota's own GUI defaults --------------------------------------------------
 
 DEFAULTS = {"model": "gemini-3.8-flash-high", "mode": "default", "verifier_model": "gemini-3.8-flash-high",
-            "rotation": "perishable", "keep_awake": "on"}
+            "rotation": "perishable", "keep_awake": "on",
+            "reserve": "3",            # % of quota under which a session leaves its account
+            "quota_poll": "10",        # minutes between quota readings of idle accounts
+            "approval_timeout": "15",  # minutes an approval waits before agy hears "no"
+            "max_rounds": "20",        # default goal rounds
+            "auto_continue": "2",      # follow-ups after denied tool calls per message
+            "default_cwd": "",         # folder new sessions start in ("" = home)
+            "worktree_default": "off"}  # new sessions in a separate git worktree
 ROTATIONS = ("perishable", "sticky", "round-robin")
+NUMBERS = {"reserve": (0, 50), "quota_poll": (2, 240), "approval_timeout": (1, 240), "max_rounds": (1, 500),
+           "auto_continue": (0, 10)}
 
 
 def defaults():
@@ -323,10 +332,29 @@ def set_defaults(values):
     d = {**defaults(), **{k: str(v) for k, v in (values or {}).items() if k in DEFAULTS}}
     if d["rotation"] not in ROTATIONS:
         raise ValueError("rotation: " + " · ".join(ROTATIONS))
-    if d["keep_awake"] not in ("on", "off"):
-        raise ValueError("keep_awake: on or off")
+    for k in ("keep_awake", "worktree_default"):
+        if d[k] not in ("on", "off"):
+            raise ValueError(f"{k}: on or off")
+    for k, (lo, hi) in NUMBERS.items():
+        try:
+            n = float(d[k])
+        except ValueError:
+            raise ValueError(f"{k}: a number") from None
+        if not lo <= n <= hi:
+            raise ValueError(f"{k}: between {lo} and {hi}")
+        d[k] = str(int(n)) if n == int(n) else str(n)
+    if d["default_cwd"] and not os.path.isdir(os.path.expanduser(d["default_cwd"])):
+        raise ValueError(f"not a folder: {d['default_cwd']}")
     _save(os.path.join(a.base(), "settings.json"), d)
     return d
+
+
+def number(key):
+    """A numeric setting (see NUMBERS), as a float."""
+    try:
+        return float(defaults()[key])
+    except (KeyError, ValueError):
+        return float(DEFAULTS[key])
 
 
 # --- antiquota's own permission rules and the hooks that ask the user -------------------

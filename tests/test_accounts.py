@@ -141,7 +141,7 @@ def test_an_account_google_wants_verified_is_kept_and_parked(home, monkeypatch):
     assert not a.needs_verify("new@example.com") and not a.walled_until("new@example.com", "gemini")
 
 
-def test_usage_is_visible_where_ccusage_reads_antigravity(home, monkeypatch):
+def test_conversation_store_link(home, monkeypatch):
     monkeypatch.delenv("ANTIQUOTA_NO_USAGE_LINK", raising=False)
     link = home / ".config/antigravity"
     assert a.expose_usage() and os.path.realpath(link) == os.path.realpath(home / ".antiquota/stack/.gemini/antigravity-cli")
