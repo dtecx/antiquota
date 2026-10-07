@@ -7,12 +7,12 @@ from datetime import datetime
 
 from . import accounts as a
 
-USAGE = """usage: agyloop <command>
+USAGE = """usage: antiquota <command>
 
   accounts             signed-in accounts (by email), quota and walls (default)
   login                add a Google account: open the sign-in link, paste the code
   probe                read /quota for every account and wall the spent ones
-  doctor               check that every account loads agy-loop's own stack
+  doctor               check that every account loads antiquota's own stack
   stack [reseed]       print the stack folder; reseed re-copies config from ~/.gemini
   unwall <name|all>    clear walls by hand
   run [--slot S] [--] <agy args...>
@@ -22,13 +22,13 @@ USAGE = """usage: agyloop <command>
                        local web GUI (sessions, goal mode, accounts, stack)
   goal <objective> [--cwd D] [--check CMD] [--model M] ...
                        headless goal run in the terminal; the session also
-                       shows up in the GUI. See: agyloop goal --help"""
+                       shows up in the GUI. See: antiquota goal --help"""
 
 
 def cmd_accounts():
     rows = a.slots()
     if not rows:
-        print("no signed-in account; run: agyloop login")
+        print("no signed-in account; run: antiquota login")
         return 0
     width = max(10, *(len(s) + 2 for s in rows))
     print(f"{'ACCOUNT':{width}} {'GEMINI':30} {'CLAUDE/GPT':30} LEASE")
@@ -63,7 +63,7 @@ def cmd_doctor():
     except (OSError, ValueError):
         mcp = []
     ref = a.loaded()
-    print(f"agy-loop stack in {gem} (separate from ~/.gemini), as agy reports it:")
+    print(f"antiquota stack in {gem} (separate from ~/.gemini), as agy reports it:")
     print(f"  skills ({len(ref['skills'] or [])}): {', '.join(ref['skills'] or ['<unreadable>'])}")
     print(f"  hooks:   {', '.join(ref['hooks'] or ['<unreadable>'])}")
     print(f"  mcp:     {', '.join(mcp)}")
@@ -109,7 +109,7 @@ def cmd_unwall(target):
 
 
 def cmd_gui(rest, open_browser=True):
-    p = argparse.ArgumentParser(prog="agyloop gui" if open_browser else "agyloop serve")
+    p = argparse.ArgumentParser(prog="antiquota gui" if open_browser else "antiquota serve")
     p.add_argument("--port", type=int, default=8765, help="0 picks a free port")
     p.add_argument("--no-open", action="store_true", help="do not open a browser")
     o = p.parse_args(rest)
@@ -140,7 +140,7 @@ def _print_event(ev, cwd):
 
 def cmd_goal(rest):
     from .engine import MODES, Engine
-    p = argparse.ArgumentParser(prog="agyloop goal", description="Work on an objective until it is verified done.")
+    p = argparse.ArgumentParser(prog="antiquota goal", description="Work on an objective until it is verified done.")
     p.add_argument("objective")
     p.add_argument("--cwd", default=".")
     p.add_argument("--model", default="gemini-3.8-flash-high", help="a model id from `agy models`; effort is part of it")

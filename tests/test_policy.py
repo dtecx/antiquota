@@ -1,4 +1,4 @@
-from agyloop import policy, stack
+from antiquota import policy, stack
 
 
 def test_policy_sorts_tools_by_risk(home):

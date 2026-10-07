@@ -29,7 +29,7 @@ PROBE_EVERY = 600
 
 
 def settings_path():
-    """agy-loop's own permission rules; your agy CLI keeps its own."""
+    """antiquota's own permission rules; your agy CLI keeps its own."""
     a.seed_stack()
     return os.path.join(a.stack_home(), ".gemini/antigravity-cli/settings.json")
 
@@ -64,7 +64,7 @@ class App:
         threading.Thread(target=self._background, daemon=True).start()
 
     def _models(self):
-        """Model list as an agy-loop account sees it (your own agy CLI is never asked)."""
+        """Model list as an antiquota account sees it (your own agy CLI is never asked)."""
         if self.models or not a.slots():
             return
         try:
@@ -253,15 +253,15 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(403, {"error": "bad host"})
         if method == "GET" and u.path == "/api/health":  # lets the app find its engine; no secrets in it
             from . import __version__
-            return self._json(200, {"ok": True, "app": "agyloop", "version": __version__, "pid": os.getpid()})
+            return self._json(200, {"ok": True, "app": "antiquota", "version": __version__, "pid": os.getpid()})
         if method == "GET" and u.path in STATIC:
             name = STATIC[u.path]
             with open(os.path.join(UI, name), "rb") as f:
                 body = f.read()
             if name == "index.html":
-                body = body.replace(b"__AGYLOOP_TOKEN__", app.token.encode())
+                body = body.replace(b"__ANTIQUOTA_TOKEN__", app.token.encode())
             return self._send(200, body, TYPES[os.path.splitext(name)[1]])
-        token = self.headers.get("X-Agyloop-Token", "")
+        token = self.headers.get("X-Antiquota-Token", "")
         if u.path == "/api/events":
             token = (qs.get("token") or [""])[0]
         parts = u.path.split("/")[2:]
@@ -497,7 +497,7 @@ def make_server(port):
 
 
 def running_engine():
-    """{pid, port, url, version} of the engine already serving this agy-loop folder, or None."""
+    """{pid, port, url, version} of the engine already serving this antiquota folder, or None."""
     try:
         with open(a.state("engine.json")) as f:
             info = json.load(f)
@@ -536,16 +536,16 @@ def login_path():
 
 
 def serve(port=8765, open_browser=True):
-    """Run the engine: one per agy-loop folder. A second start points at the first and exits."""
+    """Run the engine: one per antiquota folder. A second start points at the first and exits."""
     lock = _engine_lock()
     if lock is None:
         info = running_engine() or {}
         url = info.get("url", "")
-        print(f"agyloop already runs on {url} (pid {info.get('pid')})")
+        print(f"antiquota already runs on {url} (pid {info.get('pid')})")
         if open_browser and url:
             webbrowser.open(url)
         return 0
-    if os.environ.get("AGYLOOP_FIX_PATH") and os.name != "nt":
+    if os.environ.get("ANTIQUOTA_FIX_PATH") and os.name != "nt":
         found = login_path()
         if found:
             os.environ["PATH"] = found
@@ -558,10 +558,10 @@ def serve(port=8765, open_browser=True):
     from . import __version__
     a.write_atomic(a.state("engine.json"), json.dumps({"pid": os.getpid(), "port": port, "url": url,
                                                        "version": __version__, "started": time.time(),
-                                                       "by": os.environ.get("AGYLOOP_LAUNCHED_BY", "cli")}))
+                                                       "by": os.environ.get("ANTIQUOTA_LAUNCHED_BY", "cli")}))
     signal.signal(signal.SIGTERM, lambda *_: threading.Thread(target=srv.shutdown, daemon=True).start())
     Handler.server_ref = srv
-    print(f"agyloop on {url}  (Ctrl-C to stop)", flush=True)
+    print(f"antiquota on {url}  (Ctrl-C to stop)", flush=True)
     if open_browser:
         webbrowser.open(url)
     try:

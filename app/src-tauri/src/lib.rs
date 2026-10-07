@@ -1,4 +1,4 @@
-//! agy-loop desktop app: a native window, tray and notifications around the agy-loop engine.
+//! antiquota desktop app: a native window, tray and notifications around the antiquota engine.
 //!
 //! The window first shows a bundled start page, then loads the engine's own UI from
 //! http://127.0.0.1:<port>/ once the engine answers. The engine keeps running when the window
@@ -37,7 +37,7 @@ pub fn boot(app: &AppHandle) {
     if BOOTING.swap(true, Ordering::SeqCst) {
         return;
     }
-    status(app, "Starting the agy-loop engine…", false);
+    status(app, "Starting the antiquota engine…", false);
     let resources = app.path().resource_dir().ok();
     match engine::ensure(resources.as_deref()) {
         Ok(e) => {
@@ -111,11 +111,11 @@ pub fn request_quit(app: AppHandle) {
                 show_main(&app);
                 app.dialog()
                     .message(format!(
-                        "{}.\n\nKeep them running in the background and reopen agy-loop later, or stop the \
+                        "{}.\n\nKeep them running in the background and reopen antiquota later, or stop the \
                          sessions and quit. Background jobs keep running either way.",
                         what.join(" and ")
                     ))
-                    .title("Quit agy-loop?")
+                    .title("Quit antiquota?")
                     .kind(MessageDialogKind::Warning)
                     .buttons(MessageDialogButtons::OkCancelCustom(
                         "Keep running in background".into(),
@@ -149,7 +149,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![app_info, retry_engine, save_file, quit_app])
         .setup(|app| {
             let builder = WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
-                .title("agy-loop")
+                .title("antiquota")
                 .inner_size(1280.0, 820.0)
                 .min_inner_size(720.0, 480.0)
                 .background_color(tauri::window::Color(14, 15, 17, 255))
@@ -179,7 +179,7 @@ pub fn run() {
             }
         })
         .build(tauri::generate_context!())
-        .expect("error while building agy-loop")
+        .expect("error while building antiquota")
         .run(|app, event| match event {
             RunEvent::ExitRequested { api, .. } => {
                 if !QUITTING.load(Ordering::SeqCst) {

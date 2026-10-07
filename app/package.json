@@ -1,8 +1,8 @@
 {
-  "name": "agyloop-app",
+  "name": "antiquota-app",
   "private": true,
   "version": "0.5.0",
-  "description": "agy-loop desktop app: a native shell around the agy-loop engine",
+  "description": "antiquota desktop app: a native shell around the antiquota engine",
   "scripts": {
     "tauri": "tauri",
     "dev": "tauri dev",

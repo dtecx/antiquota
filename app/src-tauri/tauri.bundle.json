@@ -1,7 +1,7 @@
 {
   "bundle": {
     "resources": {
-      "../engine-dist/agyloopd/": "engine/agyloopd/"
+      "../engine-dist/antiquotad/": "engine/antiquotad/"
     }
   }
 }

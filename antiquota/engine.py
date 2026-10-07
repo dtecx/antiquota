@@ -28,7 +28,7 @@ from . import policy, stack
 from . import convdb
 
 EDIT_TOOLS = {"write_to_file", "replace_file_content", "multi_replace_file_content", "sed_file"}
-GATED_TOOLS = "*"      # the PreToolUse hook sees every tool; agyloop.policy decides
+GATED_TOOLS = "*"      # the PreToolUse hook sees every tool; antiquota.policy decides
 APPROVAL_WAIT = 900    # seconds an approval waits for the user before agy hears "no"
 DECLINED = "The user declined this. Do not retry it; continue another way, or explain what you need."
 MODES = {"default": [], "accept-edits": ["--mode", "accept-edits"], "plan": ["--mode", "plan"],
@@ -79,11 +79,11 @@ SHELL_TIMEOUT = 600      # seconds a `!command` may run
 SHELL_KEEP = 50_000      # characters of its output kept in the transcript
 SHELL_NOTE = 6_000       # characters of it passed on to agy
 FILE_VIEW_MAX = 2_000_000
-# Long commands run as agy-loop background jobs, so a turn never sits waiting on training.
-JOBS_HINT = ("(agy-loop) For a command that runs longer than about two minutes (training, long benchmarks, "
+# Long commands run as antiquota background jobs, so a turn never sits waiting on training.
+JOBS_HINT = ("(antiquota) For a command that runs longer than about two minutes (training, long benchmarks, "
              "big test suites), do not run it and wait. End your reply with a line\n"
              "RUN_IN_BACKGROUND: <shell command>\n"
-             "and optionally CHECK_EVERY: <minutes>m on the next line for progress check-ins. agy-loop runs it "
+             "and optionally CHECK_EVERY: <minutes>m on the next line for progress check-ins. antiquota runs it "
              "in this folder, logs its output and sends you the log when it exits.")
 BG_LINE = re.compile(r"^[ \t>*_]*RUN_IN_BACKGROUND:[*_]*[ \t]*`*(.+?)`*[ \t]*$", re.M)
 EVERY_LINE = re.compile(r"^[ \t>*_]*CHECK_EVERY:[*_]*[ \t]*(\d+(?:\.\d+)?)[ \t]*([smh]?)", re.M | re.I)
@@ -107,7 +107,7 @@ class KeepAwake:
                 import ctypes
                 ctypes.windll.kernel32.SetThreadExecutionState(0x80000000 | 0x00000001)  # CONTINUOUS | SYSTEM
             elif shutil.which("systemd-inhibit"):
-                self.proc = subprocess.Popen(["systemd-inhibit", "--what=idle:sleep", "--who=agy-loop",
+                self.proc = subprocess.Popen(["systemd-inhibit", "--what=idle:sleep", "--who=antiquota",
                                               "--why=agents are running", "sleep", "infinity"],
                                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             self.held = True
@@ -242,7 +242,7 @@ class Engine:
             meta = {**META_KEYS, **meta, "status": "idle"}  # nothing runs after a restart
             meta["usage"] = {"input": 0, "output": 0, "thinking": 0, **meta["usage"]}
             self.sessions[sid] = Session(meta)
-        for s in self.sessions.values():  # background jobs outlive agy-loop: keep watching them
+        for s in self.sessions.values():  # background jobs outlive antiquota: keep watching them
             for job in s.meta["jobs"]:
                 if not job["ended"]:
                     threading.Thread(target=self._watch_job, args=(s, job), daemon=True).start()
@@ -498,7 +498,7 @@ class Engine:
         """Run one turn, failing over between accounts. Returns (ok, final_text)."""
         m = s.meta
         if not a.slots():
-            self.notice(s, "noaccount", "No Google account is signed in to agy-loop yet. Add one, then send again.")
+            self.notice(s, "noaccount", "No Google account is signed in to antiquota yet. Add one, then send again.")
             return False, "", []
         bucket = a.bucket_of(["--model", m["model"]])
         pool = a.BUCKETS[bucket]
@@ -594,10 +594,10 @@ class Engine:
         self.status(s, "running")
         self.publish(sid, {"t": "turn_start", "turn": turn, "slot": slot, "model": m["model"]}, persist=True)
         t0 = s.turn_started = time.time()
-        # agy-loop's hooks find this session (approvals, messages sent mid-turn) through these.
-        cmd, env = a.agy_cmd(a.slot_home(slot), args, {**os.environ, "AGYLOOP_SLOT": slot, "AGYLOOP_SESSION": sid,
-                                                        "AGYLOOP_STATE": os.path.join(a.base(), "state"),
-                                                        "AGYLOOP_MODE": m["mode"]})
+        # antiquota's hooks find this session (approvals, messages sent mid-turn) through these.
+        cmd, env = a.agy_cmd(a.slot_home(slot), args, {**os.environ, "ANTIQUOTA_SLOT": slot, "ANTIQUOTA_SESSION": sid,
+                                                        "ANTIQUOTA_STATE": os.path.join(a.base(), "state"),
+                                                        "ANTIQUOTA_MODE": m["mode"]})
         proc = subprocess.Popen(cmd, cwd=m["cwd"], env=env, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                 text=True, bufsize=1)
         s.proc = proc
@@ -810,7 +810,7 @@ class Engine:
         jid = uuid.uuid4().hex[:8]
         os.makedirs(self.jobs_dir(sid), exist_ok=True)
         log = os.path.join(self.jobs_dir(sid), f"{jid}.log")
-        # Its own process group, so stopping agy-loop leaves training running and Stop kills it all.
+        # Its own process group, so stopping antiquota leaves training running and Stop kills it all.
         detach = {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == "nt" else {"start_new_session": True}
         with open(log, "wb") as out:
             proc = subprocess.Popen(cmd, shell=True, cwd=s.meta["cwd"], stdin=subprocess.DEVNULL, stdout=out,
@@ -933,15 +933,15 @@ class Engine:
 
     @staticmethod
     def _permission_flags(mode):
-        """Headless agy cannot ask and ignores allow-rules, so while agy-loop's PreToolUse hook is on,
-        agy may run anything and the hook (agyloop.policy, plus the user) decides. Without the hook,
+        """Headless agy cannot ask and ignores allow-rules, so while antiquota's PreToolUse hook is on,
+        agy may run anything and the hook (antiquota.policy, plus the user) decides. Without the hook,
         agy's own modes apply and anything that needs a yes ends the turn."""
         if stack.hook_enabled():
             return ["--dangerously-skip-permissions", *(["--mode", "plan"] if mode == "plan" else [])]
         return MODES[mode]
 
     def approval_request(self, sid, tool, args):
-        """Decide a gated tool call at once from the session's mode and agy-loop's rules, or park
+        """Decide a gated tool call at once from the session's mode and antiquota's rules, or park
         it for the user ({"pending": id}). Unknown sessions get agy's own behaviour ("ask")."""
         s = self.sessions.get(sid)
         if s is None:
@@ -1156,7 +1156,7 @@ class Engine:
         try:
             a.sync(a.slot_home(slot))
             cmd, env = a.agy_cmd(a.slot_home(slot), ["-p", prompt, "--output-format", "json", "--model", model],
-                                 {**os.environ, "AGYLOOP_SLOT": slot})
+                                 {**os.environ, "ANTIQUOTA_SLOT": slot})
             proc = subprocess.Popen(cmd, cwd=m["cwd"], env=env, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             s.proc = proc
             out, err = proc.communicate()
@@ -1189,7 +1189,7 @@ class Engine:
     def state_md(self, s):
         """The session's handoff document, built from its own record (no model, no memory service):
         objective, requests, what each turn did, files changed, jobs, open problems, last reply.
-        agy-loop keeps it current in <session>/STATE.md after every turn."""
+        antiquota keeps it current in <session>/STATE.md after every turn."""
         m, evs = s.meta, self.events(s.meta["id"])
         cwd = m["cwd"]
         rel = lambda p: os.path.relpath(p, cwd) if p and p.startswith(cwd) else (p or "?")
@@ -1257,7 +1257,7 @@ class Engine:
         s, src = self.sessions[sid], self.sessions[from_sid]
         if s.busy:
             raise ValueError("stop the running turn first")
-        note = ("You are continuing work from an earlier agy-loop session. Its handoff state follows; check "
+        note = ("You are continuing work from an earlier antiquota session. Its handoff state follows; check "
                 "the current files yourself before relying on it.\n\n" + self.state_md(src))
         s.meta["pending_note"] = "\n\n".join(x for x in (s.meta["pending_note"], note) if x)
         self.save(s)

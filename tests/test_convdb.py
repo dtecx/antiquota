@@ -1,6 +1,6 @@
 import sqlite3
 
-from agyloop import convdb
+from antiquota import convdb
 
 
 def varint(n):

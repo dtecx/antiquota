@@ -1,11 +1,11 @@
 """Which tool calls agy may make on its own, and which wait for the user.
 
-agy in headless mode cannot ask anyone and ignores allow-rules, so agy-loop runs it with
+agy in headless mode cannot ask anyone and ignores allow-rules, so antiquota runs it with
 --dangerously-skip-permissions while its own PreToolUse hook is on, and this module is the
 permission layer instead. Decisions:
 
   allow  reading, searching, agy's own bookkeeping; anything in bypass mode
-  rules  shell commands (`command(...)`) and MCP tools (`mcp(server/tool)`) in agy-loop's
+  rules  shell commands (`command(...)`) and MCP tools (`mcp(server/tool)`) in antiquota's
          allow/deny lists; otherwise the user is asked
   mode   file edits: accept-edits allows them, plan mode refuses them, default asks
   ask    deploys, databases, package installs and other side effects outside the project
@@ -47,7 +47,7 @@ def decide(mode, tool, args):
         cmd = str(args.get("CommandLine") or ("git commit" if tool == "git_commit" else ""))
         verdict = stack.command_verdict(cmd)
         if verdict == "deny":
-            return "deny", "A deny rule in agy-loop's permissions blocks this command.", ""
+            return "deny", "A deny rule in antiquota's permissions blocks this command.", ""
         if verdict == "allow":
             return "allow", "", ""
         return "ask", "", stack.suggest_rule(cmd)
@@ -63,7 +63,7 @@ def decide(mode, tool, args):
         rule = _mcp_rule(args)
         verdict = _mcp_verdict(rule) if rule else None
         if verdict == "deny":
-            return "deny", "A deny rule in agy-loop's permissions blocks this MCP tool.", ""
+            return "deny", "A deny rule in antiquota's permissions blocks this MCP tool.", ""
         if verdict == "allow":
             return "allow", "", ""
         return "ask", "", rule

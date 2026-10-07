@@ -1,4 +1,4 @@
-# agy-loop: landscape, native app plan, missing features
+# antiquota: landscape, native app plan, missing features
 
 Written 2026-10-07. The facts about agy below were checked against agy 1.3.0 on this machine unless marked "to verify".
 
@@ -10,10 +10,10 @@ The answer differs by layer.
 
 Many tools already switch agy between Google accounts. As of 2026-10-07 the serious ones are:
 
-| Project | What it does | How it compares to agy-loop |
+| Project | What it does | How it compares to antiquota |
 |---|---|---|
-| [hrmasss/antigravity-swap](https://github.com/hrmasss/antigravity-swap) (`aswap`, Python) | Switch, auto-switch, quota table. `aswap run` / `aswap exec` resume the same conversation on the next account when one runs out. Strategies: best, round-robin, next-available, soonest-reset. Hysteresis, cooldown, quarantine of dead logins, export/import, aliases, directory→account binding, `--json`. | The most mature account layer. It hands off the same way agy-loop does (same conversation id). On macOS and Windows it is limited to **one account at a time**, because the login lives in the OS keyring. Worth borrowing ideas from (see section 4). |
-| [wafardev/multigravity-cli](https://github.com/wafardev/multigravity-cli) (`mgy`) | One HOME per profile; history, MCP and settings are shared through links. | Same idea as agy-loop's slots. No routing, no harness. |
+| [hrmasss/antigravity-swap](https://github.com/hrmasss/antigravity-swap) (`aswap`, Python) | Switch, auto-switch, quota table. `aswap run` / `aswap exec` resume the same conversation on the next account when one runs out. Strategies: best, round-robin, next-available, soonest-reset. Hysteresis, cooldown, quarantine of dead logins, export/import, aliases, directory→account binding, `--json`. | The most mature account layer. It hands off the same way antiquota does (same conversation id). On macOS and Windows it is limited to **one account at a time**, because the login lives in the OS keyring. Worth borrowing ideas from (see section 4). |
+| [wafardev/multigravity-cli](https://github.com/wafardev/multigravity-cli) (`mgy`) | One HOME per profile; history, MCP and settings are shared through links. | Same idea as antiquota's slots. No routing, no harness. |
 | [Dicklesworthstone/coding_agent_account_manager](https://github.com/Dicklesworthstone/coding_agent_account_manager) (CAAM, Go, 208★) | Swaps the auth files of Claude Code, Codex and agy. `shallow-spawn` runs parallel sessions with an isolated HOME. | Generic account vault. No goal mode, routing or GUI for agy. |
 | [cruel-synthesis/agy-auth](https://github.com/cruel-synthesis/agy-auth) | Switch plus "auto" ranking by quota that would go unused. | Switch only. |
 | [daniilkireev/agy-multi-account-sync](https://github.com/daniilkireev/agy-multi-account-sync) | One `agy remote-control` daemon per account, with a shared conversation database (Linux, systemd). | Targets Google's web UI, not automation. |
@@ -34,17 +34,17 @@ The closest multi-provider harnesses do not support agy:
 - [NeotaskInc/neomax-orchestrator](https://github.com/NeotaskInc/neomax-orchestrator) does account rotation and worker failover across Claude, Codex, OpenCode, Kimi and Grok.
 - [metratek-telematics/relay](https://github.com/metratek-telematics/relay) runs a supervisor, a worker and a reviewer across Codex, Claude Code and Gemini CLI, with a browser UI and git worktrees.
 
-### What only agy-loop does
+### What only antiquota does
 
-**File-token mode** (`SSH_CONNECTION` plus a per-account HOME). It makes agy keep each login in that account's own folder on every OS. So agy-loop runs several accounts **at the same time** on macOS and Windows too, where aswap, agy-auth and Antigravity-Manager's CLI mode can run only one.
+**File-token mode** (`SSH_CONNECTION` plus a per-account HOME). It makes agy keep each login in that account's own folder on every OS. So antiquota runs several accounts **at the same time** on macOS and Windows too, where aswap, agy-auth and Antigravity-Manager's CLI mode can run only one.
 
 ### Verdict
 
-Keep agy-loop's own account layer: it is small, and concurrency is the point. Copy aswap's best ideas (section 4) instead of depending on it. The harness is not a reinvention.
+Keep antiquota's own account layer: it is small, and concurrency is the point. Copy aswap's best ideas (section 4) instead of depending on it. The harness is not a reinvention.
 
 ### Risk
 
-Pooling many free student AI Pro accounts is a pattern Google can see. The terms say tool misuse "may be grounds for suspension or termination". agy-loop drives the official agy binary and never uses the OAuth tokens itself, which is the safer side of §6. It is still not risk-free. Do not add direct calls to Google's quota or chat endpoints with stored tokens.
+Pooling many free student AI Pro accounts is a pattern Google can see. The terms say tool misuse "may be grounds for suspension or termination". antiquota drives the official agy binary and never uses the OAuth tokens itself, which is the safer side of §6. It is still not risk-free. Do not add direct calls to Google's quota or chat endpoints with stored tokens.
 
 ## 2. Native app: decision
 
@@ -68,14 +68,14 @@ Why Tauri:
 ### Architecture
 
 ```
-┌──────────── agy-loop.app (Tauri v2) ────────────┐
+┌──────────── antiquota.app (Tauri v2) ────────────┐
 │  WebView UI (TypeScript)        Rust shell       │
 │  sessions · goal · jobs ·       tray · notify ·  │
 │  accounts · settings            updater · deep   │
 │            │  HTTP + SSE (token) links · autostart│
 └────────────┼─────────────────────────────────────┘
              ▼
-   agyloopd  (Python engine, sidecar or remote)
+   antiquotad  (Python engine, sidecar or remote)
    accounts · routing · sessions · goal · jobs · stack
              │ spawns
              ▼
@@ -84,9 +84,9 @@ Why Tauri:
 
 Design rules:
 
-- **The engine is a daemon, the window is a client.** Closing the window keeps `agyloopd` running in the tray, so goals, training jobs and `/loop` continue. Quitting from the tray asks first while work is running.
-- **Local or remote engine.** The app connects to `127.0.0.1` by default, or to a remote `agyloopd`, for example a headless Linux GPU box where the training runs. The connection goes over an SSH tunnel the app opens, or a token over TLS. This is the key piece for experiment loops: the engine must run where the code and the GPU are.
-- **One API for every client.** The desktop app, a browser on any device, and the `agyloop` CLI all use the same API.
+- **The engine is a daemon, the window is a client.** Closing the window keeps `antiquotad` running in the tray, so goals, training jobs and `/loop` continue. Quitting from the tray asks first while work is running.
+- **Local or remote engine.** The app connects to `127.0.0.1` by default, or to a remote `antiquotad`, for example a headless Linux GPU box where the training runs. The connection goes over an SSH tunnel the app opens, or a token over TLS. This is the key piece for experiment loops: the engine must run where the code and the GPU are.
+- **One API for every client.** The desktop app, a browser on any device, and the `antiquota` CLI all use the same API.
   - Version it as `/api/v1`.
   - Describe it in an OpenAPI file.
   - Put a schema version on events.
@@ -95,7 +95,7 @@ Design rules:
 
 ### Phase 0: engine ready to be a daemon (about 1 week)
 
-- `agyloopd`:
+- `antiquotad`:
   - one engine per user (lock file) and a health endpoint
   - graceful shutdown
   - jobs keep running across restarts (already true)
@@ -114,7 +114,7 @@ Design rules:
 ### Phase 1: Tauri shell around today's UI (about 1 week)
 
 - `src-tauri/`:
-  - start `agyloopd` as a sidecar, or attach to an engine that is already running
+  - start `antiquotad` as a sidecar, or attach to an engine that is already running
   - pass the token through Tauri state (no query string)
   - single instance
   - window state
@@ -124,7 +124,7 @@ Design rules:
   - "Open", "Pause all", "Quit"
 - **Native features:**
   - notifications (goal met, job finished, account walled, approval needed)
-  - an `agyloop://session/<id>` deep link
+  - an `antiquota://session/<id>` deep link
   - optional autostart
   - a global shortcut that opens a new session
 - Native file drop and paste, through the existing attachment API.
@@ -151,14 +151,14 @@ The current vanilla JS (about 2k lines) has reached the size where components an
   - Windows x64
   - Linux x64/arm64
 - Steps:
-  1. Build `agyloopd` with PyInstaller (onedir, for fast start).
+  1. Build `antiquotad` with PyInstaller (onedir, for fast start).
   2. Build the Tauri bundles: `.dmg`, NSIS `.exe` / `.msi`, `.AppImage` / `.deb` / `.rpm`.
 - Signing:
   - macOS needs Developer ID and notarization, otherwise Gatekeeper blocks it.
   - Windows needs a code-signing certificate, otherwise SmartScreen warns. A PyInstaller sidecar raises false antivirus alarms more often without one.
   - The updater uses Tauri's signed manifest.
 - agy itself is not bundled. The app finds it, checks the version, and links to the install steps.
-- Linux headless: `agyloopd` plus the browser UI only, which is today's mode.
+- Linux headless: `antiquotad` plus the browser UI only, which is today's mode.
 
 ### Phase 4: platforms
 
@@ -171,8 +171,8 @@ The current vanilla JS (about 2k lines) has reached the size where components an
 
 ### Phase 5 (optional, later)
 
-- Port `agyloopd` to Rust or Go for a single binary with no Python. Only do this once the API has been stable for a while.
-- If agy ships ACP ([issue #31](https://github.com/google-antigravity/antigravity-cli/issues/31), 196 comments), use it, and expose agy-loop itself as an ACP agent for Zed and JetBrains.
+- Port `antiquotad` to Rust or Go for a single binary with no Python. Only do this once the API has been stable for a while.
+- If agy ships ACP ([issue #31](https://github.com/google-antigravity/antigravity-cli/issues/31), 196 comments), use it, and expose antiquota itself as an ACP agent for Zed and JetBrains.
 
 ## 4. Missing features, by value
 
@@ -196,7 +196,7 @@ The current vanilla JS (about 2k lines) has reached the size where components an
    - aliases
    - export and import of accounts
    - binding a project folder to an account
-   - `agyloop accounts --json`
+   - `antiquota accounts --json`
 6. **Git worktree per session or task**:
    - diff review with accept/reject per hunk
    - commit, branch, draft PR

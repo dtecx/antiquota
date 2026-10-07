@@ -6,7 +6,7 @@ import urllib.request
 
 import pytest
 
-from agyloop import server
+from antiquota import server
 
 from conftest import ONE, TWO
 
@@ -24,7 +24,7 @@ def call(srv, method, path, body=None, token=None, host=None):
     req = urllib.request.Request(f"http://127.0.0.1:{port}{path}", method=method,
                                  data=json.dumps(body).encode() if body is not None else None)
     if token:
-        req.add_header("X-Agyloop-Token", token)
+        req.add_header("X-Antiquota-Token", token)
     if body is not None:
         req.add_header("Content-Type", "application/json")
     if host:
@@ -68,7 +68,7 @@ def test_permissions_are_agy_loops_own_and_folder_listing(gui, home):
     srv, app = gui
     code, body = call(srv, "PUT", "/api/permissions", {"allow": ["command(grep)", "command(grep)"]}, app.token)
     assert json.loads(body)["allow"] == ["command(grep)"]
-    stack = json.loads((home / ".agyloop/stack/.gemini/antigravity-cli/settings.json").read_text())
+    stack = json.loads((home / ".antiquota/stack/.gemini/antigravity-cli/settings.json").read_text())
     assert stack["permissions"]["allow"] == ["command(grep)"]
     assert "command(ls)" in (home / ".gemini/antigravity-cli/settings.json").read_text()  # your agy CLI is untouched
     code, body = call(srv, "GET", "/api/fs?path=/etc", token=app.token)
@@ -105,10 +105,10 @@ def test_engine_daemon_is_single_and_discoverable(home):
     import os
     import subprocess
     import sys
-    from agyloop import accounts as a
+    from antiquota import accounts as a
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     env = {**os.environ, "PYTHONPATH": root}
-    first = subprocess.Popen([sys.executable, "-m", "agyloop", "serve", "--port", "0"], env=env,
+    first = subprocess.Popen([sys.executable, "-m", "antiquota", "serve", "--port", "0"], env=env,
                              stdout=subprocess.PIPE, text=True)
     deadline = time.time() + 15
     while time.time() < deadline and not server.running_engine():
@@ -116,16 +116,16 @@ def test_engine_daemon_is_single_and_discoverable(home):
     info = server.running_engine()
     assert info and info["pid"] == first.pid
     with urllib.request.urlopen(f"http://127.0.0.1:{info['port']}/api/health") as r:
-        assert json.loads(r.read())["app"] == "agyloop"   # no token needed to recognise it
-    second = subprocess.run([sys.executable, "-m", "agyloop", "serve", "--port", "0"], env=env,
+        assert json.loads(r.read())["app"] == "antiquota"   # no token needed to recognise it
+    second = subprocess.run([sys.executable, "-m", "antiquota", "serve", "--port", "0"], env=env,
                             capture_output=True, text=True, timeout=15)
     assert second.returncode == 0 and "already runs on " + info["url"] in second.stdout
     token = open(a.state("gui-token")).read().strip()
-    req = urllib.request.Request(info["url"] + "api/state", headers={"X-Agyloop-Token": token})
+    req = urllib.request.Request(info["url"] + "api/state", headers={"X-Antiquota-Token": token})
     with urllib.request.urlopen(req) as r:
         assert json.loads(r.read())["engine"]["busy"] == 0
     req = urllib.request.Request(info["url"] + "api/shutdown", method="POST", data=b"{}",
-                                 headers={"X-Agyloop-Token": token, "Content-Type": "application/json"})
+                                 headers={"X-Antiquota-Token": token, "Content-Type": "application/json"})
     urllib.request.urlopen(req).read()
     assert first.wait(timeout=15) == 0
     assert server.running_engine() is None and not os.path.exists(a.state("engine.json"))
@@ -137,25 +137,25 @@ def _hook(kind, payload, sid, state_dir):
     import sys
     hook = os.path.join(os.path.dirname(server.__file__), "hook.py")
     r = subprocess.run([sys.executable, hook, kind], input=json.dumps(payload), capture_output=True, text=True,
-                       timeout=60, env={**os.environ, "AGYLOOP_SESSION": sid, "AGYLOOP_STATE": state_dir})
+                       timeout=60, env={**os.environ, "ANTIQUOTA_SESSION": sid, "ANTIQUOTA_STATE": state_dir})
     return json.loads(r.stdout)
 
 
 def test_approvals_through_the_hook_and_messages_mid_turn(gui, work):
     import os
-    from agyloop import accounts as a, stack
+    from antiquota import accounts as a, stack
     srv, app = gui
     port = srv.server_address[1]
     a.write_atomic(a.state("engine.json"), json.dumps({"url": f"http://127.0.0.1:{port}/", "port": port}))
     state_dir = os.path.dirname(a.state("engine.json"))
     hooks = json.load(open(os.path.join(a.stack_home(), ".gemini/config/hooks.json")))
-    assert hooks["agyloop"]["PreToolUse"][0]["matcher"] == "*"  # agyloop.policy sorts the tools
+    assert hooks["antiquota"]["PreToolUse"][0]["matcher"] == "*"  # antiquota.policy sorts the tools
     sid = app.engine.create(str(work), "gemini-3.8-flash-low")["id"]
     run = lambda cmd: {"toolCall": {"name": "run_command", "args": {"CommandLine": cmd}}, "stepIdx": 3}
-    # agy-loop's allow rules answer at once (the stack allows `ls`); reading needs nobody's yes
+    # antiquota's allow rules answer at once (the stack allows `ls`); reading needs nobody's yes
     assert _hook("pre-tool", run("ls -la"), sid, state_dir) == {"decision": "allow"}
     assert _hook("pre-tool", {"toolCall": {"name": "view_file", "args": {}}}, sid, state_dir) == {"decision": "allow"}
-    assert _hook("pre-tool", run("ls"), "", state_dir) == {"decision": "ask"}  # not an agy-loop turn
+    assert _hook("pre-tool", run("ls"), "", state_dir) == {"decision": "ask"}  # not an antiquota turn
     # anything else waits for the user in the GUI
     out = {}
     t = threading.Thread(target=lambda: out.update(_hook("pre-tool", run("npm test -- --watch=false"), sid, state_dir)))

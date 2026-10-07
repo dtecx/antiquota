@@ -1,8 +1,8 @@
-"""agy-loop's own agy config: inspect and edit it, or copy items in from your
+"""antiquota's own agy config: inspect and edit it, or copy items in from your
 agy CLI (~/.gemini) or the Antigravity IDE (~/.gemini/antigravity).
 
 Those two folders are only ever read. Everything written lands in the stack
-(<base>/stack/.gemini), which every agy-loop account links to.
+(<base>/stack/.gemini), which every antiquota account links to.
 """
 import hashlib
 import json
@@ -101,7 +101,7 @@ def _items(kind, src):
 
 
 def agy_in_stack(*args):
-    """Run an agy subcommand against agy-loop's stack (never against your own ~/.gemini)."""
+    """Run an agy subcommand against antiquota's stack (never against your own ~/.gemini)."""
     h = a.probe_home()
     a.sync(h)
     cmd, env = a.agy_cmd(h, list(args))
@@ -308,7 +308,7 @@ def write_file(rel, text):
     os.replace(p + ".tmp", p)
 
 
-# --- agy-loop's own GUI defaults --------------------------------------------------
+# --- antiquota's own GUI defaults --------------------------------------------------
 
 DEFAULTS = {"model": "gemini-3.8-flash-high", "mode": "default", "verifier_model": "gemini-3.1-pro-high",
             "rotation": "perishable", "keep_awake": "on"}
@@ -329,7 +329,7 @@ def set_defaults(values):
     return d
 
 
-# --- agy-loop's own permission rules and the hooks that ask the user -------------------
+# --- antiquota's own permission rules and the hooks that ask the user -------------------
 
 def _settings_file():
     return os.path.join(a.stack_home(), ".gemini", "antigravity-cli", "settings.json")
@@ -345,7 +345,7 @@ def _command_rules(rules):
 
 
 def command_verdict(cmd):
-    """"allow" or "deny" when agy-loop's rules decide a shell command, else None.
+    """"allow" or "deny" when antiquota's rules decide a shell command, else None.
     A command line with several parts (&&, ||, ;, |) is allowed only when every part is."""
     allow, deny = (_command_rules(r) for r in permissions())
     parts = [p.strip() for p in re.split(r"&&|\|\||;|\|", cmd or "") if p.strip()]
@@ -381,7 +381,7 @@ def allow_rule(rule):
 
 
 def hook_command(kind):
-    """How agy calls agy-loop's hook: the bundled engine itself, or this source tree's hook.py."""
+    """How agy calls antiquota's hook: the bundled engine itself, or this source tree's hook.py."""
     import sys
     if getattr(sys, "frozen", False):
         parts = [sys.executable, "hook", kind]
@@ -394,20 +394,21 @@ def hook_command(kind):
 
 
 def hook_enabled():
-    entry = _load(os.path.join(a.stack_home(), ".gemini", "config", "hooks.json")).get("agyloop")
+    entry = _load(os.path.join(a.stack_home(), ".gemini", "config", "hooks.json")).get("antiquota")
     return bool(entry) and entry.get("enabled", True) is not False
 
 
 def install_hooks(gated):
-    """Keep the "agyloop" hook entry in the stack current (paths change between installs).
+    """Keep the "antiquota" hook entry in the stack current (paths change between installs).
     Switching it off in Settings is respected."""
     path = os.path.join(a.stack_home(), ".gemini", "config", "hooks.json")
     d = _load(path)
-    old = d.get("agyloop") or {}
+    stale = d.pop("agyloop", None)  # the entry from before the rename
+    old = d.get("antiquota") or stale or {}
     entry = {"PreToolUse": [{"matcher": gated, "hooks": [{"type": "command", "command": hook_command("pre-tool"),
                                                          "timeout": 3600}]}],
              "PreInvocation": [{"type": "command", "command": hook_command("pre-invocation"), "timeout": 15}],
              "enabled": old.get("enabled", True)}
-    if old != entry:
-        d["agyloop"] = entry
+    if old != entry or stale is not None:
+        d["antiquota"] = entry
         _save(path, d)

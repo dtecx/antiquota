@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from agyloop import stack
+from antiquota import stack
 
 
 def put(path, text):
@@ -12,7 +12,7 @@ def put(path, text):
 
 @pytest.fixture
 def setups(home):
-    """Your agy CLI and IDE setups, with things agy-loop does not have yet."""
+    """Your agy CLI and IDE setups, with things antiquota does not have yet."""
     cli, ide = home / ".gemini", home / ".gemini/antigravity"
     hook = str(cli / "config/hooks/gitnexus-agy/hook.cjs")
     put(cli / "config/hooks.json", json.dumps({"claude-mem": {}, "gitnexus": {"PostToolUse": [
@@ -40,10 +40,10 @@ def test_overview_compares_with_your_cli_and_ide(setups):
 
 def test_copy_items_in_and_rewrite_paths_into_the_stack(setups):
     stack.copy("cli", "hook", "gitnexus")
-    hooks = json.loads((setups / ".agyloop/stack/.gemini/config/hooks.json").read_text())
+    hooks = json.loads((setups / ".antiquota/stack/.gemini/config/hooks.json").read_text())
     cmd = hooks["gitnexus"]["PostToolUse"][0]["hooks"][0]["command"]
-    assert str(setups / ".agyloop/stack/.gemini/config/hooks/gitnexus-agy/hook.cjs") in cmd
-    assert (setups / ".agyloop/stack/.gemini/config/hooks/gitnexus-agy/hook.cjs").exists()
+    assert str(setups / ".antiquota/stack/.gemini/config/hooks/gitnexus-agy/hook.cjs") in cmd
+    assert (setups / ".antiquota/stack/.gemini/config/hooks/gitnexus-agy/hook.cjs").exists()
     assert rows("hooks")["gitnexus"]["cli"] == "same"
     stack.copy("ide", "skill", "ide-only")
     stack.copy("ide", "mcp")
@@ -55,7 +55,7 @@ def test_copy_items_in_and_rewrite_paths_into_the_stack(setups):
 
 def test_edit_and_delete_touch_only_the_stack(setups):
     cli_md = (setups / ".gemini/GEMINI.md").read_text()
-    stack.write_file("GEMINI.md", "agy-loop rules")
+    stack.write_file("GEMINI.md", "antiquota rules")
     assert (setups / ".gemini/GEMINI.md").read_text() == cli_md
     assert stack.overview()["gemini_md"]["cli"] == "differs"
     stack.copy("cli", "gemini_md")

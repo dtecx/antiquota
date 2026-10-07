@@ -1,16 +1,16 @@
-"""Several Google accounts behind agy CLI, sharing agy-loop's own stack.
+"""Several Google accounts behind agy CLI, sharing antiquota's own stack.
 
 A slot is a fake HOME for one account, named by its email. agy normally keeps
 its sign-in token in the OS keyring, which belongs to the OS user, not to HOME.
 But when it sees an SSH session it stores the token in a file instead
 ("Using file-based token storage because SSH session detected"): in
-.gemini/antigravity-cli/antigravity-oauth-token under its HOME. agy-loop runs every agy
+.gemini/antigravity-cli/antigravity-oauth-token under its HOME. antiquota runs every agy
 call that way, so each account's token is a plain file in its own slot, on
 macOS, Linux and Windows alike, headless or not, and your own agy CLI's keyring
 entry is never read or written. A slot is portable: copy the folder to another
 machine and the account comes with it.
 
-A slot's .gemini comes from agy-loop's own stack (<base>/stack/.gemini, cloned
+A slot's .gemini comes from antiquota's own stack (<base>/stack/.gemini, cloned
 from ~/.gemini), so skills, hooks, plugins, MCP config and permissions are the
 same for every account yet separate from your agy CLI and the Antigravity IDE.
 Every other HOME entry (git, ssh, gitnexus and claude-mem data) links to the real HOME.
@@ -64,13 +64,57 @@ RESERVE = 0.03                # rotate away from an account below this fraction 
 
 def home():
     # Not $HOME on POSIX: inside a slot $HOME is the fake one.
-    if os.environ.get("AGYLOOP_HOME"):
-        return os.environ["AGYLOOP_HOME"]
+    if os.environ.get("ANTIQUOTA_HOME"):
+        return os.environ["ANTIQUOTA_HOME"]
     return pwd.getpwuid(os.getuid()).pw_dir if pwd else os.path.expanduser("~")
 
 
+_MIGRATED = False
+
+
 def base():
-    return os.environ.get("AGYLOOP_DIR") or os.path.join(home(), ".agyloop")
+    global _MIGRATED
+    if os.environ.get("ANTIQUOTA_DIR"):
+        return os.environ["ANTIQUOTA_DIR"]
+    new = os.path.join(home(), ".antiquota")
+    if not _MIGRATED:
+        _MIGRATED = True
+        migrate_from_agyloop(os.path.join(home(), ".agyloop"), new)
+    return new
+
+
+def migrate_from_agyloop(old, new):
+    """antiquota was called agy-loop and kept everything in ~/.agyloop. Move it once, point the
+    links and config paths that name the old folder at the new one, and leave a link behind so
+    paths recorded in old transcripts still open."""
+    if os.path.lexists(new) or not os.path.isdir(old) or os.path.islink(old):
+        return
+    os.rename(old, new)
+    try:
+        os.symlink(new, old)
+    except OSError:
+        pass
+    prefix = old + os.sep
+    for root, dirs, names in os.walk(new):
+        for name in dirs + names:
+            p = os.path.join(root, name)
+            if os.path.islink(p) and os.readlink(p).startswith(prefix):
+                target = new + os.sep + os.readlink(p)[len(prefix):]
+                os.unlink(p)
+                os.symlink(target, p)
+    for rel in PATHFUL + (".gemini/antigravity-cli/settings.json",):
+        p = os.path.join(new, "stack", rel)
+        if os.path.isfile(p) and not os.path.islink(p):
+            with open(p) as f:
+                text = f.read()
+            if prefix in text:
+                with open(p, "w") as f:
+                    f.write(text.replace(prefix, new + os.sep))
+    usage = os.path.join(home(), ".config", "antigravity")
+    if os.path.islink(usage) and os.readlink(usage).startswith(prefix):
+        target = new + os.sep + os.readlink(usage)[len(prefix):]
+        os.unlink(usage)
+        os.symlink(target, usage)
 
 
 def state(*parts):
@@ -84,13 +128,13 @@ def find_agy():
     extra = [os.path.join(home(), ".local/bin"), "/opt/homebrew/bin", "/usr/local/bin"]
     if os.name == "nt":
         extra.append(os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs", "agy"))
-    return os.environ.get("AGYLOOP_AGY") or shutil.which("agy", path=os.pathsep.join([*extra, os.environ.get("PATH", "")]))
+    return os.environ.get("ANTIQUOTA_AGY") or shutil.which("agy", path=os.pathsep.join([*extra, os.environ.get("PATH", "")]))
 
 
 def agy_bin():
     found = find_agy()
     if not found:
-        sys.exit("agyloop: real agy binary not found; set AGYLOOP_AGY")
+        sys.exit("antiquota: real agy binary not found; set ANTIQUOTA_AGY")
     return found
 
 
@@ -132,7 +176,7 @@ def slots():
     return [n for n in names if os.path.isfile(os.path.join(slot_home(n), AUTH))]
 
 
-# --- agy-loop's own stack ----------------------------------------------------
+# --- antiquota's own stack ----------------------------------------------------
 
 # Everything in ~/.gemini is cloned except identity, per-process state and history.
 CLONE_SKIP = {
@@ -150,7 +194,7 @@ PATHFUL = (".gemini/config/hooks.json", ".gemini/config/mcp_config.json", ".gemi
 
 
 def to_stack_paths(text):
-    """Point absolute paths into your agy config at agy-loop's copy instead (the IDE folder stays)."""
+    """Point absolute paths into your agy config at antiquota's copy instead (the IDE folder stays)."""
     real, own = os.path.join(home(), ".gemini"), os.path.join(stack_home(), ".gemini")
     for sub in ("config/", "antigravity-cli/", "GEMINI.md", "settings.json"):
         text = text.replace(f"{real}/{sub}", f"{own}/{sub}")
@@ -182,14 +226,14 @@ def _replace(src, dst, ignore=None):
 
 
 def clone_stack():
-    """Copy your whole agy setup into agy-loop's stack. Re-running replaces the config and keeps
-    agy-loop's own conversations; your ~/.gemini is only read."""
+    """Copy your whole agy setup into antiquota's stack. Re-running replaces the config and keeps
+    antiquota's own conversations; your ~/.gemini is only read."""
     src, dst = os.path.join(home(), ".gemini"), os.path.join(stack_home(), ".gemini")
     os.makedirs(dst, exist_ok=True)
     ignore = _clone_ignore(src)
     if os.path.isdir(src):
         for name in set(os.listdir(src)) - ignore(src, os.listdir(src)):
-            if name == "antigravity-cli":  # merge one level down so agy-loop's history survives
+            if name == "antigravity-cli":  # merge one level down so antiquota's history survives
                 cli = os.path.join(src, name)
                 for n2 in set(os.listdir(cli)) - ignore(cli, os.listdir(cli)):
                     _replace(os.path.join(cli, n2), os.path.join(dst, name, n2), ignore)
@@ -217,11 +261,11 @@ def usage_link():
 
 
 def expose_usage():
-    """Let usage tools see agy-loop's conversations: ccusage (and so `hacklab sync`) reads
+    """Let usage tools see antiquota's conversations: ccusage (and so `hacklab sync`) reads
     Antigravity token usage from a few fixed folders, ~/.config/antigravity among them, and
-    nothing uses that one. Point it at agy-loop's conversation store. True if it is in place."""
+    nothing uses that one. Point it at antiquota's conversation store. True if it is in place."""
     link_path, target = usage_link(), os.path.join(stack_home(), ".gemini", "antigravity-cli")
-    if os.environ.get("AGYLOOP_NO_USAGE_LINK"):
+    if os.environ.get("ANTIQUOTA_NO_USAGE_LINK"):
         return False
     if os.path.islink(link_path):
         if os.path.realpath(link_path) == os.path.realpath(target):
@@ -527,7 +571,7 @@ class Login:
             if os.path.exists(os.path.join(self.tmp, rel)):
                 os.replace(os.path.join(self.tmp, rel), os.path.join(dst, rel))
         # Keep what else sign-in created: it shows which files are per-account.
-        leftover = os.path.join(dst, ".agyloop-login")
+        leftover = os.path.join(dst, ".antiquota-login")
         shutil.rmtree(leftover, ignore_errors=True)
         os.replace(self.tmp, leftover)
         sync(dst)
@@ -575,7 +619,7 @@ def login():
     lg = Login()
     url = lg.wait_url()
     if not url:
-        sys.exit(f"agyloop: {lg.error or 'agy printed no sign-in URL'}")
+        sys.exit(f"antiquota: {lg.error or 'agy printed no sign-in URL'}")
     print(f"Sign in with the Google account to add:\n\n  {url}\n")
     try:
         import webbrowser
@@ -596,8 +640,8 @@ def login():
             except ValueError as e:
                 print(e)
     if lg.error:
-        sys.exit(f"agyloop: {lg.error}")
-    print(f"{lg.name} signed in; it uses agy-loop's stack in {stack_home()}")
+        sys.exit(f"antiquota: {lg.error}")
+    print(f"{lg.name} signed in; it uses antiquota's stack in {stack_home()}")
 
 
 def remove(name):
@@ -819,7 +863,7 @@ def mark_signed_out(slot):
 # --- routing: which account serves the next call -------------------------------
 
 def setting(key, default):
-    """agy-loop's own settings (~/.agyloop/settings.json), read fresh each time."""
+    """antiquota's own settings (~/.antiquota/settings.json), read fresh each time."""
     try:
         with open(os.path.join(base(), "settings.json")) as f:
             return json.load(f).get(key, default)
@@ -1030,19 +1074,19 @@ def is_quota_error(rc, out, err):
 
 def run(args, pin=None):
     if not slots():
-        sys.exit("agyloop: no signed-in account; run: agyloop login")
+        sys.exit("antiquota: no signed-in account; run: antiquota login")
     if pin and pin not in slots():
-        sys.exit(f"agyloop: no signed-in slot '{pin}'")
+        sys.exit(f"antiquota: no signed-in slot '{pin}'")
     bucket = bucket_of(args)
     slot, fd = acquire(bucket, pin)
     if slot is None:
         nxt = min(walled_until(s, bucket) for s in ([pin] if pin else slots()))
-        print(f"agyloop: every account is out of {BUCKETS[bucket]} quota; next reset "
+        print(f"antiquota: every account is out of {BUCKETS[bucket]} quota; next reset "
               f"{datetime.fromtimestamp(nxt):%m-%d %H:%M}", file=sys.stderr)
         return TEMPFAIL
     try:
         sync(slot_home(slot))
-        cmd, env = agy_cmd(slot_home(slot), args, {**os.environ, "AGYLOOP_SLOT": slot})
+        cmd, env = agy_cmd(slot_home(slot), args, {**os.environ, "ANTIQUOTA_SLOT": slot})
         t0 = time.time()
         if sys.stdout.isatty():  # interactive: agy needs the real terminal, no capture
             old = signal.signal(signal.SIGINT, signal.SIG_IGN)

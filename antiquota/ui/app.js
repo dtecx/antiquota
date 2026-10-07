@@ -1,10 +1,10 @@
 'use strict';
 
-/* agyloop GUI: sessions on the left, the relay of accounts below them, one
+/* antiquota GUI: sessions on the left, the relay of accounts below them, one
    transcript in the middle, a composer docked at the bottom. Everything live
    arrives over one EventSource; everything else is a small JSON call. */
 
-const TOKEN = document.querySelector('meta[name="agyloop-token"]').content;
+const TOKEN = document.querySelector('meta[name="antiquota-token"]').content;
 const $ = (s, el = document) => el.querySelector(s);
 /* Inside the desktop app (Tauri), a few browser features go through native APIs instead. */
 const NATIVE = window.__TAURI__ || null;
@@ -58,16 +58,16 @@ const S = {
   nodes: new Map(), live: new Map(), drawer: false, tab: 'accounts', stack: null, detail: 'detailed', events: [],
 };
 try {
-  S.drawer = localStorage.getItem('agyloop.drawer') === '1';
-  S.tab = localStorage.getItem('agyloop.tab') || 'accounts';
-  S.detail = localStorage.getItem('agyloop.detail') || 'detailed';
+  S.drawer = localStorage.getItem('antiquota.drawer') === '1';
+  S.tab = localStorage.getItem('antiquota.tab') || 'accounts';
+  S.detail = localStorage.getItem('antiquota.detail') || 'detailed';
 } catch {}
-function remember(k, v) { try { localStorage.setItem('agyloop.' + k, v); } catch {} }
+function remember(k, v) { try { localStorage.setItem('antiquota.' + k, v); } catch {} }
 
 async function api(method, path, body) {
   const r = await fetch('/api/' + path, {
     method,
-    headers: { 'X-Agyloop-Token': TOKEN, ...(body ? { 'Content-Type': 'application/json' } : {}) },
+    headers: { 'X-Antiquota-Token': TOKEN, ...(body ? { 'Content-Type': 'application/json' } : {}) },
     body: body ? JSON.stringify(body) : undefined,
   });
   let j = {};
@@ -258,7 +258,7 @@ async function searchMessages(q) {
 function sessMenu(m, x, y) {
   closeMenu();
   const act = (label, fn, cls = '') => h('button', { class: cls, role: 'menuitem', onclick: () => { closeMenu(); fn(); } }, label);
-  const menu = h('div', { class: 'ctx', id: 'ctx', role: 'menu' },
+  const menu = h('div', { class: 'ctxmenu', id: 'ctx', role: 'menu' },
     act('Rename', async () => { await openSession(m.id); $('#title').click(); }),
     act(m.pinned ? 'Unpin' : 'Pin to top', () => api('PATCH', 'sessions/' + m.id, { pinned: !m.pinned }).catch(fail)),
     act('Fork: new session from its state', async () => {
@@ -326,7 +326,7 @@ const STATUS = {
 function renderHeader() {
   const m = cur();
   const busy = m && m.status !== 'idle';
-  $('#title').textContent = m ? (m.title || 'Untitled') : 'agyloop';
+  $('#title').textContent = m ? (m.title || 'Untitled') : 'antiquota';
   $('#cwd').textContent = m ? '\u200e' + m.cwd.replace(/^\/Users\/[^/]+/, '~') + '\u200e' : '';
   $('#cwd').title = m ? m.cwd : '';
   const st = $('#status');
@@ -344,7 +344,7 @@ function renderHeader() {
   $('#queued').hidden = !q;
   $('#queued').textContent = q + ' queued';
   $('#goal-btn').classList.toggle('on', !!(m && m.goal && m.goal.state === 'active'));
-  document.title = (busy ? '● ' : '') + (m ? (m.title || 'Untitled') + ' · ' : '') + 'agyloop';
+  document.title = (busy ? '● ' : '') + (m ? (m.title || 'Untitled') + ' · ' : '') + 'antiquota';
   renderGoalbar();
   renderJobbar();
   renderMeter();
@@ -443,7 +443,7 @@ function approvalNode(ev) {
     preview,
     h('div', { class: 'acts' },
       h('button', { class: 'primary btn small', onclick: () => answer('allow', false) }, 'Allow once'),
-      isCmd && ev.rule ? h('button', { class: 'btn small', title: 'Added to agy-loop\'s allow rules for every session', onclick: () => answer('allow', true) }, `Always allow ${ev.rule}`)
+      isCmd && ev.rule ? h('button', { class: 'btn small', title: 'Added to antiquota\'s allow rules for every session', onclick: () => answer('allow', true) }, `Always allow ${ev.rule}`)
         : !isCmd ? h('button', { class: 'btn small', title: 'Switches this session to accept edits', onclick: () => answer('allow', true) }, 'Allow all edits in this session') : null,
       h('button', { class: 'btn small', onclick: () => answer('deny', false) }, 'Decline')));
 }
@@ -469,7 +469,7 @@ function scrollEnd() {
 function needAccount() {
   return !S.accounts.length && h('div', { class: 'note wall' },
     h('span', { class: 'k' }, 'No account yet'),
-    'agy-loop signs in its own Google accounts, separate from your agy CLI. Add at least one to start.',
+    'antiquota signs in its own Google accounts, separate from your agy CLI. Add at least one to start.',
     h('div', { class: 'acts' }, h('button', { class: 'primary btn small', onclick: () => openAcct() }, 'Add Google account')));
 }
 function blankFor(m) {
@@ -487,7 +487,7 @@ function blankFor(m) {
       h('kbd', {}, 'Esc'), h('span', {}, 'stop the running turn'),
       h('kbd', {}, '⌘N'), h('span', {}, 'new session')));
 }
-/* A new session can start from an earlier one's handoff state: agy-loop's own record of it. */
+/* A new session can start from an earlier one's handoff state: antiquota's own record of it. */
 function pickUp(m) {
   const earlier = [...S.sessions.values()].filter(x => x.id !== m.id && x.cwd === m.cwd && x.turns > 0)
     .sort((x, y) => y.updated - x.updated).slice(0, 3);
@@ -502,7 +502,7 @@ function renderBlank() {
   $('#transcript').replaceChildren(h('div', { class: 'blank' },
     needAccount(),
     h('h2', {}, 'Start a session'),
-    h('p', {}, 'Pick a working folder and a model. Every account you sign in with agyloop shares one stack of skills, hooks and MCP servers.'),
+    h('p', {}, 'Pick a working folder and a model. Every account you sign in with antiquota shares one stack of skills, hooks and MCP servers.'),
     h('div', { class: 'row' }, h('button', { class: 'primary', onclick: openNew }, 'New session'))));
   renderHeader();
 }
@@ -770,7 +770,7 @@ function renderEvent(ev, live) {
       break;
     }
     case 'turn_end':
-      if (live && ev.status !== 'quota') notify(`${cur()?.title || 'agyloop'}: turn ${ev.turn} ${ev.status === 'SUCCESS' ? 'done' : ev.status}`, `${ev.slot} · ${secs(ev.secs)}`);
+      if (live && ev.status !== 'quota') notify(`${cur()?.title || 'antiquota'}: turn ${ev.turn} ${ev.status === 'SUCCESS' ? 'done' : ev.status}`, `${ev.slot} · ${secs(ev.secs)}`);
       $$('.turn.live', tr).forEach(n => n.classList.remove('live'));
       for (const [k, st] of S.live) { st.node.classList.remove('live'); S.live.delete(k); }
       tr.append(turnEnd(ev));
@@ -993,7 +993,7 @@ const SLASH = [
   ['/bg', 'run a command in the background; agy gets its log when it exits: /bg <command>'],
   ['/loop', 'send a prompt now and every interval while idle: /loop 15m <prompt> · /loop off'],
   ['/memory', 'show this project\'s GEMINI.md (add lines with # note)'],
-  ['/state', 'show the handoff state agy-loop keeps for this session'],
+  ['/state', 'show the handoff state antiquota keeps for this session'],
   ['/stop', 'stop the running turn, pause the goal'],
   ['/resume', 'resume a paused goal'],
   ['/cleargoal', 'remove the goal'],
@@ -1007,7 +1007,7 @@ const SLASH = [
   ['/login', 'add a Google account'],
   ['/settings', 'rules, skills, hooks, MCP, plugins, permissions'],
   ['/stack', 'show skills, hooks, MCP servers'],
-  ['/permissions', 'edit agy-loop allow rules'],
+  ['/permissions', 'edit antiquota allow rules'],
   ['/delete', 'delete this session'],
 ];
 /* One popup for both slash commands and @-mentions. Items are [label, detail, apply()]. */
@@ -1091,7 +1091,7 @@ async function attachFiles(files) {
     try {
       const r = await fetch(`/api/sessions/${m.id}/attach`, {
         method: 'POST', body: file,
-        headers: { 'X-Agyloop-Token': TOKEN, 'X-Filename': encodeURIComponent(slot.name) },
+        headers: { 'X-Antiquota-Token': TOKEN, 'X-Filename': encodeURIComponent(slot.name) },
       });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || r.statusText);
@@ -1137,7 +1137,7 @@ async function notify(title, body) {
     return;
   }
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
-  try { new Notification(title, { body, tag: 'agyloop' }); } catch {}
+  try { new Notification(title, { body, tag: 'antiquota' }); } catch {}
 }
 
 /* ---------- export the transcript as markdown ---------- */
@@ -1254,7 +1254,7 @@ function hideDrawer() {
 function verifyBlock(email, url) {
   return h('div', { class: 'verify-box' },
     h('p', {}, 'Google wants this account verified before Antigravity serves it. Open the link signed in as ',
-      h('b', {}, email), ', finish the steps, then check again. agy-loop also re-checks it by itself every 10 minutes.'),
+      h('b', {}, email), ', finish the steps, then check again. antiquota also re-checks it by itself every 10 minutes.'),
     h('div', { class: 'card-acts' },
       h('a', { class: 'primary btn small', href: url, target: '_blank', rel: 'noopener noreferrer' }, 'Verify with Google'),
       h('button', {
@@ -1283,12 +1283,12 @@ async function renderPane() {
   if (S.tab === 'accounts') {
     pane.replaceChildren(...[
       h('p', { class: 'cap' }, ROTATION_CAP[S.defaults.rotation || 'perishable'] + ' A session stays on its account while it has headroom; below 3% it moves on before failing mid-turn. A spent pool is walled until its reset; a short rate limit only rests the account.'),
-      !S.accounts.length && h('p', { class: 'cap' }, 'No account yet. Add one: agy-loop signs it in separately from your agy CLI.'),
+      !S.accounts.length && h('p', { class: 'cap' }, 'No account yet. Add one: antiquota signs it in separately from your agy CLI.'),
       ...S.accounts.map(acct => h('div', { class: 'card' + (acct.verify ? ' verify' : '') },
         h('div', { class: 'card-head' }, h('b', {}, acct.slot, acct.paused ? h('em', { class: 'paused-tag' }, 'paused') : null),
           h('span', {}, (acct.busy ? 'running · ' : '') + (acct.probed ? 'probed ' + ago(acct.probed) : 'not probed'))),
         acct.verify && verifyBlock(acct.slot, acct.verify),
-        acct.today && acct.today.turns ? h('div', { class: 'today', title: 'Tokens this account used today through agy-loop' },
+        acct.today && acct.today.turns ? h('div', { class: 'today', title: 'Tokens this account used today through antiquota' },
           `today  ↑ ${fmtK(acct.today.input)}  ↓ ${fmtK(acct.today.output)}` + (acct.today.thinking ? `  ✻ ${fmtK(acct.today.thinking)}` : '') +
           `  · ${acct.today.turns} turn${acct.today.turns > 1 ? 's' : ''}`) : null,
         !acct.verify && Object.entries({ gemini: 'Gemini', cg: 'Claude / GPT' }).map(([b, label]) => h('div', { class: 'pool' },
@@ -1362,7 +1362,7 @@ async function renderPane() {
     } catch (e) { pane.replaceChildren(h('p', { class: 'cap' }, e.message)); return; }
     const st = S.stack;
     pane.replaceChildren(
-      h('p', { class: 'cap' }, 'agy-loop runs on its own copy of your agy setup. Every account loads it; your agy CLI and the IDE are never changed.'),
+      h('p', { class: 'cap' }, 'antiquota runs on its own copy of your agy setup. Every account loads it; your agy CLI and the IDE are never changed.'),
       h('h3', {}, `Skills · ${(st.skills || []).length}`), h('div', { class: 'chips' }, (st.skills || []).map(x => h('span', { class: 'chip' }, x))),
       h('h3', {}, 'Hooks'), h('div', { class: 'chips' }, (st.hooks || []).map(x => h('span', { class: 'chip' }, x))),
       h('h3', {}, 'MCP servers'), h('div', { class: 'chips' }, (st.mcp || []).map(x => h('span', { class: 'chip' }, x))),
@@ -1533,7 +1533,7 @@ async function finishLogin() {
   catch (e) { acctMsg(e.message, 'bad'); $('#acct-finish').disabled = false; }
 }
 
-/* ---------- settings: agy-loop's own copy of your agy setup ---------- */
+/* ---------- settings: antiquota's own copy of your agy setup ---------- */
 const SET = { data: null, section: 'general', open: null };
 const SECTIONS = [['general', 'General'], ['rules', 'Rules'], ['skills', 'Skills'], ['hooks', 'Hooks'],
   ['mcp', 'MCP servers'], ['plugins', 'Plugins'], ['permissions', 'Permissions']];
@@ -1624,7 +1624,7 @@ function itemRow(kind, r, sources) {
       (r.here ? 'Replace from ' : 'Copy from ') + SRC[src])),
     r.here && h('button', {
       class: 'btn small danger',
-      onclick: async () => await ask('Your agy CLI and the IDE keep theirs.', { title: `Delete ${kind} "${r.name}" from agy-loop?`, ok: 'Delete', danger: true })
+      onclick: async () => await ask('Your agy CLI and the IDE keep theirs.', { title: `Delete ${kind} "${r.name}" from antiquota?`, ok: 'Delete', danger: true })
         && api('DELETE', `settings/${kind}/${enc}`).then(reload).catch(fail),
     }, 'Delete'),
   ];
@@ -1654,7 +1654,7 @@ function autostartRow() {
   const row = h('div', { class: 'set-toggle' });
   NATIVE.autostart.isEnabled().then(on => row.replaceChildren(
     switchBtn(on, v => (v ? NATIVE.autostart.enable() : NATIVE.autostart.disable()).catch(fail)),
-    h('div', {}, h('b', {}, 'Open at login'), h('p', { class: 'cap' }, 'agy-loop starts in the menu bar / tray when you log in, ready for sessions and schedules.'))))
+    h('div', {}, h('b', {}, 'Open at login'), h('p', { class: 'cap' }, 'antiquota starts in the menu bar / tray when you log in, ready for sessions and schedules.'))))
     .catch(() => row.remove());
   return row;
 }
@@ -1708,14 +1708,14 @@ function permList(kind, d) {
 }
 const RENDER = {
   general: d => [
-    head('General', 'Defaults for new sessions, and the copy of your agy setup that agy-loop runs on.'),
+    head('General', 'Defaults for new sessions, and the copy of your agy setup that antiquota runs on.'),
     defaultsForm(d.defaults),
     h('div', { class: 'set-block' },
-      h('h3', {}, 'agy-loop stack'),
-      h('p', { class: 'cap' }, `Every agy-loop account runs with ${d.path.replace(/^\/Users\/[^/]+/, '~')}: your rules, skills, hooks, MCP servers, plugins and permissions, copied. Edits here never touch ~/.gemini (your agy CLI) or the Antigravity IDE, and theirs only arrive when you copy them.`),
+      h('h3', {}, 'antiquota stack'),
+      h('p', { class: 'cap' }, `Every antiquota account runs with ${d.path.replace(/^\/Users\/[^/]+/, '~')}: your rules, skills, hooks, MCP servers, plugins and permissions, copied. Edits here never touch ~/.gemini (your agy CLI) or the Antigravity IDE, and theirs only arrive when you copy them.`),
       h('div', { class: 'add-row' }, h('button', {
         class: 'btn', onclick: async () => await ask('Edits made here are lost; conversations stay.',
-          { title: "Replace agy-loop's config with a fresh copy of your agy CLI setup?", ok: 'Replace', danger: true }) && doCopy('cli', 'everything'),
+          { title: "Replace antiquota's config with a fresh copy of your agy CLI setup?", ok: 'Replace', danger: true }) && doCopy('cli', 'everything'),
       }, 'Copy everything again from agy CLI'))),
   ],
   rules: d => [
@@ -1763,7 +1763,7 @@ const RENDER = {
     ...list('plugin', d.plugins, ['cli']),
   ],
   permissions: d => [
-    head('Permissions', 'Headless agy cannot ask: anything not allowed is denied and ends the turn. These rules apply to every agy-loop account, not to your agy CLI.',
+    head('Permissions', 'Headless agy cannot ask: anything not allowed is denied and ends the turn. These rules apply to every antiquota account, not to your agy CLI.',
       d.permissions.cli === 'differs' && h('button', { class: 'btn small', onclick: () => doCopy('cli', 'permissions') }, 'Copy from agy CLI')),
     ...permList('allow', d), ...permList('deny', d),
   ],
@@ -1793,16 +1793,20 @@ function renderMeter() {
   const pool = POOL(m.model);
   const q = acct && acct.quota[pool];
   const left = q ? Math.round(minFrac(q) * 100) : null;
+  const free = S.accounts.filter(x => !x.walls[pool] && !x.verify && !x.paused).length;
+  const level = left == null ? '' : left < 10 ? 'bad' : left < 25 ? 'warn' : 'ok';
   el.replaceChildren(
-    h('span', { class: 'ctx' + (pct >= 80 ? ' hot' : pct >= 50 ? ' warm' : ''), title: `Context sent with the last request: ${ctx.toLocaleString()} of ${win.toLocaleString()} tokens` },
-      h('span', { class: 'ctx-bar' }, h('i', { style: `width:${Math.max(pct, ctx ? 2 : 0)}%` })),
-      ctx ? `${fmtK(ctx)} / ${fmtK(win)} context` : 'no context yet'),
-    h('span', { title: 'Tokens this session: sent, received, thinking' },
-      `↑ ${fmtK(m.usage.input)}  ↓ ${fmtK(m.usage.output)}` + (m.usage.thinking ? `  ✻ ${fmtK(m.usage.thinking)}` : '')),
-    acct && h('span', { class: 'acct-q' + (left != null && left < 20 ? ' low' : ''), title: `${acct.slot}: ${POOL_LABEL[pool]} left (lowest window)` },
-      `${who(acct.slot)} · ${pool === 'cg' ? 'claude/gpt' : 'gemini'} ${left == null ? '–' : left + '%'}`),
+    h('span', { class: 'seg ctxm' + (pct >= 80 ? ' hot' : pct >= 50 ? ' warm' : ''), title: `Context sent with the last request: ${ctx.toLocaleString()} of ${win.toLocaleString()} tokens` },
+      h('span', { class: 'ctx-bar', 'aria-hidden': 'true' }, h('i', { style: `width:${Math.max(pct, ctx ? 2 : 0)}%` })),
+      ctx ? [h('b', {}, fmtK(ctx)), ` of ${fmtK(win)} context`] : 'no context yet'),
+    h('span', { class: 'seg tok', title: 'Tokens this session: sent ↑, received ↓, thinking ✻' },
+      '↑', h('b', {}, fmtK(m.usage.input)), ' ↓', h('b', {}, fmtK(m.usage.output)),
+      m.usage.thinking ? [' ✻', h('b', {}, fmtK(m.usage.thinking))] : null),
+    acct && h('span', { class: 'seg acct-q', title: `${acct.slot} serves this session · ${POOL_LABEL[pool]} left (lowest window)` },
+      h('i', { class: 'qdot ' + level, 'aria-hidden': 'true' }), who(acct.slot),
+      h('b', {}, (pool === 'cg' ? 'Claude/GPT ' : 'Gemini ') + (left == null ? '–' : left + '%'))),
     h('span', { class: 'grow' }),
-    h('span', { class: 'hint' }, S.accounts.filter(x => !x.walls[pool] && !x.verify).length + ' of ' + S.accounts.length + ' accounts free'));
+    h('span', { class: 'seg', title: `Accounts that can take a ${POOL_LABEL[pool]} turn now` }, h('b', {}, `${free}/${S.accounts.length}`), ' accounts free'));
 }
 
 /* ---------- wiring ---------- */

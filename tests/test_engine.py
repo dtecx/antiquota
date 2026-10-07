@@ -2,8 +2,8 @@ import json
 import threading
 import time
 
-from agyloop import accounts as a
-from agyloop.engine import CONTINUE_AFTER_QUOTA, Engine, parse_verdict
+from antiquota import accounts as a
+from antiquota.engine import CONTINUE_AFTER_QUOTA, Engine, parse_verdict
 
 from conftest import ONE, TWO
 
@@ -191,7 +191,7 @@ def test_rewind_puts_files_back_and_tells_the_agent(home, work):
 
 
 def test_mentions_clear_and_compact(home, work):
-    from agyloop.engine import expand_mentions
+    from antiquota.engine import expand_mentions
     (work / "app.py").write_text("x")
     assert expand_mentions("look at @app.py and @nope.py", str(work)).endswith(f"- {work / 'app.py'}")
     assert expand_mentions("mail me@example.com", str(work)) == "mail me@example.com"
@@ -321,7 +321,7 @@ def test_rate_limit_with_quota_left_only_rests_the_account(home, work, monkeypat
 
 
 def test_temporary_errors_retry_then_move_on_and_bad_sign_in_parks(home, work, monkeypatch):
-    monkeypatch.setattr("agyloop.engine.RETRY_WAITS", (0, 0))
+    monkeypatch.setattr("antiquota.engine.RETRY_WAITS", (0, 0))
     monkeypatch.setenv("STUB_ERROR", f"{ONE}:UNAVAILABLE: model overloaded, try again later")
     eng = Engine()
     sid = eng.create(str(work), "gemini-3.8-flash-low")["id"]
@@ -355,7 +355,7 @@ def test_handoff_state_and_picking_up_another_session(home, work):
     eng.send(new, "carry on")
     finish(eng, new)
     prompt = calls(work)[-1]["args"][1]
-    assert "continuing work from an earlier agy-loop session" in prompt and "write the notes" in prompt
+    assert "continuing work from an earlier antiquota session" in prompt and "write the notes" in prompt
     assert prompt.rstrip().endswith("carry on")
 
 

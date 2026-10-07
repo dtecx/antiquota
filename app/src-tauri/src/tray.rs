@@ -15,7 +15,7 @@ pub fn create(app: &AppHandle) -> tauri::Result<()> {
     TrayIconBuilder::with_id(TRAY_ID)
         .icon(icon)
         .icon_as_template(true)
-        .tooltip("agy-loop")
+        .tooltip("antiquota")
         .menu(&build_menu(app, None)?)
         .show_menu_on_left_click(true)
         .on_menu_event(|app, event| on_menu(app, event.id.as_ref()))
@@ -116,8 +116,8 @@ pub fn build_menu(app: &AppHandle, state: Option<&Value>) -> tauri::Result<Menu<
         .map(|s| s["jobs"].as_array().map(|j| j.iter().filter(|x| x["ended"].is_null()).count()).unwrap_or(0))
         .sum();
     let head = match (state.is_some(), running.len(), jobs) {
-        (false, _, _) => "agy-loop · starting…".to_string(),
-        (true, 0, 0) => "agy-loop · idle".to_string(),
+        (false, _, _) => "antiquota · starting…".to_string(),
+        (true, 0, 0) => "antiquota · idle".to_string(),
         (true, r, j) => {
             let mut parts = vec![];
             if r > 0 {
@@ -126,7 +126,7 @@ pub fn build_menu(app: &AppHandle, state: Option<&Value>) -> tauri::Result<Menu<
             if j > 0 {
                 parts.push(format!("{j} job{}", if j > 1 { "s" } else { "" }));
             }
-            format!("agy-loop · {}", parts.join(", "))
+            format!("antiquota · {}", parts.join(", "))
         }
     };
     menu.append(&MenuItem::with_id(app, "head", head, false, None::<&str>)?)?;
@@ -144,11 +144,11 @@ pub fn build_menu(app: &AppHandle, state: Option<&Value>) -> tauri::Result<Menu<
         }
     }
     menu.append(&PredefinedMenuItem::separator(app)?)?;
-    menu.append(&MenuItem::with_id(app, "open", "Open agy-loop", true, None::<&str>)?)?;
+    menu.append(&MenuItem::with_id(app, "open", "Open antiquota", true, None::<&str>)?)?;
     menu.append(&MenuItem::with_id(app, "new", "New session…", true, None::<&str>)?)?;
     menu.append(&MenuItem::with_id(app, "stop_all", "Stop all running", !running.is_empty(), None::<&str>)?)?;
     menu.append(&PredefinedMenuItem::separator(app)?)?;
-    menu.append(&MenuItem::with_id(app, "quit", "Quit agy-loop", true, Some("CmdOrCtrl+Q"))?)?;
+    menu.append(&MenuItem::with_id(app, "quit", "Quit antiquota", true, Some("CmdOrCtrl+Q"))?)?;
     Ok(menu)
 }
 
@@ -181,7 +181,7 @@ pub fn poll(app: AppHandle) {
                 }
                 #[cfg(target_os = "macos")]
                 let _ = tray.set_title(if busy > 0 { Some(busy.to_string()) } else { None });
-                let _ = tray.set_tooltip(Some(if busy > 0 { format!("agy-loop · {busy} working") } else { "agy-loop".into() }));
+                let _ = tray.set_tooltip(Some(if busy > 0 { format!("antiquota · {busy} working") } else { "antiquota".into() }));
             }
             if let Some(w) = handle.get_webview_window("main") {
                 let _ = w.set_badge_count(if busy > 0 { Some(busy as i64) } else { None });

@@ -117,7 +117,7 @@ if args[:1] == ["-p"] and "--output-format" in args and not args[1].startswith("
         time.sleep(float(os.environ["STUB_SLEEP"]))
     emit(event="step_update", step_update={**step, "state": "DONE", "duration_seconds": 0.01})
     reply = f"turn {n} on {name}"
-    if os.environ.get("STUB_BG") and n == 1:  # hands a long command to agy-loop
+    if os.environ.get("STUB_BG") and n == 1:  # hands a long command to antiquota
         reply += f"\nRUN_IN_BACKGROUND: `{os.environ['STUB_BG']}`"
     if n >= int(os.environ.get("STUB_DONE_AFTER", "1")):
         reply += "\nGOAL_COMPLETE"

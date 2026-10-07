@@ -3,18 +3,18 @@ import os
 import time
 from datetime import datetime
 
-from agyloop import accounts as a
-from agyloop.__main__ import main
+from antiquota import accounts as a
+from antiquota.__main__ import main
 
 from conftest import HERE, ONE, TWO, sign_in
 
 
 def test_accounts_are_named_by_email_and_use_their_own_stack(home):
     assert a.slots() == [ONE, TWO]
-    s, stack = home / ".agyloop/slots" / ONE, home / ".agyloop/stack"
+    s, stack = home / ".antiquota/slots" / ONE, home / ".antiquota/stack"
     assert (s / a.AUTH).read_text() == ONE + "-token" and not (s / a.AUTH).is_symlink()
     assert (home / a.AUTH).read_text() == "your-own-agy-sign-in"
-    # .gemini comes from agy-loop's stack, everything else from the real HOME.
+    # .gemini comes from antiquota's stack, everything else from the real HOME.
     for p in (".gemini/GEMINI.md", ".gemini/config", ".gemini/antigravity-cli/mcp",
               ".gemini/antigravity-cli/settings.json", ".gemini/antigravity-cli/conversations"):
         assert os.path.realpath(s / p) == os.path.realpath(stack / p), p
@@ -22,28 +22,28 @@ def test_accounts_are_named_by_email_and_use_their_own_stack(home):
         assert os.path.realpath(s / p) == os.path.realpath(home / p), p
     assert (s / ".gemini/config/skills/caveman/SKILL.md").read_text() == "skill"
     assert not os.path.lexists(s / ".gemini/antigravity-cli/installation_id")
-    assert not os.path.lexists(s / ".agyloop")
+    assert not os.path.lexists(s / ".antiquota")
     # Sign-in never touched either stack; what it created is kept aside.
     assert not (home / ".gemini/config/config.json").exists() and not (stack / ".gemini/config/config.json").exists()
-    assert (s / ".agyloop-login/.gemini/config/config.json").exists()
+    assert (s / ".antiquota-login/.gemini/config/config.json").exists()
     assert a.unshared(str(s)) == [] and main(["doctor"]) == 0
 
 
 def test_stack_is_separate_from_your_agy_cli(home):
-    stack_settings = home / ".agyloop/stack/.gemini/antigravity-cli/settings.json"
+    stack_settings = home / ".antiquota/stack/.gemini/antigravity-cli/settings.json"
     stack_settings.write_text('{"permissions": {"allow": ["command(rm)"]}}')
     (home / ".gemini/config/skills/new-in-cli").mkdir()
     assert "command(ls)" in (home / ".gemini/antigravity-cli/settings.json").read_text()
-    assert not (home / ".agyloop/slots" / ONE / ".gemini/config/skills/new-in-cli").exists()
-    (home / ".agyloop/stack/.gemini/antigravity-cli/conversations/c1").write_text("x")
+    assert not (home / ".antiquota/slots" / ONE / ".gemini/config/skills/new-in-cli").exists()
+    (home / ".antiquota/stack/.gemini/antigravity-cli/conversations/c1").write_text("x")
     a.seed_stack(force=True)  # re-copy config on purpose: settings reset, conversations kept
     assert "command(ls)" in stack_settings.read_text()
-    assert (home / ".agyloop/slots" / ONE / ".gemini/config/skills/new-in-cli").exists()
-    assert (home / ".agyloop/stack/.gemini/antigravity-cli/conversations/c1").exists()
+    assert (home / ".antiquota/slots" / ONE / ".gemini/config/skills/new-in-cli").exists()
+    assert (home / ".antiquota/stack/.gemini/antigravity-cli/conversations/c1").exists()
     # New real-HOME entries follow on the next sync.
     (home / ".newtool").write_text("")
-    a.sync(str(home / ".agyloop/slots" / ONE))
-    assert (home / ".agyloop/slots" / ONE / ".newtool").is_symlink()
+    a.sync(str(home / ".antiquota/slots" / ONE))
+    assert (home / ".antiquota/slots" / ONE / ".newtool").is_symlink()
 
 
 def test_sign_in_needs_the_right_code_and_never_half_creates_an_account(home):
@@ -108,8 +108,8 @@ def test_parse_real_quota_output():
 
 
 def test_every_agy_call_keeps_the_token_in_the_account_folder(home):
-    cmd, env = a.agy_cmd(str(home / ".agyloop/slots" / ONE), ["-p", "hi"])
-    assert env["HOME"] == env["USERPROFILE"] == str(home / ".agyloop/slots" / ONE)
+    cmd, env = a.agy_cmd(str(home / ".antiquota/slots" / ONE), ["-p", "hi"])
+    assert env["HOME"] == env["USERPROFILE"] == str(home / ".antiquota/slots" / ONE)
     assert env["SSH_CONNECTION"]  # agy: "Using file-based token storage because SSH session detected"
     assert a.whoami(ONE) == ONE and a.whoami(TWO) == TWO
 
@@ -142,9 +142,9 @@ def test_an_account_google_wants_verified_is_kept_and_parked(home, monkeypatch):
 
 
 def test_usage_is_visible_where_ccusage_reads_antigravity(home, monkeypatch):
-    monkeypatch.delenv("AGYLOOP_NO_USAGE_LINK", raising=False)
+    monkeypatch.delenv("ANTIQUOTA_NO_USAGE_LINK", raising=False)
     link = home / ".config/antigravity"
-    assert a.expose_usage() and os.path.realpath(link) == os.path.realpath(home / ".agyloop/stack/.gemini/antigravity-cli")
+    assert a.expose_usage() and os.path.realpath(link) == os.path.realpath(home / ".antiquota/stack/.gemini/antigravity-cli")
     os.unlink(link)
     (home / ".config/antigravity").mkdir()           # something else owns the path: leave it alone
     assert not a.expose_usage() and not os.path.islink(link)
@@ -175,3 +175,19 @@ def test_classify_reads_only_agys_error_channels():
     assert a.classify(1, err("UNAVAILABLE: the model is overloaded"), "") == "transient"
     assert a.classify(1, err("UNAUTHENTICATED: invalid_grant"), "") == "auth"
     assert a.classify(0, json.dumps({"event": "result", "result": {"status": "SUCCESS", "response": "quota 429"}}), "") is None
+
+
+def test_old_agyloop_folder_moves_to_antiquota(tmp_path):
+    import os
+    old, new = str(tmp_path / ".agyloop"), str(tmp_path / ".antiquota")
+    os.makedirs(os.path.join(old, "stack", ".gemini", "config"))
+    os.makedirs(os.path.join(old, "slots", "a@x", ".gemini"))
+    hooks = os.path.join(old, "stack", ".gemini", "config", "hooks.json")
+    open(hooks, "w").write('{"x": {"command": "%s/stack/.gemini/config/hooks/run"}}' % old)
+    os.symlink(os.path.join(old, "stack", ".gemini", "config"), os.path.join(old, "slots", "a@x", ".gemini", "config"))
+    a.migrate_from_agyloop(old, new)
+    assert os.path.islink(old) and os.path.realpath(old) == os.path.realpath(new)
+    assert os.readlink(os.path.join(new, "slots", "a@x", ".gemini", "config")) == os.path.join(new, "stack", ".gemini", "config")
+    assert "/.antiquota/stack/" in open(os.path.join(new, "stack", ".gemini", "config", "hooks.json")).read()
+    a.migrate_from_agyloop(old, new)  # a second run changes nothing
+    assert os.path.isdir(new)

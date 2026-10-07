@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>agy-loop</title>
+<title>antiquota</title>
 <style>
   :root {
     --night: #0e0f11; --night-1: #141518; --ink: #e8e6e1; --ink-2: #b3b0a9; --ink-3: #85827b; --ink-4: #5b5954;
@@ -38,8 +38,8 @@
 <body>
 <main id="main">
   <div class="mark" aria-hidden="true"><i></i><i></i></div>
-  <h1>agy-loop</h1>
-  <p id="text" role="status">Starting the agy-loop engine…</p>
+  <h1>antiquota</h1>
+  <p id="text" role="status">Starting the antiquota engine…</p>
   <div class="acts">
     <button class="primary" id="retry">Try again</button>
     <button id="quit">Quit</button>
@@ -54,7 +54,7 @@
   });
   document.getElementById('retry').onclick = () => {
     main.classList.remove('error');
-    text.textContent = 'Starting the agy-loop engine…';
+    text.textContent = 'Starting the antiquota engine…';
     T.core.invoke('retry_engine');
   };
   document.getElementById('quit').onclick = () => T.core.invoke('quit_app');

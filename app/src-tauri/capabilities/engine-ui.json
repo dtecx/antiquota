@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "engine-ui",
-  "description": "The agy-loop UI served by the local engine: native notifications, clipboard, links, save dialogs.",
+  "description": "The antiquota UI served by the local engine: native notifications, clipboard, links, save dialogs.",
   "windows": ["main"],
   "remote": {
     "urls": ["http://127.0.0.1:*/*", "http://localhost:*/*", "http://127.0.0.1:*", "http://localhost:*"]

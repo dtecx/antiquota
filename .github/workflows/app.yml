@@ -48,7 +48,7 @@ jobs:
         run: npx tauri build --config src-tauri/tauri.bundle.json
       - uses: actions/upload-artifact@v4
         with:
-          name: agy-loop-${{ matrix.os }}
+          name: antiquota-${{ matrix.os }}
           path: |
             app/src-tauri/target/release/bundle/**/*.dmg
             app/src-tauri/target/release/bundle/**/*.app

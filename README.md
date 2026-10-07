@@ -1,13 +1,13 @@
-# agyloop
+# antiquota
 
 Long-running agent loops on the Antigravity CLI (`agy`), spread over several
-Google accounts. agy-loop runs agy with its own copy of your agy setup, so your
+Google accounts. antiquota runs agy with its own copy of your agy setup, so your
 agy CLI and the Antigravity IDE are never changed by it.
 
 ```sh
-python3 -m agyloop gui          # web GUI on http://127.0.0.1:8765
-python3 -m agyloop serve        # the engine alone (for the desktop app or a service)
-python3 -m agyloop goal "all tests pass" --check "pytest -q" --cwd ~/code/app
+python3 -m antiquota gui          # web GUI on http://127.0.0.1:8765
+python3 -m antiquota serve        # the engine alone (for the desktop app or a service)
+python3 -m antiquota goal "all tests pass" --check "pytest -q" --cwd ~/code/app
 ```
 
 ## Desktop app
@@ -16,7 +16,7 @@ python3 -m agyloop goal "all tests pass" --check "pytest -q" --cwd ~/code/app
 Windows and Linux. The window shows the engine's UI; the app adds:
 
 - **Tray / menu bar**: what is working, each account's Gemini quota or why it
-  rests, *Stop all running*, *New session*. Closing the window keeps agy-loop
+  rests, *Stop all running*, *New session*. Closing the window keeps antiquota
   in the tray; quitting asks first while sessions or jobs run, and can leave
   them running in the background (the next start attaches again).
 - **Native notifications** (turn finished, goal met, job done, approval
@@ -26,8 +26,8 @@ Windows and Linux. The window shows the engine's UI; the app adds:
   your default browser, file drag and drop, one instance, remembered window
   size, *Open at login* (starts in the tray), keep-awake while agents work.
 
-The engine is a separate process (`agyloop serve`, one per agy-loop folder,
-found through `~/.agyloop/state/engine.json`). The app attaches to a running
+The engine is a separate process (`antiquota serve`, one per antiquota folder,
+found through `~/.antiquota/state/engine.json`). The app attaches to a running
 engine or starts one: the bundled engine in a release, the source tree in
 development.
 
@@ -45,13 +45,13 @@ the app is signed.
 
 ## Permissions and approvals
 
-Headless agy cannot ask anyone and ignores allow-rules, so while agy-loop's
-`agyloop` hook is on (Settings → Hooks), agy runs with
-`--dangerously-skip-permissions` and agy-loop decides every tool call
-(`agyloop/policy.py`):
+Headless agy cannot ask anyone and ignores allow-rules, so while antiquota's
+`antiquota` hook is on (Settings → Hooks), agy runs with
+`--dangerously-skip-permissions` and antiquota decides every tool call
+(`antiquota/policy.py`):
 
 - reading and searching pass; *bypass* mode passes everything;
-- shell commands and MCP tools follow agy-loop's allow/deny rules
+- shell commands and MCP tools follow antiquota's allow/deny rules
   (`command(npm test)`, `mcp(server/tool)`), anything else is asked;
 - edits follow the session mode: *accept edits* allows them, *plan* refuses
   them, *default* asks;
@@ -96,7 +96,7 @@ Switching the hook off gives back agy's own headless behaviour.
   (no tokens). Every decision lands in a routing log (Accounts drawer).
 - **Handoff without a memory service**: the turn continues in the same agy
   conversation on the next account. When a conversation cannot be resumed, or
-  a new session should pick up an earlier one, agy-loop's own handoff state
+  a new session should pick up an earlier one, antiquota's own handoff state
   (`STATE.md` in the session folder: objective, requests, a per-turn work log,
   files changed, jobs, open problems, last reply; `/state` shows it) goes in
   front of the next message.
@@ -115,7 +115,7 @@ Switching the hook off gives back agy's own headless behaviour.
   a *Verify with Google* link and *Check again*; they join the rotation once
   Google accepts them. Each card shows quota windows and today's tokens.
 - **Changes** panel: files the session edited, +/− counts, diffs on click.
-- **Settings** (⌘,): agy-loop's own rules (GEMINI.md, rules/), skills, hooks,
+- **Settings** (⌘,): antiquota's own rules (GEMINI.md, rules/), skills, hooks,
   MCP servers, plugins, permissions and session defaults, each compared with
   your agy CLI and the IDE, with one-click copy from either.
 - Slash commands: `/goal`, `/stop`, `/model`, `/effort`, `/mode`, `/login`,
@@ -129,16 +129,16 @@ a localhost Host header.
 `hacklab sync` runs `ccusage session --json`, whose Antigravity reader takes
 token usage from agy's conversation databases in a few fixed folders
 (`~/.gemini/antigravity`, `antigravity-cli`, `antigravity-ide`,
-`antigravity-backup`, `~/.config/antigravity`). agy-loop links the unused
+`antigravity-backup`, `~/.config/antigravity`). antiquota links the unused
 `~/.config/antigravity` to its own conversation store, so usage from every
-agy-loop account syncs as ordinary **Antigravity** usage, with no extra agent or
-collector. `agyloop doctor` reports whether the link is in place.
+antiquota account syncs as ordinary **Antigravity** usage, with no extra agent or
+collector. `antiquota doctor` reports whether the link is in place.
 
 ## Accounts and the stack
 
 ```
-~/.agyloop/
-  stack/.gemini/          agy-loop's copy of ~/.gemini: rules, skills, hooks, MCP, plugins, settings
+~/.antiquota/
+  stack/.gemini/          antiquota's copy of ~/.gemini: rules, skills, hooks, MCP, plugins, settings
   slots/<email>/          one fake HOME per account; its sign-in token is a file in it
   sessions/<id>/          meta.json + events.jsonl per session
   state/                  quota walls, leases, probe snapshots, raw failures
@@ -148,11 +148,11 @@ collector. `agyloop doctor` reports whether the link is in place.
   keyring (Keychain, Secret Service, Credential Manager), which belongs to the
   OS user, so a second account would overwrite the first and your own agy CLI.
   When agy sees an SSH session it uses file storage instead (its log:
-  `Using file-based token storage because SSH session detected`). agy-loop sets
+  `Using file-based token storage because SSH session detected`). antiquota sets
   `SSH_CONNECTION` (and `HOME`/`USERPROFILE`) on every agy call, so each token
   lives in `slots/<email>/.gemini/antigravity-cli/antigravity-oauth-token`. Same on
   macOS, Linux and Windows, headless or not; your keyring is never touched. A
-  slot folder can be copied to another machine. `agyloop doctor` checks that
+  slot folder can be copied to another machine. `antiquota doctor` checks that
   every account really signs in as its own email.
 - On first use the whole `~/.gemini` is cloned into the stack, except identity,
   per-process state and history. Absolute `~/.gemini` paths in `hooks.json` and
@@ -165,19 +165,19 @@ collector. `agyloop doctor` reports whether the link is in place.
 - One agy process per account at a time (file lock). Gemini and Claude/GPT
   quotas are walled separately from `/quota` (no model tokens).
 - Sign-in: agy prints a Google URL and reads the code from a terminal, so
-  agy-loop gives it a pseudo-terminal (macOS, Linux). On Windows agy finishes
+  antiquota gives it a pseudo-terminal (macOS, Linux). On Windows agy finishes
   sign-in by itself once the browser step completes.
 
 ## CLI
 
 ```sh
-agyloop login                  # add a Google account (link + paste code)
-agyloop accounts               # quota, walls and leases per account
-agyloop probe                  # refresh quota walls (cron every 10 min if no GUI runs)
-agyloop doctor                 # every account loads the stack's skills and hooks?
-agyloop stack [reseed]         # stack folder; reseed re-copies config from ~/.gemini
-agyloop run -- -p "..."        # agy on the first account with quota left; exit 75 if none
-agyloop goal "objective" ...   # headless goal run; the session also shows in the GUI
+antiquota login                  # add a Google account (link + paste code)
+antiquota accounts               # quota, walls and leases per account
+antiquota probe                  # refresh quota walls (cron every 10 min if no GUI runs)
+antiquota doctor                 # every account loads the stack's skills and hooks?
+antiquota stack [reseed]         # stack folder; reseed re-copies config from ~/.gemini
+antiquota run -- -p "..."        # agy on the first account with quota left; exit 75 if none
+antiquota goal "objective" ...   # headless goal run; the session also shows in the GUI
 ```
 
 ## Shared stack fixes
