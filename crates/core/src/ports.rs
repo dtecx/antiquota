@@ -121,6 +121,22 @@ pub trait AccountStore: Send + Sync {
     fn stack_overview(&self) -> Result<serde_json::Value, PortError> {
         unavailable()
     }
+    /// antiquota's own allow and deny lists, shared by every account and session.
+    fn permissions(&self) -> Result<crate::Permissions, PortError> {
+        Ok(crate::Permissions::default())
+    }
+    /// Replaces the given lists and returns the stored permission object.
+    fn save_permissions(
+        &self,
+        _allow: Option<Vec<String>>,
+        _deny: Option<Vec<String>>,
+    ) -> Result<serde_json::Value, PortError> {
+        unavailable()
+    }
+    /// Adds one permanent allow rule; callers have already refused unsafe rules.
+    fn add_allow_rule(&self, _rule: &str) -> Result<(), PortError> {
+        unavailable()
+    }
 }
 pub trait QuotaProbe: Send + Sync {
     fn probe<'a>(&'a self, slot: &'a Slot) -> PortFuture<'a, ProbeResult>;
@@ -144,6 +160,10 @@ pub trait SessionStore: Send + Sync {
     ) -> Result<f64, PortError>;
     fn project_usage(&self, sid: &str, records: &[EventRecord]) -> Result<(), PortError>;
     fn state_dir(&self) -> String;
+    /// Absolute paths of the mentioned files or folders that exist, relative to `cwd`.
+    fn resolve_mentions(&self, _cwd: &str, _candidates: &[String]) -> Vec<String> {
+        vec![]
+    }
     fn settings(&self) -> Result<Option<Settings>, PortError> {
         Ok(None)
     }

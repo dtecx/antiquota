@@ -5,7 +5,7 @@
   import type { Login } from '../lib/login';
   import AccountPill from './AccountPill.svelte';
   import type { Connection } from '../lib/stream';
-  import { projectName, relativeTime } from '../lib/format';
+  import { isBusy, projectName, relativeTime } from '../lib/format';
   import Icon from './Icon.svelte';
   import { groupSessions } from '../lib/navigation';
   let {
@@ -55,9 +55,14 @@
               aria-current={session.id === $view.selected?.id ? 'page' : undefined}
               title={session.title || 'New session'}
             >
-              <span class="session-dot" class:running={session.status === 'running'}></span>
+              <span
+                class="session-dot"
+                class:running={isBusy(session.status)}
+                class:attention={session.status === 'approval'}
+              ></span>
               <span class="session-title">{session.title || 'New session'}</span>
-              {#if session.pinned}<Icon name="pin" size={12} />{:else}<time
+              {#if session.status === 'approval'}<span class="attention-label">approval</span
+                >{:else if session.pinned}<Icon name="pin" size={12} />{:else}<time
                   >{relativeTime(session.updated)}</time
                 >{/if}
             </button>
@@ -225,6 +230,14 @@
   }
   .session-dot.running {
     background: var(--baton);
+  }
+  .session-dot.attention {
+    box-shadow: 0 0 0 3px var(--baton-soft);
+  }
+  .attention-label {
+    flex-shrink: 0;
+    color: var(--baton);
+    font: 10px var(--mono);
   }
   time {
     color: var(--ink-4);

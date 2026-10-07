@@ -148,6 +148,7 @@ impl Service {
     }
     fn stop_state(&self, state: &mut SessionState) -> Result<(), AppError> {
         state.cancel.cancel();
+        self.deny_pending(state)?;
         let mut next = state.meta.clone();
         next.queue.clear();
         if let Some(goal) = &mut next.goal {

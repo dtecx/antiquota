@@ -5,6 +5,12 @@ import { isStreamEvent } from './validate';
 
 export function reduceTranscript(events: EventRecord[], event: EventRecord): EventRecord[] {
   if (['meta', 'accounts', 'deleted'].includes(event.t)) return events;
+  if (event.t === 'approval') {
+    // An answer replaces its pending card in place.
+    const index = events.findIndex((item) => item.t === 'approval' && item.id === event.id);
+    if (index >= 0) return events.map((item, position) => (position === index ? event : item));
+    return [...events, event];
+  }
   if (
     event.t === 'delta' &&
     events.some(
@@ -61,7 +67,7 @@ export function projectHistory(events: EventRecord[]): EventRecord[] {
   // Durable history is authoritative. Equal timestamps and text can be separate messages.
   return events.reduce<EventRecord[]>((projection, event) => {
     if (['meta', 'accounts', 'deleted'].includes(event.t)) return projection;
-    if (['tool', 'assistant', 'thinking', 'delta'].includes(event.t))
+    if (['tool', 'assistant', 'thinking', 'delta', 'approval'].includes(event.t))
       return reduceTranscript(projection, event);
     return [...projection, event];
   }, []);

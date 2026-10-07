@@ -221,6 +221,59 @@ async fn route(
             )
             .await
         }
+        ("POST", ["approvals"]) => {
+            let text = |key: &str| match body.get(key) {
+                None | Some(Value::Null) => String::new(),
+                Some(Value::String(s)) => s.clone(),
+                Some(other) => other.to_string(),
+            };
+            let args = match body.get("args") {
+                Some(args) if truthy(args) => args.clone(),
+                _ => json!({}),
+            };
+            approval(service.approval_request(&text("session"), &text("tool"), &args)?)
+        }
+        ("GET", ["approvals", id]) => {
+            let wait = query_value(query, "wait").unwrap_or_else(|| "25".into());
+            let wait: f64 = wait.trim().parse().map_err(|_| {
+                AppError::Invalid(format!("could not convert string to float: '{wait}'"))
+            })?;
+            approval(service.approval_wait(id, wait).await?)
+        }
+        ("POST", ["approvals", id, "answer"]) => {
+            let decision = body.get("decision").and_then(Value::as_str);
+            if !matches!(decision, Some("allow" | "deny")) {
+                return Err(AppError::Invalid("decision: allow or deny".into()));
+            }
+            let why: String = match body.get("why") {
+                None | Some(Value::Null) => String::new(),
+                Some(Value::String(s)) => s.clone(),
+                Some(other) => other.to_string(),
+            }
+            .chars()
+            .take(500)
+            .collect();
+            let always = body.get("always").is_some_and(truthy);
+            approval(service.approval_answer(id, decision == Some("allow"), always, &why)?)
+        }
+        ("POST", ["sessions", id, "steer"]) => value(SteerResponse {
+            messages: service.steer(id)?,
+        }),
+        ("GET", ["permissions"]) => value(AllowRulesResponse {
+            allow: service.accounts.permissions()?.allow,
+        }),
+        ("PUT", ["permissions"]) => {
+            let list = |key: &str| -> Result<Option<Vec<String>>, AppError> {
+                match body.get(key) {
+                    None | Some(Value::Null) => Ok(None),
+                    Some(rules) => antiquota_core::policy::clean_rules(key, rules)
+                        .map(Some)
+                        .map_err(AppError::Invalid),
+                }
+            };
+            let (allow, deny) = (list("allow")?, list("deny")?);
+            Ok(service.accounts.save_permissions(allow, deny)?)
+        }
         ("POST", ["shutdown"]) => {
             state.closing.send_replace(true);
             state.shutdown.notify_one();
@@ -261,6 +314,25 @@ fn patch_fields(body: &Value) -> Result<SessionPatch, AppError> {
             .transpose()?,
         pinned: body.get("pinned").map(truthy),
         archived: body.get("archived").map(truthy),
+    })
+}
+fn approval(reply: antiquota_app::ApprovalReply) -> Result<Value, AppError> {
+    value(match reply {
+        antiquota_app::ApprovalReply::Pending(id) => ApprovalResponse {
+            pending: Some(id),
+            ..Default::default()
+        },
+        antiquota_app::ApprovalReply::Decided { decision, reason } => ApprovalResponse {
+            decision: Some(decision.as_str().into()),
+            reason: (!reason.is_empty()).then_some(reason),
+            ..Default::default()
+        },
+    })
+}
+fn query_value(query: &str, key: &str) -> Option<String> {
+    query.split('&').find_map(|part| {
+        let (k, v) = part.split_once('=').unwrap_or((part, ""));
+        (k == key).then(|| v.replace('+', " "))
     })
 }
 pub(crate) fn truthy(v: &Value) -> bool {

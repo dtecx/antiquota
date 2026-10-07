@@ -1,6 +1,6 @@
 # Rewrite test report
 
-Slice 1 implements Rust CLI/server sessions and one agy turn with the Svelte browser UI. **40 of 1144 acceptance items are Passed; 1104 remain Pending.** The inventory contains 1009 baseline items and 135 explicit rewrite requirements in [FEATURES.md](FEATURES.md). Source review, legacy tests and Python captures are references; the rows below name actual rewrite checks. A Pending row may have passing subset tests, but its remaining acceptance is explicit.
+Slice 1 implements Rust CLI/server sessions and one agy turn with the Svelte browser UI; Slice 3 adds permission policy, the hook, approvals and mid-turn steering. **105 of 1144 acceptance items are Passed; 1039 remain Pending.** Slice 2 account evidence is recorded in [slice2-coverage-proposal.json](../../tests/rewrite/slice2-coverage-proposal.json) and is not yet folded into these rows. The inventory contains 1009 baseline items and 135 explicit rewrite requirements in [FEATURES.md](FEATURES.md). Source review, legacy tests and Python captures are references; the rows below name actual rewrite checks. A Pending row may have passing subset tests, but its remaining acceptance is explicit.
 
 The fresh independent macOS arm64 gate on 2026-10-07 ran against 440 unchanged source hashes. `main` remained clean at `17ec296`; no push or cutover occurred. Synthetic processes were stopped after validation. [Final verification](../../.handoff/evidence/slice1-independent-final-summary.json) records commands, hashes, counts and cleanup.
 
@@ -16,6 +16,12 @@ The fresh independent macOS arm64 gate on 2026-10-07 ran against 440 unchanged s
 Runtime contract replay covers exactly **22 of 172 captured cases**, including one SSE case with eight original first-turn samples, across the ten currently implemented routes. The remaining 150 cases and 65 routes stay Pending. The separate [core round-trip test](../../crates/core/src/event_tests.rs) preserves every field in all 160 captured samples and 14 event kinds; schema round-trip proof does not imply runtime behavior for all those events. [Replay scope](../../tests/rewrite/slice1-scope.json) and [comparison rules](../../tests/rewrite/README.md) describe the tested subset.
 
 All application handoff, quota routing, approvals, goals/verifier, jobs, loop/schedule, worktrees, terminal, dictation and remaining UI parity retain their individual Pending rows. Native shell, zoom, window persistence, installation, Linux/Windows execution, full CI, real-account smoke and live cost records remain Pending. This validation used synthetic data under `~/Desktop/test`, with no paid agy calls or real-account changes. Existing local backup and continuity evidence do not establish final runtime migration compatibility.
+
+## Slice 3: permissions, hook, approvals and steering
+
+On 2026-10-07 on macOS arm64, `just check` passed (generated types, rustfmt, clippy with warnings denied, cargo-deny, strict Svelte/TypeScript, ESLint, Prettier) and `just test` passed 143 Rust tests, 59 Vitest tests and 30 Chromium scenarios with no failures. [Check log](../../.handoff/evidence/slice3-check.log), [test log](../../.handoff/evidence/slice3-test.log).
+
+Eleven more captured cases now replay exactly: permissions get/put/error, send-long, send-queued, session-steer and the eleven approval request/wait/answer/read cases. Real hook round trips run fake agy, which invokes the built `antiquota hook` for a tool call that waits for an HTTP or browser answer. Remaining Pending rows in this area: F-133 (stack-import and file-edit entry points arrive with the settings slice), F-145 (the 60-second poll cap is enforced but not exercised), F-464 (header state labels), F-513 (steered message label), F-581 (expired-request message), F-582 (approval notification) and F-1030 (steering lives in the approvals service, not yet a feature module).
 
 Mark a row Passed only when its full acceptance has passing tests and evidence. Passing architecture requirements describe the current sources; each future feature must still prove its own behavior. Logs and screenshots live in ignored `.handoff/evidence/`; local tokens and backup contents must never enter committed fixtures or this report.
 
@@ -122,58 +128,58 @@ Mark a row Passed only when its full acceptance has passing tests and evidence. 
 | F-099 | <a id="f-099"></a>Pending — [acceptance](FEATURES.md#f-099) | Pending | Pending |
 | F-100 | <a id="f-100"></a>Pending — [acceptance](FEATURES.md#f-100) | Pending | Pending |
 | F-101 | <a id="f-101"></a>Pending — [acceptance](FEATURES.md#f-101) | Pending | Pending |
-| F-102 | <a id="f-102"></a>Pending — [acceptance](FEATURES.md#f-102) | Pending | Pending |
-| F-103 | <a id="f-103"></a>Pending — [acceptance](FEATURES.md#f-103) | Pending | Pending |
-| F-104 | <a id="f-104"></a>Pending — [acceptance](FEATURES.md#f-104) | Pending | Pending |
-| F-105 | <a id="f-105"></a>Pending — [acceptance](FEATURES.md#f-105) | Pending | Pending |
-| F-106 | <a id="f-106"></a>Pending — [acceptance](FEATURES.md#f-106) | Pending | Pending |
-| F-107 | <a id="f-107"></a>Pending — [acceptance](FEATURES.md#f-107) | Pending | Pending |
-| F-108 | <a id="f-108"></a>Pending — [acceptance](FEATURES.md#f-108) | Pending | Pending |
-| F-109 | <a id="f-109"></a>Pending — [acceptance](FEATURES.md#f-109) | Pending | Pending |
-| F-110 | <a id="f-110"></a>Pending — [acceptance](FEATURES.md#f-110) | Pending | Pending |
-| F-111 | <a id="f-111"></a>Pending — [acceptance](FEATURES.md#f-111) | Pending | Pending |
-| F-112 | <a id="f-112"></a>Pending — [acceptance](FEATURES.md#f-112) | Pending | Pending |
-| F-113 | <a id="f-113"></a>Pending — [acceptance](FEATURES.md#f-113) | Pending | Pending |
-| F-114 | <a id="f-114"></a>Pending — [acceptance](FEATURES.md#f-114) | Pending | Pending |
-| F-115 | <a id="f-115"></a>Pending — [acceptance](FEATURES.md#f-115) | Pending | Pending |
-| F-116 | <a id="f-116"></a>Pending — [acceptance](FEATURES.md#f-116) | Pending | Pending |
-| F-117 | <a id="f-117"></a>Pending — [acceptance](FEATURES.md#f-117) | Pending | Pending |
-| F-118 | <a id="f-118"></a>Pending — [acceptance](FEATURES.md#f-118) | Pending | Pending |
-| F-119 | <a id="f-119"></a>Pending — [acceptance](FEATURES.md#f-119) | Pending | Pending |
-| F-120 | <a id="f-120"></a>Pending — [acceptance](FEATURES.md#f-120) | Pending | Pending |
-| F-121 | <a id="f-121"></a>Pending — [acceptance](FEATURES.md#f-121) | Pending | Pending |
-| F-122 | <a id="f-122"></a>Pending — [acceptance](FEATURES.md#f-122) | Pending | Pending |
-| F-123 | <a id="f-123"></a>Pending — [acceptance](FEATURES.md#f-123) | Pending | Pending |
-| F-124 | <a id="f-124"></a>Pending — [acceptance](FEATURES.md#f-124) | Pending | Pending |
-| F-125 | <a id="f-125"></a>Pending — [acceptance](FEATURES.md#f-125) | Pending | Pending |
-| F-126 | <a id="f-126"></a>Pending — [acceptance](FEATURES.md#f-126) | Pending | Pending |
-| F-127 | <a id="f-127"></a>Pending — [acceptance](FEATURES.md#f-127) | Pending | Pending |
-| F-128 | <a id="f-128"></a>Pending — [acceptance](FEATURES.md#f-128) | Pending | Pending |
-| F-129 | <a id="f-129"></a>Pending — [acceptance](FEATURES.md#f-129) | Pending | Pending |
-| F-130 | <a id="f-130"></a>Pending — [acceptance](FEATURES.md#f-130) | Pending | Pending |
-| F-131 | <a id="f-131"></a>Pending — [acceptance](FEATURES.md#f-131) | Pending | Pending |
-| F-132 | <a id="f-132"></a>Pending — [acceptance](FEATURES.md#f-132) | Pending | Pending |
+| F-102 | <a id="f-102"></a>[captured_permission_approval_and_steer_routes](../../tests/rewrite/approvals.rs); [the_hook_fails_closed_and_starts_fast](../../tests/rewrite/approvals.rs). Missing lists read as empty; the engine and the hook read the same own-stack lists. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-103 | <a id="f-103"></a>[captured_permission_approval_and_steer_routes](../../tests/rewrite/approvals.rs); [rule_lists_are_validated_and_deduplicated](../../crates/core/src/policy/tests.rs). Captured GET/PUT/error cases match; allow and deny update independently, duplicates drop in order and unrelated settings stay. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-104 | <a id="f-104"></a>[policy_sorts_tools_by_risk](../../crates/core/src/policy/tests.rs). Bypass allows every tool, including commands and side-effect tools, without adding a rule. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-105 | <a id="f-105"></a>[policy_sorts_tools_by_risk](../../crates/core/src/policy/tests.rs). Reads, searches and unknown bookkeeping tools are allowed in default and plan modes. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-106 | <a id="f-106"></a>[policy_sorts_tools_by_risk](../../crates/core/src/policy/tests.rs); [git_commit_uses_the_git_commit_command](../../crates/core/src/policy/tests.rs). run_command and git_commit go through command rules; git_commit uses `git commit` without a CommandLine. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-107 | <a id="f-107"></a>[policy_sorts_tools_by_risk](../../crates/core/src/policy/tests.rs). shell_exec, send_command_input, execute_notebook, run_extension_code and restart_dev_server ask even in accept-edits. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-108 | <a id="f-108"></a>[policy_sorts_tools_by_risk](../../crates/core/src/policy/tests.rs). Every write tool asks in default, is allowed in accept-edits and refused in plan mode. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-109 | <a id="f-109"></a>[policy_sorts_tools_by_risk](../../crates/core/src/policy/tests.rs). Deploy/database/setup/install/PR-review tools ask unless bypassed. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-110 | <a id="f-110"></a>[mcp_rules_match_exact_server_and_global_and_deny_wins](../../crates/core/src/policy/tests.rs). ServerName/ToolName and server/tool both form the rule; no server asks without a rule. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-111 | <a id="f-111"></a>[mcp_rules_match_exact_server_and_global_and_deny_wins](../../crates/core/src/policy/tests.rs). Exact, server-wide and global allows allow; exact and server-wide denies win. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-112 | <a id="f-112"></a>[command_rules_match_whole_words_and_suggest_rules](../../crates/core/src/policy/tests.rs). Exact and whole-word prefixes match; command(*) matches every part but still respects risky flags. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-113 | <a id="f-113"></a>[denies_win_even_when_the_line_cannot_be_parsed](../../crates/core/src/policy/tests.rs). Denies apply first, including through loose splitting of an unparseable line, with an explicit reason. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-114 | <a id="f-114"></a>[policy_sorts_tools_by_risk](../../crates/core/src/policy/tests.rs); [allow_rules_never_cover_risky_flags](../../crates/core/src/policy/tests.rs); [risky_flags_ask_after_any_allowed_prefix](../../crates/core/src/policy/tests.rs); [quoted_separators_never_create_commands](../../crates/core/src/policy/tests.rs); [arbitrary_lines_never_panic_and_never_allow_unlisted_commands](../../crates/core/src/policy/tests.rs). A compound line is allowed only when every part is allowed and none is risky. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-115 | <a id="f-115"></a>[shell_splitting_keeps_quoted_operators_and_removes_quotes](../../crates/core/src/policy/tests.rs); [risky_flags_ask_after_any_allowed_prefix](../../crates/core/src/policy/tests.rs); [quoted_separators_never_create_commands](../../crates/core/src/policy/tests.rs); [arbitrary_lines_never_panic_and_never_allow_unlisted_commands](../../crates/core/src/policy/tests.rs). &&, ||, ;, |, &, |&, ;; and newlines separate commands; quoted operator characters stay inside words. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-116 | <a id="f-116"></a>[command_parts_respect_quotes_and_catch_hidden_commands](../../crates/core/src/policy/tests.rs). A quoted grep -E alternation stays one argument and the real pipeline stages are each checked. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-117 | <a id="f-117"></a>[command_parts_respect_quotes_and_catch_hidden_commands](../../crates/core/src/policy/tests.rs). A quoted semicolon pattern and a quoted sed -n range create no extra commands. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-118 | <a id="f-118"></a>[command_parts_respect_quotes_and_catch_hidden_commands](../../crates/core/src/policy/tests.rs). Newline (including blank-line runs) and background & expose the hidden command, which asks. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-119 | <a id="f-119"></a>[command_parts_respect_quotes_and_catch_hidden_commands](../../crates/core/src/policy/tests.rs). $() and backtick substitution always ask, even with an echo allow rule. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-120 | <a id="f-120"></a>[command_parts_respect_quotes_and_catch_hidden_commands](../../crates/core/src/policy/tests.rs). Unbalanced quotes, a trailing escape and empty lines ask. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-121 | <a id="f-121"></a>[command_parts_respect_quotes_and_catch_hidden_commands](../../crates/core/src/policy/tests.rs). >/dev/null and 2>&1/2>&- are allowed; >, >>, >& file and <> into real files ask. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-122 | <a id="f-122"></a>[allow_rules_never_cover_risky_flags](../../crates/core/src/policy/tests.rs). find -exec, -execdir, -ok and -okdir ask under a find allow. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-123 | <a id="f-123"></a>[allow_rules_never_cover_risky_flags](../../crates/core/src/policy/tests.rs). find -delete and -fprint/-fprintf ask; find -name stays allowed. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-124 | <a id="f-124"></a>[allow_rules_never_cover_risky_flags](../../crates/core/src/policy/tests.rs). --force, --force-with-lease and -f ask; ordinary push stays allowed by its own rule. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-125 | <a id="f-125"></a>[allow_rules_never_cover_risky_flags](../../crates/core/src/policy/tests.rs). --delete, --mirror, -d and :ref deletion ask. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-126 | <a id="f-126"></a>[allow_rules_never_cover_risky_flags](../../crates/core/src/policy/tests.rs). sed -i asks under a sed allow. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-127 | <a id="f-127"></a>[allow_rules_never_cover_risky_flags](../../crates/core/src/policy/tests.rs). git reset --hard asks under a git reset allow. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-128 | <a id="f-128"></a>[allow_rules_never_cover_risky_flags](../../crates/core/src/policy/tests.rs). git clean -fd, -xdf and --force ask (the legacy pattern missed combined flags); git checkout -- path asks. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-129 | <a id="f-129"></a>[allow_rules_never_cover_risky_flags](../../crates/core/src/policy/tests.rs). git branch -D and -f ask while -d stays allowed; git stash drop/clear ask. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-130 | <a id="f-130"></a>[allow_rules_never_cover_risky_flags](../../crates/core/src/policy/tests.rs). `ls && find / -delete` asks although both bases are allowed. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-131 | <a id="f-131"></a>[command_rules_match_whole_words_and_suggest_rules](../../crates/core/src/policy/tests.rs); [permanent_rules_never_allow_arbitrary_programs](../../crates/core/src/policy/tests.rs). Two-word rules for listed tools when the second word is not a flag, one word otherwise; no rule for arbitrary program runners. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-132 | <a id="f-132"></a>[hook_waits_for_the_user_and_relays_each_answer](../../tests/rewrite/approvals.rs); [rule_lists_are_validated_and_deduplicated](../../crates/core/src/policy/tests.rs). Always-allow stores the rule once for every account and session; empty or duplicate rules are never written. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
 | F-133 | <a id="f-133"></a>Pending — [acceptance](FEATURES.md#f-133) | Pending | Pending |
-| F-134 | <a id="f-134"></a>Pending — [acceptance](FEATURES.md#f-134) | Pending | Pending |
-| F-135 | <a id="f-135"></a>Pending — [acceptance](FEATURES.md#f-135) | Pending | Pending |
-| F-136 | <a id="f-136"></a>Pending — [acceptance](FEATURES.md#f-136) | Pending | Pending |
-| F-137 | <a id="f-137"></a>Pending — [acceptance](FEATURES.md#f-137) | Pending | Pending |
-| F-138 | <a id="f-138"></a>Pending — [acceptance](FEATURES.md#f-138) | Pending | Pending |
-| F-139 | <a id="f-139"></a>Pending — [acceptance](FEATURES.md#f-139) | Pending | Pending |
-| F-140 | <a id="f-140"></a>Pending — [acceptance](FEATURES.md#f-140) | Pending | Pending |
-| F-141 | <a id="f-141"></a>Pending — [acceptance](FEATURES.md#f-141) | Pending | Pending |
-| F-142 | <a id="f-142"></a>Pending — [acceptance](FEATURES.md#f-142) | Pending | Pending |
-| F-143 | <a id="f-143"></a>Pending — [acceptance](FEATURES.md#f-143) | Pending | Pending |
-| F-144 | <a id="f-144"></a>Pending — [acceptance](FEATURES.md#f-144) | Pending | Pending |
+| F-134 | <a id="f-134"></a>[install_replaces_the_old_entry_and_keeps_a_disabled_choice](../../crates/core/src/hooks.rs); [hook_waits_for_the_user_and_relays_each_answer](../../tests/rewrite/approvals.rs). The installed entry has matcher *, a 3600-second tool timeout, a 15-second PreInvocation timeout and keeps enabled=false. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-135 | <a id="f-135"></a>[commands_quote_paths_for_each_platform](../../crates/core/src/hooks.rs); [install_replaces_the_old_entry_and_keeps_a_disabled_choice](../../crates/core/src/hooks.rs). Commands quote POSIX and Windows paths, refresh on path change and replace the pre-rename entry. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-136 | <a id="f-136"></a>[the_hook_gates_every_mode_and_native_plan_mode_is_never_passed](../../crates/adapters/agy/src/lib.rs); [real_launch_refuses_missing_malformed_and_unusable_protection](../../crates/adapters/agy/src/preflight.rs). With the hook on every mode runs with skip-permissions; a user-disabled hook uses agy's modes without native plan mode; a missing or unusable hook refuses launch. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-137 | <a id="f-137"></a>[hook_waits_for_the_user_and_relays_each_answer](../../tests/rewrite/approvals.rs); [relays a browser answer to a waiting agy tool call](../../ui/e2e/approvals.spec.ts). Each hook call reads engine discovery and the token, posts the request and long-polls until the user answers. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-138 | <a id="f-138"></a>[the_hook_fails_closed_and_starts_fast](../../tests/rewrite/approvals.rs). Without ANTIQUOTA_SESSION pre-tool answers ask and pre-invocation an empty object. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-139 | <a id="f-139"></a>[the_hook_fails_closed_and_starts_fast](../../tests/rewrite/approvals.rs). Malformed stdin is an empty payload; every call prints one JSON line and exits 0; oversized input is refused. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-140 | <a id="f-140"></a>[the_hook_fails_closed_and_starts_fast](../../tests/rewrite/approvals.rs). With no engine the own rules decide; ask becomes a deny that names the missing approver. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-141 | <a id="f-141"></a>[captured_permission_approval_and_steer_routes](../../tests/rewrite/approvals.rs); [stop_declines_waiting_requests_and_wakes_the_waiting_hook](../../tests/rewrite/approvals.rs). An unknown session answers ask over HTTP (the hook turns that into a deny); a stopped session's request is refused. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-142 | <a id="f-142"></a>[captured_permission_approval_and_steer_routes](../../tests/rewrite/approvals.rs); [hook_waits_for_the_user_and_relays_each_answer](../../tests/rewrite/approvals.rs). Allowed and denied calls resolve at once with no card. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-143 | <a id="f-143"></a>[captured_permission_approval_and_steer_routes](../../tests/rewrite/approvals.rs); [an_unanswered_request_is_declined_at_its_deadline](../../crates/app/src/tests/approvals.rs). Pending cards carry id/session/tool/args/rule/state/why/timestamp/deadline and the session shows approval. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-144 | <a id="f-144"></a>[always_allow_never_stores_an_arbitrary_program_rule](../../tests/rewrite/approvals.rs); [approvals.test.ts](../../ui/src/lib/approvals.test.ts). Nested arguments are kept; strings over 4000 characters are cut with a visible note. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
 | F-145 | <a id="f-145"></a>Pending — [acceptance](FEATURES.md#f-145) | Pending | Pending |
-| F-146 | <a id="f-146"></a>Pending — [acceptance](FEATURES.md#f-146) | Pending | Pending |
-| F-147 | <a id="f-147"></a>Pending — [acceptance](FEATURES.md#f-147) | Pending | Pending |
-| F-148 | <a id="f-148"></a>Pending — [acceptance](FEATURES.md#f-148) | Pending | Pending |
-| F-149 | <a id="f-149"></a>Pending — [acceptance](FEATURES.md#f-149) | Pending | Pending |
-| F-150 | <a id="f-150"></a>Pending — [acceptance](FEATURES.md#f-150) | Pending | Pending |
-| F-151 | <a id="f-151"></a>Pending — [acceptance](FEATURES.md#f-151) | Pending | Pending |
-| F-152 | <a id="f-152"></a>Pending — [acceptance](FEATURES.md#f-152) | Pending | Pending |
-| F-153 | <a id="f-153"></a>Pending — [acceptance](FEATURES.md#f-153) | Pending | Pending |
+| F-146 | <a id="f-146"></a>[an_unanswered_request_is_declined_at_its_deadline](../../crates/app/src/tests/approvals.rs); [an_answer_wakes_a_waiting_request_at_once](../../crates/app/src/tests/approvals.rs). An unanswered request is declined at its deadline with the explanatory reason, and waiting hooks wake. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-147 | <a id="f-147"></a>[captured_permission_approval_and_steer_routes](../../tests/rewrite/approvals.rs); [an_unanswered_request_is_declined_at_its_deadline](../../crates/app/src/tests/approvals.rs). Answers are idempotent, the first decision and reason stay, other decisions get HTTP 400. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-148 | <a id="f-148"></a>[hook_waits_for_the_user_and_relays_each_answer](../../tests/rewrite/approvals.rs); [always_allow_never_stores_an_arbitrary_program_rule](../../tests/rewrite/approvals.rs). Always-allow adds the safe suggested rule; on an unruled edit it switches the session to accept-edits. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-149 | <a id="f-149"></a>[captured_permission_approval_and_steer_routes](../../tests/rewrite/approvals.rs); [the_session_waits_until_every_request_is_answered](../../crates/app/src/tests/approvals.rs). Pending and answered events reach the transcript and stream; the session returns from approval only when none is pending. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-150 | <a id="f-150"></a>[an_answer_wakes_a_waiting_request_at_once](../../crates/app/src/tests/approvals.rs); [captured_permission_approval_and_steer_routes](../../tests/rewrite/approvals.rs). The default denial tells agy not to retry; a user reason replaces it. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-151 | <a id="f-151"></a>[stop_declines_waiting_requests_and_wakes_the_waiting_hook](../../tests/rewrite/approvals.rs); [timeouts_clamp_to_the_allowed_range_and_stop_declines](../../crates/app/src/tests/approvals.rs). Stop declines every pending request at once and wakes the waiting hook. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-152 | <a id="f-152"></a>[steering_takes_plain_messages_and_leaves_attachments_queued](../../crates/app/src/tests/approvals.rs); [steering_reaches_agy_through_the_hook_with_mentioned_paths](../../tests/rewrite/approvals.rs). Plain queued messages are handed over with @path references; attachment messages stay queued and run as their own turn. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-153 | <a id="f-153"></a>[captured_permission_approval_and_steer_routes](../../tests/rewrite/approvals.rs); [steering_reaches_agy_through_the_hook_with_mentioned_paths](../../tests/rewrite/approvals.rs); [steering_takes_plain_messages_and_leaves_attachments_queued](../../crates/app/src/tests/approvals.rs). Steered messages are recorded once with steered=true; later calls inject nothing. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
 | F-154 | <a id="f-154"></a>Pending — [acceptance](FEATURES.md#f-154) | Pending | Pending |
 | F-155 | <a id="f-155"></a>[captured_slice_one_requests_replay_with_exact_json_fields](../../crates/server/tests/rewrite_contract.rs). The actual session-create capture matches all fresh metadata fields, including timestamps under explicit pointer rules, idle status, zero usage/context/turns, empty queue/jobs, nullable conversation/goal/loop/worktree and false pinned/archived. | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-156 | <a id="f-156"></a>Pending — [acceptance](FEATURES.md#f-156) | Pending | Pending |
@@ -322,7 +328,7 @@ Mark a row Passed only when its full acceptance has passing tests and evidence. 
 | F-299 | <a id="f-299"></a>Pending — [acceptance](FEATURES.md#f-299) | Pending | Pending |
 | F-300 | <a id="f-300"></a>[runtime::serve_defaults_to_no_browser_and_gui_respects_no_open](../../tests/rewrite/runtime.rs). On Unix, gui --no-open never invokes the isolated opener; gui invokes it once with the discovered URL. **Remaining:** Default port 8765, a requested fixed port and Windows opener behavior remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-301 | <a id="f-301"></a>[runtime::serve_defaults_to_no_browser_and_gui_respects_no_open](../../tests/rewrite/runtime.rs); [engine_discovery_reuses_lock_and_static_auth_remains_local](../../crates/server/tests/rewrite_contract.rs). serve accepts ephemeral port 0, shares discovery and does not invoke the isolated browser opener. **Remaining:** Default port 8765, a requested fixed port and Windows behavior remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
-| F-302 | <a id="f-302"></a>Pending — [acceptance](FEATURES.md#f-302) | Pending | Pending |
+| F-302 | <a id="f-302"></a>[the_hook_fails_closed_and_starts_fast](../../tests/rewrite/approvals.rs); [steering_reaches_agy_through_the_hook_with_mentioned_paths](../../tests/rewrite/approvals.rs). `antiquota hook pre-tool|pre-invocation` runs before logging and the async runtime. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
 | F-303 | <a id="f-303"></a>Pending — [acceptance](FEATURES.md#f-303) | Pending | Pending |
 | F-304 | <a id="f-304"></a>Pending — [acceptance](FEATURES.md#f-304) | Pending | Pending |
 | F-305 | <a id="f-305"></a>Pending — [acceptance](FEATURES.md#f-305) | Pending | Pending |
@@ -350,13 +356,13 @@ Mark a row Passed only when its full acceptance has passing tests and evidence. 
 | F-327 | <a id="f-327"></a>Pending — [acceptance](FEATURES.md#f-327) | Pending | Pending |
 | F-328 | <a id="f-328"></a>Pending — [acceptance](FEATURES.md#f-328) | Pending | Pending |
 | F-329 | <a id="f-329"></a>[captured_slice_one_requests_replay_with_exact_json_fields](../../crates/server/tests/rewrite_contract.rs); [whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs). The complete two-account empty state capture matches every field, including an actual busy lease; a newly created idle session appears in state. **Remaining:** Multi-session ordering, a populated refreshed model catalog, quota probes and account routing transitions remain Pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
-| F-330 | <a id="f-330"></a>Pending — [acceptance](FEATURES.md#f-330) | Pending | Pending |
-| F-331 | <a id="f-331"></a>Pending — [acceptance](FEATURES.md#f-331) | Pending | Pending |
-| F-332 | <a id="f-332"></a>Pending — [acceptance](FEATURES.md#f-332) | Pending | Pending |
+| F-330 | <a id="f-330"></a>[captured_permission_approval_and_steer_routes](../../tests/rewrite/approvals.rs). Captured request, pending, immediate-allow and unknown-session cases match. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-331 | <a id="f-331"></a>[captured_permission_approval_and_steer_routes](../../tests/rewrite/approvals.rs); [stop_declines_waiting_requests_and_wakes_the_waiting_hook](../../tests/rewrite/approvals.rs). Captured wait, decided, allowed and unknown cases match; a waiting poll returns when answered. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-332 | <a id="f-332"></a>[captured_permission_approval_and_steer_routes](../../tests/rewrite/approvals.rs). Captured deny-with-reason, allow and invalid-decision cases match; why is cut at 500 characters. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
 | F-333 | <a id="f-333"></a>Pending — [acceptance](FEATURES.md#f-333) | Pending | Pending |
 | F-334 | <a id="f-334"></a>Pending — [acceptance](FEATURES.md#f-334) | Pending | Pending |
 | F-335 | <a id="f-335"></a>Pending — [acceptance](FEATURES.md#f-335) | Pending | Pending |
-| F-336 | <a id="f-336"></a>Pending — [acceptance](FEATURES.md#f-336) | Pending | Pending |
+| F-336 | <a id="f-336"></a>[captured_permission_approval_and_steer_routes](../../tests/rewrite/approvals.rs); [steering_reaches_agy_through_the_hook_with_mentioned_paths](../../tests/rewrite/approvals.rs). The captured steer case matches and the hook receives the drained messages. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
 | F-337 | <a id="f-337"></a>Pending — [acceptance](FEATURES.md#f-337) | Pending | Pending |
 | F-338 | <a id="f-338"></a>Pending — [acceptance](FEATURES.md#f-338) | Pending | Pending |
 | F-339 | <a id="f-339"></a>[captured_slice_one_requests_replay_with_exact_json_fields](../../crates/server/tests/rewrite_contract.rs); [whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs). The actual shutdown capture matches ok=true and the real process terminates while an SSE client remains connected. | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
@@ -436,7 +442,7 @@ Mark a row Passed only when its full acceptance has passing tests and evidence. 
 | F-413 | <a id="f-413"></a>Pending — [acceptance](FEATURES.md#f-413) | Pending | Pending |
 | F-414 | <a id="f-414"></a>Pending — [acceptance](FEATURES.md#f-414) | Pending | Pending |
 | F-415 | <a id="f-415"></a>Pending — [acceptance](FEATURES.md#f-415) | Pending | Pending |
-| F-416 | <a id="f-416"></a>Pending — [acceptance](FEATURES.md#f-416) | Pending | Pending |
+| F-416 | <a id="f-416"></a>[answers approval cards and keeps rules in settings](../../ui/e2e/approvals.spec.ts). A session waiting for approval shows an approval marker in the sidebar. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
 | F-417 | <a id="f-417"></a>Pending — [acceptance](FEATURES.md#f-417) | Pending | Pending |
 | F-418 | <a id="f-418"></a>Pending — [acceptance](FEATURES.md#f-418) | Pending | Pending |
 | F-419 | <a id="f-419"></a>Pending — [acceptance](FEATURES.md#f-419) | Pending | Pending |
@@ -595,10 +601,10 @@ Mark a row Passed only when its full acceptance has passing tests and evidence. 
 | F-572 | <a id="f-572"></a>Pending — [acceptance](FEATURES.md#f-572) | Pending | Pending |
 | F-573 | <a id="f-573"></a>Pending — [acceptance](FEATURES.md#f-573) | Pending | Pending |
 | F-574 | <a id="f-574"></a>Pending — [acceptance](FEATURES.md#f-574) | Pending | Pending |
-| F-575 | <a id="f-575"></a>Pending — [acceptance](FEATURES.md#f-575) | Pending | Pending |
-| F-576 | <a id="f-576"></a>Pending — [acceptance](FEATURES.md#f-576) | Pending | Pending |
-| F-577 | <a id="f-577"></a>Pending — [acceptance](FEATURES.md#f-577) | Pending | Pending |
-| F-578 | <a id="f-578"></a>Pending — [acceptance](FEATURES.md#f-578) | Pending | Pending |
+| F-575 | <a id="f-575"></a>[approvals.test.ts](../../ui/src/lib/approvals.test.ts); [answers approval cards and keeps rules in settings](../../ui/e2e/approvals.spec.ts). Cards show the command or edit target, a preview and the wait in minutes. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-576 | <a id="f-576"></a>[relays a browser answer to a waiting agy tool call](../../ui/e2e/approvals.spec.ts); [hook_waits_for_the_user_and_relays_each_answer](../../tests/rewrite/approvals.rs). Allow once answers without storing a rule. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-577 | <a id="f-577"></a>[answers approval cards and keeps rules in settings](../../ui/e2e/approvals.spec.ts). Always allow answers with the suggested rule, which then appears in settings. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-578 | <a id="f-578"></a>[always_allow_never_stores_an_arbitrary_program_rule](../../tests/rewrite/approvals.rs); [approvals.test.ts](../../ui/src/lib/approvals.test.ts). Allow all edits switches the session to accept-edits. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
 | F-579 | <a id="f-579"></a>Pending — [acceptance](FEATURES.md#f-579) | Pending | Pending |
 | F-580 | <a id="f-580"></a>Pending — [acceptance](FEATURES.md#f-580) | Pending | Pending |
 | F-581 | <a id="f-581"></a>Pending — [acceptance](FEATURES.md#f-581) | Pending | Pending |
@@ -695,7 +701,7 @@ Mark a row Passed only when its full acceptance has passing tests and evidence. 
 | F-672 | <a id="f-672"></a>Pending — [acceptance](FEATURES.md#f-672) | Pending | Pending |
 | F-673 | <a id="f-673"></a>Pending — [acceptance](FEATURES.md#f-673) | Pending | Pending |
 | F-674 | <a id="f-674"></a>Pending — [acceptance](FEATURES.md#f-674) | Pending | Pending |
-| F-675 | <a id="f-675"></a>Pending — [acceptance](FEATURES.md#f-675) | Pending | Pending |
+| F-675 | <a id="f-675"></a>[answers approval cards and keeps rules in settings](../../ui/e2e/approvals.spec.ts). Settings lists allow and deny rules separately. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
 | F-676 | <a id="f-676"></a>Pending — [acceptance](FEATURES.md#f-676) | Pending | Pending |
 | F-677 | <a id="f-677"></a>Pending — [acceptance](FEATURES.md#f-677) | Pending | Pending |
 | F-678 | <a id="f-678"></a>Pending — [acceptance](FEATURES.md#f-678) | Pending | Pending |
@@ -767,11 +773,11 @@ Mark a row Passed only when its full acceptance has passing tests and evidence. 
 | F-744 | <a id="f-744"></a>Pending — [acceptance](FEATURES.md#f-744) | Pending | Pending |
 | F-745 | <a id="f-745"></a>Pending — [acceptance](FEATURES.md#f-745) | Pending | Pending |
 | F-746 | <a id="f-746"></a>Pending — [acceptance](FEATURES.md#f-746) | Pending | Pending |
-| F-747 | <a id="f-747"></a>Pending — [acceptance](FEATURES.md#f-747) | Pending | Pending |
+| F-747 | <a id="f-747"></a>[answers approval cards and keeps rules in settings](../../ui/e2e/approvals.spec.ts). Approval wait saves 1–240 minutes through the defaults route. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
 | F-748 | <a id="f-748"></a>Pending — [acceptance](FEATURES.md#f-748) | Pending | Pending |
 | F-749 | <a id="f-749"></a>Pending — [acceptance](FEATURES.md#f-749) | Pending | Pending |
-| F-750 | <a id="f-750"></a>Pending — [acceptance](FEATURES.md#f-750) | Pending | Pending |
-| F-751 | <a id="f-751"></a>Pending — [acceptance](FEATURES.md#f-751) | Pending | Pending |
+| F-750 | <a id="f-750"></a>[answers approval cards and keeps rules in settings](../../ui/e2e/approvals.spec.ts). Allow rules are listed, added and removed one by one; a runner rule is refused with its reason. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
+| F-751 | <a id="f-751"></a>[answers approval cards and keeps rules in settings](../../ui/e2e/approvals.spec.ts). Deny rules are listed, added and removed one by one. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
 | F-752 | <a id="f-752"></a>Pending — [acceptance](FEATURES.md#f-752) | Pending | Pending |
 | F-753 | <a id="f-753"></a>Pending — [acceptance](FEATURES.md#f-753) | Pending | Pending |
 | F-754 | <a id="f-754"></a>Pending — [acceptance](FEATURES.md#f-754) | Pending | Pending |
@@ -1066,7 +1072,7 @@ Mark a row Passed only when its full acceptance has passing tests and evidence. 
 | F-1043 | <a id="f-1043"></a>Pending — [acceptance](FEATURES.md#f-1043) | Pending | Pending |
 | F-1044 | <a id="f-1044"></a>[creates sends streams groups renames and reloads a session](../../ui/e2e/sessions.spec.ts) | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-1045 | <a id="f-1045"></a>Pending — [acceptance](FEATURES.md#f-1045) | Pending | Pending |
-| F-1046 | <a id="f-1046"></a>Pending — [acceptance](FEATURES.md#f-1046) | Pending | Pending |
+| F-1046 | <a id="f-1046"></a>[the_hook_fails_closed_and_starts_fast](../../tests/rewrite/approvals.rs). A local hook decision including process start measured 13–42 ms ([timings](../../.handoff/evidence/slice1-slice3-hook-startup.json)). | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
 | F-1047 | <a id="f-1047"></a>[pnpm install --frozen-lockfile](../../ui/pnpm-lock.yaml); [pnpm check](../../ui/package.json); [pnpm build](../../ui/package.json). Pinned Svelte 5.57.2, TypeScript 6.0.3, Vite 8.3.3 and pnpm 11.19.0; runtime Node 26.10.0. | Passed | [slice1-independent-final-check.log](../../.handoff/evidence/slice1-independent-final-check.log); [slice1-independent-final-build.log](../../.handoff/evidence/slice1-independent-final-build.log) |
 | F-1048 | <a id="f-1048"></a>[tests::recursive_stale_check_detects_changed_missing_and_extra_nested_files](../../crates/server/examples/export_types.rs); [just check / check-types](../../justfile). ts-rs exports all current core/server API types, including the recursive JsonValue binding. The fresh stale check matches all generated bytes. | Passed | [slice1-independent-final-check.log](../../.handoff/evidence/slice1-independent-final-check.log); [slice1-fixes-tests.log](../../.handoff/evidence/slice1-fixes-tests.log) |
 | F-1049 | <a id="f-1049"></a>[tests::recursive_stale_check_detects_changed_missing_and_extra_nested_files](../../crates/server/examples/export_types.rs); [just check / check-types](../../justfile). The separate owned exporter regression detects changed, missing and extra nested files. Fresh just check verifies the final generated bytes without editing them. | Passed | [slice1-independent-final-check.log](../../.handoff/evidence/slice1-independent-final-check.log); [slice1-fixes-tests.log](../../.handoff/evidence/slice1-fixes-tests.log) |

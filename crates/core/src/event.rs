@@ -16,6 +16,10 @@ pub enum Event {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         #[ts(optional)]
         attachments: Option<Vec<Attachment>>,
+        /// Delivered to agy mid-turn through the PreInvocation hook.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[ts(optional)]
+        steered: Option<bool>,
     },
     TurnStart {
         turn: u64,

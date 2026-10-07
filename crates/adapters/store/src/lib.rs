@@ -179,6 +179,40 @@ impl SessionStore for FileStore {
     fn state_dir(&self) -> String {
         self.root.join("state").to_string_lossy().into_owned()
     }
+    fn resolve_mentions(&self, cwd: &str, candidates: &[String]) -> Vec<String> {
+        let home = user_home().ok();
+        let mut found: Vec<String> = vec![];
+        for candidate in candidates {
+            let expanded = match (candidate.strip_prefix('~'), &home) {
+                (Some(rest), Some(home)) if rest.is_empty() || rest.starts_with('/') => {
+                    home.join(rest.trim_start_matches('/'))
+                }
+                _ => std::path::PathBuf::from(candidate),
+            };
+            let path = normalize(&std::path::Path::new(cwd).join(expanded));
+            let text = path.to_string_lossy().into_owned();
+            if path.exists() && !found.contains(&text) {
+                found.push(text);
+            }
+        }
+        found
+    }
+}
+
+/// Lexical normalization like the legacy engine's: `.` and `..` resolve without following links.
+fn normalize(path: &std::path::Path) -> std::path::PathBuf {
+    use std::path::Component;
+    let mut out = std::path::PathBuf::new();
+    for part in path.components() {
+        match part {
+            Component::CurDir => {}
+            Component::ParentDir => {
+                out.pop();
+            }
+            other => out.push(other.as_os_str()),
+        }
+    }
+    out
 }
 pub fn valid_component(value: &str) -> bool {
     !value.is_empty()

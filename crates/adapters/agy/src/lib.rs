@@ -28,7 +28,7 @@ impl AgentRunner for AgyRunner {
     ) -> PortFuture<'a, TurnResult> {
         Box::pin(async move {
             self.ensure_executable()?;
-            self.preflight(&request).await?;
+            let gate = self.preflight(&request).await?;
             let mut command = Command::new(&self.executable);
             command.args([
                 "-p",
@@ -37,13 +37,10 @@ impl AgentRunner for AgyRunner {
                 "stream-json",
                 "--model",
                 &request.model,
-                "--dangerously-skip-permissions",
             ]);
+            command.args(permission_flags(gate, request.mode));
             if let Some(conv) = &request.conversation_id {
                 command.args(["--conversation", conv]);
-            }
-            if matches!(request.mode, antiquota_core::Mode::AcceptEdits) {
-                command.args(["--mode", "accept-edits"]);
             }
             command
                 .current_dir(&request.cwd)
@@ -136,6 +133,18 @@ impl AgentRunner for AgyRunner {
     }
 }
 
+/// Headless agy cannot ask anyone and ignores its allow rules, so while antiquota's hook is on
+/// agy may run anything and the hook decides. Without the hook agy's own modes apply, except
+/// native plan mode, which waits forever for a plan review when headless.
+fn permission_flags(gate: preflight::Gate, mode: antiquota_core::Mode) -> &'static [&'static str] {
+    use antiquota_core::Mode;
+    match (gate, mode) {
+        (preflight::Gate::Hook, _) | (_, Mode::Bypass) => &["--dangerously-skip-permissions"],
+        (preflight::Gate::AgyModes, Mode::AcceptEdits) => &["--mode", "accept-edits"],
+        (preflight::Gate::AgyModes, Mode::Default | Mode::Plan) => &[],
+    }
+}
+
 impl AgyRunner {
     pub(crate) fn ensure_executable(&self) -> Result<(), PortError> {
         if self.executable.is_file() {
@@ -145,5 +154,30 @@ impl AgyRunner {
                 "antiquota: real agy binary not found; set ANTIQUOTA_AGY".into(),
             ))
         }
+    }
+}
+
+#[cfg(test)]
+mod flag_tests {
+    use super::{permission_flags, preflight::Gate};
+    use antiquota_core::Mode;
+    #[test]
+    fn the_hook_gates_every_mode_and_native_plan_mode_is_never_passed() {
+        for mode in [Mode::Default, Mode::AcceptEdits, Mode::Plan, Mode::Bypass] {
+            assert_eq!(
+                permission_flags(Gate::Hook, mode),
+                ["--dangerously-skip-permissions"]
+            );
+        }
+        assert!(permission_flags(Gate::AgyModes, Mode::Default).is_empty());
+        assert!(permission_flags(Gate::AgyModes, Mode::Plan).is_empty());
+        assert_eq!(
+            permission_flags(Gate::AgyModes, Mode::AcceptEdits),
+            ["--mode", "accept-edits"]
+        );
+        assert_eq!(
+            permission_flags(Gate::AgyModes, Mode::Bypass),
+            ["--dangerously-skip-permissions"]
+        );
     }
 }

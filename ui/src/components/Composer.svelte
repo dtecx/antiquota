@@ -2,10 +2,11 @@
 <script lang="ts">
   import type { Workbench } from '../lib/workbench';
   import Icon from './Icon.svelte';
-  import { formatTokens } from '../lib/format';
+  import { formatTokens, isBusy, statusLabel } from '../lib/format';
   let { workbench, connected }: { workbench: Workbench; connected: boolean } = $props();
   const view = $derived(workbench.state);
-  const running = $derived($view.selected?.status === 'running');
+  const running = $derived(isBusy($view.selected?.status));
+  const attention = $derived($view.selected?.status === 'approval');
   const text = $derived($view.drafts[$view.selected?.id ?? ''] ?? '');
   function keydown(event: KeyboardEvent) {
     if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
@@ -51,8 +52,8 @@
     </div>
   </form>
   <div class="session-state">
-    <span class="status" class:running
-      ><span class="dot"></span>{$view.selected?.status ?? 'idle'}</span
+    <span class="status" class:running class:attention
+      ><span class="dot"></span>{statusLabel($view.selected?.status ?? 'idle')}</span
     >{#if $view.selected?.queue.length}<span>{$view.selected.queue.length} queued</span>{/if}<span
       class="tokens"
       >{formatTokens($view.selected?.usage.input ?? 0)} in <span>/</span>
@@ -135,6 +136,14 @@
   }
   .status.running {
     color: var(--baton);
+  }
+  .status.attention {
+    color: var(--baton);
+    font-weight: 600;
+  }
+  .status.attention .dot {
+    width: 6px;
+    height: 6px;
   }
   .dot {
     width: 4px;

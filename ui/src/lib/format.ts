@@ -32,3 +32,20 @@ export function duration(seconds: number): string {
   if (seconds < 60) return `${seconds.toFixed(seconds < 10 ? 1 : 0)}s`;
   return `${Math.floor(seconds / 60)}m ${Math.round(seconds % 60)}s`;
 }
+
+const STATUS: Record<string, string> = {
+  running: 'working',
+  approval: 'needs your approval',
+  waiting: 'waiting for an account',
+  checking: 'running check',
+  verifying: 'verifier reviewing',
+  sleeping: 'sleeping',
+};
+/** How a session status reads in the header and status line. */
+export function statusLabel(status: string): string {
+  return STATUS[status] ?? status;
+}
+/** Statuses during which a turn is still in progress. */
+export function isBusy(status: string | undefined): boolean {
+  return ['running', 'approval', 'waiting', 'checking', 'verifying'].includes(status ?? '');
+}

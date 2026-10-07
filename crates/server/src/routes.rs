@@ -23,17 +23,17 @@ pub fn catalog() -> Vec<RouteDefinition> {
         RouteDefinition {
             method: "POST".into(),
             path: "/api/approvals".into(),
-            status: RouteStatus::Pending,
+            status: RouteStatus::Implemented,
         },
         RouteDefinition {
             method: "GET".into(),
             path: "/api/approvals/{aid}".into(),
-            status: RouteStatus::Pending,
+            status: RouteStatus::Implemented,
         },
         RouteDefinition {
             method: "POST".into(),
             path: "/api/approvals/{aid}/answer".into(),
-            status: RouteStatus::Pending,
+            status: RouteStatus::Implemented,
         },
         RouteDefinition {
             method: "POST".into(),
@@ -53,7 +53,7 @@ pub fn catalog() -> Vec<RouteDefinition> {
         RouteDefinition {
             method: "POST".into(),
             path: "/api/sessions/{sid}/steer".into(),
-            status: RouteStatus::Pending,
+            status: RouteStatus::Implemented,
         },
         RouteDefinition {
             method: "GET".into(),
@@ -348,12 +348,12 @@ pub fn catalog() -> Vec<RouteDefinition> {
         RouteDefinition {
             method: "GET".into(),
             path: "/api/permissions".into(),
-            status: RouteStatus::Pending,
+            status: RouteStatus::Implemented,
         },
         RouteDefinition {
             method: "PUT".into(),
             path: "/api/permissions".into(),
-            status: RouteStatus::Pending,
+            status: RouteStatus::Implemented,
         },
         RouteDefinition {
             method: "GET".into(),

@@ -15,6 +15,7 @@
   import ConfirmRemoval from './components/ConfirmRemoval.svelte';
   import { createAccounts } from './lib/accounts';
   import { createLogin } from './lib/login';
+  import { createPermissions } from './lib/permissions';
   const token =
     document.querySelector<HTMLMetaElement>('meta[name="antiquota-token"]')?.content ?? '';
   const api = createApi(token);
@@ -24,6 +25,7 @@
   const view = workbench.state;
   const accounts = createAccounts(api);
   const login = createLogin(api, () => accounts.refresh());
+  const permissions = createPermissions(api);
   const stream = createStream(
     api.streamUrl(),
     (event) => {
@@ -107,7 +109,7 @@
       </div>{/if}
   </main>
   <SessionDialog {workbench} />
-  <AccountsPanel {accounts} {login} sessions={$view.snapshot?.sessions ?? []} />
+  <AccountsPanel {accounts} {login} {permissions} sessions={$view.snapshot?.sessions ?? []} />
   <LoginDialog {login} {accounts} />
   <ConfirmRemoval {accounts} />
 </div>

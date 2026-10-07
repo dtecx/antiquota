@@ -1,5 +1,7 @@
 //! Owns application services and session serialization; adapters own all I/O.
 mod admission;
+mod approvals;
+pub use approvals::ApprovalReply;
 mod commands;
 pub use commands::CommandResult;
 mod history;
@@ -52,6 +54,8 @@ pub struct Service {
     pub(crate) reserved: Mutex<BTreeSet<String>>,
     pub(crate) cells: RwLock<BTreeMap<String, Arc<Cell>>>,
     pub(crate) events: broadcast::Sender<StreamEvent>,
+    pub(crate) approvals: Mutex<BTreeMap<String, antiquota_core::Approval>>,
+    pub(crate) approval_signal: tokio::sync::Notify,
 }
 pub struct SystemClock;
 impl Clock for SystemClock {
@@ -131,6 +135,8 @@ impl Service {
             reserved: Mutex::new(BTreeSet::new()),
             cells: RwLock::new(cells),
             events,
+            approvals: Mutex::new(BTreeMap::new()),
+            approval_signal: tokio::sync::Notify::new(),
         }))
     }
     pub fn subscribe(&self) -> broadcast::Receiver<StreamEvent> {

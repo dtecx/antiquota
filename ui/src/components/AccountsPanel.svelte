@@ -7,13 +7,22 @@
   import AccountCard from './AccountCard.svelte';
   import RotationSettings from './RotationSettings.svelte';
   import RoutingLog from './RoutingLog.svelte';
-  let { accounts, login, sessions }: { accounts: Accounts; login: Login; sessions: Session[] } =
+  import PermissionsSettings from './PermissionsSettings.svelte';
+  import type { PermissionsStore } from '../lib/permissions';
+  let {
+    accounts,
+    login,
+    sessions,
+    permissions,
+  }: { accounts: Accounts; login: Login; sessions: Session[]; permissions: PermissionsStore } =
     $props();
   const view = $derived(accounts.state);
   let dialog: HTMLDialogElement;
   $effect(() => {
-    if ($view.open) dialog?.showModal();
-    else dialog?.close();
+    if ($view.open) {
+      dialog?.showModal();
+      void permissions.refresh();
+    } else dialog?.close();
   });
 </script>
 
@@ -62,7 +71,10 @@
               <p>Add a Google account to begin. Your agy CLI keeps its own sign-in.</p>
             </div>{/if}{/each}
       </div>
-      <RotationSettings {accounts} /><RoutingLog entries={$view.routing} {sessions} />
+      <RotationSettings {accounts} /><PermissionsSettings {permissions} /><RoutingLog
+        entries={$view.routing}
+        {sessions}
+      />
     </div>
   {/if}
 </dialog>

@@ -4,6 +4,7 @@ mod files;
 mod login;
 mod metadata;
 mod overview;
+mod permissions;
 mod stack;
 use antiquota_core::{
     AccountLease, AccountStore, LoginLink, LoginState, Model, PortError, PortFuture, Quota,
@@ -107,6 +108,10 @@ impl FileAccounts {
     pub fn expose_usage(&self) -> Result<bool, PortError> {
         farm::expose_usage(self)
     }
+    /// Keeps antiquota's own hook entry pointing at this executable.
+    pub fn install_hook(&self, program: &std::path::Path) -> Result<bool, PortError> {
+        permissions::install_hook(self, program)
+    }
 }
 impl AccountStore for FileAccounts {
     fn accounts(&self) -> Result<Vec<antiquota_core::Account>, PortError> {
@@ -192,6 +197,19 @@ impl AccountStore for FileAccounts {
     }
     fn stack_overview(&self) -> Result<serde_json::Value, PortError> {
         stack::overview(self)
+    }
+    fn permissions(&self) -> Result<antiquota_core::Permissions, PortError> {
+        Ok(permissions::read(self))
+    }
+    fn save_permissions(
+        &self,
+        allow: Option<Vec<String>>,
+        deny: Option<Vec<String>>,
+    ) -> Result<serde_json::Value, PortError> {
+        permissions::save(self, allow, deny)
+    }
+    fn add_allow_rule(&self, rule: &str) -> Result<(), PortError> {
+        permissions::add_allow(self, rule)
     }
 }
 #[cfg(test)]

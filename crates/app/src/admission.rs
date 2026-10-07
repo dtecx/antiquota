@@ -43,10 +43,11 @@ impl Service {
                 text: text.clone(),
                 kind,
                 attachments: Some(attachments.clone()),
+                steered: None,
             },
         )?;
         self.replace_meta(state, next)?;
-        let mut prompt = text;
+        let mut prompt = self.expand_mentions(&text, &state.meta.cwd);
         for attachment in attachments {
             prompt.push_str(&format!("\nAttached file: {}", attachment.path));
         }

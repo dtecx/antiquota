@@ -27,8 +27,15 @@ pub fn isolated_fake(executable: &Path, root: &Path) -> bool {
         && std::env::var_os("ANTIQUOTA_DIR").is_some()
         && std::env::var("ANTIQUOTA_NO_USAGE_LINK").as_deref() == Ok("1")
 }
+/// How a turn is protected: antiquota's hook decides every tool call, or the user switched the
+/// hook off and agy's own permission modes apply.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum Gate {
+    Hook,
+    AgyModes,
+}
 impl AgyRunner {
-    pub(crate) async fn preflight(&self, request: &TurnRequest) -> Result<(), PortError> {
+    pub(crate) async fn preflight(&self, request: &TurnRequest) -> Result<Gate, PortError> {
         let auth =
             Path::new(&request.slot.home).join(".gemini/antigravity-cli/antigravity-oauth-token");
         if !auth.is_file() || auth.is_symlink() {
@@ -37,7 +44,7 @@ impl AgyRunner {
             ));
         }
         if self.isolated_fake {
-            return Ok(());
+            return Ok(Gate::Hook);
         }
         #[cfg(unix)]
         {
@@ -67,8 +74,18 @@ impl AgyRunner {
             .ok()
             .and_then(|x| serde_json::from_slice(&x).ok())
             .ok_or_else(|| PortError::Invalid("owned denying hook is missing".into()))?;
-        let hook = &hooks["antiquota"];
-        let expected = format!("\"{}\" hook", self.hook_program.display());
+        let hook = &hooks[antiquota_core::hooks::HOOK_NAME];
+        if !hook.is_object() {
+            return Err(PortError::Invalid("owned denying hook is missing".into()));
+        }
+        if hook["enabled"] == false {
+            return Ok(Gate::AgyModes);
+        }
+        let expected = antiquota_core::hooks::hook_command(
+            &self.hook_program.to_string_lossy(),
+            "pre-tool",
+            cfg!(windows),
+        );
         let valid = hook["enabled"] == true
             && hook["PreToolUse"].as_array().is_some_and(|rows| {
                 rows.iter().any(|row| {
@@ -90,9 +107,14 @@ impl AgyRunner {
                 "owned denying hook is not installed for the account".into(),
             ));
         }
+        // The engine is deliberately unreachable here: a known-risky call must be refused by
+        // the hook's own fallback, proving the gate fails closed.
+        let unreachable = Path::new(&request.state_dir).join("preflight-unreachable");
         let mut child = Command::new(&self.hook_program)
-            .arg("hook")
-            .env("ANTIQUOTA_STATE", &request.state_dir)
+            .args(["hook", "pre-tool"])
+            .env("ANTIQUOTA_STATE", &unreachable)
+            .env("ANTIQUOTA_SESSION", "preflight")
+            .env_remove("ANTIQUOTA_MODE")
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::null())
@@ -105,7 +127,7 @@ impl AgyRunner {
             .ok_or_else(|| PortError::Invalid("hook stdin unavailable".into()))?;
         input
             .write_all(
-                br#"{"tool_name":"run_command","tool_input":{"CommandLine":"sh -c whoami"}}"#,
+                br#"{"toolCall":{"name":"run_command","args":{"CommandLine":"sh -c whoami"}}}"#,
             )
             .await
             .map_err(|_| PortError::Invalid("hook preflight failed".into()))?;
@@ -122,7 +144,7 @@ impl AgyRunner {
                 "owned hook failed the denial preflight".into(),
             ));
         }
-        Ok(())
+        Ok(Gate::Hook)
     }
 }
 
@@ -131,7 +153,7 @@ mod tests {
     use super::*;
     use antiquota_core::{Mode, Slot};
     #[tokio::test]
-    async fn real_launch_refuses_missing_malformed_and_disabled_protection() {
+    async fn real_launch_refuses_missing_malformed_and_unusable_protection() {
         let home = std::env::var_os(if cfg!(windows) { "USERPROFILE" } else { "HOME" }).unwrap();
         let root = PathBuf::from(home)
             .join("Desktop/test/antiquota-preflight")
@@ -198,15 +220,18 @@ mod tests {
         );
         let hooks = root.join("stack/.gemini/config/hooks.json");
         fs::create_dir_all(hooks.parent().unwrap()).unwrap();
-        fs::write(&hooks, r#"{"antiquota":{"enabled":false,"PreToolUse":[]}}"#).unwrap();
+        fs::write(&hooks, r#"{"antiquota":{"enabled":true,"PreToolUse":[]}}"#).unwrap();
         assert!(
             runner
                 .preflight(&request)
                 .await
                 .unwrap_err()
                 .to_string()
-                .contains("disabled")
+                .contains("unusable")
         );
+        // A hook the user switched off hands decisions back to agy's own modes.
+        fs::write(&hooks, r#"{"antiquota":{"enabled":false,"PreToolUse":[]}}"#).unwrap();
+        assert_eq!(runner.preflight(&request).await.unwrap(), Gate::AgyModes);
         assert_eq!(
             fs::read_to_string(&auth).unwrap(),
             r#"{"token":{"access_token":"synthetic"}}"#

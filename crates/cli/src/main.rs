@@ -1,5 +1,6 @@
 //! Owns command-line dispatch; the hook runs before logging and Tokio startup.
 mod accounts;
+mod hook;
 mod raw;
 use clap::{Parser, Subcommand};
 #[derive(Parser)]
@@ -48,7 +49,7 @@ enum Commands {
 }
 fn main() -> anyhow::Result<()> {
     if std::env::args().nth(1).as_deref() == Some("hook") {
-        return hook();
+        return hook::run(&std::env::args().nth(2).unwrap_or_else(|| "pre-tool".into()));
     }
     let cli = Cli::parse();
     tracing_subscriber::fmt()
@@ -78,26 +79,10 @@ fn main() -> anyhow::Result<()> {
         )?,
         Commands::Unwall { name } => accounts::unwall(accounts::context()?.as_ref(), &name)?,
         Commands::Run { args } => code = runtime.block_on(raw::run(accounts::context()?, args))?,
-        Commands::Hook { .. } => hook()?,
+        Commands::Hook { kind } => hook::run(&kind)?,
     }
     if code != 0 {
         std::process::exit(code);
     }
-    Ok(())
-}
-fn hook() -> anyhow::Result<()> {
-    use std::io::{Read, Write};
-    let mut bytes = vec![];
-    std::io::stdin().take(1_000_001).read_to_end(&mut bytes)?;
-    let reason = if bytes.len() > 1_000_000 {
-        "Hook input exceeds the limit."
-    } else {
-        "Approval support is not available in this build; the tool is denied."
-    };
-    serde_json::to_writer(
-        std::io::stdout(),
-        &serde_json::json!({"decision":"deny","reason":reason}),
-    )?;
-    std::io::stdout().write_all(b"\n")?;
     Ok(())
 }

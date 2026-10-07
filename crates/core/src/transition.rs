@@ -14,11 +14,17 @@ fn add(left: u64, right: u64) -> Result<u64, DomainError> {
 pub fn reduce(session: &mut Session, record: &EventRecord) -> Result<(), DomainError> {
     match &record.event {
         Event::Meta { meta } => *session = *meta.clone(),
-        Event::User { text, kind, .. } => {
+        Event::User {
+            text,
+            kind,
+            steered,
+            ..
+        } => {
             if session.title.is_empty() && kind == "user" {
                 session.title = text.lines().next().unwrap_or("").chars().take(60).collect();
             }
-            if session.status != "idle"
+            if *steered != Some(true)
+                && session.status != "idle"
                 && session.queue.first().is_some_and(|item| {
                     item.as_str()
                         .or_else(|| item.get("text").and_then(serde_json::Value::as_str))

@@ -162,3 +162,46 @@ pub struct DefaultsRequest {
     #[ts(optional)]
     pub worktree_default: Option<serde_json::Value>,
 }
+
+/// A permission decision for the hook, or the id of a request that waits for the user.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, TS)]
+pub struct ApprovalResponse {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub decision: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub reason: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub pending: Option<String>,
+}
+#[derive(Debug, Clone, Default, Serialize, Deserialize, TS)]
+pub struct ApprovalRequest {
+    pub session: String,
+    pub tool: String,
+    pub args: serde_json::Value,
+}
+#[derive(Debug, Clone, Default, Serialize, Deserialize, TS)]
+pub struct ApprovalAnswerRequest {
+    pub decision: String,
+    #[ts(optional)]
+    pub always: Option<bool>,
+    #[ts(optional)]
+    pub why: Option<String>,
+}
+#[derive(Debug, Clone, Default, Serialize, Deserialize, TS)]
+pub struct SteerResponse {
+    pub messages: Vec<String>,
+}
+#[derive(Debug, Clone, Default, Serialize, Deserialize, TS)]
+pub struct AllowRulesResponse {
+    pub allow: Vec<String>,
+}
+#[derive(Debug, Clone, Default, Serialize, Deserialize, TS)]
+pub struct PermissionsRequest {
+    #[ts(optional)]
+    pub allow: Option<Vec<String>>,
+    #[ts(optional)]
+    pub deny: Option<Vec<String>>,
+}

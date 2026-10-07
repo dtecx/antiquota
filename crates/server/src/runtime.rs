@@ -52,6 +52,9 @@ pub async fn serve(port: u16, open_browser: bool) -> Result<(), ServerError> {
         home,
         executable.clone(),
     ));
+    // Tool calls and mid-turn messages of this engine's turns reach it through its own hook.
+    accounts.seed_stack(false)?;
+    accounts.install_hook(&std::env::current_exe()?)?;
     let service = Service::open_with_quota(
         store,
         antiquota_store::read_settings(&root)?,

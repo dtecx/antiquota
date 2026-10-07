@@ -259,6 +259,17 @@ export function createWorkbench(api: Api, remember: (id: string) => void = () =>
           feedback: response.result === 'queued' ? 'Message queued for the next turn.' : '',
         }));
       }),
+    answer: async (id: string, decision: 'allow' | 'deny', always: boolean) => {
+      try {
+        await api.answerApproval(id, { decision, always });
+      } catch (error) {
+        fail(
+          error instanceof Error && 'status' in error && error.status === 404
+            ? new Error('That request expired (the engine restarted).')
+            : error,
+        );
+      }
+    },
     stop: () =>
       mutate(async () => {
         if (wanted) {

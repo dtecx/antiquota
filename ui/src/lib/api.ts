@@ -17,6 +17,9 @@ import type { DefaultsRequest } from '../gen/DefaultsRequest';
 import type { Settings } from '../gen/Settings';
 import type { SettingsOverview } from '../gen/SettingsOverview';
 import type { RoutingEntry } from '../gen/RoutingEntry';
+import type { ApprovalAnswerRequest } from '../gen/ApprovalAnswerRequest';
+import type { ApprovalResponse } from '../gen/ApprovalResponse';
+import type { PermissionsRequest } from '../gen/PermissionsRequest';
 import { routes } from '../gen/routes';
 
 export class RequestError extends Error {
@@ -34,7 +37,8 @@ export function createApi(token: string, request: typeof fetch = fetch) {
     const catalogPath = (path.split('?')[0] ?? path)
       .replace(/\/accounts\/login\/[^/]+/, '/accounts/login/{lid}')
       .replace(/\/accounts\/(?!login(?:\/|$)|probe$)[^/]+/, '/accounts/{name}')
-      .replace(/\/sessions\/[^/]+/, '/sessions/{sid}');
+      .replace(/\/sessions\/[^/]+/, '/sessions/{sid}')
+      .replace(/\/approvals\/[^/]+/, '/approvals/{aid}');
     if (
       !routes.some(
         (route) =>
@@ -100,6 +104,10 @@ export function createApi(token: string, request: typeof fetch = fetch) {
     settings: () => call<SettingsOverview>('GET', '/api/settings'),
     saveDefaults: (body: DefaultsRequest) => call<Settings>('PUT', '/api/settings/defaults', body),
     routing: () => call<RoutingEntry[]>('GET', '/api/routing?n=60'),
+    answerApproval: (id: string, body: ApprovalAnswerRequest) =>
+      call<ApprovalResponse>('POST', `/api/approvals/${encodeURIComponent(id)}/answer`, body),
+    savePermissions: (body: PermissionsRequest) =>
+      call<PermissionsRequest>('PUT', '/api/permissions', body),
     streamUrl: () => `/api/events?token=${encodeURIComponent(token)}`,
   };
 }

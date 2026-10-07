@@ -1,10 +1,10 @@
 # ADR 0006: One permission policy and controllable time
 
-Status: Accepted; ported/property/integration tests pending.
+Status: Accepted. Policy, hook and approval proof landed in Slice 3; jobs, time and scheduling proof remain pending.
 
 Port every legacy shell-aware permission test and RISKY-flag case into core. Conservatively split shell operators while respecting quoting; substitutions, redirects, malformed input, and executable wrappers need a decision. Every compound segment is checked. Arbitrary-program runners are never newly added to allow lists.
 
-The tool hook and agent-generated jobs use the same policy and approval stream. agy's headless runner pairs skip-permissions with its installed denying hook. Protected real launches require preflight proving that the owned hook is present, enabled, executable, and rejects a known-denied call; missing, disabled, or unusable hooks refuse launch. While full approvals await Slice 3, ask/unknown/unavailable-engine/timeouts deny. Plan mode remains instruction-based because native headless plan mode hangs.
+The tool hook and agent-generated jobs use the same policy and approval stream. agy's headless runner pairs skip-permissions with its installed denying hook. Protected real launches require preflight proving that the owned hook is present, enabled, executable, and rejects a known-denied call; missing or unusable hooks refuse launch. A hook the user switched off hands decisions to agy's own modes, never native plan mode (F-136, [ADR 0010](0010-hook-approvals-and-steering.md)). An unavailable engine, an unknown request and a timeout deny. Plan mode remains instruction-based because native headless plan mode hangs.
 
 Routing, cooldowns, deadlines, loops, and schedules receive time through `Clock`. A fake clock changes test time without sleeping. Daily schedules preserve local HH:MM behavior and explicitly test daylight-saving changes. A separate cancellable runtime wait lets stop interrupt deadlines promptly.
 

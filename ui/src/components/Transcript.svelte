@@ -4,6 +4,7 @@
   import type { Workbench } from '../lib/workbench';
   import { groupTranscript } from '../lib/transcript';
   import TurnGroup from './TurnGroup.svelte';
+  import { isBusy } from '../lib/format';
   let { workbench, login }: { workbench: Workbench; login: Login } = $props();
   const view = $derived(workbench.state);
   const groups = $derived(groupTranscript($view.events));
@@ -48,7 +49,9 @@
       </div>
     {:else}{#each groups as group, index (group.key)}<TurnGroup
           {group}
-          running={index === groups.length - 1 && $view.selected?.status === 'running'}
+          running={index === groups.length - 1 && isBusy($view.selected?.status)}
+          cwd={$view.selected?.cwd ?? ''}
+          onanswer={workbench.answer}
         />{/each}{/if}
   </div>
 </div>

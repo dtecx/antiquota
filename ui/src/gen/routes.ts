@@ -9,17 +9,17 @@ export const routes = [
   {
     "method": "POST",
     "path": "/api/approvals",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "GET",
     "path": "/api/approvals/{aid}",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "POST",
     "path": "/api/approvals/{aid}/answer",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "POST",
@@ -39,7 +39,7 @@ export const routes = [
   {
     "method": "POST",
     "path": "/api/sessions/{sid}/steer",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "GET",
@@ -334,12 +334,12 @@ export const routes = [
   {
     "method": "GET",
     "path": "/api/permissions",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "PUT",
     "path": "/api/permissions",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "GET",

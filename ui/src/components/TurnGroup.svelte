@@ -3,7 +3,18 @@
   import type { TranscriptGroup } from '../lib/transcript';
   import { duration, formatTokens } from '../lib/format';
   import ToolStep from './ToolStep.svelte';
-  let { group, running = false }: { group: TranscriptGroup; running?: boolean } = $props();
+  import ApprovalCard from './ApprovalCard.svelte';
+  let {
+    group,
+    running = false,
+    cwd = '',
+    onanswer,
+  }: {
+    group: TranscriptGroup;
+    running?: boolean;
+    cwd?: string;
+    onanswer: (id: string, decision: 'allow' | 'deny', always: boolean) => Promise<void>;
+  } = $props();
   const activity = $derived(
     group.events.filter((event) => event.t === 'tool' || event.t === 'thinking'),
   );
@@ -22,6 +33,7 @@
         >
       </div>
       <div class="message">{group.user.text}</div>
+      {#if group.user.steered}<span class="steered">sent while agy worked</span>{/if}
       {#each group.user.attachments ?? [] as attachment (attachment.path)}<span class="attachment"
           >{attachment.name}</span
         >{/each}
@@ -65,6 +77,7 @@
       >
         {event.text}
       </p>
+    {:else if event.t === 'approval'}<ApprovalCard {event} {cwd} {onanswer} />
     {:else if event.t === 'shell'}<details class="shell">
         <summary><code>{event.cmd}</code></summary>
         <pre>{event.output}</pre>
@@ -108,6 +121,12 @@
     white-space: pre-wrap;
     overflow-wrap: anywhere;
     line-height: 1.7;
+  }
+  .steered {
+    display: block;
+    margin-top: var(--space-2);
+    color: var(--ink-4);
+    font: 10px var(--mono);
   }
   .attachment {
     display: inline-block;

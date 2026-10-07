@@ -40,8 +40,9 @@ fn decode(map: &Map<String, Value>) -> Result<(Event, &'static [&'static str]), 
                     .unwrap_or("user")
                     .into(),
                 attachments: optional(map, "attachments")?,
+                steered: optional(map, "steered")?,
             },
-            &["t", "text", "kind", "attachments"][..],
+            &["t", "text", "kind", "attachments", "steered"][..],
         ),
         "turn_start" => (
             Event::TurnStart {

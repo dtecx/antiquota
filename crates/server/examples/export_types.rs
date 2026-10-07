@@ -42,6 +42,12 @@ fn generate(dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
     Rule::export_all(&config)?;
     Turn::export_all(&config)?;
     RouteDefinition::export_all(&config)?;
+    ApprovalResponse::export_all(&config)?;
+    ApprovalRequest::export_all(&config)?;
+    ApprovalAnswerRequest::export_all(&config)?;
+    SteerResponse::export_all(&config)?;
+    AllowRulesResponse::export_all(&config)?;
+    PermissionsRequest::export_all(&config)?;
     fs::write(
         dir.join("routes.ts"),
         format!(
