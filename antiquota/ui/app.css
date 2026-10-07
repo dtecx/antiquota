@@ -795,9 +795,10 @@ a.path:hover { color: var(--baton); text-decoration-color: var(--baton); }
 .pickup .when { color: var(--ink-4); font-size: 11px; }
 
 /* ---------- desktop app (macOS: content runs under the title bar) ---------- */
-.native.mac .side { padding-top: 10px; }
+.native.mac .side { padding-top: max(10px, calc(10px / var(--ui-zoom, 1))); }
+.native.mac .side > :not(.sessions) { flex-shrink: 0; }
 /* the window buttons sit at the left of this row: the name goes to its right end */
-.native.mac .brand { min-height: 32px; padding-left: 72px; padding-right: 8px; }
+.native.mac .brand { min-height: max(32px, calc(32px / var(--ui-zoom, 1))); padding-left: calc(72px / var(--ui-zoom, 1)); padding-right: 8px; }
 .native.mac .brand .mark { margin-left: auto; }
 .native .top, .native .brand { -webkit-user-select: none; user-select: none; }
 
@@ -1031,6 +1032,10 @@ body.no-stamps .turn > span:last-child { display: none; }
 .embed .side, .embed .drawer, .embed #drawer-btn, .embed #split-btn, .embed .side-open { display: none !important; }
 .embed .app { grid-template-columns: minmax(0, 1fr) !important; }
 #split-btn.on { color: var(--baton); }
+@media (max-width: 860px) {
+  .app.split-on { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+  .native.mac:not(.embed) .top { padding-left: calc(90px / var(--ui-zoom, 1)); min-height: calc(52px / var(--ui-zoom, 1)); }
+}
 .ctx-cap { padding: 6px 10px 4px; font: 500 10.5px var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--ink-4); }
 
 /* ---------- dictation ---------- */

@@ -14,8 +14,8 @@ for (const proto of [Element.prototype, DocumentFragment.prototype]) {
   }
 }
 /* Inside the desktop app (Tauri), a few browser features go through native APIs instead. */
-const NATIVE = window.__TAURI__ || null;
 const EMBED = new URLSearchParams(location.search).has('embed');  // the right half of side-by-side
+const NATIVE = (EMBED ? parent.__TAURI__ : window.__TAURI__) || null;
 if (EMBED) document.documentElement.classList.add('embed');
 const openExternal = url => NATIVE ? NATIVE.opener.openUrl(url) : window.open(url, '_blank', 'noopener');
 const readClipboard = () => NATIVE ? NATIVE.clipboardManager.readText() : navigator.clipboard.readText();
@@ -79,12 +79,20 @@ try {
 function savePrefs() { remember('prefs', JSON.stringify(PREF)); }
 /* UI scale: ⌘= ⌘- ⌘0 (and View menu in the app), 70–160%. */
 function setZoom(z) {
+  if (EMBED) return parent.setZoom(z);
+  if (!NATIVE) return;
+  if (!Number.isFinite(z)) z = 1;
   PREF.zoom = Math.round(Math.min(1.6, Math.max(0.7, z)) * 100) / 100;
-  document.documentElement.style.zoom = PREF.zoom === 1 ? '' : PREF.zoom;
+  document.documentElement.style.setProperty('--ui-zoom', PREF.zoom);
+  NATIVE.webview.getCurrentWebview().setZoom(PREF.zoom).catch(fail);
   savePrefs();
 }
-const zoomBy = d => { setZoom(d ? PREF.zoom + d : 1); toast(`Zoom ${Math.round(PREF.zoom * 100)}%`); };
-if (PREF.zoom !== 1) document.documentElement.style.zoom = PREF.zoom;
+function zoomBy(d) {
+  if (EMBED) return parent.zoomBy(d);
+  setZoom(d ? PREF.zoom + d : 1);
+  toast(`Zoom ${Math.round(PREF.zoom * 100)}%`);
+}
+if (NATIVE && !EMBED) setZoom(PREF.zoom);
 function remember(k, v) { try { localStorage.setItem('antiquota.' + k, v); } catch {} }
 
 async function api(method, path, body) {
@@ -2332,11 +2340,12 @@ const RENDER = {
       head('Appearance', 'Saved on this device.'),
       h('div', { class: 'set-block' },
         h('h3', {}, 'Interface size'),
-        h('div', { class: 'seg-ctl', role: 'radiogroup', 'aria-label': 'Interface size' }, scales.map(z => h('button', {
+        NATIVE && h('div', { class: 'seg-ctl', role: 'radiogroup', 'aria-label': 'Interface size' }, scales.map(z => h('button', {
           class: Math.abs(PREF.zoom - z) < .01 ? 'on' : '', role: 'radio', 'aria-checked': String(Math.abs(PREF.zoom - z) < .01),
           onclick: () => { setZoom(z); renderSettings(); },
         }, Math.round(z * 100) + '%'))),
-        h('p', { class: 'cap' }, `Now ${Math.round(PREF.zoom * 100)}%. Keys: ⌘= larger, ⌘− smaller, ⌘0 actual size.`)),
+        h('p', { class: 'cap' }, NATIVE ? `Now ${Math.round(PREF.zoom * 100)}%. Keys: ⌘= larger, ⌘− smaller, ⌘0 actual size.`
+          : 'Use your browser’s zoom controls: ⌘/Ctrl= larger, ⌘/Ctrl− smaller, ⌘/Ctrl0 actual size.')),
       h('div', { class: 'set-block' },
         h('h3', {}, 'Transcript'),
         h('div', { class: 'seg-ctl', role: 'radiogroup', 'aria-label': 'Transcript view' },
@@ -2683,9 +2692,9 @@ function wire() {
     if (mod && e.key === ',') { e.preventDefault(); openSettings(); }
     if (mod && e.key === '/') { e.preventDefault(); showShortcuts(); }
     if (mod && e.shiftKey && e.key.toLowerCase() === 'm') { e.preventDefault(); toggleDictation(); }
-    if (mod && (e.key === '=' || e.key === '+')) { e.preventDefault(); zoomBy(0.1); }
-    if (mod && (e.key === '-' || e.key === '_')) { e.preventDefault(); zoomBy(-0.1); }
-    if (mod && e.key === '0') { e.preventDefault(); zoomBy(0); }
+    if (NATIVE && mod && (e.key === '=' || e.key === '+')) { e.preventDefault(); zoomBy(0.1); }
+    if (NATIVE && mod && (e.key === '-' || e.key === '_')) { e.preventDefault(); zoomBy(-0.1); }
+    if (NATIVE && mod && e.key === '0') { e.preventDefault(); zoomBy(0); }
     if (mod && e.key.toLowerCase() === 'k') { e.preventDefault(); $('#search').focus(); $('#search').select(); }
     if (mod && e.key.toLowerCase() === 'j') { e.preventDefault(); $('#input').focus(); }
     if (mod && e.key.toLowerCase() === 'b' && !e.shiftKey) { e.preventDefault(); $('#drawer-btn').click(); }
