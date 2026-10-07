@@ -24,7 +24,7 @@ import uuid
 from datetime import datetime
 
 from . import accounts as a
-from . import policy, stack
+from . import gitops, policy, stack
 from . import convdb
 
 EDIT_TOOLS = {"write_to_file", "replace_file_content", "multi_replace_file_content", "sed_file"}
@@ -44,7 +44,8 @@ VERDICT_RE = re.compile(r"^\W*VERDICT:\s*(DONE|NOT[_ ]DONE)\W*$", re.I | re.M)
 META_KEYS = {"id": "", "title": "", "cwd": "", "model": "", "effort": "", "mode": "default", "created": 0,
              "updated": 0, "status": "idle", "status_until": None, "conversation_id": None, "turns": 0,
              "queue": [], "goal": None, "last_slot": None, "usage": {"input": 0, "output": 0, "thinking": 0},
-             "context": 0, "pending_note": "", "jobs": [], "loop": None, "pinned": False, "archived": False}
+             "context": 0, "pending_note": "", "jobs": [], "loop": None, "pinned": False, "archived": False,
+             "worktree": None}
 DENIED_NOTE = ("These commands were denied: headless agy cannot ask for permission, so the turn ended. "
                "Do not retry them or reword them; carry on without them: {cmds}")
 AUTO_CONTINUES = 2  # follow-ups after denials per user message, so a stuck agent cannot loop forever
@@ -315,7 +316,7 @@ class Engine:
 
     # --- session lifecycle ----------------------------------------------
 
-    def create(self, cwd, model, effort="", mode="default", title=""):
+    def create(self, cwd, model, effort="", mode="default", title="", worktree=False):
         cwd = os.path.abspath(os.path.expanduser(cwd))
         if not os.path.isdir(cwd):
             raise ValueError(f"not a directory: {cwd}")
@@ -323,8 +324,11 @@ class Engine:
             raise ValueError(f"unknown mode: {mode}")
         sid = uuid.uuid4().hex[:12]
         now = time.time()
+        wt = None
+        if worktree:  # its own branch and folder, so parallel sessions never edit the same files
+            wt, cwd = gitops.add_worktree(cwd, sid, title, os.path.join(a.base(), "worktrees"))
         s = Session({**META_KEYS, "id": sid, "title": title, "cwd": cwd, "model": model, "effort": effort,
-                     "mode": mode, "created": now, "updated": now, "queue": [],
+                     "mode": mode, "created": now, "updated": now, "queue": [], "worktree": wt,
                      "usage": {"input": 0, "output": 0, "thinking": 0}})
         self.sessions[sid] = s
         self.save(s)
@@ -341,6 +345,62 @@ class Engine:
             if k in fields:
                 s.meta[k] = bool(fields[k])
         self.save(s)
+        return s.meta
+
+    # --- git: review, commit, merge -------------------------------------------
+
+    def _name_branch(self, s):
+        """A worktree made before the session had a title gets its branch named after the first request."""
+        wt, sid = s.meta.get("worktree"), s.meta["id"]
+        if not wt or wt["branch"] != f"antiquota/session-{sid[:4]}":
+            return
+        new = f"antiquota/{gitops.slug(s.meta['title'])}-{sid[:4]}"
+        if new != wt["branch"] and gitops.git(wt["path"], "branch", "-m", wt["branch"], new, check=False) == "":
+            if gitops.git(wt["path"], "rev-parse", "--abbrev-ref", "HEAD", check=False).strip() == new:
+                s.meta["worktree"] = {**wt, "branch": new}
+                self.save(s)
+
+    def git_status(self, sid):
+        m = self.sessions[sid].meta
+        return gitops.status(m["cwd"], m.get("worktree"))
+
+    def git_diff(self, sid, path=None, committed=False):
+        m = self.sessions[sid].meta
+        return gitops.diff(m["cwd"], path, committed, m.get("worktree"))
+
+    def git_commit(self, sid, message):
+        s = self.sessions[sid]
+        sha = gitops.commit(s.meta["cwd"], message)
+        self.notice(s, "info", f"Committed {sha}: {message.strip().splitlines()[0][:120]}")
+        return {"sha": sha}
+
+    def git_discard(self, sid, path):
+        s = self.sessions[sid]
+        gitops.discard(s.meta["cwd"], path)
+        self.notice(s, "info", f"Discarded the changes to {path}.")
+        return {"ok": True}
+
+    def git_merge(self, sid):
+        s = self.sessions[sid]
+        wt = s.meta.get("worktree")
+        if not wt:
+            raise ValueError("this session has no worktree to merge")
+        sha = gitops.merge(wt, f"Merge {wt['branch']}: {s.meta['title'] or 'antiquota session'}")
+        self.notice(s, "info", f"Merged {wt['branch']} into {wt['base']} ({sha}).")
+        return {"sha": sha}
+
+    def git_remove_worktree(self, sid, delete_branch=False):
+        s = self.sessions[sid]
+        wt = s.meta.get("worktree")
+        if not wt:
+            raise ValueError("this session has no worktree")
+        if s.busy:
+            raise ValueError("stop the running turn first")
+        gitops.remove_worktree(wt, delete_branch)
+        s.meta.update(worktree=None, cwd=wt["repo"], conversation_id=None, archived=True,
+                      pending_note="This session's worktree was removed; you now work in the main checkout.")
+        self.save(s)
+        self.notice(s, "info", f"Removed the worktree{' and its branch' if delete_branch else ''}; the session is archived.")
         return s.meta
 
     def fork(self, sid):
@@ -452,6 +512,7 @@ class Engine:
             while True:
                 if not m["title"] and kind == "user":
                     m["title"] = (text.strip().splitlines() or ["(attachment)"])[0][:60]
+                    self._name_branch(s)
                 files = [{"name": os.path.basename(p), "path": p,
                           "image": os.path.splitext(p)[1].lower() in (".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".heic")}
                          for p in attachments or []]

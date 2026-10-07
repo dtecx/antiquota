@@ -203,7 +203,7 @@ function sessItem(m) {
       onclick: () => openSession(m.id),
     },
     h('span', { class: `dot ${m.status}${goalOn ? ' goal' : ''}` }),
-    h('span', { class: 't' }, (m.pinned ? '◆ ' : '') + (m.title || 'Untitled')),
+    h('span', { class: 't' }, (m.pinned ? '◆ ' : '') + (m.worktree ? '⎇ ' : '') + (m.title || 'Untitled')),
     h('span', { class: 'when' }, ago(m.updated)),
     sub && h('span', { class: 'sub' + (m.status === 'approval' ? ' attn' : '') }, sub)),
     h('button', {
@@ -223,8 +223,9 @@ function renderSessions() {
   const pinned = list.filter(m => m.pinned);
   if (pinned.length) groups.set('\u0000pinned', pinned);
   for (const m of list.filter(m => !m.pinned)) {
-    if (!groups.has(m.cwd)) groups.set(m.cwd, []);
-    groups.get(m.cwd).push(m);
+    const key = m.worktree ? m.worktree.repo : m.cwd;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(m);
   }
   const nav = $('#sessions');
   nav.replaceChildren();
@@ -327,8 +328,9 @@ function renderHeader() {
   const m = cur();
   const busy = m && m.status !== 'idle';
   $('#title').textContent = m ? (m.title || 'Untitled') : 'antiquota';
-  $('#cwd').textContent = m ? '\u200e' + m.cwd.replace(/^\/Users\/[^/]+/, '~') + '\u200e' : '';
-  $('#cwd').title = m ? m.cwd : '';
+  $('#cwd').textContent = !m ? '' : m.worktree ? '⎇ ' + m.worktree.branch
+    : '\u200e' + m.cwd.replace(/^\/Users\/[^/]+/, '~') + '\u200e';
+  $('#cwd').title = m ? (m.worktree ? `Worktree of ${m.worktree.repo} (from ${m.worktree.base}) in ${m.cwd}` : m.cwd) : '';
   const st = $('#status');
   st.hidden = !busy;
   if (busy) {
@@ -1268,6 +1270,59 @@ async function slash(text) {
   } catch (e) { fail(e); }
 }
 
+/* ---------- git: review uncommitted work, commit, merge a worktree back ---------- */
+async function renderGit(box, m) {
+  let st;
+  try { st = await api('GET', `sessions/${m.id}/git`); } catch { return; }
+  if (!st || !st.root) { box.replaceChildren(); return; }
+  const wt = st.worktree;
+  const fileRow = (f, committed) => {
+    const row = h('details', { class: 'change' },
+      h('summary', {}, h('span', { class: 'code c-' + (f.code || 'M').replace('?', 'U') }, f.code === '??' ? 'new' : (f.code || '')),
+        h('span', { class: 'cpath', title: f.path }, f.path),
+        h('span', { class: 'meta' }, f.add ? h('span', { class: 'stat add' }, '+' + f.add) : null,
+          f.del ? h('span', { class: 'stat del' }, '−' + f.del) : null,
+          !committed && h('button', { class: 'btn small ghostish', title: 'Put this file back as it is in the last commit',
+            onclick: async e => {
+              e.preventDefault();
+              if (await ask(f.code === '??' ? 'The new file is deleted.' : 'Its uncommitted changes are lost.', { title: `Discard ${f.path}?`, ok: 'Discard', danger: true }))
+                api('POST', `sessions/${m.id}/git/discard`, { path: f.path }).then(() => renderGit(box, m)).catch(fail);
+            } }, 'Discard'))));
+    row.addEventListener('toggle', async () => {
+      if (!row.open || row.children.length > 1) return;
+      const r = await api('GET', `sessions/${m.id}/git/diff?path=${encodeURIComponent(f.path)}${committed ? '&committed=1' : ''}`).catch(fail);
+      if (r) row.append(diffNode(r.diff || '(no textual change)'));
+    });
+    return row;
+  };
+  const msg = h('textarea', { class: 'commit-msg', rows: 2, placeholder: 'Commit message', spellcheck: 'true',
+    'aria-label': 'Commit message' });
+  msg.value = m.title || '';
+  box.replaceChildren(...[
+    h('div', { class: 'githead' },
+      h('span', { class: 'branch' }, '⎇ ' + st.branch),
+      wt ? h('span', { class: 'cap' }, `worktree from ${wt.base} · ${st.ahead} commit${st.ahead === 1 ? '' : 's'}` + (st.merged ? ` · merged into ${wt.base}` : ' ahead'))
+        : h('span', { class: 'cap', title: st.root }, st.root.replace(/^\/Users\/[^/]+/, '~'))),
+    h('h3', {}, st.files.length ? `Uncommitted · ${st.files.length} file${st.files.length === 1 ? '' : 's'}` : 'Uncommitted'),
+    ...(st.files.length ? st.files.map(f => fileRow(f, false)) : [h('p', { class: 'cap' }, 'Nothing uncommitted.')]),
+    st.files.length ? h('form', { class: 'commit-form', onsubmit: e => {
+      e.preventDefault();
+      api('POST', `sessions/${m.id}/git/commit`, { message: msg.value }).then(r => { toast('Committed ' + r.sha); renderGit(box, m); }).catch(fail);
+    } }, msg, h('div', { class: 'acts' }, h('button', { class: 'primary btn small' }, 'Commit all'))) : null,
+    ...(wt ? [
+      h('h3', {}, `On ${st.branch} · ${st.committed.length} file${st.committed.length === 1 ? '' : 's'}`),
+      ...(st.committed.length ? st.committed.map(f => fileRow(f, true)) : [h('p', { class: 'cap' }, 'No commits on this branch yet.')]),
+      h('div', { class: 'acts git-acts' },
+        h('button', { class: 'primary btn small', disabled: !st.ahead || st.merged, title: st.merged ? 'Already merged' : st.ahead ? `Merge ${st.branch} into ${wt.base} in ${wt.repo}` : 'Commit something first',
+          onclick: () => api('POST', `sessions/${m.id}/git/merge`).then(r => { toast(`Merged into ${wt.base} (${r.sha})`); renderGit(box, m); }).catch(fail) }, `Merge into ${wt.base}`),
+        h('button', { class: 'btn small', onclick: async () => {
+          const keep = await ask(`The folder ${wt.path} goes away and the session is archived. Keep the branch ${wt.branch}?`,
+            { title: 'Remove this worktree?', ok: 'Remove, keep branch' });
+          if (keep) api('POST', `sessions/${m.id}/git/remove`, { delete_branch: false }).then(() => toast('Worktree removed')).catch(fail);
+        } }, 'Remove worktree')),
+    ] : [])].filter(Boolean));
+}
+
 /* ---------- drawer ---------- */
 function showDrawer(tab) {
   S.drawer = true;
@@ -1428,7 +1483,11 @@ async function renderPane() {
       files.set(path, f);
     }
     const list = [...files.values()].sort((x, y) => y.last - x.last);
+    const gitBox = h('div', { class: 'gitbox' });
+    if (cur()) renderGit(gitBox, cur());
     pane.replaceChildren(
+      gitBox,
+      h('h3', {}, 'Edits by agy in this session'),
       h('p', { class: 'cap' }, cur() ? `Files this session changed, newest first. Click one for its diffs.` : 'Open a session to see its changes.'),
       ...(list.length ? list.map(f => {
         const row = h('details', { class: 'change' },
@@ -1475,7 +1534,8 @@ let pendingText = '';
 function openNew(text) {
   pendingText = typeof text === 'string' ? text : '';
   const m = cur();
-  $('#new-cwd').value = m ? m.cwd : S.defaults.cwd;
+  $('#new-cwd').value = m ? (m.worktree ? m.worktree.repo : m.cwd) : S.defaults.cwd;
+  $('#new-worktree').checked = false;
   setPicker($('#new-model'), $('#new-effort'), m ? m.model : S.defaults.model);
   $('#new-mode').value = m ? m.mode : (S.defaults.mode || 'default');
   browse('');
@@ -1486,6 +1546,7 @@ async function createFromDialog() {
   try {
     const meta = await api('POST', 'sessions', {
       cwd: $('#new-cwd').value.trim(), model: $('#new-effort').value, mode: $('#new-mode').value,
+      worktree: $('#new-worktree').checked,
     });
     S.sessions.set(meta.id, meta);
     await openSession(meta.id);

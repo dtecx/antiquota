@@ -339,7 +339,19 @@ class Handler(BaseHTTPRequestHandler):
             case ("POST", ["sessions"]):
                 d = stack.defaults()
                 return e.create(b.get("cwd") or a.home(), b.get("model") or d["model"], "",
-                                b.get("mode") or d["mode"], b.get("title", ""))
+                                b.get("mode") or d["mode"], b.get("title", ""), bool(b.get("worktree")))
+            case ("GET", ["sessions", sid, "git"]):
+                return e.git_status(sid) or {}
+            case ("GET", ["sessions", sid, "git", "diff"]):
+                return {"diff": e.git_diff(sid, (qs.get("path") or [None])[0], (qs.get("committed") or [""])[0] == "1")}
+            case ("POST", ["sessions", sid, "git", "commit"]):
+                return e.git_commit(sid, str(b.get("message", "")))
+            case ("POST", ["sessions", sid, "git", "discard"]):
+                return e.git_discard(sid, str(b.get("path", "")))
+            case ("POST", ["sessions", sid, "git", "merge"]):
+                return e.git_merge(sid)
+            case ("POST", ["sessions", sid, "git", "remove"]):
+                return e.git_remove_worktree(sid, bool(b.get("delete_branch")))
             case ("GET", ["sessions", sid]):
                 return {"meta": e.sessions[sid].meta, "events": e.events(sid)}
             case ("PATCH", ["sessions", sid]):
