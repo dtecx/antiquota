@@ -983,3 +983,23 @@ body.no-stamps .turn > span:last-child { display: none; }
 .pane { overflow-x: hidden; }
 
 .btn:disabled, .primary:disabled, button.primary[disabled] { opacity: .4; cursor: default; filter: saturate(.4); }
+
+/* ---------- grouped steps ---------- */
+.tgroup { margin: 6px 0; }
+.tg-head {
+  display: flex; align-items: center; gap: 9px; width: 100%; padding: 5px 8px 5px 6px; border: 0; border-radius: var(--r-md);
+  background: none; text-align: left; color: var(--ink-3); font: 13px var(--sans);
+}
+.tg-head:hover { background: var(--rule); color: var(--ink-2); }
+.tg-ico { width: 14px; height: 14px; flex: none; border-radius: 4px; border: 1.5px solid var(--ink-4); position: relative; }
+.tg-ico::after { content: ""; position: absolute; inset: 3px; border-radius: 1px; background: var(--ink-4); }
+.tgroup.running .tg-ico { border-color: var(--baton); animation: pulse 1.4s var(--ease) infinite; }
+.tgroup.running .tg-ico::after { background: var(--baton); }
+.tg-label { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tgroup.running .tg-label { color: var(--ink-2); }
+.tg-meta { display: flex; gap: 8px; align-items: center; margin-left: 4px; font: 11.5px var(--mono); color: var(--ink-4); white-space: nowrap; flex: none; }
+.tg-fail { color: var(--bad); }
+.tg-head .chev { margin-left: auto; color: var(--ink-4); transition: transform .15s var(--ease); }
+.tgroup.open > .tg-head .chev { transform: rotate(90deg); }
+.tg-body { margin: 2px 0 4px 13px; padding-left: 12px; border-left: 1px solid var(--rule-2); }
+.tg-body > .tool { margin: 2px 0; }

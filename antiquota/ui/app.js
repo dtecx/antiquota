@@ -6,6 +6,13 @@
 
 const TOKEN = document.querySelector('meta[name="antiquota-token"]').content;
 const $ = (s, el = document) => el.querySelector(s);
+/* Renderers build child lists with `cond && node`: skip null/false instead of printing "null". */
+for (const proto of [Element.prototype, DocumentFragment.prototype]) {
+  for (const name of ['replaceChildren', 'append', 'prepend']) {
+    const orig = proto[name];
+    proto[name] = function (...kids) { return orig.apply(this, kids.flat(Infinity).filter(k => k != null && k !== false)); };
+  }
+}
 /* Inside the desktop app (Tauri), a few browser features go through native APIs instead. */
 const NATIVE = window.__TAURI__ || null;
 const openExternal = url => NATIVE ? NATIVE.opener.openUrl(url) : window.open(url, '_blank', 'noopener');
@@ -650,6 +657,48 @@ function toolNode(ev) {
   wrap.toggle = toggle;
   return wrap;
 }
+/* Grouped view (like Claude Code): agy's steps between replies fold into one line, e.g.
+   "Ran 3 commands, read 2 files, edited 1 file". Open it for the steps; open a step for its output. */
+const KIND = { run: ['Ran', 'command', 'commands'], read: ['Read', 'file', 'files'], edit: ['Edited', 'file', 'files'],
+  list: ['Listed', 'folder', 'folders'], search: ['Searched', 'time', 'times'], web: ['Fetched', 'page', 'pages'],
+  mcp: ['Called', 'MCP tool', 'MCP tools'], other: ['Used', 'tool', 'tools'] };
+function groupNode() {
+  const body = h('div', { class: 'tg-body', hidden: '' });
+  const label = h('span', { class: 'tg-label' }), meta = h('span', { class: 'tg-meta' });
+  const head = h('button', { class: 'tg-head', type: 'button', 'aria-expanded': 'false' },
+    h('span', { class: 'tg-ico', 'aria-hidden': 'true' }), label, meta, h('span', { class: 'chev', 'aria-hidden': 'true' }, '›'));
+  const g = h('div', { class: 'tgroup' }, head, body);
+  g.body = body;
+  g.toggle = (open = body.hidden) => { body.hidden = !open; g.classList.toggle('open', open); head.setAttribute('aria-expanded', String(open)); };
+  head.addEventListener('click', () => g.toggle());
+  g.refresh = () => {
+    const evs = [...body.children].map(n => n.ev).filter(Boolean);
+    const counts = {}, files = { read: new Set(), edit: new Set() };
+    let add = 0, del = 0, failed = 0, running = null;
+    for (const ev of evs) {
+      const [, arg, kind] = toolInfo(ev);
+      const k = KIND[kind] ? kind : 'other';
+      if (k === 'read' || k === 'edit') files[k].add(arg); else counts[k] = (counts[k] || 0) + 1;
+      if (ev.diff) { const [a2, d2] = diffStats(ev.diff); add += a2; del += d2; }
+      if (ev.state === 'error') failed++;
+      if (ev.state === 'running') running = ev;
+    }
+    if (files.read.size) counts.read = files.read.size;
+    if (files.edit.size) counts.edit = files.edit.size;
+    const order = ['edit', 'run', 'read', 'search', 'list', 'web', 'mcp', 'other'];
+    const parts = order.filter(k => counts[k]).map((k, i) => {
+      const [verb, one, many] = KIND[k];
+      return `${i ? verb.toLowerCase() : verb} ${counts[k]} ${counts[k] === 1 ? one : many}`;
+    });
+    label.textContent = running ? `${toolInfo(running)[0]} ${toolInfo(running)[1] || ''}`.trim() + '…' : parts.join(', ');
+    meta.replaceChildren(
+      add ? h('span', { class: 'stat add' }, '+' + add) : null, del ? h('span', { class: 'stat del' }, '−' + del) : null,
+      failed ? h('span', { class: 'tg-fail' }, `${failed} failed`) : null,
+      evs.length > 1 && !running ? h('span', {}, `${evs.length} steps`) : null);
+    g.classList.toggle('running', !!running);
+  };
+  return g;
+}
 function thinkingNode(ev) {
   const d = h('details', { class: 'thinking' },
     h('summary', {}, h('span', { class: 'spark' }, '✻'), 'Thought',
@@ -758,6 +807,7 @@ function renderEvent(ev, live) {
   const tr = $('#transcript');
   const stick = nearBottom();
   $('.blank', tr)?.remove();
+  if (ev.t !== 'tool' && ev.t !== 'thinking') S.group = null;  // a reply, message or notice ends a run of steps
   switch (ev.t) {
     case 'user':
       tr.append(userNode(ev));
@@ -799,8 +849,14 @@ function renderEvent(ev, live) {
     case 'tool': {
       const key = 't' + ev.turn + ':' + ev.step;
       const node = toolNode(ev), old = S.nodes.get(key);
-      if (old) { old.replaceWith(node); if (old.classList.contains('open')) node.toggle(true); } else tr.append(node);
+      node.ev = ev;
+      if (old) { old.replaceWith(node); if (old.classList.contains('open')) node.toggle(true); }
+      else if (PREF.view === 'grouped') {
+        if (!S.group || !S.group.isConnected || tr.lastElementChild !== S.group) { S.group = groupNode(); tr.append(S.group); }
+        S.group.body.append(node);
+      } else tr.append(node);
       S.nodes.set(key, node);
+      node.closest('.tgroup')?.refresh();
       break;
     }
     case 'thinking': {
@@ -849,6 +905,7 @@ async function openSession(sid) {
   S.cur = sid;
   history.replaceState(null, '', '#' + sid);
   S.nodes.clear();
+  S.group = null;
   S.live.clear();
   renderSessions();
   const { meta, events } = await api('GET', 'sessions/' + sid);
@@ -2130,6 +2187,7 @@ function setDetail(mode) {
   $$('details.thinking').forEach(d => { d.open = mode === 'detailed' && d.textContent.length < 1300; });
 }
 function expandAll(open) {
+  $$('.tgroup', $('#transcript')).forEach(g => g.toggle(open));
   $$('.tool', $('#transcript')).forEach(t => t.toggle && t.toggle(open));
   $$('details.thinking', $('#transcript')).forEach(d => { d.open = open; });
 }
