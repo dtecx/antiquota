@@ -22,6 +22,7 @@ import uuid
 from datetime import datetime
 
 from . import accounts as a
+from . import convdb
 
 EDIT_TOOLS = {"write_to_file", "replace_file_content", "multi_replace_file_content", "sed_file"}
 MODES = {"default": [], "accept-edits": ["--mode", "accept-edits"], "plan": ["--mode", "plan"],
@@ -33,7 +34,8 @@ VERDICT_RE = re.compile(r"^\W*VERDICT:\s*(DONE|NOT[_ ]DONE)\W*$", re.I | re.M)
 # Every meta key exists from creation on: see Engine.save.
 META_KEYS = {"id": "", "title": "", "cwd": "", "model": "", "effort": "", "mode": "default", "created": 0,
              "updated": 0, "status": "idle", "status_until": None, "conversation_id": None, "turns": 0,
-             "queue": [], "goal": None, "last_slot": None, "usage": {"input": 0, "output": 0}}
+             "queue": [], "goal": None, "last_slot": None, "usage": {"input": 0, "output": 0, "thinking": 0},
+             "context": 0}
 CONTINUE_AFTER_QUOTA = ("Continue exactly where you stopped. Your previous attempt was cut off by an "
                         "account quota limit; do not redo work that is already finished.")
 
@@ -93,6 +95,7 @@ class Session:
         self.proc = None
         self.thread = None
         self.files = {}  # path -> last content seen, a fallback "before" for diffs
+        self.thinking_due = []  # (turn, step, tokens) replies whose thinking was not in agy's db yet
 
     @property
     def dir(self):
@@ -115,6 +118,7 @@ class Engine:
             except (OSError, ValueError):
                 continue
             meta = {**META_KEYS, **meta, "status": "idle"}  # nothing runs after a restart
+            meta["usage"] = {"input": 0, "output": 0, "thinking": 0, **meta["usage"]}
             self.sessions[sid] = Session(meta)
 
     # --- pub/sub and storage ----------------------------------------------
@@ -178,7 +182,8 @@ class Engine:
         sid = uuid.uuid4().hex[:12]
         now = time.time()
         s = Session({**META_KEYS, "id": sid, "title": title, "cwd": cwd, "model": model, "effort": effort,
-                     "mode": mode, "created": now, "updated": now, "queue": [], "usage": {"input": 0, "output": 0}})
+                     "mode": mode, "created": now, "updated": now, "queue": [],
+                     "usage": {"input": 0, "output": 0, "thinking": 0}})
         self.sessions[sid] = s
         self.save(s)
         return s.meta
@@ -351,7 +356,8 @@ class Engine:
         reader.start()
         texts, before, tail, result, denied = {}, {}, [], {}, []
         last = None                       # (step_type, state) of this turn's latest step
-        usage = {"input_tokens": 0, "output_tokens": 0, "total_tokens": 0}
+        usage = {"input_tokens": 0, "output_tokens": 0, "thinking_tokens": 0, "total_tokens": 0}
+        context = 0  # the largest prompt this turn sent: history + tools + cached part
         for line in proc.stdout:
             try:
                 d = json.loads(line)
@@ -366,8 +372,10 @@ class Engine:
                 su = d.get("step_update") or {}
                 self._step(s, turn, su, texts, before, denied)
                 last = (su.get("step_type"), su.get("state"))
+                step_usage = (su.get("usage") or {}) if su.get("state") == "DONE" else {}
                 for k in usage:  # per step: agy's result totals the whole conversation
-                    usage[k] += (su.get("usage") or {}).get(k, 0) if su.get("state") == "DONE" else 0
+                    usage[k] += step_usage.get(k, 0)
+                context = max(context, step_usage.get("input_tokens", 0) + step_usage.get("cache_read_tokens", 0))
             else:
                 tail.append(line)
                 if ev == "result":
@@ -375,6 +383,9 @@ class Engine:
         proc.wait()
         reader.join(timeout=5)
         s.proc = None
+        due, s.thinking_due = s.thinking_due, []
+        for t, step, tokens in due:
+            self._thinking(s, t, step, tokens)
         err = "".join(err).strip()
         stopped = s.stop.is_set()
         # In a resumed conversation agy's result keeps the last error of the conversation, e.g. a
@@ -387,6 +398,10 @@ class Engine:
                      and bool(re.search(r"conversation", err + json.dumps(result), re.I)))
         m["usage"]["input"] += usage.get("input_tokens", 0)
         m["usage"]["output"] += usage.get("output_tokens", 0)
+        m["usage"]["thinking"] = m["usage"].get("thinking", 0) + usage.get("thinking_tokens", 0)
+        if context:
+            m["context"] = context
+        usage["context"] = context
         if result.get("denied_actions") or denied:
             self.notice(s, "denied", "agy denied a tool call that headless mode cannot ask about.",
                         actions=result.get("denied_actions") or [], commands=denied)
@@ -408,6 +423,10 @@ class Engine:
             if delta:
                 texts[step] = texts.get(step, "") + delta
                 self.publish(sid, {"t": "delta", "turn": turn, "step": step, "text": delta})
+            if state != "ACTIVE":
+                tokens = (su.get("usage") or {}).get("thinking_tokens", 0)
+                if not self._thinking(s, turn, step, tokens) and tokens:
+                    s.thinking_due.append((turn, step, tokens))
             if state != "ACTIVE" and texts.get(step):
                 self.publish(sid, {"t": "assistant", "turn": turn, "step": step, "text": texts[step]}, persist=True)
         elif kind == "tool":
@@ -436,6 +455,15 @@ class Engine:
                 ev["diff"] = _diff(path, b, after, s.meta["cwd"])
                 self._remember(s, path, after)
             self.publish(sid, ev, persist=True)
+
+    def _thinking(self, s, turn, step, tokens=0):
+        """Publish a reply's thinking, read from agy's conversation db. True if found."""
+        conv_dir = os.path.join(a.stack_home(), ".gemini", "antigravity-cli", "conversations")
+        text = convdb.thinking(conv_dir, s.meta.get("conversation_id"), step)
+        if text:
+            self.publish(s.meta["id"], {"t": "thinking", "turn": turn, "step": step, "text": text, "tokens": tokens},
+                         persist=True)
+        return bool(text)
 
     @staticmethod
     def _remember(s, path, content):

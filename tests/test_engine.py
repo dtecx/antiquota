@@ -41,7 +41,7 @@ def test_turn_streams_persists_and_survives_restart(home, work):
     assert evs[3]["text"].startswith(f"turn 1 on {ONE}")
     meta = eng.sessions[sid].meta
     assert meta["title"] == "hello" and meta["conversation_id"].startswith(f"conv-{ONE}")
-    assert meta["usage"] == {"input": 100, "output": 10} and meta["status"] == "idle"
+    assert meta["usage"] == {"input": 100, "output": 10, "thinking": 0} and meta["status"] == "idle"
     assert calls(work)[0]["args"][calls(work)[0]["args"].index("--model") + 1] == "gemini-3.8-flash-low"
     again = Engine()
     assert [e["t"] for e in again.events(sid)] == [e["t"] for e in evs]
@@ -159,4 +159,4 @@ def test_a_reply_wins_over_the_resumed_conversations_old_error(home, work, monke
     finish(eng, sid)
     assert [e["status"] for e in eng.events(sid) if e["t"] == "turn_end"] == ["SUCCESS"]
     assert not a.walled_until(ONE, "gemini") and kinds(eng, sid) == []
-    assert eng.sessions[sid].meta["usage"] == {"input": 100, "output": 10}  # this turn only
+    assert eng.sessions[sid].meta["usage"] == {"input": 100, "output": 10, "thinking": 0}  # this turn only
