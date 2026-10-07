@@ -214,6 +214,14 @@ pub trait SessionStore: Send + Sync {
     ) -> Result<f64, PortError>;
     fn project_usage(&self, sid: &str, records: &[EventRecord]) -> Result<(), PortError>;
     fn state_dir(&self) -> String;
+    /// Where this session's uploaded attachments live.
+    fn attachments_dir(&self, _sid: &str) -> String {
+        String::new()
+    }
+    /// The folder that holds session worktrees.
+    fn worktrees_dir(&self) -> String {
+        String::new()
+    }
     /// Where a job of this session writes its log.
     fn job_log_path(&self, _sid: &str, _jid: &str) -> String {
         String::new()
@@ -229,8 +237,60 @@ pub trait SessionStore: Send + Sync {
         unavailable()
     }
 }
+/// A session's project folder as the Files tab and file viewer see it.
+pub trait Workspace: Send + Sync {
+    /// One folder of the project: folders first, hidden and heavy entries last and dimmed,
+    /// at most 400 entries; `{root, path, entries}`.
+    fn tree(&self, cwd: &str, path: &str) -> Result<serde_json::Value, PortError>;
+    /// A text file inside the project or one of `roots`, at most 2 MB; `{path, rel, text}`.
+    fn read_text(
+        &self,
+        cwd: &str,
+        roots: &[String],
+        path: &str,
+    ) -> Result<serde_json::Value, PortError>;
+}
+/// Git for sessions: worktrees, review, commit and merge. Nothing here pushes anywhere.
 pub trait Vcs: Send + Sync {
-    fn status(&self, cwd: &str) -> Result<String, PortError>;
+    /// The repository's top folder, or `None` outside a repository.
+    fn root(&self, cwd: &str) -> Option<String>;
+    /// A new branch and worktree starting at the current commit; returns the record and the
+    /// folder the session works in (the same subfolder as `cwd`).
+    fn add_worktree(
+        &self,
+        cwd: &str,
+        branch: &str,
+        folder: &str,
+    ) -> Result<(crate::worktree::Worktree, String), PortError>;
+    /// Branch, changed files with counts, and for a worktree what it adds to its base;
+    /// `None` outside a repository.
+    fn status(
+        &self,
+        cwd: &str,
+        worktree: Option<&crate::worktree::Worktree>,
+    ) -> Result<Option<serde_json::Value>, PortError>;
+    fn diff(
+        &self,
+        cwd: &str,
+        path: Option<&str>,
+        committed: Option<&crate::worktree::Worktree>,
+    ) -> Result<String, PortError>;
+    /// Commits every change and returns the short commit id.
+    fn commit(&self, cwd: &str, message: &str) -> Result<String, PortError>;
+    fn discard(&self, cwd: &str, path: &str) -> Result<(), PortError>;
+    /// Merges the worktree branch into its base in the main checkout; returns the short id.
+    fn merge(
+        &self,
+        worktree: &crate::worktree::Worktree,
+        message: &str,
+    ) -> Result<String, PortError>;
+    fn remove_worktree(
+        &self,
+        worktree: &crate::worktree::Worktree,
+        delete_branch: bool,
+    ) -> Result<(), PortError>;
+    /// Renames a worktree's branch; `true` when the checkout now has the new name.
+    fn rename_branch(&self, path: &str, from: &str, to: &str) -> bool;
 }
 pub trait Pty: Send {
     fn write(&mut self, data: &[u8]) -> Result<(), PortError>;

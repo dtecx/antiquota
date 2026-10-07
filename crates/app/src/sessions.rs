@@ -19,7 +19,19 @@ impl Service {
         model: &str,
         mode: Mode,
     ) -> Result<Session, AppError> {
-        let cwd = self.store.validate_cwd(cwd)?;
+        self.create_in(cwd, title, model, mode, false)
+    }
+    /// Creates a session; with `worktree` it gets its own branch and folder so parallel
+    /// sessions never edit the same files.
+    pub fn create_in(
+        &self,
+        cwd: &str,
+        title: &str,
+        model: &str,
+        mode: Mode,
+        worktree: bool,
+    ) -> Result<Session, AppError> {
+        let mut cwd = self.store.validate_cwd(cwd)?;
         let reservation = loop {
             let id = uuid::Uuid::new_v4().simple().to_string()[..12].to_owned();
             if self.store.exists(&id)? {
@@ -39,6 +51,12 @@ impl Service {
             }
         };
         let id = reservation.id.clone();
+        let mut record = None;
+        if worktree {
+            let (made, work) = self.new_worktree(&cwd, &id, title)?;
+            record = Some(made.to_value());
+            cwd = work;
+        }
         let now = self.clock.now();
         if !now.is_finite() || now < 0.0 {
             return Err(AppError::Invalid("invalid clock instant".into()));
@@ -51,6 +69,7 @@ impl Service {
             mode,
             created: now,
             updated: now,
+            worktree: record,
             ..Default::default()
         };
         let record = EventRecord::new(

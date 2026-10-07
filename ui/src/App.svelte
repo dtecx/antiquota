@@ -17,6 +17,10 @@
   import GoalDialog from './components/GoalDialog.svelte';
   import JobBar from './components/JobBar.svelte';
   import JobLog from './components/JobLog.svelte';
+  import Drawer from './components/Drawer.svelte';
+  import FileViewer from './components/FileViewer.svelte';
+  import ConfirmDialog from './components/ConfirmDialog.svelte';
+  import { drawer } from './lib/git';
   import { revising } from './lib/goals';
   import { createAccounts } from './lib/accounts';
   import { createLogin } from './lib/login';
@@ -68,6 +72,11 @@
       accounts.open();
       return;
     }
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'b') {
+      event.preventDefault();
+      drawer.update((d) => ({ ...d, open: !d.open }));
+      return;
+    }
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'n') {
       event.preventDefault();
       workbench.openDialog('create');
@@ -113,9 +122,12 @@
         {#if $view.loading}<small>Connecting to the engine…</small>{/if}
       </div>{/if}
   </main>
+  <Drawer {workbench} {api} />
   <SessionDialog {workbench} />
   <GoalDialog {workbench} />
   <JobLog />
+  <FileViewer />
+  <ConfirmDialog />
   <AccountsPanel {accounts} {login} {permissions} sessions={$view.snapshot?.sessions ?? []} />
   <LoginDialog {login} {accounts} />
   <ConfirmRemoval {accounts} />

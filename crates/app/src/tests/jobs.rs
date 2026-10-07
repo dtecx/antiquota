@@ -36,6 +36,8 @@ fn awake_service(keep_awake: &str, awake: Arc<RecordingAwake>) -> Arc<Service> {
         shell: None,
         jobs: None,
         awake: Some(awake),
+        vcs: None,
+        workspace: None,
     })
     .unwrap()
 }
@@ -173,6 +175,8 @@ async fn sessions_keep_twenty_jobs_and_skip_duplicate_requests() {
         shell: None,
         jobs: Some(Arc::new(EndlessJobs::default())),
         awake: Some(awake.clone()),
+        vcs: None,
+        workspace: None,
     })
     .unwrap();
     let id = service

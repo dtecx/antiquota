@@ -51,6 +51,7 @@ fn generate(dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
     GoalRequest::export_all(&config)?;
     JobLogResponse::export_all(&config)?;
     antiquota_core::jobs::Job::export_all(&config)?;
+    antiquota_core::worktree::Worktree::export_all(&config)?;
     LoopResponse::export_all(&config)?;
     fs::write(
         dir.join("routes.ts"),

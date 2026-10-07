@@ -2,9 +2,12 @@
 <script lang="ts">
   import type { Workbench } from '../lib/workbench';
   import Icon from './Icon.svelte';
+  import { drawer } from '../lib/git';
+  import { asWorktree } from '../lib/workbench';
   let { workbench }: { workbench: Workbench } = $props();
   const view = $derived(workbench.state);
   const models = $derived($view.snapshot?.models ?? []);
+  const worktree = $derived(asWorktree($view.selected?.worktree));
 </script>
 
 <header>
@@ -15,7 +18,14 @@
   >
   <div class="identity">
     <h1>{$view.selected?.title || 'New session'}</h1>
-    <p title={$view.selected?.cwd}>{$view.selected?.cwd || 'Choose a project to start'}</p>
+    {#if worktree}<p
+        class="branch"
+        title={`${worktree.path} · from ${worktree.base} in ${worktree.repo}`}
+      >
+        <Icon name="branch" size={11} />{worktree.branch}
+      </p>{:else}<p title={$view.selected?.cwd}>
+        {$view.selected?.cwd || 'Choose a project to start'}
+      </p>{/if}
   </div>
   {#if $view.selected}
     <div class="controls">
@@ -47,6 +57,14 @@
         title={$view.selected.pinned ? 'Unpin session' : 'Pin session'}
         onclick={() => workbench.update({ pinned: !$view.selected?.pinned })}
         disabled={$view.mutating}><Icon name="pin" /></button
+      ><button
+        class="icon quiet"
+        class:pinned={$drawer.open}
+        aria-label="Changes and files"
+        title="Changes and files (⌘B)"
+        aria-pressed={$drawer.open}
+        onclick={() => drawer.update((d) => ({ ...d, open: !d.open }))}
+        ><Icon name="panel" /></button
       >
     </div>
   {/if}
@@ -78,6 +96,12 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+  .branch {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    color: var(--baton);
   }
   .controls {
     display: flex;

@@ -15,3 +15,25 @@ it('groups folders, pins before recent sessions, and combines filter terms', () 
   expect(sessions.map((session) => session.id)).toEqual(['old', 'new', 'archive', 'other']);
   expect(groupSessions(sessions, 'missing')).toEqual([]);
 });
+
+it('puts a worktree session under its repository', () => {
+  const groups = groupSessions(
+    [
+      { ...fixtureSession('a'), cwd: '/repo', updated: 2 },
+      {
+        ...fixtureSession('b'),
+        cwd: '/data/worktrees/repo-b',
+        updated: 1,
+        worktree: {
+          repo: '/repo',
+          path: '/data/worktrees/repo-b',
+          branch: 'x',
+          base: 'main',
+          base_sha: 's',
+        },
+      },
+    ],
+    '',
+  );
+  expect(groups.map((g) => [g.cwd, g.sessions.map((s) => s.id)])).toEqual([['/repo', ['a', 'b']]]);
+});

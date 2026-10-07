@@ -5,7 +5,18 @@
     size = 16,
   }: {
     name:
-      'plus' | 'folder' | 'chat' | 'menu' | 'edit' | 'send' | 'stop' | 'close' | 'search' | 'pin';
+      | 'plus'
+      | 'folder'
+      | 'chat'
+      | 'menu'
+      | 'edit'
+      | 'send'
+      | 'stop'
+      | 'close'
+      | 'search'
+      | 'pin'
+      | 'panel'
+      | 'branch';
     size?: number;
   } = $props();
   const paths = {
@@ -17,6 +28,8 @@
     send: 'M8 13V3M3 8l5-5 5 5',
     stop: 'M4 4h8v8H4z',
     close: 'M4 4l8 8M12 4l-8 8',
+    panel: 'M2.5 3h11v10h-11zM10 3v10',
+    branch: 'M5 3v10M5 9c0-2 6-1 6-4M11 3v2',
     search: 'M10.5 10.5l3 3M11 6.8a4.2 4.2 0 1 1-8.4 0 4.2 4.2 0 0 1 8.4 0',
     pin: 'M5 2h6l-1 5 3 3H3l3-3zM8 10v4',
   };

@@ -15,6 +15,7 @@ export interface DialogState {
   kind: 'create' | 'rename';
   title: string;
   cwd: string;
+  worktree: boolean;
 }
 export interface WorkbenchState {
   snapshot: StateResponse | null;
@@ -199,6 +200,7 @@ export function createWorkbench(api: Api, remember: (id: string) => void = () =>
       ...current,
       error: '',
       dialog: {
+        worktree: kind === 'create' && current.snapshot?.defaults.worktree_default === 'on',
         kind,
         title: kind === 'rename' ? (value.selected?.title ?? '') : '',
         cwd:
@@ -230,13 +232,14 @@ export function createWorkbench(api: Api, remember: (id: string) => void = () =>
       mutate(async () => {
         const value = get(state);
         if (!value.dialog) return;
-        const { kind, title, cwd } = value.dialog;
+        const { kind, title, cwd, worktree } = value.dialog;
         if (kind === 'rename' && value.selected)
           replaceSession(await api.update(value.selected.id, { title }));
         else {
           const session = await api.create({
             cwd,
             title,
+            worktree,
             model: value.snapshot?.defaults.model || 'gemini-3.8-flash-high',
           });
           await refresh(session.id);
@@ -295,6 +298,22 @@ export function createWorkbench(api: Api, remember: (id: string) => void = () =>
               : 'Executing: edits and commands ask you first.',
         }));
       }),
+    worktreeField: (on: boolean) =>
+      state.update((value) => ({
+        ...value,
+        dialog: value.dialog ? { ...value.dialog, worktree: on } : null,
+      })),
+    /** Adds an @path mention to the current draft. */
+    mention: (path: string) =>
+      state.update((value) => {
+        const draft = value.drafts[wanted] ?? '';
+        const separator = draft && !draft.endsWith(' ') ? ' ' : '';
+        return { ...value, drafts: { ...value.drafts, [wanted]: `${draft}${separator}@${path} ` } };
+      }),
+    removeWorktree: (deleteBranch: boolean) =>
+      mutate(async () => {
+        if (wanted) replaceSession(await api.gitRemove(wanted, deleteBranch));
+      }),
     stopJob: (jid: string) =>
       mutate(async () => {
         if (wanted) await api.stopJob(wanted, jid);
@@ -331,3 +350,10 @@ export function createWorkbench(api: Api, remember: (id: string) => void = () =>
   };
 }
 export type Workbench = ReturnType<typeof createWorkbench>;
+
+/** A stored worktree record, or null. */
+export function asWorktree(value: unknown): import('../gen/Worktree').Worktree | null {
+  if (!value || typeof value !== 'object' || !('branch' in value) || !('repo' in value))
+    return null;
+  return value as import('../gen/Worktree').Worktree;
+}

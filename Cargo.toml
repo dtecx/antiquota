@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/core", "crates/features", "crates/app", "crates/server", "crates/cli", "crates/adapters/agy", "crates/adapters/accounts", "crates/adapters/store", "crates/adapters/pty", "crates/adapters/shell", "tests/fake-agy"]
+members = ["crates/core", "crates/features", "crates/app", "crates/server", "crates/cli", "crates/adapters/agy", "crates/adapters/accounts", "crates/adapters/store", "crates/adapters/pty", "crates/adapters/shell", "crates/adapters/git", "tests/fake-agy"]
 exclude = ["app/src-tauri"]
 
 [workspace.package]
@@ -39,6 +39,7 @@ antiquota-accounts = { path = "crates/adapters/accounts" }
 antiquota-store = { path = "crates/adapters/store" }
 antiquota-pty = { path = "crates/adapters/pty" }
 antiquota-shell = { path = "crates/adapters/shell" }
+antiquota-git = { path = "crates/adapters/git" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

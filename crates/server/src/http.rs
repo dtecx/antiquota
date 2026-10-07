@@ -128,9 +128,7 @@ async fn route(
             })
         }
         ("POST", ["sessions"]) => {
-            if body["worktree"].as_bool() == Some(true) {
-                return Err(AppError::Missing("worktree feature pending".into()));
-            }
+            let worktree = body.get("worktree").is_some_and(truthy);
             let defaults = service.public_defaults()?;
             let cwd = body
                 .get("cwd")
@@ -151,16 +149,20 @@ async fn route(
                     .and_then(Value::as_str)
                     .unwrap_or(&defaults.mode),
             )?;
+            let title = body["title"].as_str().unwrap_or("");
+            let model = body
+                .get("model")
+                .and_then(Value::as_str)
+                .unwrap_or(&defaults.model);
+            if worktree {
+                return value(service.create_in(&cwd, title, model, mode, true)?);
+            }
             command(
                 service,
                 Command::Create {
                     cwd,
-                    title: body["title"].as_str().unwrap_or("").into(),
-                    model: body
-                        .get("model")
-                        .and_then(Value::as_str)
-                        .unwrap_or(&defaults.model)
-                        .into(),
+                    title: title.into(),
+                    model: model.into(),
                     mode,
                 },
             )
@@ -330,6 +332,29 @@ async fn route(
             service.set_loop(id, 0, "", None)?;
             value(OkResponse { ok: true })
         }
+        ("GET", ["sessions", id, "tree"]) => {
+            service.project_tree(id, &query_value(query, "path").unwrap_or_default())
+        }
+        ("GET", ["sessions", id, "file"]) => {
+            service.read_file(id, &query_value(query, "path").unwrap_or_default())
+        }
+        ("GET", ["sessions", id, "git"]) => service.git_status(id),
+        ("GET", ["sessions", id, "git", "diff"]) => {
+            let path = query_value(query, "path").filter(|p| !p.is_empty());
+            let committed = query_value(query, "committed").as_deref() == Some("1");
+            Ok(json!({"diff": service.git_diff(id, path.as_deref(), committed)?}))
+        }
+        ("POST", ["sessions", id, "git", "commit"]) => {
+            Ok(json!({"sha": service.git_commit(id, &loose_text(body.get("message")))?}))
+        }
+        ("POST", ["sessions", id, "git", "discard"]) => {
+            service.git_discard(id, &loose_text(body.get("path")))?;
+            value(OkResponse { ok: true })
+        }
+        ("POST", ["sessions", id, "git", "merge"]) => Ok(json!({"sha": service.git_merge(id)?})),
+        ("POST", ["sessions", id, "git", "remove"]) => {
+            value(service.git_remove_worktree(id, body.get("delete_branch").is_some_and(truthy))?)
+        }
         ("POST", ["sessions", id, "steer"]) => value(SteerResponse {
             messages: service.steer(id)?,
         }),
@@ -413,11 +438,33 @@ fn approval(reply: antiquota_app::ApprovalReply) -> Result<Value, AppError> {
         },
     })
 }
+/// One decoded query parameter, like Python's `parse_qs`.
 fn query_value(query: &str, key: &str) -> Option<String> {
     query.split('&').find_map(|part| {
         let (k, v) = part.split_once('=').unwrap_or((part, ""));
-        (k == key).then(|| v.replace('+', " "))
+        (decode(k) == key).then(|| decode(v))
     })
+}
+fn decode(text: &str) -> String {
+    let bytes = text.as_bytes();
+    let mut out = Vec::with_capacity(bytes.len());
+    let mut i = 0;
+    while i < bytes.len() {
+        match bytes[i] {
+            b'+' => out.push(b' '),
+            b'%' if i + 2 < bytes.len()
+                && bytes[i + 1].is_ascii_hexdigit()
+                && bytes[i + 2].is_ascii_hexdigit() =>
+            {
+                let hex = |b: u8| (b as char).to_digit(16).unwrap_or(0) as u8;
+                out.push(hex(bytes[i + 1]) * 16 + hex(bytes[i + 2]));
+                i += 2;
+            }
+            other => out.push(other),
+        }
+        i += 1;
+    }
+    String::from_utf8_lossy(&out).into_owned()
 }
 pub(crate) fn truthy(v: &Value) -> bool {
     match v {

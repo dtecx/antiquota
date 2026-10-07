@@ -159,6 +159,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "antiquota-git"
+version = "0.5.0"
+dependencies = [
+ "antiquota-core",
+ "serde_json",
+]
+
+[[package]]
 name = "antiquota-pty"
 version = "0.5.0"
 dependencies = [
@@ -177,6 +185,7 @@ dependencies = [
  "antiquota-agy",
  "antiquota-app",
  "antiquota-core",
+ "antiquota-git",
  "antiquota-pty",
  "antiquota-shell",
  "antiquota-store",

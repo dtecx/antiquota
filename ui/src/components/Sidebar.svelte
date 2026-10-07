@@ -61,6 +61,9 @@
                 class:attention={session.status === 'approval'}
               ></span>
               <span class="session-title">{session.title || 'New session'}</span>
+              {#if session.worktree}<span class="worktree" title="Own git worktree"
+                  ><Icon name="branch" size={11} /></span
+                >{/if}
               {#if session.status === 'approval'}<span class="attention-label">approval</span
                 >{:else if session.pinned}<Icon name="pin" size={12} />{:else}<time
                   >{relativeTime(session.updated)}</time
@@ -233,6 +236,10 @@
   }
   .session-dot.attention {
     box-shadow: 0 0 0 3px var(--baton-soft);
+  }
+  .worktree {
+    display: inline-flex;
+    color: var(--ink-4);
   }
   .attention-label {
     flex-shrink: 0;

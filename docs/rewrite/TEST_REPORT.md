@@ -1,6 +1,6 @@
 # Rewrite test report
 
-Slice 1 implements Rust CLI/server sessions and one agy turn with the Svelte browser UI; Slice 3 adds permission policy, the hook, approvals and mid-turn steering; Slice 4 adds goals, the check command, the independent verifier and plan mode; Slice 5 adds background jobs, loops, daily schedules and keep-awake. **171 of 1144 acceptance items are Passed; 973 remain Pending.** Slice 2 account evidence is recorded in [slice2-coverage-proposal.json](../../tests/rewrite/slice2-coverage-proposal.json) and is not yet folded into these rows. The inventory contains 1009 baseline items and 135 explicit rewrite requirements in [FEATURES.md](FEATURES.md). Source review, legacy tests and Python captures are references; the rows below name actual rewrite checks. A Pending row may have passing subset tests, but its remaining acceptance is explicit.
+Slice 1 implements Rust CLI/server sessions and one agy turn with the Svelte browser UI; Slice 3 adds permission policy, the hook, approvals and mid-turn steering; Slice 4 adds goals, the check command, the independent verifier and plan mode; Slice 5 adds background jobs, loops, daily schedules and keep-awake; Slice 6 adds git worktrees, change review and project files. **206 of 1144 acceptance items are Passed; 938 remain Pending.** Slice 2 account evidence is recorded in [slice2-coverage-proposal.json](../../tests/rewrite/slice2-coverage-proposal.json) and is not yet folded into these rows. The inventory contains 1009 baseline items and 135 explicit rewrite requirements in [FEATURES.md](FEATURES.md). Source review, legacy tests and Python captures are references; the rows below name actual rewrite checks. A Pending row may have passing subset tests, but its remaining acceptance is explicit.
 
 The fresh independent macOS arm64 gate on 2026-10-07 ran against 440 unchanged source hashes. `main` remained clean at `17ec296`; no push or cutover occurred. Synthetic processes were stopped after validation. [Final verification](../../.handoff/evidence/slice1-independent-final-summary.json) records commands, hashes, counts and cleanup.
 
@@ -34,6 +34,12 @@ Goal runs use the real engine, fake agy and the platform shell for checks; the v
 On 2026-10-07 on macOS arm64, `just check` passed and `just test` passed 189 Rust tests, 65 Vitest tests and 34 Chromium scenarios. [Check log](../../.handoff/evidence/slice5-check.log), [test log](../../.handoff/evidence/slice5-test.log).
 
 All ten captured job, loop and schedule cases replay exactly. Jobs run as real detached process groups; an engine restart adopts them. Remaining Pending rows here: F-231 and F-234 (dispatch is skipped for a stopped session, but that path and loop install clearing a stop are not exercised), F-233 (recalculating a daily schedule after it fires), F-235 (the stale-quota refresh belongs to account polling), F-237 (Windows keep-awake is not implemented; macOS and Linux are), F-238 (keep-awake release on shutdown is unit-proven but not with a real engine), F-569 (empty-log text and scrolling) and F-573 (Stop on an interval loop in the browser).
+
+## Slice 6: git worktrees, change review and project files
+
+On 2026-10-07 on macOS arm64, `just check` passed and `just test` passed 201 Rust tests, 69 Vitest tests and 37 Chromium scenarios. [Check log](../../.handoff/evidence/slice6-check.log), [test log](../../.handoff/evidence/slice6-test.log).
+
+The captured worktree flow (create, status, commit, committed diff, merge, remove) replays exactly against a real repository, together with the outside-folder and no-worktree refusals. The git adapter runs against real repositories. Remaining Pending rows here: F-265 (renamed paths and binary numstat), F-268, F-271 to F-273 (the outside-repository, other-branch, dirty-worktree, conflict and busy refusals are implemented but not exercised), F-414, F-462, F-463 (sidebar and header details not asserted), F-584, F-586, F-587, F-591 to F-595, F-597 (breadcrumb clicks, sizes, empty folders, transcript file links, line highlights, copy and close buttons, no-session text), F-589/F-590 (native open and reveal arrive with the desktop shell), F-601, F-609 and F-610.
 
 Mark a row Passed only when its full acceptance has passing tests and evidence. Passing architecture requirements describe the current sources; each future feature must still prove its own behavior. Logs and screenshots live in ignored `.handoff/evidence/`; local tokens and backup contents must never enter committed fixtures or this report.
 
@@ -291,28 +297,28 @@ Mark a row Passed only when its full acceptance has passing tests and evidence. 
 | F-250 | <a id="f-250"></a>Pending — [acceptance](FEATURES.md#f-250) | Pending | Pending |
 | F-251 | <a id="f-251"></a>Pending — [acceptance](FEATURES.md#f-251) | Pending | Pending |
 | F-252 | <a id="f-252"></a>Pending — [acceptance](FEATURES.md#f-252) | Pending | Pending |
-| F-253 | <a id="f-253"></a>Pending — [acceptance](FEATURES.md#f-253) | Pending | Pending |
-| F-254 | <a id="f-254"></a>Pending — [acceptance](FEATURES.md#f-254) | Pending | Pending |
-| F-255 | <a id="f-255"></a>Pending — [acceptance](FEATURES.md#f-255) | Pending | Pending |
+| F-253 | <a id="f-253"></a>[listings_and_files_stay_inside_the_project](../../crates/adapters/store/src/workspace.rs); [listings_and_files_are_bounded_and_links_cannot_escape](../../crates/adapters/store/src/workspace.rs); [review_tree_and_files_of_the_main_checkout](../../tests/rewrite/git.rs). Listings stay inside the real project folder, folders first and hidden entries last, with sizes, dim flags and at most 400 entries. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
+| F-254 | <a id="f-254"></a>[listings_and_files_stay_inside_the_project](../../crates/adapters/store/src/workspace.rs); [listings_and_files_are_bounded_and_links_cannot_escape](../../crates/adapters/store/src/workspace.rs); [captured_worktree_flow_and_refusals](../../tests/rewrite/git.rs). Traversal and linked folders that leave the project are refused; valid subfolders return root and relative path. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
+| F-255 | <a id="f-255"></a>[listings_and_files_stay_inside_the_project](../../crates/adapters/store/src/workspace.rs); [listings_and_files_are_bounded_and_links_cannot_escape](../../crates/adapters/store/src/workspace.rs); [review_tree_and_files_of_the_main_checkout](../../tests/rewrite/git.rs). Only text inside the project or attachments opens, up to 2 MB, refusing NUL bytes and decoding with replacement. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
 | F-256 | <a id="f-256"></a>Pending — [acceptance](FEATURES.md#f-256) | Pending | Pending |
 | F-257 | <a id="f-257"></a>Pending — [acceptance](FEATURES.md#f-257) | Pending | Pending |
 | F-258 | <a id="f-258"></a>Pending — [acceptance](FEATURES.md#f-258) | Pending | Pending |
 | F-259 | <a id="f-259"></a>Pending — [acceptance](FEATURES.md#f-259) | Pending | Pending |
-| F-260 | <a id="f-260"></a>Pending — [acceptance](FEATURES.md#f-260) | Pending | Pending |
-| F-261 | <a id="f-261"></a>Pending — [acceptance](FEATURES.md#f-261) | Pending | Pending |
-| F-262 | <a id="f-262"></a>Pending — [acceptance](FEATURES.md#f-262) | Pending | Pending |
-| F-263 | <a id="f-263"></a>Pending — [acceptance](FEATURES.md#f-263) | Pending | Pending |
-| F-264 | <a id="f-264"></a>Pending — [acceptance](FEATURES.md#f-264) | Pending | Pending |
+| F-260 | <a id="f-260"></a>[worktrees_need_a_commit_and_keep_the_subfolder](../../crates/adapters/git/src/tests.rs); [review_commit_discard_merge_and_remove](../../crates/adapters/git/src/tests.rs). The repository root comes from the git command with credential prompts and optional locks off; errors report git's last line; nothing pushes. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
+| F-261 | <a id="f-261"></a>[worktrees_need_a_commit_and_keep_the_subfolder](../../crates/adapters/git/src/tests.rs). A worktree needs a commit and starts at HEAD without the main checkout's dirty edits. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
+| F-262 | <a id="f-262"></a>[branches_use_a_short_title_slug_and_the_session_prefix](../../crates/core/src/worktree.rs); [captured_worktree_flow_and_refusals](../../tests/rewrite/git.rs). Branches are antiquota/<slug>-<id prefix> and folders <repo>-<session id>; slugs cap at 32 characters with a session fallback. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
+| F-263 | <a id="f-263"></a>[worktrees_need_a_commit_and_keep_the_subfolder](../../crates/adapters/git/src/tests.rs); [captured_worktree_flow_and_refusals](../../tests/rewrite/git.rs). The working subfolder carries over and repo/path/branch/base/base_sha are stored. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
+| F-264 | <a id="f-264"></a>[untitled_worktree_branches_take_the_first_request_and_removal_tells_agy](../../tests/rewrite/git.rs); [worktrees_need_a_commit_and_keep_the_subfolder](../../crates/adapters/git/src/tests.rs). An untitled worktree branch takes the first request's title only while it has its original name and the rename succeeds. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
 | F-265 | <a id="f-265"></a>Pending — [acceptance](FEATURES.md#f-265) | Pending | Pending |
-| F-266 | <a id="f-266"></a>Pending — [acceptance](FEATURES.md#f-266) | Pending | Pending |
-| F-267 | <a id="f-267"></a>Pending — [acceptance](FEATURES.md#f-267) | Pending | Pending |
+| F-266 | <a id="f-266"></a>[review_commit_discard_merge_and_remove](../../crates/adapters/git/src/tests.rs); [captured_worktree_flow_and_refusals](../../tests/rewrite/git.rs). Worktrees report commits ahead of base_sha, committed files and whether the branch is merged into its base. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
+| F-267 | <a id="f-267"></a>[review_commit_discard_merge_and_remove](../../crates/adapters/git/src/tests.rs); [review_tree_and_files_of_the_main_checkout](../../tests/rewrite/git.rs). Uncommitted diffs include new files and narrow to one path. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
 | F-268 | <a id="f-268"></a>Pending — [acceptance](FEATURES.md#f-268) | Pending | Pending |
-| F-269 | <a id="f-269"></a>Pending — [acceptance](FEATURES.md#f-269) | Pending | Pending |
-| F-270 | <a id="f-270"></a>Pending — [acceptance](FEATURES.md#f-270) | Pending | Pending |
+| F-269 | <a id="f-269"></a>[review_commit_discard_merge_and_remove](../../crates/adapters/git/src/tests.rs); [review_tree_and_files_of_the_main_checkout](../../tests/rewrite/git.rs). Commit stages everything, needs a message, refuses an empty commit, returns the short id and records a notice. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
+| F-270 | <a id="f-270"></a>[review_commit_discard_merge_and_remove](../../crates/adapters/git/src/tests.rs); [review_tree_and_files_of_the_main_checkout](../../tests/rewrite/git.rs). Discard restores a tracked file or removes a new one and refuses absolute, traversal and empty paths. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
 | F-271 | <a id="f-271"></a>Pending — [acceptance](FEATURES.md#f-271) | Pending | Pending |
 | F-272 | <a id="f-272"></a>Pending — [acceptance](FEATURES.md#f-272) | Pending | Pending |
 | F-273 | <a id="f-273"></a>Pending — [acceptance](FEATURES.md#f-273) | Pending | Pending |
-| F-274 | <a id="f-274"></a>Pending — [acceptance](FEATURES.md#f-274) | Pending | Pending |
+| F-274 | <a id="f-274"></a>[untitled_worktree_branches_take_the_first_request_and_removal_tells_agy](../../tests/rewrite/git.rs); [captured_worktree_flow_and_refusals](../../tests/rewrite/git.rs). Removal moves the session to the main checkout with a fresh conversation, archives it and tells agy once on its next turn. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
 | F-275 | <a id="f-275"></a>Pending — [acceptance](FEATURES.md#f-275) | Pending | Pending |
 | F-276 | <a id="f-276"></a>Pending — [acceptance](FEATURES.md#f-276) | Pending | Pending |
 | F-277 | <a id="f-277"></a>Pending — [acceptance](FEATURES.md#f-277) | Pending | Pending |
@@ -378,18 +384,18 @@ Mark a row Passed only when its full acceptance has passing tests and evidence. 
 | F-337 | <a id="f-337"></a>Pending — [acceptance](FEATURES.md#f-337) | Pending | Pending |
 | F-338 | <a id="f-338"></a>Pending — [acceptance](FEATURES.md#f-338) | Pending | Pending |
 | F-339 | <a id="f-339"></a>[captured_slice_one_requests_replay_with_exact_json_fields](../../crates/server/tests/rewrite_contract.rs); [whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs). The actual shutdown capture matches ok=true and the real process terminates while an SSE client remains connected. | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
-| F-340 | <a id="f-340"></a>[captured_slice_one_requests_replay_with_exact_json_fields](../../crates/server/tests/rewrite_contract.rs). The captured create metadata and invalid cwd error match exactly; the accepted request includes cwd/model/title and empty legacy effort. **Remaining:** All mode/default combinations, absent cwd and worktree creation remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-340 | <a id="f-340"></a>[captured_worktree_flow_and_refusals](../../tests/rewrite/git.rs); [captured_slice_one_requests_replay_with_exact_json_fields](../../crates/server/tests/rewrite_contract.rs). Creation accepts cwd/model/mode/title/worktree with the captured defaults and empty effort. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
 | F-341 | <a id="f-341"></a>Pending — [acceptance](FEATURES.md#f-341) | Pending | Pending |
 | F-342 | <a id="f-342"></a>Pending — [acceptance](FEATURES.md#f-342) | Pending | Pending |
 | F-343 | <a id="f-343"></a>Pending — [acceptance](FEATURES.md#f-343) | Pending | Pending |
 | F-344 | <a id="f-344"></a>Pending — [acceptance](FEATURES.md#f-344) | Pending | Pending |
-| F-345 | <a id="f-345"></a>Pending — [acceptance](FEATURES.md#f-345) | Pending | Pending |
-| F-346 | <a id="f-346"></a>Pending — [acceptance](FEATURES.md#f-346) | Pending | Pending |
-| F-347 | <a id="f-347"></a>Pending — [acceptance](FEATURES.md#f-347) | Pending | Pending |
-| F-348 | <a id="f-348"></a>Pending — [acceptance](FEATURES.md#f-348) | Pending | Pending |
-| F-349 | <a id="f-349"></a>Pending — [acceptance](FEATURES.md#f-349) | Pending | Pending |
-| F-350 | <a id="f-350"></a>Pending — [acceptance](FEATURES.md#f-350) | Pending | Pending |
-| F-351 | <a id="f-351"></a>Pending — [acceptance](FEATURES.md#f-351) | Pending | Pending |
+| F-345 | <a id="f-345"></a>[captured_worktree_flow_and_refusals](../../tests/rewrite/git.rs); [review_tree_and_files_of_the_main_checkout](../../tests/rewrite/git.rs). The tree route returns root, path and entries and refuses folders outside the project. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
+| F-346 | <a id="f-346"></a>[captured_worktree_flow_and_refusals](../../tests/rewrite/git.rs); [review_tree_and_files_of_the_main_checkout](../../tests/rewrite/git.rs). The status route returns branch, files and worktree data. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
+| F-347 | <a id="f-347"></a>[captured_worktree_flow_and_refusals](../../tests/rewrite/git.rs); [review_tree_and_files_of_the_main_checkout](../../tests/rewrite/git.rs). The diff route accepts a decoded path and committed=1. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
+| F-348 | <a id="f-348"></a>[captured_worktree_flow_and_refusals](../../tests/rewrite/git.rs); [review_tree_and_files_of_the_main_checkout](../../tests/rewrite/git.rs). The commit route returns the short id and records a notice. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
+| F-349 | <a id="f-349"></a>[review_tree_and_files_of_the_main_checkout](../../tests/rewrite/git.rs). The discard route restores or removes one file. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
+| F-350 | <a id="f-350"></a>[captured_worktree_flow_and_refusals](../../tests/rewrite/git.rs). The captured merge case matches. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
+| F-351 | <a id="f-351"></a>[captured_worktree_flow_and_refusals](../../tests/rewrite/git.rs); [untitled_worktree_branches_take_the_first_request_and_removal_tells_agy](../../tests/rewrite/git.rs). The captured remove case matches and the branch stays unless asked. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
 | F-352 | <a id="f-352"></a>[captured_slice_one_requests_replay_with_exact_json_fields](../../crates/server/tests/rewrite_contract.rs); [whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs). The captured empty session and missing-session error match; a complete session response is identical after real engine restart. **Remaining:** Sessions containing later feature event types remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-353 | <a id="f-353"></a>[captured_slice_one_requests_replay_with_exact_json_fields](../../crates/server/tests/rewrite_contract.rs). Captured patch success and invalid-mode error match every field. **Remaining:** All update fields, boolean coercion and ignored-key cases remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-354 | <a id="f-354"></a>[queued_messages_stop_delete_and_crash_leave_recoverable_sessions](../../crates/server/tests/rewrite_contract.rs); [deletion_refuses_admission_through_a_previously_cloned_cell](../../crates/app/src/tests/lifecycle.rs). The actual deletion capture matches; subsequent GET is 404. SESSION_2 binds from a fresh created session. The barrier regression rejects admission through a pre-cloned cell during deletion and proves no resurrection after reopening. **Remaining:** Exact unknown-session DELETE response and deletion of an active HTTP session remain Pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
@@ -621,12 +627,12 @@ Mark a row Passed only when its full acceptance has passing tests and evidence. 
 | F-580 | <a id="f-580"></a>[answers approval cards and keeps rules in settings](../../ui/e2e/approvals.spec.ts). Answered cards show allowed or declined, once or the permanent rule, and the reason. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
 | F-581 | <a id="f-581"></a>Pending — [acceptance](FEATURES.md#f-581) | Pending | Pending |
 | F-582 | <a id="f-582"></a>Pending — [acceptance](FEATURES.md#f-582) | Pending | Pending |
-| F-583 | <a id="f-583"></a>Pending — [acceptance](FEATURES.md#f-583) | Pending | Pending |
+| F-583 | <a id="f-583"></a>[browses files, views one and mentions it](../../ui/e2e/git.spec.ts). The Files tab lists the session's folders and files. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
 | F-584 | <a id="f-584"></a>Pending — [acceptance](FEATURES.md#f-584) | Pending | Pending |
-| F-585 | <a id="f-585"></a>Pending — [acceptance](FEATURES.md#f-585) | Pending | Pending |
+| F-585 | <a id="f-585"></a>[browses files, views one and mentions it](../../ui/e2e/git.spec.ts). The parent row goes up one folder. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
 | F-586 | <a id="f-586"></a>Pending — [acceptance](FEATURES.md#f-586) | Pending | Pending |
 | F-587 | <a id="f-587"></a>Pending — [acceptance](FEATURES.md#f-587) | Pending | Pending |
-| F-588 | <a id="f-588"></a>Pending — [acceptance](FEATURES.md#f-588) | Pending | Pending |
+| F-588 | <a id="f-588"></a>[browses files, views one and mentions it](../../ui/e2e/git.spec.ts). Mention adds the file's @ path to the composer. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
 | F-589 | <a id="f-589"></a>Pending — [acceptance](FEATURES.md#f-589) | Pending | Pending |
 | F-590 | <a id="f-590"></a>Pending — [acceptance](FEATURES.md#f-590) | Pending | Pending |
 | F-591 | <a id="f-591"></a>Pending — [acceptance](FEATURES.md#f-591) | Pending | Pending |
@@ -634,19 +640,19 @@ Mark a row Passed only when its full acceptance has passing tests and evidence. 
 | F-593 | <a id="f-593"></a>Pending — [acceptance](FEATURES.md#f-593) | Pending | Pending |
 | F-594 | <a id="f-594"></a>Pending — [acceptance](FEATURES.md#f-594) | Pending | Pending |
 | F-595 | <a id="f-595"></a>Pending — [acceptance](FEATURES.md#f-595) | Pending | Pending |
-| F-596 | <a id="f-596"></a>Pending — [acceptance](FEATURES.md#f-596) | Pending | Pending |
+| F-596 | <a id="f-596"></a>[browses files, views one and mentions it](../../ui/e2e/git.spec.ts). Clicking the backdrop closes the viewer. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
 | F-597 | <a id="f-597"></a>Pending — [acceptance](FEATURES.md#f-597) | Pending | Pending |
-| F-598 | <a id="f-598"></a>Pending — [acceptance](FEATURES.md#f-598) | Pending | Pending |
-| F-599 | <a id="f-599"></a>Pending — [acceptance](FEATURES.md#f-599) | Pending | Pending |
-| F-600 | <a id="f-600"></a>Pending — [acceptance](FEATURES.md#f-600) | Pending | Pending |
+| F-598 | <a id="f-598"></a>[reviews, discards and commits changes in the main checkout](../../ui/e2e/git.spec.ts); [works in a worktree, merges it and removes it](../../ui/e2e/git.spec.ts); [git.test.ts](../../ui/src/lib/git.test.ts). Review shows branch and repository, or worktree base, commits ahead and merged state. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
+| F-599 | <a id="f-599"></a>[reviews, discards and commits changes in the main checkout](../../ui/e2e/git.spec.ts). Uncommitted rows show status, additions and deletions. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
+| F-600 | <a id="f-600"></a>[reviews, discards and commits changes in the main checkout](../../ui/e2e/git.spec.ts). Expanding a file loads its diff. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
 | F-601 | <a id="f-601"></a>Pending — [acceptance](FEATURES.md#f-601) | Pending | Pending |
-| F-602 | <a id="f-602"></a>Pending — [acceptance](FEATURES.md#f-602) | Pending | Pending |
-| F-603 | <a id="f-603"></a>Pending — [acceptance](FEATURES.md#f-603) | Pending | Pending |
-| F-604 | <a id="f-604"></a>Pending — [acceptance](FEATURES.md#f-604) | Pending | Pending |
-| F-605 | <a id="f-605"></a>Pending — [acceptance](FEATURES.md#f-605) | Pending | Pending |
-| F-606 | <a id="f-606"></a>Pending — [acceptance](FEATURES.md#f-606) | Pending | Pending |
-| F-607 | <a id="f-607"></a>Pending — [acceptance](FEATURES.md#f-607) | Pending | Pending |
-| F-608 | <a id="f-608"></a>Pending — [acceptance](FEATURES.md#f-608) | Pending | Pending |
+| F-602 | <a id="f-602"></a>[reviews, discards and commits changes in the main checkout](../../ui/e2e/git.spec.ts). Discard asks first and names what is lost. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
+| F-603 | <a id="f-603"></a>[reviews, discards and commits changes in the main checkout](../../ui/e2e/git.spec.ts). Commit all sends the message and refreshes review. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
+| F-604 | <a id="f-604"></a>[reviews, discards and commits changes in the main checkout](../../ui/e2e/git.spec.ts). The commit message starts as the session title. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
+| F-605 | <a id="f-605"></a>[works in a worktree, merges it and removes it](../../ui/e2e/git.spec.ts). Worktree review lists files committed on its branch. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
+| F-606 | <a id="f-606"></a>[works in a worktree, merges it and removes it](../../ui/e2e/git.spec.ts); [git.test.ts](../../ui/src/lib/git.test.ts). Merge is enabled only with unmerged commits ahead. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
+| F-607 | <a id="f-607"></a>[works in a worktree, merges it and removes it](../../ui/e2e/git.spec.ts); [untitled_worktree_branches_take_the_first_request_and_removal_tells_agy](../../tests/rewrite/git.rs). Remove worktree asks first, archives the session and keeps the branch. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
+| F-608 | <a id="f-608"></a>[git.test.ts](../../ui/src/lib/git.test.ts). The agent's recorded diffs group by file, newest first. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
 | F-609 | <a id="f-609"></a>Pending — [acceptance](FEATURES.md#f-609) | Pending | Pending |
 | F-610 | <a id="f-610"></a>Pending — [acceptance](FEATURES.md#f-610) | Pending | Pending |
 | F-611 | <a id="f-611"></a>Pending — [acceptance](FEATURES.md#f-611) | Pending | Pending |

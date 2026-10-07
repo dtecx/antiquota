@@ -14,6 +14,7 @@ pub mod ports;
 pub mod session;
 pub mod settings;
 pub mod transition;
+pub mod worktree;
 pub use accounts::*;
 pub use command::*;
 pub use event::*;

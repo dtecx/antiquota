@@ -23,6 +23,7 @@ import type { PermissionsRequest } from '../gen/PermissionsRequest';
 import type { GoalRequest } from '../gen/GoalRequest';
 import type { Job } from '../gen/Job';
 import type { JobLogResponse } from '../gen/JobLogResponse';
+import type { FileText, Tree } from './git';
 import { routes } from '../gen/routes';
 
 export class RequestError extends Error {
@@ -119,6 +120,24 @@ export function createApi(token: string, request: typeof fetch = fetch) {
     jobLog: (id: string, jid: string) =>
       call<JobLogResponse>('GET', `${sessionPath(id)}/jobs/${encodeURIComponent(jid)}/log`),
     deleteLoop: (id: string) => call<OkResponse>('DELETE', `${sessionPath(id)}/loop`),
+    gitStatus: (id: string) => call<unknown>('GET', `${sessionPath(id)}/git`),
+    gitDiff: (id: string, path: string | null, committed: boolean) => {
+      const query = new URLSearchParams();
+      if (path) query.set('path', path);
+      if (committed) query.set('committed', '1');
+      return call<{ diff: string }>('GET', `${sessionPath(id)}/git/diff?${query}`);
+    },
+    gitCommit: (id: string, message: string) =>
+      call<{ sha: string }>('POST', `${sessionPath(id)}/git/commit`, { message }),
+    gitDiscard: (id: string, path: string) =>
+      call<OkResponse>('POST', `${sessionPath(id)}/git/discard`, { path }),
+    gitMerge: (id: string) => call<{ sha: string }>('POST', `${sessionPath(id)}/git/merge`, {}),
+    gitRemove: (id: string, deleteBranch: boolean) =>
+      call<Session>('POST', `${sessionPath(id)}/git/remove`, { delete_branch: deleteBranch }),
+    tree: (id: string, path: string) =>
+      call<Tree>('GET', `${sessionPath(id)}/tree?${new URLSearchParams({ path })}`),
+    file: (id: string, path: string) =>
+      call<FileText>('GET', `${sessionPath(id)}/file?${new URLSearchParams({ path })}`),
     savePermissions: (body: PermissionsRequest) =>
       call<PermissionsRequest>('PUT', '/api/permissions', body),
     streamUrl: () => `/api/events?token=${encodeURIComponent(token)}`,

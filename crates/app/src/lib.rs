@@ -15,12 +15,14 @@ mod attempt;
 mod turns;
 pub use account_service::AccountService;
 mod defaults;
+mod git;
 mod goals;
 pub use goals::TurnOutcome;
 mod handoff;
 use antiquota_core::{
     AccountStore, AgentRunner, Awake, Cancellation, Clock, CommandOutcome, EventRecord, JobRunner,
     PortError, PortFuture, QuotaProbe, Session, SessionStore, Settings, ShellRunner, StreamEvent,
+    Vcs, Workspace, worktree::Worktree,
 };
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -63,6 +65,8 @@ pub struct Service {
     pub(crate) pending_jobs: Mutex<BTreeMap<String, (String, String, u64)>>,
     pub(crate) jobs: Arc<dyn JobRunner>,
     pub(crate) awake: Arc<dyn Awake>,
+    pub(crate) vcs: Arc<dyn Vcs>,
+    pub(crate) workspace: Arc<dyn Workspace>,
     pub(crate) approval_signal: tokio::sync::Notify,
 }
 pub struct SystemClock;
@@ -154,6 +158,73 @@ impl JobRunner for NoJobs {
         Ok(String::new())
     }
 }
+/// Used until a git adapter is supplied: every folder is outside a repository.
+struct NoVcs;
+impl Vcs for NoVcs {
+    fn root(&self, _cwd: &str) -> Option<String> {
+        None
+    }
+    fn add_worktree(
+        &self,
+        cwd: &str,
+        _branch: &str,
+        _folder: &str,
+    ) -> Result<(Worktree, String), PortError> {
+        Err(PortError::Invalid(format!(
+            "{cwd} is not inside a git repository"
+        )))
+    }
+    fn status(
+        &self,
+        _cwd: &str,
+        _worktree: Option<&Worktree>,
+    ) -> Result<Option<serde_json::Value>, PortError> {
+        Ok(None)
+    }
+    fn diff(
+        &self,
+        _cwd: &str,
+        _path: Option<&str>,
+        _committed: Option<&Worktree>,
+    ) -> Result<String, PortError> {
+        Err(PortError::Invalid("not a git repository".into()))
+    }
+    fn commit(&self, _cwd: &str, _message: &str) -> Result<String, PortError> {
+        Err(PortError::Invalid("not a git repository".into()))
+    }
+    fn discard(&self, _cwd: &str, _path: &str) -> Result<(), PortError> {
+        Err(PortError::Invalid(
+            "pick a file inside the repository".into(),
+        ))
+    }
+    fn merge(&self, _worktree: &Worktree, _message: &str) -> Result<String, PortError> {
+        Err(PortError::Invalid("not a git repository".into()))
+    }
+    fn remove_worktree(&self, _worktree: &Worktree, _delete_branch: bool) -> Result<(), PortError> {
+        Ok(())
+    }
+    fn rename_branch(&self, _path: &str, _from: &str, _to: &str) -> bool {
+        false
+    }
+}
+struct NoWorkspace;
+impl Workspace for NoWorkspace {
+    fn tree(&self, _cwd: &str, _path: &str) -> Result<serde_json::Value, PortError> {
+        Err(PortError::Unavailable(
+            "project files are unavailable".into(),
+        ))
+    }
+    fn read_text(
+        &self,
+        _cwd: &str,
+        _roots: &[String],
+        _path: &str,
+    ) -> Result<serde_json::Value, PortError> {
+        Err(PortError::Unavailable(
+            "project files are unavailable".into(),
+        ))
+    }
+}
 struct NoAwake;
 impl Awake for NoAwake {
     fn hold(&self) {}
@@ -171,6 +242,8 @@ pub struct Ports {
     pub shell: Option<Arc<dyn ShellRunner>>,
     pub jobs: Option<Arc<dyn JobRunner>>,
     pub awake: Option<Arc<dyn Awake>>,
+    pub vcs: Option<Arc<dyn Vcs>>,
+    pub workspace: Option<Arc<dyn Workspace>>,
 }
 
 /// Python-compatible truthiness for loosely typed stored values.
@@ -212,6 +285,8 @@ impl Service {
             shell: None,
             jobs: None,
             awake: None,
+            vcs: None,
+            workspace: None,
         })
     }
     pub fn compose(ports: Ports) -> Result<Arc<Self>, AppError> {
@@ -225,6 +300,8 @@ impl Service {
             shell,
             jobs,
             awake,
+            vcs,
+            workspace,
         } = ports;
         let mut cells = BTreeMap::new();
         for (mut meta, records) in store.load()? {
@@ -268,6 +345,8 @@ impl Service {
             pending_jobs: Mutex::new(BTreeMap::new()),
             jobs: jobs.unwrap_or_else(|| Arc::new(NoJobs)),
             awake: awake.unwrap_or_else(|| Arc::new(NoAwake)),
+            vcs: vcs.unwrap_or_else(|| Arc::new(NoVcs)),
+            workspace: workspace.unwrap_or_else(|| Arc::new(NoWorkspace)),
             approval_signal: tokio::sync::Notify::new(),
         }))
     }

@@ -37,6 +37,7 @@ impl Service {
         if next.title.is_empty() && kind == "user" {
             next.title = text.lines().next().unwrap_or("").chars().take(60).collect();
         }
+        let note = std::mem::take(&mut next.pending_note);
         self.append(
             state,
             Event::User {
@@ -47,9 +48,14 @@ impl Service {
             },
         )?;
         self.replace_meta(state, next)?;
+        self.name_branch(state)?;
         let mut prompt = self.expand_mentions(&text, &state.meta.cwd);
         for attachment in attachments {
             prompt.push_str(&format!("\nAttached file: {}", attachment.path));
+        }
+        if !note.is_empty() {
+            // A rewind, compact or worktree change happened since the last turn.
+            prompt = format!("{note}\n\n{prompt}");
         }
         if state.meta.conversation_id.is_none() {
             // The request itself stays last.

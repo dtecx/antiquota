@@ -51,6 +51,17 @@
             oninput={(event) => workbench.dialogField('cwd', event.currentTarget.value)}
             required
           /><small>Agent commands run inside this folder.</small></label
+        ><label class="toggle"
+          ><input
+            type="checkbox"
+            aria-label="Own git worktree"
+            checked={$view.dialog.worktree}
+            onchange={(event) => workbench.worktreeField(event.currentTarget.checked)}
+          /><span
+            >Own git worktree<small
+              >A separate branch and folder, so parallel sessions never edit the same files.</small
+            ></span
+          ></label
         >{/if}
       {#if $view.error}<p class="error" role="alert">{$view.error}</p>{/if}
       <div class="actions">
@@ -107,6 +118,18 @@
   small {
     color: var(--ink-3);
     font-size: 11px;
+  }
+  .toggle {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+  .toggle input {
+    width: auto;
+    margin-top: 2px;
+  }
+  .toggle span {
+    display: grid;
+    gap: var(--space-1);
   }
   .actions {
     display: flex;

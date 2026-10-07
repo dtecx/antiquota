@@ -1,5 +1,6 @@
 /** Owns stable project grouping, local filtering, and pinned session ordering. */
 import type { Session } from '../gen/Session';
+import { asWorktree } from './workbench';
 export function groupSessions(sessions: Session[], filter: string) {
   const folders = new Map<string, Session[]>();
   const terms = filter.toLowerCase().split(/\s+/);
@@ -9,9 +10,11 @@ export function groupSessions(sessions: Session[], filter: string) {
       !terms.every((term) => `${session.title} ${session.cwd}`.toLowerCase().includes(term))
     )
       continue;
-    const group = folders.get(session.cwd) ?? [];
+    // A worktree session belongs to the repository it was branched from.
+    const folder = asWorktree(session.worktree)?.repo ?? session.cwd;
+    const group = folders.get(folder) ?? [];
     group.push(session);
-    folders.set(session.cwd, group);
+    folders.set(folder, group);
   }
   return [...folders].map(([cwd, group]) => ({
     cwd,

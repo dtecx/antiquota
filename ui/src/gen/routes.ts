@@ -84,37 +84,37 @@ export const routes = [
   {
     "method": "GET",
     "path": "/api/sessions/{sid}/tree",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "GET",
     "path": "/api/sessions/{sid}/git",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "GET",
     "path": "/api/sessions/{sid}/git/diff",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "POST",
     "path": "/api/sessions/{sid}/git/commit",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "POST",
     "path": "/api/sessions/{sid}/git/discard",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "POST",
     "path": "/api/sessions/{sid}/git/merge",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "POST",
     "path": "/api/sessions/{sid}/git/remove",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "GET",
@@ -194,7 +194,7 @@ export const routes = [
   {
     "method": "GET",
     "path": "/api/sessions/{sid}/file",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "POST",

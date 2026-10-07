@@ -1,6 +1,7 @@
 //! Owns compatible file persistence, account/engine locks, and usage projection.
 mod files;
 mod usage;
+mod workspace;
 use antiquota_core::{EventRecord, PortError, Session, SessionStore};
 pub use files::*;
 use std::{
@@ -8,6 +9,7 @@ use std::{
     path::{Path, PathBuf},
     sync::Mutex,
 };
+pub use workspace::FileWorkspace;
 #[derive(Debug)]
 pub struct FileStore {
     pub root: PathBuf,
@@ -178,6 +180,17 @@ impl SessionStore for FileStore {
     }
     fn state_dir(&self) -> String {
         self.root.join("state").to_string_lossy().into_owned()
+    }
+    fn attachments_dir(&self, sid: &str) -> String {
+        self.root
+            .join("sessions")
+            .join(sid)
+            .join("attachments")
+            .to_string_lossy()
+            .into_owned()
+    }
+    fn worktrees_dir(&self) -> String {
+        self.root.join("worktrees").to_string_lossy().into_owned()
     }
     fn job_log_path(&self, sid: &str, jid: &str) -> String {
         self.root
