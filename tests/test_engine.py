@@ -160,3 +160,15 @@ def test_a_reply_wins_over_the_resumed_conversations_old_error(home, work, monke
     assert [e["status"] for e in eng.events(sid) if e["t"] == "turn_end"] == ["SUCCESS"]
     assert not a.walled_until(ONE, "gemini") and kinds(eng, sid) == []
     assert eng.sessions[sid].meta["usage"] == {"input": 100, "output": 10, "thinking": 0}  # this turn only
+
+
+def test_a_denied_command_gets_one_follow_up_that_names_it(home, work, monkeypatch):
+    monkeypatch.setenv("STUB_DENY", "git status")
+    eng = Engine()
+    sid = eng.create(str(work), "gemini-3.8-flash-low")["id"]
+    eng.send(sid, "do it")
+    finish(eng, sid)
+    users = [e for e in eng.events(sid) if e["t"] == "user"]
+    assert [u["kind"] for u in users] == ["user", "nudge"]
+    assert "`git status`" in users[1]["text"] and "Do not retry" in users[1]["text"]
+    assert kinds(eng, sid) == ["denied"]

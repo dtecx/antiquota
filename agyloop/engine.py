@@ -36,6 +36,9 @@ META_KEYS = {"id": "", "title": "", "cwd": "", "model": "", "effort": "", "mode"
              "updated": 0, "status": "idle", "status_until": None, "conversation_id": None, "turns": 0,
              "queue": [], "goal": None, "last_slot": None, "usage": {"input": 0, "output": 0, "thinking": 0},
              "context": 0}
+DENIED_NOTE = ("These commands were denied: headless agy cannot ask for permission, so the turn ended. "
+               "Do not retry them or reword them; carry on without them: {cmds}")
+AUTO_CONTINUES = 2  # follow-ups after denials per user message, so a stuck agent cannot loop forever
 CONTINUE_AFTER_QUOTA = ("Continue exactly where you stopped. Your previous attempt was cut off by an "
                         "account quota limit; do not redo work that is already finished.")
 
@@ -256,24 +259,32 @@ class Engine:
     # --- the loop ---------------------------------------------------------
 
     def _loop(self, s, text, kind):
-        m, errors = s.meta, 0
+        m, errors, continues = s.meta, 0, 0
         try:
             while True:
                 if not m["title"] and kind == "user":
                     m["title"] = text.strip().splitlines()[0][:60]
                 self.publish(m["id"], {"t": "user", "text": text, "kind": kind}, persist=True)
-                ok, reply = self._turn(s, text)
+                ok, reply, denied = self._turn(s, text)
                 text = None
+                note = DENIED_NOTE.format(cmds=", ".join(f"`{c}`" for c in denied)) if denied else ""
+                if kind == "user":
+                    continues = 0
                 g = m.get("goal")
                 if g and g["state"] == "active" and not s.stop.is_set():
                     if ok:
                         errors = 0
                         text, kind = self._goal_next(s, reply), "nudge"
+                        if text and note:
+                            text = note + "\n\n" + text
                     elif errors < 3:  # transient failure in a long run: back off and push on
                         errors += 1
                         self.notice(s, "goal", f"The turn failed; retrying in {30 * errors}s ({errors}/3).")
                         if not s.stop.wait(30 * errors):
                             text, kind = "Continue working toward the objective: " + g["objective"], "nudge"
+                elif ok and note and continues < AUTO_CONTINUES and not s.stop.is_set():
+                    continues += 1
+                    text, kind = note + "\n\nContinue the task.", "nudge"
                 with s.lock:  # decide under the lock, so a message sent right now is never stranded
                     if text is None and m["queue"] and not s.stop.is_set():
                         text, kind = m["queue"].pop(0), "user"
@@ -292,7 +303,7 @@ class Engine:
         m = s.meta
         if not a.slots():
             self.notice(s, "noaccount", "No Google account is signed in to agy-loop yet. Add one, then send again.")
-            return False, ""
+            return False, "", []
         bucket = a.bucket_of(["--model", m["model"]])
         pool = a.BUCKETS[bucket]
         failovers = 0
@@ -300,18 +311,18 @@ class Engine:
             self.status(s, "waiting")
             slot, fd = a.acquire(bucket, stop=s.stop)
             if s.stop.is_set():
-                return False, ""
+                return False, "", []
             if slot is None:
                 nxt = a.next_reset(bucket)
                 if not (m.get("goal") or {}).get("state") == "active":
                     self.notice(s, "wall", f"Every account is out of {pool} quota. Next reset {hhmm(nxt)}. "
                                            "Send again later, or use goal mode to wait automatically.")
-                    return False, ""
+                    return False, "", []
                 self.notice(s, "wall", f"Every account is out of {pool} quota. Sleeping until {hhmm(nxt)}, "
                                        "then the goal continues.")
                 self.status(s, "sleeping", until=nxt)
                 if s.stop.wait(max(5, nxt - time.time() + 30)):
-                    return False, ""
+                    return False, "", []
                 continue
             try:
                 r = self._run_agy(s, slot, prompt)
@@ -332,8 +343,8 @@ class Engine:
                 prompt = self._handoff(s, prompt)
                 failovers += 1
                 continue
-            return r["ok"], r["text"]
-        return False, ""
+            return r["ok"], r["text"], r["denied"]
+        return False, "", []
 
     def _run_agy(self, s, slot, prompt):
         m, sid = s.meta, s.meta["id"]
@@ -402,6 +413,11 @@ class Engine:
         if context:
             m["context"] = context
         usage["context"] = context
+        if usage["total_tokens"] or usage["input_tokens"]:  # per-account ledger for the accounts panel
+            with open(a.state("usage.jsonl"), "a") as f:
+                f.write(json.dumps({"t": int(time.time()), "slot": slot, "model": m["model"], "session": sid,
+                                    "input": usage["input_tokens"], "output": usage["output_tokens"],
+                                    "thinking": usage["thinking_tokens"]}) + "\n")
         if result.get("denied_actions") or denied:
             self.notice(s, "denied", "agy denied a tool call that headless mode cannot ask about.",
                         actions=result.get("denied_actions") or [], commands=denied)
@@ -413,7 +429,7 @@ class Engine:
                            "secs": round(time.time() - t0, 1)}, persist=True)
         self.save(s)
         final = (texts[max(texts)] if texts else "") or result.get("response") or ""
-        return {"ok": ok, "quota": quota, "conv_lost": conv_lost, "text": final}
+        return {"ok": ok, "quota": quota, "conv_lost": conv_lost, "text": final, "denied": [c for c in denied if c]}
 
     def _step(self, s, turn, su, texts, before, denied):
         sid, step, state = s.meta["id"], su.get("step_index"), su.get("state")

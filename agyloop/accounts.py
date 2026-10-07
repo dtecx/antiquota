@@ -660,6 +660,28 @@ def whoami(slot):
     return found[-1].rstrip(".,;") if found else None
 
 
+def usage_today():
+    """{slot: {"input", "output", "thinking", "turns"}} since local midnight, from the engine's ledger."""
+    midnight = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+    out = {}
+    try:
+        with open(state("usage.jsonl")) as f:
+            for line in f:
+                try:
+                    u = json.loads(line)
+                except ValueError:
+                    continue
+                if u.get("t", 0) < midnight:
+                    continue
+                d = out.setdefault(u["slot"], {"input": 0, "output": 0, "thinking": 0, "turns": 0})
+                for k in ("input", "output", "thinking"):
+                    d[k] += u.get(k, 0)
+                d["turns"] += 1
+    except OSError:
+        pass
+    return out
+
+
 def probe():
     for s in slots():
         fd = try_lease(s)

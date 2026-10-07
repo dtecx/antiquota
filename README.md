@@ -11,23 +11,47 @@ python3 -m agyloop goal "all tests pass" --check "pytest -q" --cwd ~/code/app
 
 ## GUI
 
-- Sessions per project folder, a streamed transcript with tool steps, file
-  diffs, markdown, and a composer with model, effort and permission mode.
+- **Sessions** per project folder, running in parallel; each turn goes to the
+  first account with quota left, and a quota error hands the turn to the next
+  account in the same conversation.
+- **Transcript like Claude Code / Codex**: streamed replies with markdown;
+  **thinking** blocks (Gemini's reasoning, read from agy's own conversation db,
+  since the CLI stream never carries it); tool rows with a short **preview**
+  (last lines of a command, first changed lines of an edit) that expand to the
+  full output or diff; a compact mode and an expand-all switch.
+- **Token meter** under the composer: context sent with the last request against
+  the model's window, session totals (sent, received, thinking), and the
+  serving account's remaining quota.
+- **Model picker**: family first (grouped by Gemini vs Claude/GPT quota), then
+  effort; Gemini efforts are model variants, Claude/GPT-OSS have a fixed one.
 - **Goal mode**: the agent keeps working until it ends with `GOAL_COMPLETE`
-  *and* an optional check command exits 0 *and* an independent verifier (by
-  default Claude Sonnet, on the separate Claude/GPT quota) answers
-  `VERDICT: DONE`. Otherwise the reason goes back to the agent as the next
-  prompt. When every account is out of quota it sleeps until the first reset.
-- **Accounts by email**: *Add account* opens Google sign-in; paste the code it
-  shows (agy allows 60 seconds). Accounts are used in order; a quota error
-  passes the turn to the next account in the same conversation.
-- **Settings** (⌘,): edit agy-loop's own rules (GEMINI.md, rules/), skills,
-  hooks, MCP servers, plugins, permissions and session defaults. Each item shows
-  whether it matches your agy CLI or the IDE, with one-click copy from either.
-- Slash commands: `/goal`, `/stop`, `/model`, `/mode`, `/login`, `/settings`, ...
+  *and* an optional check command exits 0 *and* an independent verifier answers
+  `VERDICT: DONE`; reasons go back as the next prompt; when every account is out
+  of quota it sleeps until the first reset.
+- **Accounts by email**: *Add account* opens Google sign-in; click "Copy to
+  Clipboard" on Google's page and come back: the code goes in by itself (agy
+  allows 60 seconds). Accounts Google wants verified first are kept, parked with
+  a *Verify with Google* link and *Check again*; they join the rotation once
+  Google accepts them. Each card shows quota windows and today's tokens.
+- **Changes** panel: files the session edited, +/− counts, diffs on click.
+- **Settings** (⌘,): agy-loop's own rules (GEMINI.md, rules/), skills, hooks,
+  MCP servers, plugins, permissions and session defaults, each compared with
+  your agy CLI and the IDE, with one-click copy from either.
+- Slash commands: `/goal`, `/stop`, `/model`, `/effort`, `/mode`, `/login`,
+  `/settings`, ...
 
-The server binds to 127.0.0.1 only and every API call needs a per-launch token
-and a localhost Host header.
+The server binds to 127.0.0.1 only; every API call needs the install's token and
+a localhost Host header.
+
+## Usage on Hacklab
+
+`hacklab sync` runs `ccusage session --json`, whose Antigravity reader takes
+token usage from agy's conversation databases in a few fixed folders
+(`~/.gemini/antigravity`, `antigravity-cli`, `antigravity-ide`,
+`antigravity-backup`, `~/.config/antigravity`). agy-loop links the unused
+`~/.config/antigravity` to its own conversation store, so usage from every
+agy-loop account syncs as ordinary **Antigravity** usage, with no extra agent or
+collector. `agyloop doctor` reports whether the link is in place.
 
 ## Accounts and the stack
 

@@ -120,6 +120,11 @@ if args[:1] == ["-p"] and "--output-format" in args and not args[1].startswith("
     emit(event="step_update", step_update={"conversation_id": conv, "step_index": 4, "state": "DONE",
                                            "step_type": "agent_response", "text_delta": "",
                                            "usage": {"input_tokens": 100, "output_tokens": 10, "total_tokens": 110}})
+    if os.environ.get("STUB_DENY") and n == 1:  # first turn: a command headless agy refuses, then the turn ends
+        emit(event="step_update", step_update={"conversation_id": conv, "step_index": 5, "state": "ERROR", "step_type": "tool",
+                                               "tool_name": "run_command", "tool_info": {"name": "run_command",
+                                               "parameters": {"CommandLine": os.environ["STUB_DENY"]},
+                                               "error": {"type": "TOOL_ERROR", "message": "permission check failed: user denied permission to run command"}}})
     if os.environ.get("STUB_STALE_ERROR"):  # agy reports a resumed conversation's old error
         emit(event="result", result={"conversation_id": conv, "status": "ERROR", "response": reply,
                                      "error": "Individual quota reached. Resets in 110h50m31s.",

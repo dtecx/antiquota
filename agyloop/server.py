@@ -77,7 +77,7 @@ class App:
             threading.Event().wait(PROBE_EVERY)
 
     def accounts(self):
-        out = []
+        out, today = [], a.usage_today()
         for s in a.slots():
             try:
                 with open(a.state("quota", s + ".json")) as f:
@@ -88,7 +88,8 @@ class App:
             if fd is not None:
                 os.close(fd)
             out.append({"slot": s, "busy": fd is None, "probed": q.get("at"), "quota": q.get("quota", {}),
-                        "walls": {b: a.walled_until(s, b) for b in a.BUCKETS}, "verify": a.needs_verify(s)})
+                        "walls": {b: a.walled_until(s, b) for b in a.BUCKETS}, "verify": a.needs_verify(s),
+                        "today": today.get(s, {})})
         return out
 
     def check(self, name):

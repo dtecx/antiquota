@@ -23,7 +23,7 @@ function h(tag, attrs = {}, ...kids) {
 
 const S = {
   sessions: new Map(), cur: null, accounts: [], models: [], defaults: {},
-  nodes: new Map(), live: new Map(), drawer: false, tab: 'accounts', stack: null, detail: 'detailed',
+  nodes: new Map(), live: new Map(), drawer: false, tab: 'accounts', stack: null, detail: 'detailed', events: [],
 };
 try {
   S.drawer = localStorage.getItem('agyloop.drawer') === '1';
@@ -588,6 +588,7 @@ async function open(sid) {
   const tr = $('#transcript');
   tr.replaceChildren();
   if (!events.length) tr.append(blankFor(meta));
+  S.events = events;
   for (const ev of events) renderEvent(ev, false);
   renderSessions();
   renderHeader();
@@ -621,7 +622,13 @@ function handle(m) {
     }
     return;
   }
-  if (m.sid === S.cur) renderEvent(m, true);
+  if (m.sid === S.cur) {
+    if (m.t === 'tool' && m.state !== 'running') {
+      S.events.push(m);
+      if (S.drawer && S.tab === 'changes') renderPane();
+    }
+    renderEvent(m, true);
+  }
 }
 function connect() {
   const es = new EventSource('/api/events?token=' + encodeURIComponent(TOKEN));
@@ -845,6 +852,9 @@ async function renderPane() {
         h('div', { class: 'card-head' }, h('b', {}, acct.slot),
           h('span', {}, (acct.busy ? 'running · ' : '') + (acct.probed ? 'probed ' + ago(acct.probed) : 'not probed'))),
         acct.verify && verifyBlock(acct.slot, acct.verify),
+        acct.today && acct.today.turns ? h('div', { class: 'today', title: 'Tokens this account used today through agy-loop' },
+          `today  ↑ ${fmtK(acct.today.input)}  ↓ ${fmtK(acct.today.output)}` + (acct.today.thinking ? `  ✻ ${fmtK(acct.today.thinking)}` : '') +
+          `  · ${acct.today.turns} turn${acct.today.turns > 1 ? 's' : ''}`) : null,
         !acct.verify && Object.entries({ gemini: 'Gemini', cg: 'Claude / GPT' }).map(([b, label]) => h('div', { class: 'pool' },
           h('div', { class: 'pool-name' }, h('span', {}, label), acct.walls[b] ? h('em', {}, 'walled until ' + clock(acct.walls[b])) : null),
           Object.entries(acct.quota[b] || {}).map(([w, [frac, reset]]) => h('div', { class: 'win', title: reset ? 'resets ' + new Date(reset * 1000).toLocaleString() : 'disabled until the other window resets' },
@@ -861,6 +871,29 @@ async function renderPane() {
         h('button', { class: 'primary', onclick: () => openAcct() }, 'Add account'),
         h('button', { class: 'btn', onclick: () => api('POST', 'accounts/probe').then(() => toast('Probing accounts…')).catch(fail) }, 'Probe now')),
     ].filter(Boolean));
+  } else if (S.tab === 'changes') {
+    const files = new Map();
+    for (const e of S.events) {
+      if (e.t !== 'tool' || !e.diff) continue;
+      const path = e.params.TargetFile || e.params.File || '?';
+      const f = files.get(path) || { path, add: 0, del: 0, diffs: [], last: 0 };
+      const [ad, de] = diffStats(e.diff);
+      f.add += ad; f.del += de; f.diffs.push(e.diff); f.last = e.ts || f.last;
+      files.set(path, f);
+    }
+    const list = [...files.values()].sort((x, y) => y.last - x.last);
+    pane.replaceChildren(
+      h('p', { class: 'cap' }, cur() ? `Files this session changed, newest first. Click one for its diffs.` : 'Open a session to see its changes.'),
+      ...(list.length ? list.map(f => {
+        const row = h('details', { class: 'change' },
+          h('summary', {}, h('span', { class: 'cpath', title: f.path }, rel(f.path)),
+            h('span', { class: 'meta' }, f.add ? h('span', { class: 'stat add' }, '+' + f.add) : null,
+              f.del ? h('span', { class: 'stat del' }, '−' + f.del) : null, `${f.diffs.length}×`)));
+        row.addEventListener('toggle', () => {
+          if (row.open && row.children.length === 1) row.append(...f.diffs.map(d => diffNode(d)));
+        }, { once: false });
+        return row;
+      }) : [h('p', { class: 'cap' }, 'No file edits yet.')]));
   } else {
     pane.replaceChildren(h('p', { class: 'cap' }, 'Loading what agy reports…'));
     try {
