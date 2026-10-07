@@ -139,3 +139,12 @@ def test_an_account_google_wants_verified_is_kept_and_parked(home, monkeypatch):
     monkeypatch.delenv("STUB_INELIGIBLE")            # the user verified it with Google
     assert a.probe_slot("new@example.com") is not None
     assert not a.needs_verify("new@example.com") and not a.walled_until("new@example.com", "gemini")
+
+
+def test_usage_is_visible_where_ccusage_reads_antigravity(home, monkeypatch):
+    monkeypatch.delenv("AGYLOOP_NO_USAGE_LINK", raising=False)
+    link = home / ".config/antigravity"
+    assert a.expose_usage() and os.path.realpath(link) == os.path.realpath(home / ".agyloop/stack/.gemini/antigravity-cli")
+    os.unlink(link)
+    (home / ".config/antigravity").mkdir()           # something else owns the path: leave it alone
+    assert not a.expose_usage() and not os.path.islink(link)

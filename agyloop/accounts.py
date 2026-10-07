@@ -194,6 +194,32 @@ def clone_stack():
 def seed_stack(force=False):
     if force or not os.path.isdir(os.path.join(stack_home(), ".gemini")):
         clone_stack()
+    expose_usage()
+
+
+def usage_link():
+    return os.path.join(home(), ".config", "antigravity")
+
+
+def expose_usage():
+    """Let usage tools see agy-loop's conversations: ccusage (and so `hacklab sync`) reads
+    Antigravity token usage from a few fixed folders, ~/.config/antigravity among them, and
+    nothing uses that one. Point it at agy-loop's conversation store. True if it is in place."""
+    link_path, target = usage_link(), os.path.join(stack_home(), ".gemini", "antigravity-cli")
+    if os.environ.get("AGYLOOP_NO_USAGE_LINK"):
+        return False
+    if os.path.islink(link_path):
+        if os.path.realpath(link_path) == os.path.realpath(target):
+            return True
+        if not os.path.exists(link_path):  # a dangling link of ours from an older location
+            os.unlink(link_path)
+        else:
+            return False
+    elif os.path.exists(link_path):
+        return False  # something else owns it: leave it alone
+    os.makedirs(os.path.dirname(link_path), exist_ok=True)
+    link(target, link_path)
+    return True
 
 
 def _join(rel, name):
