@@ -27,7 +27,9 @@ python3 -m agyloop goal "all tests pass" --check "pytest -q" --cwd ~/code/app
 - **Goal mode**: the agent keeps working until it ends with `GOAL_COMPLETE`
   *and* an optional check command exits 0 *and* an independent verifier answers
   `VERDICT: DONE`; reasons go back as the next prompt; when every account is out
-  of quota it sleeps until the first reset.
+  of quota it sleeps until the first reset. The verifier defaults to Gemini 3.1
+  Pro, a different model on the same Google quota; if a chosen Claude/GPT
+  verifier runs out of its (small) quota everywhere, the session's model judges.
 - **Accounts by email**: *Add account* opens Google sign-in; click "Copy to
   Clipboard" on Google's page and come back: the code goes in by itself (agy
   allows 60 seconds). Accounts Google wants verified first are kept, parked with

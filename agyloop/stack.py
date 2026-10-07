@@ -310,7 +310,7 @@ def write_file(rel, text):
 
 # --- agy-loop's own GUI defaults --------------------------------------------------
 
-DEFAULTS = {"model": "gemini-3.8-flash-high", "mode": "default", "verifier_model": "claude-sonnet-4-6"}
+DEFAULTS = {"model": "gemini-3.8-flash-high", "mode": "default", "verifier_model": "gemini-3.1-pro-high"}
 
 
 def defaults():

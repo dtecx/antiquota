@@ -676,7 +676,7 @@ function ensureOption(sel, value) {
 /* Models as agy lists them: "Gemini 3.8 Flash (High)" is family "Gemini 3.8 Flash", effort
    "high". Gemini families come in effort variants; Claude and GPT-OSS have one fixed model. */
 const POOL = id => /^(claude|gpt)/.test(id) ? 'cg' : 'gemini';
-const POOL_LABEL = { gemini: 'Gemini quota', cg: 'Claude / GPT quota' };
+const POOL_LABEL = { gemini: 'Gemini quota', cg: 'Claude / GPT quota (small limits)' };
 function families(extraId) {
   const list = [...S.models];
   if (extraId && !list.some(m => m.id === extraId)) list.push({ id: extraId, label: extraId });
@@ -1542,7 +1542,9 @@ function wire() {
   $('#attach-btn').addEventListener('click', () => $('#attach-input').click());
   $('#attach-input').addEventListener('change', e => { attachFiles([...e.target.files]); e.target.value = ''; });
   input.addEventListener('paste', e => {
-    const files = [...(e.clipboardData?.files || [])];
+    const stamp = new Date().toTimeString().slice(0, 8).replace(/:/g, '');
+    const files = [...(e.clipboardData?.files || [])].map(f =>  // browsers name every pasted image image.png
+      f.name === 'image.png' ? new File([f], `screenshot-${stamp}.png`, { type: f.type }) : f);
     if (files.length) { e.preventDefault(); attachFiles(files); }
   });
   let dragDepth = 0;

@@ -668,13 +668,28 @@ class Engine:
     def _verify(self, s):
         """Fresh read-only agy call that judges the objective. None if it cannot run."""
         m, g = s.meta, s.meta["goal"]
-        model = g.get("verifier_model") or m["model"]
-        bucket = a.bucket_of(["--model", model])
         self.status(s, "verifying")
-        slot, fd = a.acquire(bucket, stop=s.stop)
-        if slot is None:
-            self.notice(s, "verdict", f"No account has {a.BUCKETS[bucket]} quota for the verifier.", done=None)
-            return None
+        # The verifier's own model first; when its quota is gone on every account (Claude/GPT
+        # limits are small), the session's model judges instead, so the goal never stalls on it.
+        models = list(dict.fromkeys(x for x in (g.get("verifier_model"), m["model"]) if x))
+        for i, model in enumerate(models):
+            bucket = a.bucket_of(["--model", model])
+            while not s.stop.is_set():
+                slot, fd = a.acquire(bucket, stop=s.stop)
+                if slot is None:
+                    break
+                reply = self._verifier_call(s, slot, fd, model, bucket)
+                if reply is not None:
+                    return self._verdict(s, reply, slot, model)
+            if i + 1 < len(models) and not s.stop.is_set():
+                self.notice(s, "info", f"No account has {a.BUCKETS[bucket]} quota for the verifier ({model}); "
+                                       f"{models[i + 1]} verifies instead.")
+        self.notice(s, "verdict", "No account has quota left for the verifier.", done=None)
+        return None
+
+    def _verifier_call(self, s, slot, fd, model, bucket):
+        """One read-only agy call; its reply text, or None after a quota error (the slot gets walled)."""
+        m, g = s.meta, s.meta["goal"]
         # Headless agy ends the turn on any denied tool, so the verifier sticks to viewing files.
         prompt = ("You are a strict, independent verifier. Another agent claims this objective is complete:\n\n"
                   f"{g['objective']}\n\nThe work is in the current directory. Inspect it yourself with file "
@@ -692,13 +707,15 @@ class Engine:
             s.proc = None
             if a.is_quota_error(proc.returncode, out, err):
                 a.wall_after_quota_error(slot, bucket)
-                self.notice(s, "verdict", f"The verifier hit the {a.BUCKETS[bucket]} quota on {slot}.", done=None)
+                self.notice(s, "info", f"The verifier hit the {a.BUCKETS[bucket]} quota on {slot}.")
                 return None
-            reply = json.loads(out)["response"]
+            return json.loads(out)["response"]
         except (ValueError, KeyError, TypeError):
-            reply = ""
+            return ""
         finally:
             os.close(fd)
+
+    def _verdict(self, s, reply, slot, model):
         v = parse_verdict(reply)
         if v is None:
             self.notice(s, "verdict", "The verifier gave no verdict. Its reply: " + (reply[-600:] or "(empty)"), done=None)

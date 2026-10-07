@@ -148,7 +148,7 @@ def cmd_goal(rest):
     p.add_argument("--mode", default="accept-edits", choices=list(MODES))
     p.add_argument("--check", default="", help="shell command that must exit 0 when the goal is met")
     p.add_argument("--no-verifier", action="store_true", help="skip the independent verifier")
-    p.add_argument("--verifier-model", default="claude-sonnet-4-6")
+    p.add_argument("--verifier-model", default="gemini-3.1-pro-high")
     p.add_argument("--max-rounds", type=int, default=20)
     o = p.parse_args(rest)
     eng = Engine()

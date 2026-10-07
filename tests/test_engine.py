@@ -222,3 +222,17 @@ def test_attachments_reach_agy_through_add_dir(home, work, monkeypatch):
     assert f["path"] in args[1] and "/etc/passwd" not in args[1]
     user = [e for e in eng.events(sid) if e["t"] == "user"][-1]
     assert [x["name"] for x in user["attachments"]] == ["shot one.png"]
+
+
+def test_verifier_falls_back_to_session_model_without_its_quota(home, work, monkeypatch):
+    monkeypatch.setenv("STUB_DONE_AFTER", "1")
+    for slot in (ONE, TWO):  # Claude/GPT quota gone everywhere
+        a.set_wall(slot, "cg", time.time() + 3600, "test")
+    eng = Engine()
+    sid = eng.create(str(work), "gemini-3.8-flash-low", mode="accept-edits")["id"]
+    eng.set_goal(sid, "write notes", check="test -f notes.txt", verifier=True, verifier_model="claude-sonnet-4-6")
+    finish(eng, sid)
+    assert eng.sessions[sid].meta["goal"]["state"] == "met"
+    verifier = [c for c in calls(work) if "VERDICT:" in c["args"][1]]
+    assert len(verifier) == 1 and "gemini-3.8-flash-low" in verifier[0]["args"]
+    assert any("verifies instead" in e["text"] for e in eng.events(sid) if e["t"] == "notice")
