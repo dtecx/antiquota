@@ -194,3 +194,21 @@ impl Service {
         Ok(self.workspace.read_text(&cwd, &roots, path)?)
     }
 }
+
+impl Service {
+    /// Keeps an uploaded file with the session; agy reads the folder through `--add-dir`.
+    pub fn attach(
+        &self,
+        id: &str,
+        filename: &str,
+        data: &[u8],
+    ) -> Result<antiquota_core::Attachment, AppError> {
+        self.get(id)?;
+        Ok(self.store.save_attachment(id, filename, data)?)
+    }
+
+    pub fn read_attachment(&self, id: &str, name: &str) -> Result<Option<Vec<u8>>, AppError> {
+        self.get(id)?;
+        Ok(self.store.read_attachment(id, name)?)
+    }
+}

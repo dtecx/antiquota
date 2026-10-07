@@ -25,6 +25,7 @@ import type { Job } from '../gen/Job';
 import type { JobLogResponse } from '../gen/JobLogResponse';
 import type { FileText, Tree } from './git';
 import type { TerminalInfo } from '../gen/TerminalInfo';
+import type { Attachment } from '../gen/Attachment';
 import { routes } from '../gen/routes';
 
 export class RequestError extends Error {
@@ -37,14 +38,26 @@ export class RequestError extends Error {
   }
 }
 
+/** The words dictation heard, and the account that transcribed them. */
+export interface Transcript {
+  text: string;
+  slot: string;
+}
+
 export function createApi(token: string, request: typeof fetch = fetch) {
-  async function call<T>(method: string, path: string, body?: unknown): Promise<T> {
+  async function call<T>(
+    method: string,
+    path: string,
+    body?: unknown,
+    raw?: { data: Blob; headers: Record<string, string> },
+  ): Promise<T> {
     const catalogPath = (path.split('?')[0] ?? path)
       .replace(/\/accounts\/login\/[^/]+/, '/accounts/login/{lid}')
       .replace(/\/accounts\/(?!login(?:\/|$)|probe$)[^/]+/, '/accounts/{name}')
       .replace(/\/sessions\/[^/]+/, '/sessions/{sid}')
       .replace(/\/approvals\/[^/]+/, '/approvals/{aid}')
-      .replace(/\/jobs\/[^/]+/, '/jobs/{jid}');
+      .replace(/\/jobs\/[^/]+/, '/jobs/{jid}')
+      .replace(/\/attachments\/[^/]+/, '/attachments/{name}');
     if (
       !routes.some(
         (route) =>
@@ -65,9 +78,10 @@ export function createApi(token: string, request: typeof fetch = fetch) {
         method,
         headers: {
           'X-Antiquota-Token': token,
+          ...(raw?.headers ?? {}),
           ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
         },
-        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+        ...(raw ? { body: raw.data } : body === undefined ? {} : { body: JSON.stringify(body) }),
       });
     } catch {
       throw new RequestError('Cannot reach the engine. Your draft is kept here.', 0);
@@ -148,6 +162,19 @@ export function createApi(token: string, request: typeof fetch = fetch) {
       call<Tree>('GET', `${sessionPath(id)}/tree?${new URLSearchParams({ path })}`),
     file: (id: string, path: string) =>
       call<FileText>('GET', `${sessionPath(id)}/file?${new URLSearchParams({ path })}`),
+    attach: (id: string, data: Blob, name: string) =>
+      call<Attachment>('POST', `${sessionPath(id)}/attach`, undefined, {
+        data,
+        headers: { 'X-Filename': encodeURIComponent(name) },
+      }),
+    /** Images and downloads load through elements, so the token travels in the query. */
+    attachmentUrl: (id: string, name: string) =>
+      `${sessionPath(id)}/attachments/${encodeURIComponent(name)}?token=${encodeURIComponent(token)}`,
+    transcribe: (data: Blob, type: string) =>
+      call<Transcript>('POST', '/api/transcribe', undefined, {
+        data,
+        headers: { 'X-Audio-Type': type },
+      }),
     savePermissions: (body: PermissionsRequest) =>
       call<PermissionsRequest>('PUT', '/api/permissions', body),
     streamUrl: () => `/api/events?token=${encodeURIComponent(token)}`,

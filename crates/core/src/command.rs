@@ -66,6 +66,8 @@ pub struct TurnRequest {
     pub conversation_id: Option<String>,
     pub slot: Slot,
     pub state_dir: String,
+    /// Extra folders agy may read: the session's attachments and job logs.
+    pub add_dirs: Vec<String>,
 }
 
 /// Owns global account and defaults commands, shared by HTTP and CLI clients.

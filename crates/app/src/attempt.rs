@@ -45,6 +45,7 @@ impl Service {
                 conversation_id,
                 slot: lease.slot().clone(),
                 state_dir: self.store.state_dir(),
+                add_dirs: self.store.readable_dirs(id),
             }
         };
         let turn = request.turn;

@@ -45,6 +45,8 @@ export async function createSandbox(label: 'antiquota-dev' | 'antiquota-ui-e2e')
     ANTIQUOTA_UI_DIR: join(repository, 'ui', 'dist'),
     FAKE_AGY_SCRIPT: script,
     FAKE_AGY_RECORD: join(root, 'fake-calls.jsonl'),
+    // What the fake agent "hears" in a dictation recording.
+    FAKE_AGY_TRANSCRIPT: 'Dictated from the fixture.',
   };
   delete env.FAKE_AGY_SCENARIO;
   delete env.STUB_SLEEP;

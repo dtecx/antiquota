@@ -50,8 +50,15 @@ impl Service {
         self.replace_meta(state, next)?;
         self.name_branch(state)?;
         let mut prompt = self.expand_mentions(&text, &state.meta.cwd);
-        for attachment in attachments {
-            prompt.push_str(&format!("\nAttached file: {}", attachment.path));
+        if !attachments.is_empty() {
+            let list: Vec<String> = attachments
+                .iter()
+                .map(|a| format!("- {}", a.path))
+                .collect();
+            prompt.push_str(&format!(
+                "\n\nAttached files (open each with your file viewer; images are visible to you):\n{}",
+                list.join("\n")
+            ));
         }
         if !note.is_empty() {
             // A rewind, compact or worktree change happened since the last turn.

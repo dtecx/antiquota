@@ -53,6 +53,9 @@ impl AgentRunner for AgyRunner {
             if let Some(conv) = &request.conversation_id {
                 command.args(["--conversation", conv]);
             }
+            for dir in &request.add_dirs {
+                command.args(["--add-dir", dir]);
+            }
             command
                 .current_dir(&request.cwd)
                 .env("HOME", &request.slot.home)

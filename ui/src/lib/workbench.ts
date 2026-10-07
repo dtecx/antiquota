@@ -250,21 +250,31 @@ export function createWorkbench(api: Api, remember: (id: string) => void = () =>
       mutate(async () => {
         if (wanted) replaceSession(await api.update(wanted, patch));
       }),
-    send: () =>
-      mutate(async () => {
+    /** Sends the draft with uploaded attachments; resolves true once the engine took it. */
+    send: async (attachments: string[] = []) => {
+      let sent = false;
+      await mutate(async () => {
         const id = wanted;
         const text = get(state).drafts[id] ?? '';
-        if (!id || !text.trim()) return;
-        const response = await api.send(id, { text });
+        if (!id || (!text.trim() && !attachments.length)) return;
+        const response = await api.send(id, attachments.length ? { text, attachments } : { text });
+        sent = true;
         state.update((value) => ({
           ...value,
           drafts: {
             ...value.drafts,
             [id]: value.drafts[id] === text ? '' : (value.drafts[id] ?? ''),
           },
-          feedback: response.result === 'queued' ? 'Message queued for the next turn.' : '',
+          feedback:
+            response.result !== 'queued'
+              ? ''
+              : attachments.length
+                ? 'Queued after the current turn.'
+                : 'Message queued for the next turn.',
         }));
-      }),
+      });
+      return sent;
+    },
     setGoal: (body: GoalRequest) =>
       mutate(async () => {
         const id = wanted;

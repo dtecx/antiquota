@@ -5,18 +5,21 @@
   import ToolStep from './ToolStep.svelte';
   import ApprovalCard from './ApprovalCard.svelte';
   import { asJob, jobFailed, jobStatus } from '../lib/jobs';
+  import { extensionLabel } from '../lib/media';
   let {
     group,
     running = false,
     cwd = '',
     onanswer,
     onlog,
+    attachmentUrl,
   }: {
     group: TranscriptGroup;
     running?: boolean;
     cwd?: string;
     onanswer: (id: string, decision: 'allow' | 'deny', always: boolean) => Promise<void>;
     onlog: (jid: string) => void;
+    attachmentUrl: (name: string) => string;
   } = $props();
   const activity = $derived(
     group.events.filter((event) => event.t === 'tool' || event.t === 'thinking'),
@@ -37,9 +40,20 @@
       </div>
       <div class="message">{group.user.text}</div>
       {#if group.user.steered}<span class="steered">sent while agy worked</span>{/if}
-      {#each group.user.attachments ?? [] as attachment (attachment.path)}<span class="attachment"
-          >{attachment.name}</span
-        >{/each}
+      {#if group.user.attachments?.length}<div class="attachments">
+          {#each group.user.attachments as attachment (attachment.path)}{#if attachment.image}<a
+                class="thumb"
+                href={attachmentUrl(attachment.name)}
+                target="_blank"
+                rel="noopener"
+                title={attachment.name}
+                ><img src={attachmentUrl(attachment.name)} alt={attachment.name} /></a
+              >{:else}<span class="attachment" title={attachment.name}
+                ><span class="kind">{extensionLabel(attachment.name)}</span><span class="name"
+                  >{attachment.name}</span
+                ></span
+              >{/if}{/each}
+        </div>{/if}
     </section>
   {/if}
   {#if start || activity.length}
@@ -174,14 +188,51 @@
     color: var(--ink-4);
     font: 10px var(--mono);
   }
-  .attachment {
-    display: inline-block;
+  .attachments {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
     margin-top: var(--space-2);
+  }
+  .thumb img {
+    display: block;
+    min-width: 36px;
+    min-height: 36px;
+    max-width: 220px;
+    max-height: 160px;
+    object-fit: contain;
+    background: var(--well);
+    border-radius: var(--r-md);
+    outline: 1px solid var(--rule-2);
+    outline-offset: -1px;
+  }
+  .attachment {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    max-width: 240px;
     border: 1px solid var(--rule-2);
-    border-radius: var(--r-sm);
-    padding: var(--space-1) var(--space-2);
+    border-radius: var(--r-md);
+    padding: 2px var(--space-2) 2px 2px;
+    background: var(--well);
     color: var(--ink-2);
-    font: 10px var(--mono);
+    font-size: 12px;
+  }
+  .attachment .kind {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: var(--r-sm);
+    background: var(--rule);
+    color: var(--ink-3);
+    font: 500 9px var(--mono);
+    text-transform: uppercase;
+  }
+  .attachment .name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .reply {
     padding: var(--space-5) 0 var(--space-3);

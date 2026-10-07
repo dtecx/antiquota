@@ -1,11 +1,12 @@
 <!-- Owns scroll behavior and empty/loading presentation for the event projection. -->
 <script lang="ts">
   import type { Login } from '../lib/login';
+  import type { Api } from '../lib/api';
   import type { Workbench } from '../lib/workbench';
   import { groupTranscript } from '../lib/transcript';
   import TurnGroup from './TurnGroup.svelte';
   import { isBusy } from '../lib/format';
-  let { workbench, login }: { workbench: Workbench; login: Login } = $props();
+  let { workbench, login, api }: { workbench: Workbench; login: Login; api: Api } = $props();
   const view = $derived(workbench.state);
   const groups = $derived(groupTranscript($view.events));
   let scroller: HTMLDivElement;
@@ -53,6 +54,7 @@
           cwd={$view.selected?.cwd ?? ''}
           onanswer={workbench.answer}
           onlog={workbench.openJobLog}
+          attachmentUrl={(name) => api.attachmentUrl($view.selected?.id ?? '', name)}
         />{/each}{/if}
   </div>
 </div>

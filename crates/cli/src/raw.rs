@@ -99,6 +99,7 @@ pub async fn run(accounts: Arc<FileAccounts>, mut args: Vec<String>) -> anyhow::
         conversation_id: None,
         slot: lease.slot().clone(),
         state_dir: accounts.root.join("state").to_string_lossy().into_owned(),
+        add_dirs: vec![],
     };
     let started = clock.now();
     let mut result = runner.raw(&request, &args).await?;

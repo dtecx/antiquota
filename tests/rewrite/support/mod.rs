@@ -35,6 +35,8 @@ pub struct Server {
     pub agy: PathBuf,
     pub port: u16,
     pub token: String,
+    /// Extra environment for the engine (and the fake agy it starts).
+    pub env: Vec<(String, String)>,
     child: Option<Child>,
 }
 impl Server {
@@ -128,6 +130,7 @@ impl Server {
             agy,
             port: 0,
             token: String::new(),
+            env: Vec::new(),
             child: None,
         };
         if start {
@@ -184,7 +187,11 @@ impl Server {
             .env("FAKE_AGY_SCRIPT", &self.script)
             .env("FAKE_AGY_RECORD", self.root.join("fake-calls.jsonl"))
             .env_remove("FAKE_AGY_SCENARIO")
-            .env_remove("STUB_SLEEP");
+            .env_remove("STUB_SLEEP")
+            .env_remove("FAKE_AGY_TRANSCRIPT");
+        for (key, value) in &self.env {
+            command.env(key, value);
+        }
         #[cfg(unix)]
         {
             let inherited = std::env::var_os("PATH").unwrap_or_default();

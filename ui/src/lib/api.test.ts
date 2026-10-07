@@ -97,4 +97,38 @@ describe('typed API boundary', () => {
     expect(await api.accounts()).toEqual([account]);
     expect(await api.settings()).toEqual(settings);
   });
+  it('uploads raw attachments and recordings with their headers and builds media URLs', async () => {
+    const request = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        Response.json({ name: 'a b.png', path: '/x/a b.png', image: true, size: 3 }),
+      )
+      .mockResolvedValueOnce(Response.json({ text: 'Hi.', slot: 'one@example.com' }));
+    const api = createApi('t+k', request);
+    const file = new Blob(['abc']);
+    expect((await api.attach('s/1', file, 'a b.png')).size).toBe(3);
+    const audio = new Blob(['RIFF'], { type: 'audio/wav' });
+    expect(await api.transcribe(audio, 'wav')).toEqual({ text: 'Hi.', slot: 'one@example.com' });
+    expect(request.mock.calls).toEqual([
+      [
+        '/api/sessions/s%2F1/attach',
+        {
+          method: 'POST',
+          headers: { 'X-Antiquota-Token': 't+k', 'X-Filename': 'a%20b.png' },
+          body: file,
+        },
+      ],
+      [
+        '/api/transcribe',
+        {
+          method: 'POST',
+          headers: { 'X-Antiquota-Token': 't+k', 'X-Audio-Type': 'wav' },
+          body: audio,
+        },
+      ],
+    ]);
+    expect(api.attachmentUrl('s/1', 'a b.png')).toBe(
+      '/api/sessions/s%2F1/attachments/a%20b.png?token=t%2Bk',
+    );
+  });
 });

@@ -16,6 +16,8 @@ mod attempt;
 mod turns;
 pub use account_service::AccountService;
 mod defaults;
+mod dictation;
+pub use dictation::{RECORDING_LIMIT, Transcript};
 mod git;
 mod goals;
 pub use goals::TurnOutcome;

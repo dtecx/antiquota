@@ -44,6 +44,8 @@ pub struct AskRequest {
     pub model: String,
     pub cwd: String,
     pub slot: Slot,
+    pub add_dirs: Vec<String>,
+    pub timeout: f64,
 }
 /// `status` is SUCCESS, quota, auth or error; `response` is agy's reply text.
 #[derive(Debug, Clone, Default)]
@@ -214,6 +216,32 @@ pub trait SessionStore: Send + Sync {
     ) -> Result<f64, PortError>;
     fn project_usage(&self, sid: &str, records: &[EventRecord]) -> Result<(), PortError>;
     fn state_dir(&self) -> String;
+    /// Keeps an uploaded file with the session under a safe, unused name.
+    fn save_attachment(
+        &self,
+        _sid: &str,
+        _filename: &str,
+        _data: &[u8],
+    ) -> Result<crate::Attachment, PortError> {
+        Err(PortError::Unavailable("attachments are unavailable".into()))
+    }
+    /// An attachment's bytes, by its stored name; `None` when it is not there.
+    fn read_attachment(&self, _sid: &str, _name: &str) -> Result<Option<Vec<u8>>, PortError> {
+        Ok(None)
+    }
+    /// Existing folders agy may read during a turn: attachments and job logs.
+    fn readable_dirs(&self, _sid: &str) -> Vec<String> {
+        vec![]
+    }
+    /// Writes a recording for dictation; returns its folder and path.
+    fn save_recording(
+        &self,
+        _data: &[u8],
+        _extension: &str,
+    ) -> Result<(String, String), PortError> {
+        Err(PortError::Unavailable("dictation is unavailable".into()))
+    }
+    fn discard_recording(&self, _path: &str) {}
     /// Where this session's uploaded attachments live.
     fn attachments_dir(&self, _sid: &str) -> String {
         String::new()

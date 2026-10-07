@@ -188,6 +188,7 @@ mod tests {
                 home: slot.to_string_lossy().into_owned(),
             },
             state_dir: root.join("state").to_string_lossy().into_owned(),
+            add_dirs: vec![],
         };
         let runner = AgyRunner {
             executable: "not-executed".into(),

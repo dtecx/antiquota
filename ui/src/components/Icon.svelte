@@ -16,7 +16,8 @@
       | 'search'
       | 'pin'
       | 'panel'
-      | 'branch';
+      | 'branch'
+      | 'mic';
     size?: number;
   } = $props();
   const paths = {
@@ -32,6 +33,7 @@
     branch: 'M5 3v10M5 9c0-2 6-1 6-4M11 3v2',
     search: 'M10.5 10.5l3 3M11 6.8a4.2 4.2 0 1 1-8.4 0 4.2 4.2 0 0 1 8.4 0',
     pin: 'M5 2h6l-1 5 3 3H3l3-3zM8 10v4',
+    mic: 'M8 2a2 2 0 0 1 2 2v4a2 2 0 0 1-4 0V4a2 2 0 0 1 2-2M4 7.5a4 4 0 0 0 8 0M8 11.5V14',
   };
 </script>
 

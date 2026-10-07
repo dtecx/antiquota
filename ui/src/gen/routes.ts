@@ -364,16 +364,16 @@ export const routes = [
   {
     "method": "POST",
     "path": "/api/transcribe",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "POST",
     "path": "/api/sessions/{sid}/attach",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "GET",
     "path": "/api/sessions/{sid}/attachments/{name}",
-    "status": "pending"
+    "status": "implemented"
   }
 ] satisfies readonly RouteDefinition[];

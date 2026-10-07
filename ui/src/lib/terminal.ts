@@ -32,6 +32,31 @@ export function decodeFrame(data: string): Uint8Array {
   return bytes;
 }
 
+/** Sends keystrokes one request at a time, in order; keys typed meanwhile go out together. */
+export function inputQueue(
+  send: (data: string) => Promise<unknown>,
+  fail: (error: unknown) => void,
+) {
+  let waiting = '';
+  let busy = false;
+  function next() {
+    if (busy || !waiting) return;
+    const data = waiting;
+    waiting = '';
+    busy = true;
+    send(data)
+      .catch(fail)
+      .finally(() => {
+        busy = false;
+        next();
+      });
+  }
+  return (data: string) => {
+    waiting += data;
+    next();
+  };
+}
+
 export interface Frame {
   d?: string;
   shell?: string;
@@ -102,11 +127,12 @@ export async function shellFor(
     resizeTimer: undefined,
     listeners: new Set(),
   };
-  term.onData((data) => {
-    api.termInput(sid, data).catch((error: unknown) => {
-      red(shell, error instanceof Error ? error.message : 'Input failed.');
-    });
-  });
+  term.onData(
+    inputQueue(
+      (data) => api.termInput(sid, data),
+      (error: unknown) => red(shell, error instanceof Error ? error.message : 'Input failed.'),
+    ),
+  );
   shells.set(sid, shell);
   await start(shell, api, streamUrl, false);
   return shell;

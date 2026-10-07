@@ -9,6 +9,7 @@
   import SessionDialog from './components/SessionDialog.svelte';
   import Transcript from './components/Transcript.svelte';
   import Composer from './components/Composer.svelte';
+  import DropZone from './components/DropZone.svelte';
   import Icon from './components/Icon.svelte';
   import AccountsPanel from './components/AccountsPanel.svelte';
   import LoginDialog from './components/LoginDialog.svelte';
@@ -85,6 +86,7 @@
 </script>
 
 <svelte:window onkeydown={shortcut} />
+<DropZone {workbench} {api} />
 <div class="workbench">
   <Sidebar {workbench} {accounts} {login} connection={$connection} />
   <main>
@@ -101,10 +103,10 @@
           onclick={() => workbench.change({ error: '' })}><Icon name="close" /></button
         >
       </div>{/if}
-    {#if $view.selected}<Transcript {workbench} {login} /><GoalBar
+    {#if $view.selected}<Transcript {workbench} {login} {api} /><GoalBar
         {workbench}
         onrevise={() => revising.set(true)}
-      /><JobBar {workbench} /><Composer {workbench} connected={$connection === 'live'} />
+      /><JobBar {workbench} /><Composer {workbench} {api} connected={$connection === 'live'} />
     {:else}<div class="welcome">
         <span class="eyebrow">YOUR WORKBENCH</span>
         <h1>A place for the next idea.</h1>

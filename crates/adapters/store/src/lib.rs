@@ -1,4 +1,5 @@
 //! Owns compatible file persistence, account/engine locks, and usage projection.
+mod attachments;
 mod files;
 mod usage;
 mod workspace;
@@ -150,13 +151,12 @@ impl SessionStore for FileStore {
                 if !canonical.starts_with(&dir) || !canonical.is_file() {
                     return None;
                 }
+                let name = canonical.file_name()?.to_string_lossy().into_owned();
                 Some(antiquota_core::Attachment {
-                    name: canonical.file_name()?.to_string_lossy().into_owned(),
+                    image: attachments::is_image(&name),
+                    name,
                     path: canonical.to_string_lossy().into_owned(),
-                    image: matches!(
-                        canonical.extension().and_then(|x| x.to_str()),
-                        Some("png" | "jpg" | "jpeg" | "gif" | "webp")
-                    ),
+                    size: None,
                 })
             })
             .collect())
@@ -180,6 +180,26 @@ impl SessionStore for FileStore {
     }
     fn state_dir(&self) -> String {
         self.root.join("state").to_string_lossy().into_owned()
+    }
+    fn save_attachment(
+        &self,
+        sid: &str,
+        filename: &str,
+        data: &[u8],
+    ) -> Result<antiquota_core::Attachment, PortError> {
+        self.store_attachment(sid, filename, data)
+    }
+    fn read_attachment(&self, sid: &str, name: &str) -> Result<Option<Vec<u8>>, PortError> {
+        self.load_attachment(sid, name)
+    }
+    fn readable_dirs(&self, sid: &str) -> Vec<String> {
+        self.existing_dirs(sid)
+    }
+    fn save_recording(&self, data: &[u8], extension: &str) -> Result<(String, String), PortError> {
+        self.write_recording(data, extension)
+    }
+    fn discard_recording(&self, path: &str) {
+        attachments::remove(path);
     }
     fn attachments_dir(&self, sid: &str) -> String {
         self.root

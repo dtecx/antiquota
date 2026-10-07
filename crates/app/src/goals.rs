@@ -345,6 +345,8 @@ impl Service {
                             model: model.clone(),
                             cwd: session.cwd.clone(),
                             slot: slot.clone(),
+                            add_dirs: vec![],
+                            timeout: 1800.0,
                         },
                         cancel.clone(),
                     )

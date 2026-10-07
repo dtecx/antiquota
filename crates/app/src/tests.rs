@@ -1,5 +1,6 @@
 //! Proves application turns, queue control, and replay with only in-memory ports.
 mod approvals;
+mod dictation;
 mod goals;
 mod jobs;
 mod lifecycle;

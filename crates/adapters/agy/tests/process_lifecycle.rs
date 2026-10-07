@@ -54,6 +54,7 @@ async fn inherited_pipes_close_on_stop_crash_and_protocol_failure() {
                 home: sandbox.token_home().to_string_lossy().into_owned(),
             },
             state_dir: sandbox.root.join("state").to_string_lossy().into_owned(),
+            add_dirs: vec![],
         };
         let cancellation = Cancellation::default();
         let signal = cancellation.clone();

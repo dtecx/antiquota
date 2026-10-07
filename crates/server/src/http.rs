@@ -43,7 +43,11 @@ pub async fn dispatch(State(state): State<Arc<HttpState>>, request: Request) -> 
         && path.starts_with("/api/sessions/")
         && path.ends_with("/term/stream")
         && path.matches('/').count() == 5;
-    let token = if path == "/api/events" || terminal_stream {
+    let attachment_download = method == "GET"
+        && path.starts_with("/api/sessions/")
+        && path.split('/').nth(4) == Some("attachments")
+        && path.split('/').count() == 6;
+    let token = if path == "/api/events" || terminal_stream || attachment_download {
         query_token(request.uri().query().unwrap_or(""))
     } else {
         request
@@ -58,6 +62,75 @@ pub async fn dispatch(State(state): State<Arc<HttpState>>, request: Request) -> 
     }
     if method == "GET" && path == "/api/events" {
         return crate::stream::events(&state);
+    }
+    if attachment_download {
+        let parts: Vec<&str> = path.split('/').collect();
+        let (id, name) = (parts[3], decode(parts[5]));
+        return match state.service.read_attachment(id, &name) {
+            Ok(Some(bytes)) => bytes_response(200, bytes, mime(&name)),
+            Ok(None) => error(404, &format!("not found: '{name}'")),
+            Err(AppError::Missing(x)) => error(404, &format!("not found: '{x}'")),
+            Err(e) => error(400, &e.to_string()),
+        };
+    }
+    let declared = request
+        .headers()
+        .get(header::CONTENT_LENGTH)
+        .and_then(|x| x.to_str().ok())
+        .and_then(|x| x.parse::<usize>().ok());
+    let raw_target = match (method.as_str(), path.as_str()) {
+        ("POST", "/api/transcribe") => Some(("recording too long", None)),
+        ("POST", p)
+            if p.starts_with("/api/sessions/")
+                && p.ends_with("/attach")
+                && p.matches('/').count() == 4 =>
+        {
+            Some((
+                "attachments are limited to 25 MB",
+                Some(p.split('/').nth(3).unwrap_or("").to_owned()),
+            ))
+        }
+        _ => None,
+    };
+    if let Some((too_large, session)) = raw_target {
+        let limit = antiquota_app::RECORDING_LIMIT;
+        if declared.is_some_and(|n| n > limit) {
+            return error(400, too_large);
+        }
+        // Read the headers before the body: a borrowed request cannot cross the await below.
+        let (audio, filename) = {
+            let headers = request.headers();
+            let text = |name: &str| {
+                headers
+                    .get(name)
+                    .and_then(|x| x.to_str().ok())
+                    .map(str::to_owned)
+            };
+            (
+                text("X-Audio-Type").unwrap_or_else(|| "wav".into()),
+                text("X-Filename")
+                    .map(|f| decode(&f))
+                    .unwrap_or_else(|| "file".into()),
+            )
+        };
+        let Ok(bytes) = to_bytes(request.into_body(), limit).await else {
+            return error(400, too_large);
+        };
+        let result = match session {
+            None => state
+                .service
+                .transcribe(&bytes, &audio)
+                .await
+                .map(|t| json!({"text": t.text, "slot": t.slot})),
+            Some(id) => state.service.attach(&id, &filename, &bytes).and_then(value),
+        };
+        return match result {
+            Ok(value) => response(200, &value),
+            Err(AppError::Missing(x)) => error(404, &format!("not found: '{x}'")),
+            Err(AppError::Invalid(x))
+            | Err(AppError::Port(antiquota_core::PortError::Invalid(x))) => error(400, &x),
+            Err(e) => error(500, &e.to_string()),
+        };
     }
     if terminal_stream {
         let id = path
@@ -542,6 +615,28 @@ fn bytes_response(code: u16, bytes: Vec<u8>, kind: &str) -> Response {
         .header(header::SERVER, "antiquota/0.5.0")
         .body(Body::from(bytes))
         .unwrap_or_else(|_| Response::new(Body::empty()))
+}
+/// The content type of an attachment by its extension, as Python's mimetypes guesses it.
+fn mime(name: &str) -> &'static str {
+    let ext = name.rsplit('.').next().unwrap_or("").to_lowercase();
+    match ext.as_str() {
+        "txt" | "log" => "text/plain",
+        "md" => "text/markdown",
+        "csv" => "text/csv",
+        "html" | "htm" => "text/html",
+        "json" => "application/json",
+        "pdf" => "application/pdf",
+        "png" => "image/png",
+        "jpg" | "jpeg" => "image/jpeg",
+        "gif" => "image/gif",
+        "webp" => "image/webp",
+        "bmp" => "image/bmp",
+        "heic" => "image/heic",
+        "svg" => "image/svg+xml",
+        "wav" => "audio/x-wav",
+        "zip" => "application/zip",
+        _ => "application/octet-stream",
+    }
 }
 fn static_path(path: &str) -> Option<String> {
     match path {

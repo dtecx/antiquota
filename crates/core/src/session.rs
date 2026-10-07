@@ -41,6 +41,10 @@ pub struct Attachment {
     pub name: String,
     pub path: String,
     pub image: bool,
+    /// Bytes, reported on upload; transcript records leave it out.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub size: Option<u64>,
 }
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[serde(default)]

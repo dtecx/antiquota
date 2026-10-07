@@ -35,6 +35,28 @@ describe('session workbench store', () => {
     expect(get(workbench.state).drafts.fixture).toBe('');
     expect(get(workbench.state).feedback).toBe('Message queued for the next turn.');
   });
+  it('sends attachment-only messages and reports whether the engine took them', async () => {
+    const api = fixtureApi();
+    const send = vi
+      .fn<Api['send']>()
+      .mockResolvedValueOnce({ result: 'started' })
+      .mockRejectedValueOnce(new Error('offline'));
+    api.send = send;
+    const workbench = createWorkbench(api);
+    await workbench.refresh();
+    expect(await workbench.send()).toBe(false);
+    expect(await workbench.send(['/data/a.png'])).toBe(true);
+    workbench.draft('With text');
+    expect(await workbench.send(['/data/b.txt'])).toBe(false);
+    expect(send.mock.calls).toEqual([
+      ['fixture', { text: '', attachments: ['/data/a.png'] }],
+      ['fixture', { text: 'With text', attachments: ['/data/b.txt'] }],
+    ]);
+    expect(get(workbench.state).drafts.fixture).toBe('With text');
+    send.mockResolvedValueOnce({ result: 'queued' });
+    expect(await workbench.send(['/data/c.txt'])).toBe(true);
+    expect(get(workbench.state).feedback).toBe('Queued after the current turn.');
+  });
   it('preserves a newer draft typed while sending the earlier one', async () => {
     const api = fixtureApi();
     let complete: (value: { result: string }) => void = () => {};
