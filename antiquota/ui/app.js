@@ -1624,6 +1624,7 @@ function openSplit(sid) {
   box.hidden = false;
   $('#app').classList.add('split-on');
   $('#split-btn').classList.add('on');
+  if (S.drawer) hideDrawer();  // two sessions need the room; ⌘B still brings the panel back
 }
 function closeSplit() {
   PREF.split = null; savePrefs();
@@ -1646,6 +1647,7 @@ function splitMenu(x, y) {
   const r = menu.getBoundingClientRect();
   menu.style.left = Math.min(x, innerWidth - r.width - 8) + 'px';
   menu.style.top = Math.min(y, innerHeight - r.height - 8) + 'px';
+  menu.querySelector('button')?.focus();
   setTimeout(() => document.addEventListener('mousedown', outsideMenu), 0);
 }
 window.addEventListener('message', e => {  // the right half asks to swap places or close
@@ -2664,7 +2666,16 @@ function wire() {
   });
   title.addEventListener('blur', () => finish(true));
 
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#ctx')) { e.preventDefault(); closeMenu(); } }, true);
+  document.addEventListener('keydown', e => {
+    const menu = $('#ctx');
+    if (!menu) return;
+    if (e.key === 'Escape') { e.preventDefault(); closeMenu(); return; }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      const items = [...menu.querySelectorAll('button')], at = items.indexOf(document.activeElement);
+      items[(at + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length]?.focus();
+    }
+  }, true);
   document.addEventListener('keydown', e => {
     const mod = e.metaKey || e.ctrlKey;
     if (mod && e.key.toLowerCase() === 'n') { e.preventDefault(); openNew(); }
