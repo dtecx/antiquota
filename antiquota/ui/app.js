@@ -1505,6 +1505,12 @@ async function slash(text) {
   } catch (e) { fail(e); }
 }
 
+function stepSession(d) {
+  const list = [...document.querySelectorAll('#sessions .sess-row .sess')];
+  const at = list.findIndex(b => b.classList.contains('on'));
+  list[(at + d + list.length) % list.length]?.click();
+}
+
 /* ---------- keyboard shortcuts and commands (⌘/ or /help) ---------- */
 const KEYS = [['⌘= ⌘− ⌘0', 'interface larger / smaller / actual size'], ['⌘⇧M', 'dictate a message (again to stop)'], ['⌘N', 'new session'], ['⌘K', 'find a session or message'], ['⌘J', 'focus the message box'],
   ['⌘⇧[  ⌘⇧]', 'previous / next session'], ['⌘B', 'show or hide the side panel'], ['⌘.', 'stop the running turn'],
@@ -2675,10 +2681,7 @@ function wire() {
     if (mod && e.key === '\\' && !EMBED) { e.preventDefault(); $('#split').hidden ? $('#split-btn').click() : closeSplit(); }
     if (mod && e.shiftKey && (e.key === '[' || e.key === ']' || e.key === '{' || e.key === '}')) {
       e.preventDefault();
-      const list = [...document.querySelectorAll('#sessions .sess-row .sess')];
-      const at = list.findIndex(b => b.classList.contains('on'));
-      const next = list[(at + ((e.key === ']' || e.key === '}') ? 1 : -1) + list.length) % list.length];
-      next?.click();
+      stepSession(e.key === ']' || e.key === '}' ? 1 : -1);
     }
     if (e.key === 'Escape' && !$('#settings').hidden && !document.querySelector('dialog[open]')) closeSettings();
   });

@@ -5,6 +5,7 @@
 //! closes (the app stays in the tray), and quitting asks before stopping running work.
 
 mod engine;
+mod menu;
 mod tray;
 
 use serde_json::json;
@@ -163,6 +164,7 @@ pub fn run() {
                 .traffic_light_position(tauri::LogicalPosition::new(18.0, 20.0));
             builder.build()?;
             tray::create(app.handle())?;
+            app.set_menu(menu::build(app.handle())?)?;
             let handle = app.handle().clone();
             std::thread::spawn(move || {
                 boot(&handle);
@@ -170,6 +172,7 @@ pub fn run() {
             });
             Ok(())
         })
+        .on_menu_event(|app, event| menu::on_event(app, event.id().as_ref()))
         .on_window_event(|window, event| {
             if let WindowEvent::CloseRequested { api, .. } = event {
                 if window.label() == "main" && !QUITTING.load(Ordering::SeqCst) {
