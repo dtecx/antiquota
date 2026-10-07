@@ -15,6 +15,8 @@ for (const proto of [Element.prototype, DocumentFragment.prototype]) {
 }
 /* Inside the desktop app (Tauri), a few browser features go through native APIs instead. */
 const NATIVE = window.__TAURI__ || null;
+const EMBED = new URLSearchParams(location.search).has('embed');  // the right half of side-by-side
+if (EMBED) document.documentElement.classList.add('embed');
 const openExternal = url => NATIVE ? NATIVE.opener.openUrl(url) : window.open(url, '_blank', 'noopener');
 const readClipboard = () => NATIVE ? NATIVE.clipboardManager.readText() : navigator.clipboard.readText();
 const copyText = text => NATIVE ? NATIVE.clipboardManager.writeText(text) : navigator.clipboard.writeText(text);
@@ -220,8 +222,9 @@ function sessItem(m) {
   else if (g) sub = `◎ ${g.state === 'active' ? 'round ' + g.round + '/' + g.max_rounds : g.state}`;
   return h('div', { class: 'sess-row', oncontextmenu: e => { e.preventDefault(); sessMenu(m, e.clientX, e.clientY); } },
     h('button', {
-      class: 'sess' + (m.id === S.cur ? ' on' : '') + (m.archived ? ' archived' : ''), title: m.title || 'Untitled',
-      onclick: () => openSession(m.id),
+      class: 'sess' + (m.id === S.cur ? ' on' : '') + (m.archived ? ' archived' : ''),
+      title: (m.title || 'Untitled') + ' · ⌥-click: open on the right',
+      onclick: e => (e.altKey && !EMBED ? openSplit(m.id) : openSession(m.id)),
     },
     h('span', { class: `dot ${m.status}${goalOn ? ' goal' : ''}` }),
     h('span', { class: 't' }, (m.pinned ? '◆ ' : '') + (m.worktree ? '⎇ ' : '') + (m.title || 'Untitled')),
@@ -1507,6 +1510,49 @@ async function renderGit(box, m) {
     ] : [])].filter(Boolean));
 }
 
+/* ---------- side by side: a second session in the right half ---------- */
+function openSplit(sid) {
+  if (EMBED || !S.sessions.has(sid)) return;
+  PREF.split = sid; savePrefs();
+  const box = $('#split');
+  const frame = h('iframe', { src: `/?embed=1#${sid}`, title: 'Second session' });
+  box.replaceChildren(frame);
+  box.hidden = false;
+  $('#app').classList.add('split-on');
+  $('#split-btn').classList.add('on');
+}
+function closeSplit() {
+  PREF.split = null; savePrefs();
+  $('#split').hidden = true;
+  $('#split').replaceChildren();
+  $('#app').classList.remove('split-on');
+  $('#split-btn').classList.remove('on');
+}
+function splitMenu(x, y) {
+  closeMenu();
+  const others = [...S.sessions.values()].filter(m => m.id !== S.cur && !m.archived).sort((a, b) => b.updated - a.updated).slice(0, 14);
+  const act = (label, fn, cls = '') => h('button', { class: cls, role: 'menuitem', onclick: () => { closeMenu(); fn(); } }, label);
+  const menu = h('div', { class: 'ctxmenu', id: 'ctx', role: 'menu' },
+    h('div', { class: 'ctx-cap' }, 'Show beside this one'),
+    ...others.map(m => act((m.status !== 'idle' ? '● ' : '') + (m.title || 'Untitled'), () => openSplit(m.id))),
+    !others.length && h('div', { class: 'ctx-cap' }, 'No other session yet.'),
+    !$('#split').hidden && h('hr'),
+    !$('#split').hidden && act('Close side by side', closeSplit));
+  document.body.append(menu);
+  const r = menu.getBoundingClientRect();
+  menu.style.left = Math.min(x, innerWidth - r.width - 8) + 'px';
+  menu.style.top = Math.min(y, innerHeight - r.height - 8) + 'px';
+  setTimeout(() => document.addEventListener('mousedown', outsideMenu), 0);
+}
+window.addEventListener('message', e => {  // the right half asks to swap places or close
+  if (e.origin !== location.origin || !e.data || EMBED) return;
+  if (e.data.type === 'antiquota-close-split') return closeSplit();
+  if (e.data.type !== 'antiquota-swap') return;
+  const left = S.cur;
+  openSession(e.data.sid);
+  if (left) openSplit(left);
+});
+
 /* ---------- drawer ---------- */
 function showDrawer(tab) {
   S.drawer = true;
@@ -2414,6 +2460,13 @@ function wire() {
   $('#search').addEventListener('input', renderSessions);
   $('#acct-pill').addEventListener('click', () => S.accounts.length ? openSettings('usage') : openAcct());
   $('#drawer-btn').addEventListener('click', () => (S.drawer ? hideDrawer() : showDrawer()));
+  $('#split-btn').addEventListener('click', e => { const r = e.currentTarget.getBoundingClientRect(); splitMenu(r.left - 180, r.bottom + 6); });
+  if (EMBED) {  // right half: a swap button instead of the side panel
+    $('.top-right').prepend(h('button', { class: 'icon-btn', title: 'Swap sides', 'aria-label': 'Swap sides',
+      onclick: () => parent.postMessage({ type: 'antiquota-swap', sid: S.cur }, location.origin) }, '⇆'),
+    h('button', { class: 'icon-btn', title: 'Close side by side', 'aria-label': 'Close side by side',
+      onclick: () => parent.postMessage({ type: 'antiquota-close-split' }, location.origin) }, '✕'));
+  }
   $$('.tabs button').forEach(b => b.addEventListener('click', () => showDrawer(b.dataset.tab)));
   $('#side-open').addEventListener('click', () => $('#side').classList.add('open'));
   $('#side-close').addEventListener('click', () => $('#side').classList.remove('open'));
@@ -2515,6 +2568,7 @@ function wire() {
     if (mod && e.key.toLowerCase() === 'k') { e.preventDefault(); $('#search').focus(); $('#search').select(); }
     if (mod && e.key.toLowerCase() === 'j') { e.preventDefault(); $('#input').focus(); }
     if (mod && e.key.toLowerCase() === 'b' && !e.shiftKey) { e.preventDefault(); $('#drawer-btn').click(); }
+    if (mod && e.key === '\\' && !EMBED) { e.preventDefault(); $('#split').hidden ? $('#split-btn').click() : closeSplit(); }
     if (mod && e.shiftKey && (e.key === '[' || e.key === ']' || e.key === '{' || e.key === '}')) {
       e.preventDefault();
       const list = [...document.querySelectorAll('#sessions .sess-row .sess')];
@@ -2529,6 +2583,7 @@ function wire() {
 
 wire();
 setDetail(S.detail);
+
 document.body.classList.toggle('no-stamps', !PREF.stamps);
 if (S.drawer) showDrawer();
-load().then(connect).catch(fail);
+load().then(() => { connect(); if (!EMBED && PREF.split && S.sessions.has(PREF.split) && PREF.split !== S.cur) openSplit(PREF.split); }).catch(fail);

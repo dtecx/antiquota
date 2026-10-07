@@ -1023,3 +1023,12 @@ body.no-stamps .turn > span:last-child { display: none; }
 .term-screen { flex: 1; min-height: 0; padding: 8px; border: 1px solid var(--rule-2); border-radius: var(--r-md); background: var(--well); }
 .term-screen .xterm { height: 100%; }
 .drawer:has(.term-wrap) { width: min(720px, 48vw); }
+
+/* ---------- side by side ---------- */
+.app.split-on { grid-template-columns: 264px minmax(0, 1fr) minmax(0, 1fr) auto; }
+.split { min-width: 0; border-left: 1px solid var(--rule-2); display: flex; }
+.split iframe { flex: 1; width: 100%; height: 100%; border: 0; background: var(--night); }
+.embed .side, .embed .drawer, .embed #drawer-btn, .embed #split-btn, .embed .side-open { display: none !important; }
+.embed .app { grid-template-columns: minmax(0, 1fr) !important; }
+#split-btn.on { color: var(--baton); }
+.ctx-cap { padding: 6px 10px 4px; font: 500 10.5px var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--ink-4); }

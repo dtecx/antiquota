@@ -51,7 +51,10 @@
         <button class="icon-btn" id="detail-btn" title="Previews and thinking" aria-label="Toggle previews and thinking">
           <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 4h12M2 8h8M2 12h10"/></svg>
         </button>
-        <button class="icon-btn" id="drawer-btn" title="Accounts, stack, permissions" aria-label="Toggle side panel">
+        <button class="icon-btn" id="split-btn" title="Side by side: a second session (⌘\\)" aria-label="Side by side">
+          <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1.5" y="2.5" width="5.5" height="11" rx="1.5"/><rect x="9" y="2.5" width="5.5" height="11" rx="1.5"/></svg>
+        </button>
+        <button class="icon-btn" id="drawer-btn" title="Changes, files, terminal (⌘B)" aria-label="Toggle side panel">
           <svg viewBox="0 0 16 16" width="16" height="16"><rect x="1.5" y="2.5" width="13" height="11" rx="2" fill="none" stroke="currentColor"/><path d="M10 2.5v11" stroke="currentColor"/></svg>
         </button>
       </div>
@@ -94,6 +97,8 @@
       <div class="meter" id="meter" aria-live="polite"></div>
     </footer>
   </main>
+
+  <section class="split" id="split" hidden aria-label="Second session"></section>
 
   <aside class="drawer" id="drawer" hidden>
     <div class="tabs" role="tablist">
