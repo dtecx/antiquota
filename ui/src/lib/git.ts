@@ -101,7 +101,7 @@ export function humanSize(bytes: number): string {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
-export type DrawerTab = 'changes' | 'files';
+export type DrawerTab = 'changes' | 'files' | 'terminal';
 const KEY = 'antiquota.drawer';
 function remembered(): { open: boolean; tab: DrawerTab } {
   try {
@@ -109,7 +109,9 @@ function remembered(): { open: boolean; tab: DrawerTab } {
       open?: unknown;
       tab?: unknown;
     };
-    return { open: value.open === true, tab: value.tab === 'files' ? 'files' : 'changes' };
+    const tab: DrawerTab =
+      value.tab === 'files' || value.tab === 'terminal' ? value.tab : 'changes';
+    return { open: value.open === true, tab };
   } catch {
     return { open: false, tab: 'changes' };
   }

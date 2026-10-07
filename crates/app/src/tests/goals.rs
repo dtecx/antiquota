@@ -270,6 +270,7 @@ async fn check_results_keep_the_last_output_and_report_timeouts() {
             awake: None,
             vcs: None,
             workspace: None,
+            terminals: None,
         })
         .unwrap();
         let id = service

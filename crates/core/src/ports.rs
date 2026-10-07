@@ -292,10 +292,38 @@ pub trait Vcs: Send + Sync {
     /// Renames a worktree's branch; `true` when the checkout now has the new name.
     fn rename_branch(&self, path: &str, from: &str, to: &str) -> bool;
 }
-pub trait Pty: Send {
-    fn write(&mut self, data: &[u8]) -> Result<(), PortError>;
-    fn resize(&mut self, cols: u16, rows: u16) -> Result<(), PortError>;
-    fn stop(&mut self) -> Result<(), PortError>;
+/// What the Terminal panel shows about a session's shell.
+#[derive(Debug, Clone, PartialEq, serde::Serialize, ts_rs::TS)]
+pub struct TerminalInfo {
+    pub alive: bool,
+    pub shell: String,
+    pub cwd: String,
+}
+/// Output for one subscriber: raw bytes, then `Exit` once the shell ends.
+#[derive(Debug, Clone, PartialEq)]
+pub enum TerminalChunk {
+    Data(Vec<u8>),
+    Exit,
+}
+/// The recent screen for a new subscriber and the chunks that follow it.
+pub struct TerminalFeed {
+    pub recent: Vec<u8>,
+    pub chunks: std::sync::mpsc::Receiver<TerminalChunk>,
+}
+/// One interactive shell in a pseudo-terminal.
+pub trait Terminal: Send + Sync {
+    fn info(&self) -> TerminalInfo;
+    /// Sends keyboard input; fails once the shell has exited.
+    fn write(&self, data: &[u8]) -> Result<(), PortError>;
+    /// Resizes a live terminal; resizing an ended one does nothing.
+    fn resize(&self, cols: u16, rows: u16) -> Result<(), PortError>;
+    /// Ends the shell and everything it started; ending twice is harmless.
+    fn kill(&self);
+    fn subscribe(&self) -> TerminalFeed;
+}
+/// Starts shells for the Terminal panel.
+pub trait Terminals: Send + Sync {
+    fn spawn(&self, cwd: &str, cols: u16, rows: u16) -> Result<Arc<dyn Terminal>, PortError>;
 }
 pub trait Transcriber: Send + Sync {
     fn transcribe<'a>(&'a self, audio: Vec<u8>, kind: &'a str) -> PortFuture<'a, String>;

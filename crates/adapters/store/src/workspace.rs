@@ -186,11 +186,28 @@ mod tests {
         std::os::unix::fs::symlink(root.join("outside"), project.join("escape")).unwrap();
         let ws = FileWorkspace;
         let cwd = project.to_str().unwrap();
-        assert_eq!(ws.tree(cwd, "many").unwrap()["entries"].as_array().unwrap().len(), 400);
-        assert!(ws.read_text(cwd, &[], "big.txt").unwrap_err().to_string().contains("over 2 MB"));
-        assert_eq!(ws.read_text(cwd, &[], "latin.txt").unwrap()["text"], "a\u{fffd}b");
+        assert_eq!(
+            ws.tree(cwd, "many").unwrap()["entries"]
+                .as_array()
+                .unwrap()
+                .len(),
+            400
+        );
+        assert!(
+            ws.read_text(cwd, &[], "big.txt")
+                .unwrap_err()
+                .to_string()
+                .contains("over 2 MB")
+        );
+        assert_eq!(
+            ws.read_text(cwd, &[], "latin.txt").unwrap()["text"],
+            "a\u{fffd}b"
+        );
         #[cfg(unix)]
-        assert!(ws.tree(cwd, "escape").is_err(), "a linked folder may not escape");
+        assert!(
+            ws.tree(cwd, "escape").is_err(),
+            "a linked folder may not escape"
+        );
         let _ = std::fs::remove_dir_all(root);
     }
 }

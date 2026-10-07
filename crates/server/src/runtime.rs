@@ -67,6 +67,7 @@ pub async fn serve(port: u16, open_browser: bool) -> Result<(), ServerError> {
         awake: Some(Arc::new(antiquota_shell::KeepAwake::default())),
         vcs: Some(Arc::new(antiquota_git::Git)),
         workspace: Some(Arc::new(antiquota_store::FileWorkspace)),
+        terminals: Some(Arc::new(antiquota_pty::Shells)),
     })?;
     let listener = match TcpListener::bind(("127.0.0.1", port)).await {
         Ok(x) => x,

@@ -24,6 +24,7 @@ import type { GoalRequest } from '../gen/GoalRequest';
 import type { Job } from '../gen/Job';
 import type { JobLogResponse } from '../gen/JobLogResponse';
 import type { FileText, Tree } from './git';
+import type { TerminalInfo } from '../gen/TerminalInfo';
 import { routes } from '../gen/routes';
 
 export class RequestError extends Error {
@@ -134,6 +135,15 @@ export function createApi(token: string, request: typeof fetch = fetch) {
     gitMerge: (id: string) => call<{ sha: string }>('POST', `${sessionPath(id)}/git/merge`, {}),
     gitRemove: (id: string, deleteBranch: boolean) =>
       call<Session>('POST', `${sessionPath(id)}/git/remove`, { delete_branch: deleteBranch }),
+    termStart: (id: string, body: { cols: number; rows: number; restart: boolean }) =>
+      call<TerminalInfo>('POST', `${sessionPath(id)}/term`, body),
+    termInput: (id: string, data: string) =>
+      call<OkResponse>('POST', `${sessionPath(id)}/term/input`, { data }),
+    termResize: (id: string, cols: number, rows: number) =>
+      call<OkResponse>('POST', `${sessionPath(id)}/term/resize`, { cols, rows }),
+    termKill: (id: string) => call<OkResponse>('POST', `${sessionPath(id)}/term/kill`, {}),
+    termStreamUrl: (id: string) =>
+      `${sessionPath(id)}/term/stream?token=${encodeURIComponent(token)}`,
     tree: (id: string, path: string) =>
       call<Tree>('GET', `${sessionPath(id)}/tree?${new URLSearchParams({ path })}`),
     file: (id: string, path: string) =>

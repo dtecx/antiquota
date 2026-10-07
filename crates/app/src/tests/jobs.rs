@@ -38,6 +38,7 @@ fn awake_service(keep_awake: &str, awake: Arc<RecordingAwake>) -> Arc<Service> {
         awake: Some(awake),
         vcs: None,
         workspace: None,
+        terminals: None,
     })
     .unwrap()
 }
@@ -177,6 +178,7 @@ async fn sessions_keep_twenty_jobs_and_skip_duplicate_requests() {
         awake: Some(awake.clone()),
         vcs: None,
         workspace: None,
+        terminals: None,
     })
     .unwrap();
     let id = service

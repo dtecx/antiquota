@@ -2,6 +2,7 @@
 mod admission;
 mod approvals;
 mod jobs;
+mod terminals;
 pub use approvals::ApprovalReply;
 mod commands;
 pub use commands::CommandResult;
@@ -22,7 +23,7 @@ mod handoff;
 use antiquota_core::{
     AccountStore, AgentRunner, Awake, Cancellation, Clock, CommandOutcome, EventRecord, JobRunner,
     PortError, PortFuture, QuotaProbe, Session, SessionStore, Settings, ShellRunner, StreamEvent,
-    Vcs, Workspace, worktree::Worktree,
+    Terminals, Vcs, Workspace, worktree::Worktree,
 };
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -67,6 +68,8 @@ pub struct Service {
     pub(crate) awake: Arc<dyn Awake>,
     pub(crate) vcs: Arc<dyn Vcs>,
     pub(crate) workspace: Arc<dyn Workspace>,
+    pub(crate) terminals: Arc<dyn Terminals>,
+    pub(crate) terms: Mutex<BTreeMap<String, Arc<dyn antiquota_core::Terminal>>>,
     pub(crate) approval_signal: tokio::sync::Notify,
 }
 pub struct SystemClock;
@@ -225,6 +228,17 @@ impl Workspace for NoWorkspace {
         ))
     }
 }
+struct NoTerminals;
+impl Terminals for NoTerminals {
+    fn spawn(
+        &self,
+        _cwd: &str,
+        _cols: u16,
+        _rows: u16,
+    ) -> Result<Arc<dyn antiquota_core::Terminal>, PortError> {
+        Err(PortError::Unavailable("terminals are unavailable".into()))
+    }
+}
 struct NoAwake;
 impl Awake for NoAwake {
     fn hold(&self) {}
@@ -244,6 +258,7 @@ pub struct Ports {
     pub awake: Option<Arc<dyn Awake>>,
     pub vcs: Option<Arc<dyn Vcs>>,
     pub workspace: Option<Arc<dyn Workspace>>,
+    pub terminals: Option<Arc<dyn Terminals>>,
 }
 
 /// Python-compatible truthiness for loosely typed stored values.
@@ -287,6 +302,7 @@ impl Service {
             awake: None,
             vcs: None,
             workspace: None,
+            terminals: None,
         })
     }
     pub fn compose(ports: Ports) -> Result<Arc<Self>, AppError> {
@@ -302,6 +318,7 @@ impl Service {
             awake,
             vcs,
             workspace,
+            terminals,
         } = ports;
         let mut cells = BTreeMap::new();
         for (mut meta, records) in store.load()? {
@@ -347,6 +364,8 @@ impl Service {
             awake: awake.unwrap_or_else(|| Arc::new(NoAwake)),
             vcs: vcs.unwrap_or_else(|| Arc::new(NoVcs)),
             workspace: workspace.unwrap_or_else(|| Arc::new(NoWorkspace)),
+            terminals: terminals.unwrap_or_else(|| Arc::new(NoTerminals)),
+            terms: Mutex::new(BTreeMap::new()),
             approval_signal: tokio::sync::Notify::new(),
         }))
     }
@@ -401,6 +420,14 @@ impl Service {
         self.begin_shutdown();
         // Detached jobs keep running; only the sleep inhibition ends with the engine.
         self.awake.release();
+        let ids: Vec<String> = self
+            .terms
+            .lock()
+            .map(|t| t.keys().cloned().collect())
+            .unwrap_or_default();
+        for id in ids {
+            self.term_kill(&id);
+        }
         let _ = self.accounts.cancel_logins().await;
         let ids = self.sessions().unwrap_or_default();
         for s in &ids {

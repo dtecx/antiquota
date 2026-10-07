@@ -39,7 +39,11 @@ pub async fn dispatch(State(state): State<Arc<HttpState>>, request: Request) -> 
     {
         return static_response(&state, &file);
     }
-    let token = if path == "/api/events" {
+    let terminal_stream = method == "GET"
+        && path.starts_with("/api/sessions/")
+        && path.ends_with("/term/stream")
+        && path.matches('/').count() == 5;
+    let token = if path == "/api/events" || terminal_stream {
         query_token(request.uri().query().unwrap_or(""))
     } else {
         request
@@ -54,6 +58,16 @@ pub async fn dispatch(State(state): State<Arc<HttpState>>, request: Request) -> 
     }
     if method == "GET" && path == "/api/events" {
         return crate::stream::events(&state);
+    }
+    if terminal_stream {
+        let id = path
+            .trim_start_matches("/api/sessions/")
+            .trim_end_matches("/term/stream");
+        return match state.service.term_feed(id) {
+            Ok((info, feed)) => crate::stream::terminal(info, feed),
+            Err(AppError::Missing(x)) => error(404, &format!("not found: '{x}'")),
+            Err(e) => error(400, &e.to_string()),
+        };
     }
     let body = if matches!(method.as_str(), "POST" | "PATCH" | "PUT") {
         if request
@@ -355,6 +369,24 @@ async fn route(
         ("POST", ["sessions", id, "git", "remove"]) => {
             value(service.git_remove_worktree(id, body.get("delete_branch").is_some_and(truthy))?)
         }
+        ("POST", ["sessions", id, "term"]) => {
+            let (cols, rows) = (dimension(body.get("cols"))?, dimension(body.get("rows"))?);
+            let restart = body.get("restart").is_some_and(truthy);
+            value(service.term_start(id, cols.unwrap_or(100), rows.unwrap_or(30), restart)?)
+        }
+        ("POST", ["sessions", id, "term", "input"]) => {
+            service.term_input(id, &loose_text(body.get("data")))?;
+            value(OkResponse { ok: true })
+        }
+        ("POST", ["sessions", id, "term", "resize"]) => {
+            let (cols, rows) = (dimension(body.get("cols"))?, dimension(body.get("rows"))?);
+            service.term_resize(id, cols.unwrap_or(100), rows.unwrap_or(30))?;
+            value(OkResponse { ok: true })
+        }
+        ("POST", ["sessions", id, "term", "kill"]) => {
+            service.term_kill(id);
+            value(OkResponse { ok: true })
+        }
         ("POST", ["sessions", id, "steer"]) => value(SteerResponse {
             messages: service.steer(id)?,
         }),
@@ -414,6 +446,19 @@ fn patch_fields(body: &Value) -> Result<SessionPatch, AppError> {
         pinned: body.get("pinned").map(truthy),
         archived: body.get("archived").map(truthy),
     })
+}
+/// A terminal size from a JSON number or numeric string, clamped to the PTY range.
+fn dimension(value: Option<&Value>) -> Result<Option<u16>, AppError> {
+    let number = match value {
+        None | Some(Value::Null) => return Ok(None),
+        Some(Value::Number(n)) => n.as_f64(),
+        Some(Value::String(s)) => s.trim().parse::<f64>().ok(),
+        Some(_) => None,
+    };
+    number
+        .filter(|n| n.is_finite())
+        .map(|n| Some(n.clamp(0.0, f64::from(u16::MAX)) as u16))
+        .ok_or_else(|| AppError::Invalid("terminal size must be a number".into()))
 }
 /// Python's `str(value or "")` for loosely typed request fields.
 fn loose_text(value: Option<&Value>) -> String {

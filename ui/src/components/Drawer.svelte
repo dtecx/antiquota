@@ -1,15 +1,17 @@
-<!-- Owns the side drawer beside the conversation: Changes and Files tabs. -->
+<!-- Owns the side drawer beside the conversation: Changes, Files and Terminal tabs. -->
 <script lang="ts">
   import type { Api } from '../lib/api';
   import type { Workbench } from '../lib/workbench';
   import { drawer } from '../lib/git';
   import ChangesPanel from './ChangesPanel.svelte';
   import FilesPanel from './FilesPanel.svelte';
+  import TerminalPanel from './TerminalPanel.svelte';
   import Icon from './Icon.svelte';
   let { workbench, api }: { workbench: Workbench; api: Api } = $props();
   const tabs = [
     { id: 'changes', label: 'Changes' },
     { id: 'files', label: 'Files' },
+    { id: 'terminal', label: 'Terminal' },
   ] as const;
 </script>
 
@@ -29,7 +31,10 @@
       >
     </div>
     <div class="panel" role="tabpanel">
-      {#if $drawer.tab === 'changes'}<ChangesPanel {workbench} {api} />{:else}<FilesPanel
+      {#if $drawer.tab === 'changes'}<ChangesPanel
+          {workbench}
+          {api}
+        />{:else if $drawer.tab === 'files'}<FilesPanel {workbench} {api} />{:else}<TerminalPanel
           {workbench}
           {api}
         />{/if}
@@ -39,7 +44,7 @@
 
 <style>
   .drawer {
-    width: 380px;
+    width: 420px;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;

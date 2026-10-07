@@ -187,6 +187,7 @@ impl Service {
             self.stop_state(&mut state)?;
         }
         self.wait_idle(id).await;
+        self.term_kill(id);
         let state = cell
             .state
             .lock()

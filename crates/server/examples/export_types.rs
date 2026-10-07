@@ -49,6 +49,7 @@ fn generate(dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
     AllowRulesResponse::export_all(&config)?;
     PermissionsRequest::export_all(&config)?;
     GoalRequest::export_all(&config)?;
+    antiquota_core::TerminalInfo::export_all(&config)?;
     JobLogResponse::export_all(&config)?;
     antiquota_core::jobs::Job::export_all(&config)?;
     antiquota_core::worktree::Worktree::export_all(&config)?;

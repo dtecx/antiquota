@@ -139,3 +139,5 @@ Slice 4 adds goal mode: pure goal decisions in features, the `ShellRunner` port 
 Slice 5 adds background jobs (`JobRunner` port, detached process groups, adoption after restart), agent job requests through the permission policy, interval loops and daily schedules, the scheduler tick with keep-awake (`Awake` port), and the job bar, loop bar, job lines and log viewer. See [ADR 0012](adr/0012-background-jobs-and-scheduling.md).
 
 Slice 6 adds git worktrees and change review (`Vcs` port, `antiquota-git` adapter), read-only project files (`Workspace` port in the store adapter), the pending-note path for agy's next request, and the side drawer with Changes and Files, the file viewer and an in-app confirm dialog. See [ADR 0013](adr/0013-git-worktrees-and-project-files.md).
+
+Slice 7 adds the Terminal panel: `Terminals`/`Terminal` ports, the PTY adapter's login shells with replay buffer and bounded subscribers, the terminal routes and base64 SSE stream, and a lazily loaded xterm tab with one instance per session. See [ADR 0014](adr/0014-terminal.md).

@@ -64,22 +64,22 @@ export const routes = [
   {
     "method": "POST",
     "path": "/api/sessions/{sid}/term",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "POST",
     "path": "/api/sessions/{sid}/term/input",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "POST",
     "path": "/api/sessions/{sid}/term/resize",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "POST",
     "path": "/api/sessions/{sid}/term/kill",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "GET",
@@ -359,7 +359,7 @@ export const routes = [
   {
     "method": "GET",
     "path": "/api/sessions/{sid}/term/stream",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "POST",

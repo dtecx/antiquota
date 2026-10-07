@@ -1,6 +1,6 @@
 # Rewrite test report
 
-Slice 1 implements Rust CLI/server sessions and one agy turn with the Svelte browser UI; Slice 3 adds permission policy, the hook, approvals and mid-turn steering; Slice 4 adds goals, the check command, the independent verifier and plan mode; Slice 5 adds background jobs, loops, daily schedules and keep-awake; Slice 6 adds git worktrees, change review and project files. **206 of 1144 acceptance items are Passed; 938 remain Pending.** Slice 2 account evidence is recorded in [slice2-coverage-proposal.json](../../tests/rewrite/slice2-coverage-proposal.json) and is not yet folded into these rows. The inventory contains 1009 baseline items and 135 explicit rewrite requirements in [FEATURES.md](FEATURES.md). Source review, legacy tests and Python captures are references; the rows below name actual rewrite checks. A Pending row may have passing subset tests, but its remaining acceptance is explicit.
+Slice 1 implements Rust CLI/server sessions and one agy turn with the Svelte browser UI; Slice 3 adds permission policy, the hook, approvals and mid-turn steering; Slice 4 adds goals, the check command, the independent verifier and plan mode; Slice 5 adds background jobs, loops, daily schedules and keep-awake; Slice 6 adds git worktrees, change review and project files; Slice 7 adds the Terminal panel. **229 of 1144 acceptance items are Passed; 915 remain Pending.** Slice 2 account evidence is recorded in [slice2-coverage-proposal.json](../../tests/rewrite/slice2-coverage-proposal.json) and is not yet folded into these rows. The inventory contains 1009 baseline items and 135 explicit rewrite requirements in [FEATURES.md](FEATURES.md). Source review, legacy tests and Python captures are references; the rows below name actual rewrite checks. A Pending row may have passing subset tests, but its remaining acceptance is explicit.
 
 The fresh independent macOS arm64 gate on 2026-10-07 ran against 440 unchanged source hashes. `main` remained clean at `17ec296`; no push or cutover occurred. Synthetic processes were stopped after validation. [Final verification](../../.handoff/evidence/slice1-independent-final-summary.json) records commands, hashes, counts and cleanup.
 
@@ -40,6 +40,12 @@ All ten captured job, loop and schedule cases replay exactly. Jobs run as real d
 On 2026-10-07 on macOS arm64, `just check` passed and `just test` passed 201 Rust tests, 69 Vitest tests and 37 Chromium scenarios. [Check log](../../.handoff/evidence/slice6-check.log), [test log](../../.handoff/evidence/slice6-test.log).
 
 The captured worktree flow (create, status, commit, committed diff, merge, remove) replays exactly against a real repository, together with the outside-folder and no-worktree refusals. The git adapter runs against real repositories. Remaining Pending rows here: F-265 (renamed paths and binary numstat), F-268, F-271 to F-273 (the outside-repository, other-branch, dirty-worktree, conflict and busy refusals are implemented but not exercised), F-414, F-462, F-463 (sidebar and header details not asserted), F-584, F-586, F-587, F-591 to F-595, F-597 (breadcrumb clicks, sizes, empty folders, transcript file links, line highlights, copy and close buttons, no-session text), F-589/F-590 (native open and reveal arrive with the desktop shell), F-601, F-609 and F-610.
+
+## Slice 7: terminal
+
+On 2026-10-08 on macOS arm64, `just check` passed and `just test` passed 212 Rust tests, 70 Vitest tests and 38 Chromium scenarios. [Check log](../../.handoff/evidence/slice7-check.log), [test log](../../.handoff/evidence/slice7-test.log).
+
+Captured terminal create, input, resize, restart, kill and missing cases replay exactly when the login shell is zsh (the captured shell name); with another shell the same requests are checked without the shell-name field. The stream is read for real and the typed command's output is asserted, as the capture's comparison rules require. The captured `/vendor/xterm*` static files belonged to the legacy page; the rewrite bundles xterm into its own lazily loaded chunk (intentional difference). Remaining Pending rows here: F-276 (Windows ConPTY with COMSPEC needs a Windows run), F-284 (burst coalescing is implemented but not measured), F-309, F-620, F-623, F-625, F-630, F-631, F-636 to F-638 (not individually asserted), and the dictation rows F-285 to F-289.
 
 Mark a row Passed only when its full acceptance has passing tests and evidence. Passing architecture requirements describe the current sources; each future feature must still prove its own behavior. Logs and screenshots live in ignored `.handoff/evidence/`; local tokens and backup contents must never enter committed fixtures or this report.
 
@@ -319,15 +325,15 @@ Mark a row Passed only when its full acceptance has passing tests and evidence. 
 | F-272 | <a id="f-272"></a>Pending — [acceptance](FEATURES.md#f-272) | Pending | Pending |
 | F-273 | <a id="f-273"></a>Pending — [acceptance](FEATURES.md#f-273) | Pending | Pending |
 | F-274 | <a id="f-274"></a>[untitled_worktree_branches_take_the_first_request_and_removal_tells_agy](../../tests/rewrite/git.rs); [captured_worktree_flow_and_refusals](../../tests/rewrite/git.rs). Removal moves the session to the main checkout with a fresh conversation, archives it and tells agy once on its next turn. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
-| F-275 | <a id="f-275"></a>Pending — [acceptance](FEATURES.md#f-275) | Pending | Pending |
+| F-275 | <a id="f-275"></a>[captured_terminal_routes_and_stream](../../tests/rewrite/terminal.rs); [a_shell_runs_in_its_folder_replays_output_and_ends](../../crates/adapters/pty/src/terminal.rs). One shell per session starts in its folder (default 100×30) with TERM=xterm-256color and COLORTERM=truecolor, and a live one is reused. | Passed | [slice7-test.log](../../.handoff/evidence/slice7-test.log) |
 | F-276 | <a id="f-276"></a>Pending — [acceptance](FEATURES.md#f-276) | Pending | Pending |
-| F-277 | <a id="f-277"></a>Pending — [acceptance](FEATURES.md#f-277) | Pending | Pending |
-| F-278 | <a id="f-278"></a>Pending — [acceptance](FEATURES.md#f-278) | Pending | Pending |
-| F-279 | <a id="f-279"></a>Pending — [acceptance](FEATURES.md#f-279) | Pending | Pending |
-| F-280 | <a id="f-280"></a>Pending — [acceptance](FEATURES.md#f-280) | Pending | Pending |
-| F-281 | <a id="f-281"></a>Pending — [acceptance](FEATURES.md#f-281) | Pending | Pending |
-| F-282 | <a id="f-282"></a>Pending — [acceptance](FEATURES.md#f-282) | Pending | Pending |
-| F-283 | <a id="f-283"></a>Pending — [acceptance](FEATURES.md#f-283) | Pending | Pending |
+| F-277 | <a id="f-277"></a>[a_shell_runs_in_its_folder_replays_output_and_ends](../../crates/adapters/pty/src/terminal.rs); [captured_terminal_routes_and_stream](../../tests/rewrite/terminal.rs). Raw output streams and the last 256 KiB replay for late or reconnecting subscribers. | Passed | [slice7-test.log](../../.handoff/evidence/slice7-test.log) |
+| F-278 | <a id="f-278"></a>[a_shell_runs_in_its_folder_replays_output_and_ends](../../crates/adapters/pty/src/terminal.rs); [captured_terminal_routes_and_stream](../../tests/rewrite/terminal.rs). Each subscriber gets recent output and a 4000-chunk queue; closed subscribers are dropped and the exit always arrives, even after lag. | Passed | [slice7-test.log](../../.handoff/evidence/slice7-test.log) |
+| F-279 | <a id="f-279"></a>[an_exited_shell_refuses_input_until_restarted_and_deletion_kills_it](../../tests/rewrite/terminal.rs); [a_shell_runs_in_its_folder_replays_output_and_ends](../../crates/adapters/pty/src/terminal.rs). Input goes to a live shell; an exited one answers with the restart hint. | Passed | [slice7-test.log](../../.handoff/evidence/slice7-test.log) |
+| F-280 | <a id="f-280"></a>[a_shell_runs_in_its_folder_replays_output_and_ends](../../crates/adapters/pty/src/terminal.rs); [an_exited_shell_refuses_input_until_restarted_and_deletion_kills_it](../../tests/rewrite/terminal.rs). Live terminals resize with sizes clamped to at least 2; resizing an ended one does nothing. | Passed | [slice7-test.log](../../.handoff/evidence/slice7-test.log) |
+| F-281 | <a id="f-281"></a>[a_shell_runs_in_its_folder_replays_output_and_ends](../../crates/adapters/pty/src/terminal.rs); [an_exited_shell_refuses_input_until_restarted_and_deletion_kills_it](../../tests/rewrite/terminal.rs); [captured_terminal_routes_and_stream](../../tests/rewrite/terminal.rs). Exit marks the shell dead, prints the process-exited line and ends subscribers; restart replaces dead or restarted shells. | Passed | [slice7-test.log](../../.handoff/evidence/slice7-test.log) |
+| F-282 | <a id="f-282"></a>[captured_terminal_routes_and_stream](../../tests/rewrite/terminal.rs); [an_exited_shell_refuses_input_until_restarted_and_deletion_kills_it](../../tests/rewrite/terminal.rs); [kill_ends_the_shell_and_its_children](../../crates/adapters/pty/src/terminal.rs). Kill, session deletion and restart end the shell's process group; ending twice is harmless. | Passed | [slice7-test.log](../../.handoff/evidence/slice7-test.log) |
+| F-283 | <a id="f-283"></a>[captured_terminal_routes_and_stream](../../tests/rewrite/terminal.rs); [base64_matches_the_standard_alphabet](../../crates/server/src/stream.rs). The stream starts with base64 recent output plus shell/cwd/alive, then base64 chunks, pings while quiet, and exit=true. | Passed | [slice7-test.log](../../.handoff/evidence/slice7-test.log) |
 | F-284 | <a id="f-284"></a>Pending — [acceptance](FEATURES.md#f-284) | Pending | Pending |
 | F-285 | <a id="f-285"></a>Pending — [acceptance](FEATURES.md#f-285) | Pending | Pending |
 | F-286 | <a id="f-286"></a>Pending — [acceptance](FEATURES.md#f-286) | Pending | Pending |
@@ -369,7 +375,7 @@ Mark a row Passed only when its full acceptance has passing tests and evidence. 
 | F-322 | <a id="f-322"></a>Pending — [acceptance](FEATURES.md#f-322) | Pending | Pending |
 | F-323 | <a id="f-323"></a>[captured_slice_one_requests_replay_with_exact_json_fields](../../crates/server/tests/rewrite_contract.rs); [engine_discovery_reuses_lock_and_static_auth_remains_local](../../crates/server/tests/rewrite_contract.rs). The complete actual health capture matches ok/app/version/pid, requires no token and obeys Host validation. | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-324 | <a id="f-324"></a>[whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs); [captured_slice_one_requests_replay_with_exact_json_fields](../../crates/server/tests/rewrite_contract.rs). The real shared SSE route matches all fields of eight selected first-turn samples and the captured wrong-token response. **Remaining:** Global account, goal, approval, job and terminal events and timed keepalive comments remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
-| F-325 | <a id="f-325"></a>Pending — [acceptance](FEATURES.md#f-325) | Pending | Pending |
+| F-325 | <a id="f-325"></a>[captured_terminal_routes_and_stream](../../tests/rewrite/terminal.rs). The stream route answers with the query token and 404 without a terminal. | Passed | [slice7-test.log](../../.handoff/evidence/slice7-test.log) |
 | F-326 | <a id="f-326"></a>Pending — [acceptance](FEATURES.md#f-326) | Pending | Pending |
 | F-327 | <a id="f-327"></a>Pending — [acceptance](FEATURES.md#f-327) | Pending | Pending |
 | F-328 | <a id="f-328"></a>Pending — [acceptance](FEATURES.md#f-328) | Pending | Pending |
@@ -385,10 +391,10 @@ Mark a row Passed only when its full acceptance has passing tests and evidence. 
 | F-338 | <a id="f-338"></a>Pending — [acceptance](FEATURES.md#f-338) | Pending | Pending |
 | F-339 | <a id="f-339"></a>[captured_slice_one_requests_replay_with_exact_json_fields](../../crates/server/tests/rewrite_contract.rs); [whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs). The actual shutdown capture matches ok=true and the real process terminates while an SSE client remains connected. | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-340 | <a id="f-340"></a>[captured_worktree_flow_and_refusals](../../tests/rewrite/git.rs); [captured_slice_one_requests_replay_with_exact_json_fields](../../crates/server/tests/rewrite_contract.rs). Creation accepts cwd/model/mode/title/worktree with the captured defaults and empty effort. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
-| F-341 | <a id="f-341"></a>Pending — [acceptance](FEATURES.md#f-341) | Pending | Pending |
-| F-342 | <a id="f-342"></a>Pending — [acceptance](FEATURES.md#f-342) | Pending | Pending |
-| F-343 | <a id="f-343"></a>Pending — [acceptance](FEATURES.md#f-343) | Pending | Pending |
-| F-344 | <a id="f-344"></a>Pending — [acceptance](FEATURES.md#f-344) | Pending | Pending |
+| F-341 | <a id="f-341"></a>[captured_terminal_routes_and_stream](../../tests/rewrite/terminal.rs). The captured create and restart cases return alive/shell/cwd. | Passed | [slice7-test.log](../../.handoff/evidence/slice7-test.log) |
+| F-342 | <a id="f-342"></a>[captured_terminal_routes_and_stream](../../tests/rewrite/terminal.rs); [an_exited_shell_refuses_input_until_restarted_and_deletion_kills_it](../../tests/rewrite/terminal.rs). Captured input and missing-terminal cases match; a dead shell answers 400. | Passed | [slice7-test.log](../../.handoff/evidence/slice7-test.log) |
+| F-343 | <a id="f-343"></a>[captured_terminal_routes_and_stream](../../tests/rewrite/terminal.rs); [an_exited_shell_refuses_input_until_restarted_and_deletion_kills_it](../../tests/rewrite/terminal.rs). Resize answers ok, with or without a live shell. | Passed | [slice7-test.log](../../.handoff/evidence/slice7-test.log) |
+| F-344 | <a id="f-344"></a>[captured_terminal_routes_and_stream](../../tests/rewrite/terminal.rs); [an_exited_shell_refuses_input_until_restarted_and_deletion_kills_it](../../tests/rewrite/terminal.rs). Kill and kill-again answer ok, also for a session without a shell. | Passed | [slice7-test.log](../../.handoff/evidence/slice7-test.log) |
 | F-345 | <a id="f-345"></a>[captured_worktree_flow_and_refusals](../../tests/rewrite/git.rs); [review_tree_and_files_of_the_main_checkout](../../tests/rewrite/git.rs). The tree route returns root, path and entries and refuses folders outside the project. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
 | F-346 | <a id="f-346"></a>[captured_worktree_flow_and_refusals](../../tests/rewrite/git.rs); [review_tree_and_files_of_the_main_checkout](../../tests/rewrite/git.rs). The status route returns branch, files and worktree data. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
 | F-347 | <a id="f-347"></a>[captured_worktree_flow_and_refusals](../../tests/rewrite/git.rs); [review_tree_and_files_of_the_main_checkout](../../tests/rewrite/git.rs). The diff route accepts a decoded path and committed=1. | Passed | [slice6-test.log](../../.handoff/evidence/slice6-test.log) |
@@ -666,20 +672,20 @@ Mark a row Passed only when its full acceptance has passing tests and evidence. 
 | F-619 | <a id="f-619"></a>Pending — [acceptance](FEATURES.md#f-619) | Pending | Pending |
 | F-620 | <a id="f-620"></a>Pending — [acceptance](FEATURES.md#f-620) | Pending | Pending |
 | F-621 | <a id="f-621"></a>Pending — [acceptance](FEATURES.md#f-621) | Pending | Pending |
-| F-622 | <a id="f-622"></a>Pending — [acceptance](FEATURES.md#f-622) | Pending | Pending |
+| F-622 | <a id="f-622"></a>[runs a shell in the session folder](../../ui/e2e/terminal.spec.ts). The Changes, Files or Terminal tab choice persists per device. | Passed | [slice7-test.log](../../.handoff/evidence/slice7-test.log) |
 | F-623 | <a id="f-623"></a>Pending — [acceptance](FEATURES.md#f-623) | Pending | Pending |
-| F-624 | <a id="f-624"></a>Pending — [acceptance](FEATURES.md#f-624) | Pending | Pending |
+| F-624 | <a id="f-624"></a>[runs a shell in the session folder](../../ui/e2e/terminal.spec.ts). xterm loads lazily, once, as its own chunk. | Passed | [slice7-test.log](../../.handoff/evidence/slice7-test.log) |
 | F-625 | <a id="f-625"></a>Pending — [acceptance](FEATURES.md#f-625) | Pending | Pending |
-| F-626 | <a id="f-626"></a>Pending — [acceptance](FEATURES.md#f-626) | Pending | Pending |
-| F-627 | <a id="f-627"></a>Pending — [acceptance](FEATURES.md#f-627) | Pending | Pending |
-| F-628 | <a id="f-628"></a>Pending — [acceptance](FEATURES.md#f-628) | Pending | Pending |
-| F-629 | <a id="f-629"></a>Pending — [acceptance](FEATURES.md#f-629) | Pending | Pending |
+| F-626 | <a id="f-626"></a>[runs a shell in the session folder](../../ui/e2e/terminal.spec.ts). Each session keeps its xterm instance across tab switches. | Passed | [slice7-test.log](../../.handoff/evidence/slice7-test.log) |
+| F-627 | <a id="f-627"></a>[runs a shell in the session folder](../../ui/e2e/terminal.spec.ts). The terminal starts a shell in the session folder and shows shell and folder in its title. | Passed | [slice7-test.log](../../.handoff/evidence/slice7-test.log) |
+| F-628 | <a id="f-628"></a>[runs a shell in the session folder](../../ui/e2e/terminal.spec.ts). Keystrokes reach the shell. | Passed | [slice7-test.log](../../.handoff/evidence/slice7-test.log) |
+| F-629 | <a id="f-629"></a>[runs a shell in the session folder](../../ui/e2e/terminal.spec.ts); [terminal.test.ts](../../ui/src/lib/terminal.test.ts). Streamed base64 bytes render as terminal output. | Passed | [slice7-test.log](../../.handoff/evidence/slice7-test.log) |
 | F-630 | <a id="f-630"></a>Pending — [acceptance](FEATURES.md#f-630) | Pending | Pending |
 | F-631 | <a id="f-631"></a>Pending — [acceptance](FEATURES.md#f-631) | Pending | Pending |
-| F-632 | <a id="f-632"></a>Pending — [acceptance](FEATURES.md#f-632) | Pending | Pending |
-| F-633 | <a id="f-633"></a>Pending — [acceptance](FEATURES.md#f-633) | Pending | Pending |
-| F-634 | <a id="f-634"></a>Pending — [acceptance](FEATURES.md#f-634) | Pending | Pending |
-| F-635 | <a id="f-635"></a>Pending — [acceptance](FEATURES.md#f-635) | Pending | Pending |
+| F-632 | <a id="f-632"></a>[runs a shell in the session folder](../../ui/e2e/terminal.spec.ts). Clear empties the display without restarting the shell. | Passed | [slice7-test.log](../../.handoff/evidence/slice7-test.log) |
+| F-633 | <a id="f-633"></a>[runs a shell in the session folder](../../ui/e2e/terminal.spec.ts). Restart starts a fresh shell and reconnects output. | Passed | [slice7-test.log](../../.handoff/evidence/slice7-test.log) |
+| F-634 | <a id="f-634"></a>[runs a shell in the session folder](../../ui/e2e/terminal.spec.ts). Kill ends the shell. | Passed | [slice7-test.log](../../.handoff/evidence/slice7-test.log) |
+| F-635 | <a id="f-635"></a>[runs a shell in the session folder](../../ui/e2e/terminal.spec.ts). Exit marks the title exited and closes the stream. | Passed | [slice7-test.log](../../.handoff/evidence/slice7-test.log) |
 | F-636 | <a id="f-636"></a>Pending — [acceptance](FEATURES.md#f-636) | Pending | Pending |
 | F-637 | <a id="f-637"></a>Pending — [acceptance](FEATURES.md#f-637) | Pending | Pending |
 | F-638 | <a id="f-638"></a>Pending — [acceptance](FEATURES.md#f-638) | Pending | Pending |

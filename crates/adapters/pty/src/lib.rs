@@ -1,4 +1,5 @@
-//! Owns a bounded portable PTY/ConPTY console for agy's authorization-code input.
+//! Owns portable PTY/ConPTY consoles: agy's authorization-code input and the Terminal panel.
+mod terminal;
 use antiquota_core::PortError;
 use portable_pty::{Child, CommandBuilder, MasterPty, PtySize, native_pty_system};
 use std::{
@@ -12,6 +13,7 @@ use std::{
     thread,
     time::{Duration, Instant},
 };
+pub use terminal::{ShellTerminal, Shells};
 pub struct Console {
     child: Mutex<Box<dyn Child + Send + Sync>>,
     master: Mutex<Option<Box<dyn MasterPty + Send>>>,

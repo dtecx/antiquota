@@ -126,13 +126,10 @@ pub struct Events {
 }
 impl Events {
     pub fn open(port: u16, token: &str) -> Self {
-        let socket = connect(
-            port,
-            "GET",
-            &format!("/api/events?token={token}"),
-            &BTreeMap::new(),
-            &[],
-        );
+        Self::open_path(port, &format!("/api/events?token={token}"))
+    }
+    pub fn open_path(port: u16, path: &str) -> Self {
+        let socket = connect(port, "GET", path, &BTreeMap::new(), &[]);
         let mut reader = BufReader::new(socket);
         let (status, headers) = head(&mut reader);
         assert_eq!(status, 200);
