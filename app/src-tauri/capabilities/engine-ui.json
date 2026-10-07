@@ -16,6 +16,9 @@
     "clipboard-manager:allow-read-text",
     "clipboard-manager:allow-write-text",
     "opener:allow-open-url",
+    "autostart:allow-enable",
+    "autostart:allow-disable",
+    "autostart:allow-is-enabled",
     "allow-save-file",
     "allow-app-info",
     "allow-quit-app"

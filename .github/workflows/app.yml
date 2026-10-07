@@ -1,0 +1,59 @@
+name: app
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14
+          - os: windows-latest
+          - os: ubuntu-22.04
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Linux packages for the web view
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - name: Engine tests
+        working-directory: .
+        if: runner.os != 'Windows'
+        run: python -m pip install pytest && python -m pytest -q
+      - run: npm ci
+      - name: Build the engine (POSIX)
+        if: runner.os != 'Windows'
+        run: sh scripts/build-engine.sh
+      - name: Build the engine (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/build-engine.ps1
+      - name: Build the app
+        run: npx tauri build --config src-tauri/tauri.bundle.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: agy-loop-${{ matrix.os }}
+          path: |
+            app/src-tauri/target/release/bundle/**/*.dmg
+            app/src-tauri/target/release/bundle/**/*.app
+            app/src-tauri/target/release/bundle/**/*.msi
+            app/src-tauri/target/release/bundle/**/*.exe
+            app/src-tauri/target/release/bundle/**/*.deb
+            app/src-tauri/target/release/bundle/**/*.rpm
+            app/src-tauri/target/release/bundle/**/*.AppImage

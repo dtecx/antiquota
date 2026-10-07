@@ -141,6 +141,10 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            Some(vec!["--hidden"]), // started at login: straight to the tray
+        ))
         .manage(Shared { engine: Mutex::new(None) })
         .invoke_handler(tauri::generate_handler![app_info, retry_engine, save_file, quit_app])
         .setup(|app| {
@@ -149,7 +153,8 @@ pub fn run() {
                 .inner_size(1280.0, 820.0)
                 .min_inner_size(720.0, 480.0)
                 .background_color(tauri::window::Color(14, 15, 17, 255))
-                .disable_drag_drop_handler(); // HTML5 drag and drop reaches the page (attachments)
+                .disable_drag_drop_handler() // HTML5 drag and drop reaches the page (attachments)
+                .visible(!std::env::args().any(|a| a == "--hidden"));
             // macOS: the sidebar runs under the traffic lights, like other native apps.
             #[cfg(target_os = "macos")]
             let builder = builder

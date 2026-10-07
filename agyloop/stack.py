@@ -311,7 +311,7 @@ def write_file(rel, text):
 # --- agy-loop's own GUI defaults --------------------------------------------------
 
 DEFAULTS = {"model": "gemini-3.8-flash-high", "mode": "default", "verifier_model": "gemini-3.1-pro-high",
-            "rotation": "perishable"}
+            "rotation": "perishable", "keep_awake": "on"}
 ROTATIONS = ("perishable", "sticky", "round-robin")
 
 
@@ -323,6 +323,8 @@ def set_defaults(values):
     d = {**defaults(), **{k: str(v) for k, v in (values or {}).items() if k in DEFAULTS}}
     if d["rotation"] not in ROTATIONS:
         raise ValueError("rotation: " + " · ".join(ROTATIONS))
+    if d["keep_awake"] not in ("on", "off"):
+        raise ValueError("keep_awake: on or off")
     _save(os.path.join(a.base(), "settings.json"), d)
     return d
 

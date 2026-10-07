@@ -833,3 +833,7 @@ a.path:hover { color: var(--baton); text-decoration-color: var(--baton); }
 .ctx hr { border: 0; border-top: 1px solid var(--rule); margin: 4px 2px; }
 .paused-tag { margin-left: 8px; font: 500 10.5px var(--mono); font-style: normal; color: var(--ink-3); padding: 1px 6px; border: 1px solid var(--rule-2); border-radius: 999px; }
 .acct.paused { opacity: .45; }
+
+.set-toggle { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: start; margin: 8px 0 12px; }
+.set-toggle b { font-size: 13px; font-weight: 500; }
+.set-toggle .cap { margin: 2px 0 0; }

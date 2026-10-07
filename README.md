@@ -6,8 +6,62 @@ agy CLI and the Antigravity IDE are never changed by it.
 
 ```sh
 python3 -m agyloop gui          # web GUI on http://127.0.0.1:8765
+python3 -m agyloop serve        # the engine alone (for the desktop app or a service)
 python3 -m agyloop goal "all tests pass" --check "pytest -q" --cwd ~/code/app
 ```
+
+## Desktop app
+
+`app/` is a native shell (Tauri v2) around the same engine and UI, for macOS,
+Windows and Linux. The window shows the engine's UI; the app adds:
+
+- **Tray / menu bar**: what is working, each account's Gemini quota or why it
+  rests, *Stop all running*, *New session*. Closing the window keeps agy-loop
+  in the tray; quitting asks first while sessions or jobs run, and can leave
+  them running in the background (the next start attaches again).
+- **Native notifications** (turn finished, goal met, job done, approval
+  needed), dock badge with the number of working sessions, a bounce when an
+  approval waits.
+- Save dialogs for exports, clipboard access for the sign-in code, links in
+  your default browser, file drag and drop, one instance, remembered window
+  size, *Open at login* (starts in the tray), keep-awake while agents work.
+
+The engine is a separate process (`agyloop serve`, one per agy-loop folder,
+found through `~/.agyloop/state/engine.json`). The app attaches to a running
+engine or starts one: the bundled engine in a release, the source tree in
+development.
+
+```sh
+cd app && npm install
+npm run dev                     # development: engine from this repository
+npm run build                   # release: bundled engine (PyInstaller) + .app/.dmg, .msi/.exe, .deb/.rpm/.AppImage
+```
+
+Requirements to build: Rust, Node, Python 3.10+. Windows builds use
+`scripts/build-engine.ps1` (adds pywinpty, which gives agy the console it needs
+to read the sign-in code). `.github/workflows/app.yml` builds all three
+platforms. Unsigned builds: macOS Gatekeeper and Windows SmartScreen warn until
+the app is signed.
+
+## Permissions and approvals
+
+Headless agy cannot ask anyone and ignores allow-rules, so while agy-loop's
+`agyloop` hook is on (Settings → Hooks), agy runs with
+`--dangerously-skip-permissions` and agy-loop decides every tool call
+(`agyloop/policy.py`):
+
+- reading and searching pass; *bypass* mode passes everything;
+- shell commands and MCP tools follow agy-loop's allow/deny rules
+  (`command(npm test)`, `mcp(server/tool)`), anything else is asked;
+- edits follow the session mode: *accept edits* allows them, *plan* refuses
+  them, *default* asks;
+- deploys, databases and package installs are asked.
+
+An approval appears in the transcript (*Allow once*, *Always allow …*,
+*Decline*); agy waits for it (up to 15 minutes, then hears "no"). With no app
+or engine to ask (a CLI run), the hook declines what would need a yes.
+Messages you send while agy works reach it at its next step, like Claude Code.
+Switching the hook off gives back agy's own headless behaviour.
 
 ## GUI
 

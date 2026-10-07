@@ -1649,6 +1649,14 @@ function list(kind, rows, sources) {
   return rows.length ? rows.map(r => itemRow(kind, r, sources)) : [h('p', { class: 'cap' }, 'Nothing here yet.')];
 }
 const openNewItem = async (key) => { SET.open = key; await reload(); };
+function autostartRow() {
+  const row = h('div', { class: 'set-toggle' });
+  NATIVE.autostart.isEnabled().then(on => row.replaceChildren(
+    switchBtn(on, v => (v ? NATIVE.autostart.enable() : NATIVE.autostart.disable()).catch(fail)),
+    h('div', {}, h('b', {}, 'Open at login'), h('p', { class: 'cap' }, 'agy-loop starts in the menu bar / tray when you log in, ready for sessions and schedules.'))))
+    .catch(() => row.remove());
+  return row;
+}
 function defaultsForm(df) {
   const fam = h('select', { id: 'df-family' }), eff = h('select', { id: 'df-effort' });
   const mode = h('select', { id: 'df-mode' }, [['default', 'default'], ['accept-edits', 'accept edits'], ['plan', 'plan'], ['bypass', 'bypass']]
@@ -1671,6 +1679,12 @@ function defaultsForm(df) {
     h('h3', {}, 'Accounts'),
     h('div', { class: 'row3' }, h('label', { class: 'field' }, h('span', {}, 'Rotation'), rot)),
     h('p', { class: 'cap' }, 'Sessions keep their account while it has headroom; rotation decides which account a session moves to.'),
+    h('h3', {}, 'This computer'),
+    h('div', { class: 'set-toggle' },
+      switchBtn((df.keep_awake || 'on') === 'on', on => api('PUT', 'settings/defaults', { keep_awake: on ? 'on' : 'off' })
+        .then(d => { S.defaults = { ...S.defaults, ...d }; }).catch(fail)),
+      h('div', {}, h('b', {}, 'Keep awake while agents work'), h('p', { class: 'cap' }, 'The computer does not sleep while a session or background job runs. The display may still turn off.'))),
+    NATIVE && autostartRow(),
     h('div', { class: 'add-row' }, h('button', {
       class: 'primary', onclick: async () => {
         try {

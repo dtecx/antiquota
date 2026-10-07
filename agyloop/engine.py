@@ -910,7 +910,7 @@ class Engine:
         polled = time.time()
         while True:
             time.sleep(5)
-            if a.setting("keep_awake", True) and self.busy_count():
+            if a.setting("keep_awake", "on") != "off" and self.busy_count():
                 self.awake.hold()
             else:
                 self.awake.release()

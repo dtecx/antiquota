@@ -334,6 +334,57 @@ def check_name(name):
         raise ValueError(f"not an account: {name!r}")
 
 
+class _ConPty:
+    """Windows: agy reads the sign-in code only from a console, so it runs in a pseudo-console
+    (ConPTY, through pywinpty). Looks enough like a Popen for Login; stdout and stderr arrive as
+    one stream, which is pumped into both of Login's sinks. Untested on real Windows so far."""
+
+    def __init__(self, cmd, cwd, env):
+        from winpty import PtyProcess  # pywinpty, bundled with the Windows engine
+        # Wide enough that agy's URL and JSON never wrap.
+        self.p = PtyProcess.spawn(subprocess.list2cmdline(cmd), cwd=cwd, env=env, dimensions=(60, 8000))
+        self.returncode = None
+
+    def lines(self):
+        buf = ""
+        while True:
+            try:
+                chunk = self.p.read(4096)
+            except EOFError:
+                break
+            buf += ANSI_RE.sub("", chunk).replace("\r\n", "\n").replace("\r", "\n")
+            *done, buf = buf.split("\n")
+            for line in done:
+                yield line + "\n"
+        if buf:
+            yield buf
+
+    def write(self, text):
+        self.p.write(text.replace("\n", "\r\n"))
+
+    def poll(self):
+        if self.returncode is None and not self.p.isalive():
+            self.returncode = self.p.exitstatus if self.p.exitstatus is not None else 1
+        return self.returncode
+
+    def wait(self, timeout=None):
+        t0 = time.time()
+        while self.poll() is None:
+            if timeout is not None and time.time() - t0 > timeout:
+                raise subprocess.TimeoutExpired("agy", timeout)
+            time.sleep(0.1)
+        return self.returncode
+
+    def kill(self):
+        try:
+            self.p.terminate(force=True)
+        except Exception:
+            pass
+
+
+ANSI_RE = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]|\x1b\][^\x07]*\x07")
+
+
 class Login:
     """One Google sign-in for a slot, the way agy does it headless.
 
@@ -351,21 +402,38 @@ class Login:
         os.makedirs(slots_dir, mode=0o700, exist_ok=True)
         self.tmp = tempfile.mkdtemp(prefix=".login-", dir=slots_dir)
         self.log = os.path.join(self.tmp, "signin.log")
-        # agy reads the pasted code only from a terminal. Without a pty module (Windows) it
-        # still finishes by itself once the browser sign-in completes.
-        self.pty, tty = pty.openpty() if pty else (None, subprocess.DEVNULL)
+        # agy reads the pasted code only from a terminal: a pty on POSIX, ConPTY on Windows.
         cmd, env = agy_cmd(self.tmp, ["-p", "/quota", "--output-format", "json", "--log-file", self.log])
-        self.proc = subprocess.Popen(cmd, env=env, cwd=self.tmp, stdin=tty,
-                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-                                     start_new_session=os.name != "nt")
-        if self.pty is not None:
-            os.close(tty)
         self.out, self.err = [], []
         self.seen_url = threading.Event()
         self.ended = threading.Event()
-        threading.Thread(target=self._pump, args=(self.proc.stdout, self.out), daemon=True).start()
-        threading.Thread(target=self._pump, args=(self.proc.stderr, self.err), daemon=True).start()
+        self.pty = self.console = None
+        if pty is None:
+            try:
+                self.console = self.proc = _ConPty(cmd, self.tmp, env)
+            except ImportError:  # no pywinpty: agy may still finish once the browser sign-in completes
+                self.proc = subprocess.Popen(cmd, env=env, cwd=self.tmp, stdin=subprocess.DEVNULL,
+                                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        else:
+            self.pty, tty = pty.openpty()
+            self.proc = subprocess.Popen(cmd, env=env, cwd=self.tmp, stdin=tty, stdout=subprocess.PIPE,
+                                         stderr=subprocess.PIPE, text=True, start_new_session=True)
+            os.close(tty)
+        if self.console is not None:
+            threading.Thread(target=self._pump_console, daemon=True).start()
+        else:
+            threading.Thread(target=self._pump, args=(self.proc.stdout, self.out), daemon=True).start()
+            threading.Thread(target=self._pump, args=(self.proc.stderr, self.err), daemon=True).start()
         threading.Thread(target=self._finish, daemon=True).start()
+
+    def _pump_console(self):
+        for line in self.console.lines():
+            self.out.append(line)
+            self.err.append(line)
+            m = SIGNIN_URL.search(line)
+            if m and not self.url:
+                self.url = m.group(0)
+                self.seen_url.set()
 
     def _pump(self, src, sink):
         for line in src:
@@ -388,9 +456,12 @@ class Login:
             raise ValueError("paste the single-line code Google showed after sign-in")
         if self.ended.is_set():
             raise ValueError(self.error or "this sign-in already finished")
-        if self.pty is None:
+        if self.console is not None:
+            self.console.write(code + "\n")
+        elif self.pty is not None:
+            os.write(self.pty, (code + "\n").encode())
+        else:
             raise ValueError("on this system agy finishes sign-in by itself; just complete it in the browser")
-        os.write(self.pty, (code + "\n").encode())
         self.ended.wait(timeout)
         return self.state
 
