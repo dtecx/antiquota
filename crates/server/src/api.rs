@@ -205,3 +205,15 @@ pub struct PermissionsRequest {
     #[ts(optional)]
     pub deny: Option<Vec<String>>,
 }
+#[derive(Debug, Clone, Default, Serialize, Deserialize, TS)]
+pub struct GoalRequest {
+    pub objective: String,
+    #[ts(optional)]
+    pub check: Option<String>,
+    #[ts(optional)]
+    pub verifier: Option<bool>,
+    #[ts(optional)]
+    pub verifier_model: Option<String>,
+    #[ts(optional)]
+    pub max_rounds: Option<u64>,
+}

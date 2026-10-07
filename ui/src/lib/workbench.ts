@@ -7,6 +7,8 @@ import type { StateResponse } from '../gen/StateResponse';
 import type { StreamEvent } from '../gen/StreamEvent';
 import type { Api } from './api';
 import { projectHistory, reduceTranscript } from './transcript';
+import type { GoalRequest } from '../gen/GoalRequest';
+import { EXECUTE_PLAN } from './goals';
 
 export interface DialogState {
   kind: 'create' | 'rename';
@@ -257,6 +259,39 @@ export function createWorkbench(api: Api, remember: (id: string) => void = () =>
             [id]: value.drafts[id] === text ? '' : (value.drafts[id] ?? ''),
           },
           feedback: response.result === 'queued' ? 'Message queued for the next turn.' : '',
+        }));
+      }),
+    setGoal: (body: GoalRequest) =>
+      mutate(async () => {
+        const id = wanted;
+        if (!id) return;
+        replaceSession(await api.setGoal(id, body));
+        state.update((value) =>
+          value.drafts[id]?.trim() === body.objective
+            ? { ...value, drafts: { ...value.drafts, [id]: '' } }
+            : value,
+        );
+      }),
+    resumeGoal: () =>
+      mutate(async () => {
+        if (wanted) await api.resumeGoal(wanted);
+      }),
+    clearGoal: () =>
+      mutate(async () => {
+        if (wanted) await api.clearGoal(wanted);
+      }),
+    executePlan: (mode: 'accept-edits' | 'default') =>
+      mutate(async () => {
+        const id = wanted;
+        if (!id) return;
+        replaceSession(await api.update(id, { mode }));
+        await api.send(id, { text: EXECUTE_PLAN });
+        state.update((value) => ({
+          ...value,
+          feedback:
+            mode === 'accept-edits'
+              ? 'Executing the plan.'
+              : 'Executing: edits and commands ask you first.',
         }));
       }),
     answer: async (id: string, decision: 'allow' | 'deny', always: boolean) => {

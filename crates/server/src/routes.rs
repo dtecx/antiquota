@@ -228,17 +228,17 @@ pub fn catalog() -> Vec<RouteDefinition> {
         RouteDefinition {
             method: "POST".into(),
             path: "/api/sessions/{sid}/goal".into(),
-            status: RouteStatus::Pending,
+            status: RouteStatus::Implemented,
         },
         RouteDefinition {
             method: "POST".into(),
             path: "/api/sessions/{sid}/goal/resume".into(),
-            status: RouteStatus::Pending,
+            status: RouteStatus::Implemented,
         },
         RouteDefinition {
             method: "DELETE".into(),
             path: "/api/sessions/{sid}/goal".into(),
-            status: RouteStatus::Pending,
+            status: RouteStatus::Implemented,
         },
         RouteDefinition {
             method: "GET".into(),

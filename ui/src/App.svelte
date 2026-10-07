@@ -13,6 +13,9 @@
   import AccountsPanel from './components/AccountsPanel.svelte';
   import LoginDialog from './components/LoginDialog.svelte';
   import ConfirmRemoval from './components/ConfirmRemoval.svelte';
+  import GoalBar from './components/GoalBar.svelte';
+  import GoalDialog from './components/GoalDialog.svelte';
+  import { revising } from './lib/goals';
   import { createAccounts } from './lib/accounts';
   import { createLogin } from './lib/login';
   import { createPermissions } from './lib/permissions';
@@ -87,10 +90,10 @@
           onclick={() => workbench.change({ error: '' })}><Icon name="close" /></button
         >
       </div>{/if}
-    {#if $view.selected}<Transcript {workbench} {login} /><Composer
+    {#if $view.selected}<Transcript {workbench} {login} /><GoalBar
         {workbench}
-        connected={$connection === 'live'}
-      />
+        onrevise={() => revising.set(true)}
+      /><Composer {workbench} connected={$connection === 'live'} />
     {:else}<div class="welcome">
         <span class="eyebrow">YOUR WORKBENCH</span>
         <h1>A place for the next idea.</h1>
@@ -109,6 +112,7 @@
       </div>{/if}
   </main>
   <SessionDialog {workbench} />
+  <GoalDialog {workbench} />
   <AccountsPanel {accounts} {login} {permissions} sessions={$view.snapshot?.sessions ?? []} />
   <LoginDialog {login} {accounts} />
   <ConfirmRemoval {accounts} />

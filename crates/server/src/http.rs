@@ -256,6 +256,45 @@ async fn route(
             let always = body.get("always").is_some_and(truthy);
             approval(service.approval_answer(id, decision == Some("allow"), always, &why)?)
         }
+        ("POST", ["sessions", id, "goal"]) => {
+            let text = |key: &str| match body.get(key) {
+                None | Some(Value::Null) => String::new(),
+                Some(Value::String(s)) => s.clone(),
+                Some(other) => other.to_string(),
+            };
+            let max_rounds = match body.get("max_rounds") {
+                None => 20,
+                Some(Value::Number(n)) if n.as_f64().is_some_and(|f| f >= 0.0) => {
+                    n.as_f64().unwrap_or(20.0) as u64
+                }
+                Some(Value::String(s)) if s.trim().parse::<u64>().is_ok() => {
+                    s.trim().parse().unwrap_or(20)
+                }
+                Some(_) => {
+                    return Err(AppError::Invalid(
+                        "max_rounds: a whole number of rounds".into(),
+                    ));
+                }
+            };
+            let session = service.set_goal(
+                id,
+                &text("objective"),
+                &text("check"),
+                body.get("verifier").is_none_or(truthy),
+                &text("verifier_model"),
+                max_rounds,
+                true,
+            )?;
+            value(session)
+        }
+        ("POST", ["sessions", id, "goal", "resume"]) => {
+            service.resume_goal(id)?;
+            value(OkResponse { ok: true })
+        }
+        ("DELETE", ["sessions", id, "goal"]) => {
+            service.clear_goal(id)?;
+            value(OkResponse { ok: true })
+        }
         ("POST", ["sessions", id, "steer"]) => value(SteerResponse {
             messages: service.steer(id)?,
         }),

@@ -14,6 +14,16 @@ impl Service {
         let cell = self.cell(id)?;
         self.send_cell(id, cell, text, attachments, kind)
     }
+    fn error_notice(&self, id: &str, error: &AppError) {
+        let _ = self.streamed(
+            id,
+            Event::Notice {
+                kind: "error".into(),
+                text: error.to_string(),
+                data: json!({}),
+            },
+        );
+    }
     pub(crate) fn send_cell(
         self: &Arc<Self>,
         id: &str,
@@ -45,29 +55,57 @@ impl Service {
         let service = self.clone();
         let id = id.to_owned();
         tokio::spawn(async move {
-            service.run_queue(id, prompt).await;
+            service.run_queue(id, prompt, kind).await;
         });
         Ok("started")
     }
-    async fn run_queue(self: Arc<Self>, id: String, mut prompt: String) {
+    /// Runs turns until nothing follows: each finished turn may continue a goal, retry, or
+    /// follow up denied commands; otherwise the next queued message runs.
+    async fn run_queue(self: Arc<Self>, id: String, mut prompt: String, mut kind: String) {
+        let (mut errors, mut continues) = (0, 0);
         loop {
-            if let Err(error) = self.one_turn(&id, &prompt).await {
-                let _ = self.streamed(
-                    &id,
-                    Event::Notice {
-                        kind: "error".into(),
-                        text: error.to_string(),
-                        data: json!({}),
-                    },
-                );
+            let outcome = match self.one_turn(&id, &prompt).await {
+                Ok(outcome) => outcome,
+                Err(error) => {
+                    self.error_notice(&id, &error);
+                    Default::default()
+                }
+            };
+            if kind == "user" {
+                continues = 0;
             }
+            let next = match self
+                .follow_up(&id, &outcome, &mut errors, &mut continues)
+                .await
+            {
+                Ok(next) => next,
+                Err(error) => {
+                    self.error_notice(&id, &error);
+                    None
+                }
+            };
             let Ok(cell) = self.cell(&id) else { return };
             let Ok(mut state) = cell.state.lock() else {
                 return;
             };
-            if !state.cancel.is_cancelled() && !state.meta.queue.is_empty() {
-                let item = state.meta.queue[0].clone();
-                match self.admit(&mut state, &item, true) {
+            // Decided under the lock, so a message sent right now is never stranded.
+            let item = match next {
+                Some((text, next_kind)) if !state.cancel.is_cancelled() => Some((
+                    json!({"text": text, "attachments": [], "kind": next_kind}),
+                    false,
+                )),
+                _ if !state.cancel.is_cancelled() && !state.meta.queue.is_empty() => {
+                    Some((state.meta.queue[0].clone(), true))
+                }
+                _ => None,
+            };
+            if let Some((item, queued)) = item {
+                kind = item
+                    .get("kind")
+                    .and_then(serde_json::Value::as_str)
+                    .unwrap_or("user")
+                    .to_owned();
+                match self.admit(&mut state, &item, queued) {
                     Ok(value) => prompt = value,
                     Err(error) => {
                         tracing::error!(%error,"queued admission failed");

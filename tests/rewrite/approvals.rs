@@ -156,6 +156,12 @@ fn pending_id(server: &Server, id: &str) -> String {
 fn hook_waits_for_the_user_and_relays_each_answer() {
     let mut server = Server::new_stopped("approvals-hook", false);
     seed_rules(&server, json!({"allow": ["command(ls)"]}));
+    // Denied-command follow-ups have their own test; here each decline ends the turn.
+    fs::write(
+        server.data.join("settings.json"),
+        json!({"keep_awake": "off", "auto_continue": "0"}).to_string(),
+    )
+    .unwrap();
     server.start();
     let hooks: Value = serde_json::from_slice(
         &fs::read(server.data.join("stack/.gemini/config/hooks.json")).unwrap(),

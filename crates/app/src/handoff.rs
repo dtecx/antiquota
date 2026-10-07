@@ -13,7 +13,7 @@ impl Service {
         self: &Arc<Self>,
         id: &str,
         original: &str,
-    ) -> Result<(), AppError> {
+    ) -> Result<crate::goals::TurnOutcome, AppError> {
         let cell = self.cell(id)?;
         let (cancel, model) = {
             let state = cell
@@ -23,7 +23,7 @@ impl Service {
             (state.cancel.clone(), state.meta.model.clone())
         };
         if cancel.is_cancelled() {
-            return Ok(());
+            return Ok(Default::default());
         }
         let count = self.account_overview()?.len();
         if count == 0 {
@@ -45,10 +45,10 @@ impl Service {
                 .acquire_account(id, bucket, preferred.as_deref(), &cancel)
                 .await?
             else {
-                return Ok(());
+                return Ok(Default::default());
             };
             if cancel.is_cancelled() {
-                return Ok(());
+                return Ok(Default::default());
             }
             if preferred.as_deref() != Some(lease.slot().name.as_str()) {
                 let mut entry = RoutingEntry {
@@ -66,7 +66,7 @@ impl Service {
             }
             let result = self.attempt(id, &prompt, &*lease, &cancel).await?;
             if cancel.is_cancelled() {
-                return Ok(());
+                return Ok(Default::default());
             }
             let name = &lease.slot().name;
             if result.status == "quota" {
@@ -93,7 +93,7 @@ impl Service {
                 }
             }
             if cancel.is_cancelled() {
-                return Ok(());
+                return Ok(Default::default());
             }
             let meta = self.get(id)?.0;
             let turn = Turn {
@@ -109,7 +109,7 @@ impl Service {
             let Some(Command::ContinueTurn { delay, fresh, .. }) = continuation else {
                 drop(lease);
                 self.announce_accounts()?;
-                return Ok(());
+                return self.turn_outcome(id, meta.turns, result.status == "SUCCESS");
             };
             let again = if meta.conversation_id.is_some() {
                 CONTINUE.into()
@@ -174,7 +174,7 @@ impl Service {
                     prompt = self.fresh_handoff(id, &prompt)?;
                     failovers += 1;
                 }
-                _ => return Ok(()),
+                _ => return Ok(Default::default()),
             }
             drop(lease);
             self.announce_accounts()?;
@@ -182,7 +182,7 @@ impl Service {
                 self.clock.wait(delay, cancel.clone()).await?;
             }
         }
-        Ok(())
+        Ok(Default::default())
     }
     async fn acquire_account(
         &self,
@@ -233,6 +233,26 @@ impl Service {
                     .map(|a| a.slot.as_str())
                     .collect();
                 let reset = next_reset(&accounts, bucket, self.clock.now());
+                if held.is_empty() && self.goal_active(id)? {
+                    self.notice(
+                        id,
+                        "wall",
+                        &format!(
+                            "Every account is out of {pool} quota. Sleeping until {}, then the goal continues.",
+                            self.clock.local_hhmm(reset)
+                        ),
+                        json!({"reset":reset}),
+                    )?;
+                    self.set_status(id, "sleeping", (reset > 0.0).then_some(reset))?;
+                    let pause = if reset > 0.0 {
+                        (reset - self.clock.now() + 30.0).max(5.0)
+                    } else {
+                        60.0
+                    };
+                    self.clock.wait(pause, cancel.clone()).await?;
+                    self.set_status(id, "waiting", None)?;
+                    continue;
+                }
                 let text = if !held.is_empty() {
                     format!(
                         "Every account with {pool} quota is paused ({}). Resume one in the Accounts panel, then send again.",
@@ -317,7 +337,7 @@ impl Service {
         summary.push_str(&format!("\nContinue. Current request:\n{prompt}"));
         Ok(summary)
     }
-    fn notice(
+    pub(crate) fn notice(
         &self,
         id: &str,
         kind: &str,

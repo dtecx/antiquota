@@ -37,6 +37,38 @@ pub struct TurnResult {
     pub usage: StepUsage,
     pub error: String,
 }
+/// One read-only, fresh-conversation agy call, such as the goal verifier.
+#[derive(Debug, Clone)]
+pub struct AskRequest {
+    pub prompt: String,
+    pub model: String,
+    pub cwd: String,
+    pub slot: Slot,
+}
+/// `status` is SUCCESS, quota, auth or error; `response` is agy's reply text.
+#[derive(Debug, Clone, Default)]
+pub struct AskResult {
+    pub status: String,
+    pub response: String,
+    pub error: String,
+}
+/// A shell command's result; `code` is `None` when it timed out or was cancelled.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct CommandOutcome {
+    pub code: Option<i32>,
+    pub output: String,
+    pub timed_out: bool,
+}
+/// Runs a user-configured shell command (such as a goal check) in a project folder.
+pub trait ShellRunner: Send + Sync {
+    fn run<'a>(
+        &'a self,
+        cwd: &'a str,
+        command: &'a str,
+        timeout: f64,
+        cancel: Cancellation,
+    ) -> PortFuture<'a, CommandOutcome>;
+}
 pub trait TurnSink: Send {
     fn event(&mut self, event: Event) -> Result<(), PortError>;
     fn conversation_id(&mut self, conversation_id: &str) -> Result<(), PortError>;
@@ -48,6 +80,10 @@ pub trait AgentRunner: Send + Sync {
         cancel: Cancellation,
         sink: Box<dyn TurnSink + 'a>,
     ) -> PortFuture<'a, TurnResult>;
+    /// A separate read-only call in a fresh conversation, without antiquota's session hooks.
+    fn ask<'a>(&'a self, _request: AskRequest, _cancel: Cancellation) -> PortFuture<'a, AskResult> {
+        Box::pin(async { unavailable() })
+    }
 }
 pub trait AccountLease: Send + Sync {
     fn slot(&self) -> &Slot;
@@ -184,6 +220,10 @@ pub trait Transcriber: Send + Sync {
 }
 pub trait Clock: Send + Sync {
     fn now(&self) -> f64;
+    /// The local wall-clock time of an instant as HH:MM, for messages to the user.
+    fn local_hhmm(&self, _instant: f64) -> String {
+        "?".into()
+    }
     fn wait(&self, _seconds: f64, _cancel: Cancellation) -> PortFuture<'_, ()> {
         Box::pin(async { unavailable() })
     }

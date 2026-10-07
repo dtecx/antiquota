@@ -3,11 +3,23 @@
   import type { Workbench } from '../lib/workbench';
   import Icon from './Icon.svelte';
   import { formatTokens, isBusy, statusLabel } from '../lib/format';
+  import { draftFor, goalDialog, revising } from '../lib/goals';
   let { workbench, connected }: { workbench: Workbench; connected: boolean } = $props();
   const view = $derived(workbench.state);
   const running = $derived(isBusy($view.selected?.status));
   const attention = $derived($view.selected?.status === 'approval');
   const text = $derived($view.drafts[$view.selected?.id ?? ''] ?? '');
+  let prompt: HTMLTextAreaElement | undefined = $state();
+  $effect(() => {
+    if ($revising) prompt?.focus();
+  });
+  function openGoal() {
+    const session = $view.selected;
+    if (!session) return;
+    goalDialog.set(
+      draftFor(session.goal, text, $view.snapshot?.defaults.verifier_model || session.model),
+    );
+  }
   function keydown(event: KeyboardEvent) {
     if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
       event.preventDefault();
@@ -22,6 +34,7 @@
     class="composer"
     onsubmit={(event) => {
       event.preventDefault();
+      revising.set(false);
       void workbench.send();
     }}
   >
@@ -29,7 +42,12 @@
       id="prompt"
       aria-label="Message"
       rows="3"
-      placeholder={running ? 'Queue a message for the next turn…' : 'Message antiquota…'}
+      bind:this={prompt}
+      placeholder={$revising
+        ? 'What should change in the plan?'
+        : running
+          ? 'Queue a message for the next turn…'
+          : 'Message antiquota…'}
       value={text}
       oninput={(event) => workbench.draft(event.currentTarget.value)}
       onkeydown={keydown}
@@ -37,7 +55,14 @@
     <div class="composer-tools">
       <span class="hint"><kbd>↵</kbd> send <span>·</span> <kbd>⇧ ↵</kbd> newline</span>
       <div class="actions">
-        {#if running}<button
+        <button
+          type="button"
+          class="goal-button"
+          class:active={$view.selected?.goal?.state === 'active'}
+          title="Work on an objective until it is verified done"
+          onclick={openGoal}
+          disabled={!$view.selected}>◎ Goal</button
+        >{#if running}<button
             type="button"
             class="stop"
             onclick={() => workbench.stop()}
@@ -120,6 +145,16 @@
   }
   .stop {
     color: var(--ink-2);
+  }
+  .goal-button {
+    min-height: 32px;
+    padding: var(--space-1) var(--space-3);
+    font-size: 12px;
+    color: var(--ink-2);
+  }
+  .goal-button.active {
+    color: var(--baton);
+    border-color: var(--baton);
   }
   .session-state {
     display: flex;

@@ -20,6 +20,7 @@ import type { RoutingEntry } from '../gen/RoutingEntry';
 import type { ApprovalAnswerRequest } from '../gen/ApprovalAnswerRequest';
 import type { ApprovalResponse } from '../gen/ApprovalResponse';
 import type { PermissionsRequest } from '../gen/PermissionsRequest';
+import type { GoalRequest } from '../gen/GoalRequest';
 import { routes } from '../gen/routes';
 
 export class RequestError extends Error {
@@ -106,6 +107,10 @@ export function createApi(token: string, request: typeof fetch = fetch) {
     routing: () => call<RoutingEntry[]>('GET', '/api/routing?n=60'),
     answerApproval: (id: string, body: ApprovalAnswerRequest) =>
       call<ApprovalResponse>('POST', `/api/approvals/${encodeURIComponent(id)}/answer`, body),
+    setGoal: (id: string, body: GoalRequest) =>
+      call<Session>('POST', `${sessionPath(id)}/goal`, body),
+    resumeGoal: (id: string) => call<OkResponse>('POST', `${sessionPath(id)}/goal/resume`, {}),
+    clearGoal: (id: string) => call<OkResponse>('DELETE', `${sessionPath(id)}/goal`),
     savePermissions: (body: PermissionsRequest) =>
       call<PermissionsRequest>('PUT', '/api/permissions', body),
     streamUrl: () => `/api/events?token=${encodeURIComponent(token)}`,

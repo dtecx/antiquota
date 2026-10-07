@@ -35,16 +35,16 @@ pub(crate) enum Gate {
     AgyModes,
 }
 impl AgyRunner {
-    pub(crate) async fn preflight(&self, request: &TurnRequest) -> Result<Gate, PortError> {
-        let auth =
-            Path::new(&request.slot.home).join(".gemini/antigravity-cli/antigravity-oauth-token");
+    /// The account's token must be a private regular file holding an access token.
+    pub(crate) fn token_ready(&self, home: &str) -> Result<(), PortError> {
+        let auth = Path::new(home).join(".gemini/antigravity-cli/antigravity-oauth-token");
         if !auth.is_file() || auth.is_symlink() {
             return Err(PortError::Invalid(
                 "account token must be a regular private file".into(),
             ));
         }
         if self.isolated_fake {
-            return Ok(Gate::Hook);
+            return Ok(());
         }
         #[cfg(unix)]
         {
@@ -66,6 +66,13 @@ impl AgyRunner {
         .map_err(|_| PortError::Invalid("account token is malformed".into()))?;
         if token["token"]["access_token"].as_str().is_none() {
             return Err(PortError::Invalid("account token is malformed".into()));
+        }
+        Ok(())
+    }
+    pub(crate) async fn preflight(&self, request: &TurnRequest) -> Result<Gate, PortError> {
+        self.token_ready(&request.slot.home)?;
+        if self.isolated_fake {
+            return Ok(Gate::Hook);
         }
         let root = Path::new(&request.state_dir)
             .parent()

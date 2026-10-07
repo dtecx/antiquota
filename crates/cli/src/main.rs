@@ -1,5 +1,6 @@
 //! Owns command-line dispatch; the hook runs before logging and Tokio startup.
 mod accounts;
+mod goal;
 mod hook;
 mod raw;
 use clap::{Parser, Subcommand};
@@ -46,6 +47,8 @@ enum Commands {
         #[arg(default_value = "pre-tool")]
         kind: String,
     },
+    /// Work on an objective until it is verified done.
+    Goal(goal::GoalArgs),
 }
 fn main() -> anyhow::Result<()> {
     if std::env::args().nth(1).as_deref() == Some("hook") {
@@ -80,6 +83,7 @@ fn main() -> anyhow::Result<()> {
         Commands::Unwall { name } => accounts::unwall(accounts::context()?.as_ref(), &name)?,
         Commands::Run { args } => code = runtime.block_on(raw::run(accounts::context()?, args))?,
         Commands::Hook { kind } => hook::run(&kind)?,
+        Commands::Goal(args) => code = runtime.block_on(goal::run(args))?,
     }
     if code != 0 {
         std::process::exit(code);

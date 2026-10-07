@@ -1,6 +1,6 @@
 # Rewrite test report
 
-Slice 1 implements Rust CLI/server sessions and one agy turn with the Svelte browser UI; Slice 3 adds permission policy, the hook, approvals and mid-turn steering. **105 of 1144 acceptance items are Passed; 1039 remain Pending.** Slice 2 account evidence is recorded in [slice2-coverage-proposal.json](../../tests/rewrite/slice2-coverage-proposal.json) and is not yet folded into these rows. The inventory contains 1009 baseline items and 135 explicit rewrite requirements in [FEATURES.md](FEATURES.md). Source review, legacy tests and Python captures are references; the rows below name actual rewrite checks. A Pending row may have passing subset tests, but its remaining acceptance is explicit.
+Slice 1 implements Rust CLI/server sessions and one agy turn with the Svelte browser UI; Slice 3 adds permission policy, the hook, approvals and mid-turn steering; Slice 4 adds goals, the check command, the independent verifier and plan mode. **142 of 1144 acceptance items are Passed; 1002 remain Pending.** Slice 2 account evidence is recorded in [slice2-coverage-proposal.json](../../tests/rewrite/slice2-coverage-proposal.json) and is not yet folded into these rows. The inventory contains 1009 baseline items and 135 explicit rewrite requirements in [FEATURES.md](FEATURES.md). Source review, legacy tests and Python captures are references; the rows below name actual rewrite checks. A Pending row may have passing subset tests, but its remaining acceptance is explicit.
 
 The fresh independent macOS arm64 gate on 2026-10-07 ran against 440 unchanged source hashes. `main` remained clean at `17ec296`; no push or cutover occurred. Synthetic processes were stopped after validation. [Final verification](../../.handoff/evidence/slice1-independent-final-summary.json) records commands, hashes, counts and cleanup.
 
@@ -22,6 +22,12 @@ All application handoff, quota routing, approvals, goals/verifier, jobs, loop/sc
 On 2026-10-07 on macOS arm64, `just check` passed (generated types, rustfmt, clippy with warnings denied, cargo-deny, strict Svelte/TypeScript, ESLint, Prettier) and `just test` passed 143 Rust tests, 59 Vitest tests and 30 Chromium scenarios with no failures. [Check log](../../.handoff/evidence/slice3-check.log), [test log](../../.handoff/evidence/slice3-test.log).
 
 Eleven more captured cases now replay exactly: permissions get/put/error, send-long, send-queued, session-steer and the eleven approval request/wait/answer/read cases. Real hook round trips run fake agy, which invokes the built `antiquota hook` for a tool call that waits for an HTTP or browser answer. Remaining Pending rows in this area: F-133 (stack-import and file-edit entry points arrive with the settings slice), F-145 (the 60-second poll cap is enforced but not exercised), F-464 (header state labels), F-513 (steered message label), F-581 (expired-request message), F-582 (approval notification) and F-1030 (steering lives in the approvals service, not yet a feature module).
+
+## Slice 4: goals, verifier and plan mode
+
+On 2026-10-07 on macOS arm64, `just check` passed and `just test` passed 169 Rust tests, 62 Vitest tests and 33 Chromium scenarios. [Check log](../../.handoff/evidence/slice4-check.log), [test log](../../.handoff/evidence/slice4-test.log).
+
+Goal runs use the real engine, fake agy and the platform shell for checks; the verifier is a separate fresh agy call. Captured goal-empty, goal-resume-empty, goal-resume and goal-delete cases replay exactly; goal-create and goal-get-met depend on earlier job state and are compared field by field instead. Remaining Pending rows here: F-203 (a job's completion wake arrives with the jobs slice), F-204 (retry waits are proven in the feature module; app-level cancellation of the wait is not exercised), F-212 (a quota error during the verifier call itself), F-163 (the fresh-conversation jobs instruction), F-179 (the allowance reset per user message), F-305 (Ctrl-C in the goal CLI) and F-564 (Execute with approvals in the browser).
 
 Mark a row Passed only when its full acceptance has passing tests and evidence. Passing architecture requirements describe the current sources; each future feature must still prove its own behavior. Logs and screenshots live in ignored `.handoff/evidence/`; local tokens and backup contents must never enter committed fixtures or this report.
 
@@ -207,7 +213,7 @@ Mark a row Passed only when its full acceptance has passing tests and evidence. 
 | F-178 | <a id="f-178"></a>Pending — [acceptance](FEATURES.md#f-178) | Pending | Pending |
 | F-179 | <a id="f-179"></a>Pending — [acceptance](FEATURES.md#f-179) | Pending | Pending |
 | F-180 | <a id="f-180"></a>[runtime::cli_without_accounts_exits_with_error_and_preserves_the_accepted_prompt](../../tests/rewrite/runtime.rs). No-account CLI execution fails promptly, retains the accepted prompt, reports an error notice, returns idle and does not start a runner. **Remaining:** The legacy noaccount notice kind and all-paused wall explanation need exact parity proof. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
-| F-181 | <a id="f-181"></a>Pending — [acceptance](FEATURES.md#f-181) | Pending | Pending |
+| F-181 | <a id="f-181"></a>[a_goal_sleeps_until_the_wall_lifts_then_continues](../../crates/app/src/tests/goals.rs); [without_a_goal_spent_quota_ends_the_turn](../../crates/app/src/tests/goals.rs). Without a goal an all-walled pool reports and ends the turn; an active goal sleeps until the reset plus 30 seconds (at least 5) and continues. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
 | F-182 | <a id="f-182"></a>Pending — [acceptance](FEATURES.md#f-182) | Pending | Pending |
 | F-183 | <a id="f-183"></a>Pending — [acceptance](FEATURES.md#f-183) | Pending | Pending |
 | F-184 | <a id="f-184"></a>Pending — [acceptance](FEATURES.md#f-184) | Pending | Pending |
@@ -224,26 +230,26 @@ Mark a row Passed only when its full acceptance has passing tests and evidence. 
 | F-195 | <a id="f-195"></a>Pending — [acceptance](FEATURES.md#f-195) | Pending | Pending |
 | F-196 | <a id="f-196"></a>Pending — [acceptance](FEATURES.md#f-196) | Pending | Pending |
 | F-197 | <a id="f-197"></a>Pending — [acceptance](FEATURES.md#f-197) | Pending | Pending |
-| F-198 | <a id="f-198"></a>Pending — [acceptance](FEATURES.md#f-198) | Pending | Pending |
-| F-199 | <a id="f-199"></a>Pending — [acceptance](FEATURES.md#f-199) | Pending | Pending |
-| F-200 | <a id="f-200"></a>Pending — [acceptance](FEATURES.md#f-200) | Pending | Pending |
-| F-201 | <a id="f-201"></a>Pending — [acceptance](FEATURES.md#f-201) | Pending | Pending |
-| F-202 | <a id="f-202"></a>Pending — [acceptance](FEATURES.md#f-202) | Pending | Pending |
+| F-198 | <a id="f-198"></a>[a_goal_runs_its_check_and_verifier_until_met](../../tests/rewrite/goals.rs). The goal is trimmed, starts at round 0 and active, records a goal notice and sends a goal-kind prompt. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
+| F-199 | <a id="f-199"></a>[a_goal_runs_its_check_and_verifier_until_met](../../tests/rewrite/goals.rs); [a_failed_check_skips_the_verifier_and_the_round_limit_abandons](../../tests/rewrite/goals.rs). An empty objective is refused; omitted fields default to verifier on, no verifier model and 20 rounds. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
+| F-200 | <a id="f-200"></a>[prompts_name_the_objective_and_the_mark](../../crates/core/src/goal.rs); [the_goal_command_starts_its_own_engine_and_exits_zero_when_met](../../tests/rewrite/goals.rs). The goal prompt asks for autonomous work and the `GOAL_COMPLETE` line only when verified. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
+| F-201 | <a id="f-201"></a>[rounds_move_only_on_successful_turns_and_stop_at_the_limit](../../crates/features/src/goal.rs); [a_failed_check_skips_the_verifier_and_the_round_limit_abandons](../../tests/rewrite/goals.rs). Each successful evaluation moves the round; the goal fails once the round passes max_rounds (legacy boundary kept). | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
+| F-202 | <a id="f-202"></a>[a_goal_runs_its_check_and_verifier_until_met](../../tests/rewrite/goals.rs); [rounds_move_only_on_successful_turns_and_stop_at_the_limit](../../crates/features/src/goal.rs). A reply without the mark records the round notice and nudges toward the objective. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
 | F-203 | <a id="f-203"></a>Pending — [acceptance](FEATURES.md#f-203) | Pending | Pending |
 | F-204 | <a id="f-204"></a>Pending — [acceptance](FEATURES.md#f-204) | Pending | Pending |
-| F-205 | <a id="f-205"></a>Pending — [acceptance](FEATURES.md#f-205) | Pending | Pending |
-| F-206 | <a id="f-206"></a>Pending — [acceptance](FEATURES.md#f-206) | Pending | Pending |
-| F-207 | <a id="f-207"></a>Pending — [acceptance](FEATURES.md#f-207) | Pending | Pending |
-| F-208 | <a id="f-208"></a>Pending — [acceptance](FEATURES.md#f-208) | Pending | Pending |
-| F-209 | <a id="f-209"></a>Pending — [acceptance](FEATURES.md#f-209) | Pending | Pending |
-| F-210 | <a id="f-210"></a>Pending — [acceptance](FEATURES.md#f-210) | Pending | Pending |
-| F-211 | <a id="f-211"></a>Pending — [acceptance](FEATURES.md#f-211) | Pending | Pending |
+| F-205 | <a id="f-205"></a>[stop_pauses_a_goal_and_resume_restarts_it](../../tests/rewrite/goals.rs); [a_goal_runs_its_check_and_verifier_until_met](../../tests/rewrite/goals.rs). Stop pauses the goal; resume restarts it at round 0 with the legacy nudge; clear removes only the goal. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
+| F-206 | <a id="f-206"></a>[a_goal_runs_its_check_and_verifier_until_met](../../tests/rewrite/goals.rs). The captured resume-without-goal case answers 400 `no goal`. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
+| F-207 | <a id="f-207"></a>[a_goal_runs_its_check_and_verifier_until_met](../../tests/rewrite/goals.rs); [a_failed_check_skips_the_verifier_and_the_round_limit_abandons](../../tests/rewrite/goals.rs); [check_results_keep_the_last_output_and_report_timeouts](../../crates/app/src/tests/goals.rs); [commands_report_exit_codes_output_timeouts_and_cancellation](../../crates/adapters/shell/src/lib.rs). The check runs with the platform shell in the project folder for up to 1800 seconds; the notice keeps the last 3000 characters and passed means exit 0. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
+| F-208 | <a id="f-208"></a>[a_failed_check_skips_the_verifier_and_the_round_limit_abandons](../../tests/rewrite/goals.rs). A failed check skips the verifier and its exact result is fed to the next nudge. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
+| F-209 | <a id="f-209"></a>[stop_pauses_a_goal_and_resume_restarts_it](../../tests/rewrite/goals.rs). A verifier-disabled goal is met after its completion mark. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
+| F-210 | <a id="f-210"></a>[a_goal_runs_its_check_and_verifier_until_met](../../tests/rewrite/goals.rs). The verifier is one `--output-format json` agy call in the project folder without skip-permissions or session variables, with view-only instructions. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
+| F-211 | <a id="f-211"></a>[a_rejected_verdict_feeds_back_and_a_spent_verifier_pool_falls_back](../../tests/rewrite/goals.rs); [the_goal_command_starts_its_own_engine_and_exits_zero_when_met](../../tests/rewrite/goals.rs). With no live quota for the verifier's model the session model verifies instead; defaults stay gemini-3.8-flash-high. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
 | F-212 | <a id="f-212"></a>Pending — [acceptance](FEATURES.md#f-212) | Pending | Pending |
-| F-213 | <a id="f-213"></a>Pending — [acceptance](FEATURES.md#f-213) | Pending | Pending |
-| F-214 | <a id="f-214"></a>Pending — [acceptance](FEATURES.md#f-214) | Pending | Pending |
-| F-215 | <a id="f-215"></a>Pending — [acceptance](FEATURES.md#f-215) | Pending | Pending |
-| F-216 | <a id="f-216"></a>Pending — [acceptance](FEATURES.md#f-216) | Pending | Pending |
-| F-217 | <a id="f-217"></a>Pending — [acceptance](FEATURES.md#f-217) | Pending | Pending |
+| F-213 | <a id="f-213"></a>[verdicts_follow_the_last_line_and_list_what_is_missing](../../crates/core/src/goal.rs). The last VERDICT line decides, case-insensitively, with surrounding punctuation and DONE / NOT_DONE / NOT DONE. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
+| F-214 | <a id="f-214"></a>[verdicts_follow_the_last_line_and_list_what_is_missing](../../crates/core/src/goal.rs); [met_needs_the_check_and_the_verifier_to_agree](../../crates/features/src/goal.rs). At most 20 bullets and 1500 reason characters; a reply without a verdict counts as unavailable, never done. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
+| F-215 | <a id="f-215"></a>[a_goal_runs_its_check_and_verifier_until_met](../../tests/rewrite/goals.rs); [a_rejected_verdict_feeds_back_and_a_spent_verifier_pool_falls_back](../../tests/rewrite/goals.rs). Check and verdict notices carry rc/output/passed and done/missing/slot/model; a negative or unavailable verdict feeds back. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
+| F-216 | <a id="f-216"></a>[met_needs_the_check_and_the_verifier_to_agree](../../crates/features/src/goal.rs); [a_goal_runs_its_check_and_verifier_until_met](../../tests/rewrite/goals.rs). Met requires the mark, a passing check when set and a positive verifier when enabled. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
+| F-217 | <a id="f-217"></a>[stopping_during_the_verifier_never_marks_the_goal_met](../../crates/app/src/tests/goals.rs). Stopping during the verifier call cancels it and the goal stays paused, never met. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
 | F-218 | <a id="f-218"></a>Pending — [acceptance](FEATURES.md#f-218) | Pending | Pending |
 | F-219 | <a id="f-219"></a>Pending — [acceptance](FEATURES.md#f-219) | Pending | Pending |
 | F-220 | <a id="f-220"></a>Pending — [acceptance](FEATURES.md#f-220) | Pending | Pending |
@@ -329,8 +335,8 @@ Mark a row Passed only when its full acceptance has passing tests and evidence. 
 | F-300 | <a id="f-300"></a>[runtime::serve_defaults_to_no_browser_and_gui_respects_no_open](../../tests/rewrite/runtime.rs). On Unix, gui --no-open never invokes the isolated opener; gui invokes it once with the discovered URL. **Remaining:** Default port 8765, a requested fixed port and Windows opener behavior remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-301 | <a id="f-301"></a>[runtime::serve_defaults_to_no_browser_and_gui_respects_no_open](../../tests/rewrite/runtime.rs); [engine_discovery_reuses_lock_and_static_auth_remains_local](../../crates/server/tests/rewrite_contract.rs). serve accepts ephemeral port 0, shares discovery and does not invoke the isolated browser opener. **Remaining:** Default port 8765, a requested fixed port and Windows behavior remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-302 | <a id="f-302"></a>[the_hook_fails_closed_and_starts_fast](../../tests/rewrite/approvals.rs); [steering_reaches_agy_through_the_hook_with_mentioned_paths](../../tests/rewrite/approvals.rs). `antiquota hook pre-tool|pre-invocation` runs before logging and the async runtime. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
-| F-303 | <a id="f-303"></a>Pending — [acceptance](FEATURES.md#f-303) | Pending | Pending |
-| F-304 | <a id="f-304"></a>Pending — [acceptance](FEATURES.md#f-304) | Pending | Pending |
+| F-303 | <a id="f-303"></a>[the_goal_command_starts_its_own_engine_and_exits_zero_when_met](../../tests/rewrite/goals.rs); [the_goal_command_uses_the_running_engine_and_fails_when_abandoned](../../tests/rewrite/goals.rs). `goal` accepts --cwd, --model, --mode (four modes), --check, --no-verifier, --verifier-model and --max-rounds. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
+| F-304 | <a id="f-304"></a>[the_goal_command_starts_its_own_engine_and_exits_zero_when_met](../../tests/rewrite/goals.rs); [the_goal_command_uses_the_running_engine_and_fails_when_abandoned](../../tests/rewrite/goals.rs). The goal session is visible to the app; the command exits 0 only when met and reuses a running engine. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
 | F-305 | <a id="f-305"></a>Pending — [acceptance](FEATURES.md#f-305) | Pending | Pending |
 | F-306 | <a id="f-306"></a>[captured_slice_one_requests_replay_with_exact_json_fields](../../crates/server/tests/rewrite_contract.rs); [engine_discovery_reuses_lock_and_static_auth_remains_local](../../crates/server/tests/rewrite_contract.rs). The captured bad Host is rejected; localhost Host and token-free health work; a bounded connection to 127.0.0.2 fails; static traversal is rejected. **Remaining:** Further invalid Host forms and cross-platform bind proof remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-307 | <a id="f-307"></a>[whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs); [short_token_regenerates_then_reuses](../../crates/adapters/store/src/tests.rs). The same GUI token survives a real shutdown and restart. **Remaining:** Missing-token creation and exact private mode assertions remain Pending; short-token regeneration and minimum length now pass. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
@@ -397,9 +403,9 @@ Mark a row Passed only when its full acceptance has passing tests and evidence. 
 | F-368 | <a id="f-368"></a>Pending — [acceptance](FEATURES.md#f-368) | Pending | Pending |
 | F-369 | <a id="f-369"></a>Pending — [acceptance](FEATURES.md#f-369) | Pending | Pending |
 | F-370 | <a id="f-370"></a>[queued_messages_stop_delete_and_crash_leave_recoverable_sessions](../../crates/server/tests/rewrite_contract.rs); [stop_and_shutdown_finish_a_turn_with_inherited_descendant_pipes](../../crates/server/tests/interruptions.rs). Captured stop response matches during an active fake turn, the session becomes idle and its queue is empty. Descendant/inherited-pipe stop now ends promptly with one stopped TurnEnd and no delayed write. **Remaining:** Approval waits, goals and other paused state remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
-| F-371 | <a id="f-371"></a>Pending — [acceptance](FEATURES.md#f-371) | Pending | Pending |
-| F-372 | <a id="f-372"></a>Pending — [acceptance](FEATURES.md#f-372) | Pending | Pending |
-| F-373 | <a id="f-373"></a>Pending — [acceptance](FEATURES.md#f-373) | Pending | Pending |
+| F-371 | <a id="f-371"></a>[a_goal_runs_its_check_and_verifier_until_met](../../tests/rewrite/goals.rs); [a_failed_check_skips_the_verifier_and_the_round_limit_abandons](../../tests/rewrite/goals.rs). The route accepts every goal field, starts the goal and returns session metadata. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
+| F-372 | <a id="f-372"></a>[stop_pauses_a_goal_and_resume_restarts_it](../../tests/rewrite/goals.rs). The captured resume case returns ok and restarts the goal. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
+| F-373 | <a id="f-373"></a>[a_goal_runs_its_check_and_verifier_until_met](../../tests/rewrite/goals.rs). The captured delete case clears only the goal. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
 | F-374 | <a id="f-374"></a>Pending — [acceptance](FEATURES.md#f-374) | Pending | Pending |
 | F-375 | <a id="f-375"></a>Pending — [acceptance](FEATURES.md#f-375) | Pending | Pending |
 | F-376 | <a id="f-376"></a>Pending — [acceptance](FEATURES.md#f-376) | Pending | Pending |
@@ -579,19 +585,19 @@ Mark a row Passed only when its full acceptance has passing tests and evidence. 
 | F-550 | <a id="f-550"></a>Pending — [acceptance](FEATURES.md#f-550) | Pending | Pending |
 | F-551 | <a id="f-551"></a>Pending — [acceptance](FEATURES.md#f-551) | Pending | Pending |
 | F-552 | <a id="f-552"></a>Pending — [acceptance](FEATURES.md#f-552) | Pending | Pending |
-| F-553 | <a id="f-553"></a>Pending — [acceptance](FEATURES.md#f-553) | Pending | Pending |
-| F-554 | <a id="f-554"></a>Pending — [acceptance](FEATURES.md#f-554) | Pending | Pending |
-| F-555 | <a id="f-555"></a>Pending — [acceptance](FEATURES.md#f-555) | Pending | Pending |
-| F-556 | <a id="f-556"></a>Pending — [acceptance](FEATURES.md#f-556) | Pending | Pending |
-| F-557 | <a id="f-557"></a>Pending — [acceptance](FEATURES.md#f-557) | Pending | Pending |
-| F-558 | <a id="f-558"></a>Pending — [acceptance](FEATURES.md#f-558) | Pending | Pending |
-| F-559 | <a id="f-559"></a>Pending — [acceptance](FEATURES.md#f-559) | Pending | Pending |
-| F-560 | <a id="f-560"></a>Pending — [acceptance](FEATURES.md#f-560) | Pending | Pending |
-| F-561 | <a id="f-561"></a>Pending — [acceptance](FEATURES.md#f-561) | Pending | Pending |
-| F-562 | <a id="f-562"></a>Pending — [acceptance](FEATURES.md#f-562) | Pending | Pending |
-| F-563 | <a id="f-563"></a>Pending — [acceptance](FEATURES.md#f-563) | Pending | Pending |
+| F-553 | <a id="f-553"></a>[starts a goal from the composer and follows it until met](../../ui/e2e/goals.spec.ts); [goals.test.ts](../../ui/src/lib/goals.test.ts). The dialog reuses the session goal or the composer text. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
+| F-554 | <a id="f-554"></a>[starts a goal from the composer and follows it until met](../../ui/e2e/goals.spec.ts). Objective, optional check, verifier toggle and model, and round limit are editable. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
+| F-555 | <a id="f-555"></a>[starts a goal from the composer and follows it until met](../../ui/e2e/goals.spec.ts). Start goal posts every field. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
+| F-556 | <a id="f-556"></a>[starts a goal from the composer and follows it until met](../../ui/e2e/goals.spec.ts). Starting a goal whose objective equals the composer text clears the composer. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
+| F-557 | <a id="f-557"></a>[starts a goal from the composer and follows it until met](../../ui/e2e/goals.spec.ts); [goals.test.ts](../../ui/src/lib/goals.test.ts). The bar shows the objective, rounds or state, check and verifier model. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
+| F-558 | <a id="f-558"></a>[pauses and resumes a goal](../../ui/e2e/goals.spec.ts). Pause stops the active session and the goal shows paused. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
+| F-559 | <a id="f-559"></a>[pauses and resumes a goal](../../ui/e2e/goals.spec.ts). Resume restarts an unmet paused goal. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
+| F-560 | <a id="f-560"></a>[starts a goal from the composer and follows it until met](../../ui/e2e/goals.spec.ts). Edit opens the dialog with the goal's values. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
+| F-561 | <a id="f-561"></a>[starts a goal from the composer and follows it until met](../../ui/e2e/goals.spec.ts). Remove deletes the goal and its bar. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
+| F-562 | <a id="f-562"></a>[executes or revises a finished plan](../../ui/e2e/goals.spec.ts); [goals.test.ts](../../ui/src/lib/goals.test.ts). A successful idle plan-mode turn shows the plan bar. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
+| F-563 | <a id="f-563"></a>[executes or revises a finished plan](../../ui/e2e/goals.spec.ts). Execute plan switches to accept-edits and sends the execution instruction. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
 | F-564 | <a id="f-564"></a>Pending — [acceptance](FEATURES.md#f-564) | Pending | Pending |
-| F-565 | <a id="f-565"></a>Pending — [acceptance](FEATURES.md#f-565) | Pending | Pending |
+| F-565 | <a id="f-565"></a>[executes or revises a finished plan](../../ui/e2e/goals.spec.ts). Revise focuses the composer with the revision placeholder. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
 | F-566 | <a id="f-566"></a>Pending — [acceptance](FEATURES.md#f-566) | Pending | Pending |
 | F-567 | <a id="f-567"></a>Pending — [acceptance](FEATURES.md#f-567) | Pending | Pending |
 | F-568 | <a id="f-568"></a>Pending — [acceptance](FEATURES.md#f-568) | Pending | Pending |
@@ -605,8 +611,8 @@ Mark a row Passed only when its full acceptance has passing tests and evidence. 
 | F-576 | <a id="f-576"></a>[relays a browser answer to a waiting agy tool call](../../ui/e2e/approvals.spec.ts); [hook_waits_for_the_user_and_relays_each_answer](../../tests/rewrite/approvals.rs). Allow once answers without storing a rule. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
 | F-577 | <a id="f-577"></a>[answers approval cards and keeps rules in settings](../../ui/e2e/approvals.spec.ts). Always allow answers with the suggested rule, which then appears in settings. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
 | F-578 | <a id="f-578"></a>[always_allow_never_stores_an_arbitrary_program_rule](../../tests/rewrite/approvals.rs); [approvals.test.ts](../../ui/src/lib/approvals.test.ts). Allow all edits switches the session to accept-edits. | Passed | [slice3-test.log](../../.handoff/evidence/slice3-test.log) |
-| F-579 | <a id="f-579"></a>Pending — [acceptance](FEATURES.md#f-579) | Pending | Pending |
-| F-580 | <a id="f-580"></a>Pending — [acceptance](FEATURES.md#f-580) | Pending | Pending |
+| F-579 | <a id="f-579"></a>[answers approval cards and keeps rules in settings](../../ui/e2e/approvals.spec.ts). Decline sends a denial and the card turns into a declined receipt. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
+| F-580 | <a id="f-580"></a>[answers approval cards and keeps rules in settings](../../ui/e2e/approvals.spec.ts). Answered cards show allowed or declined, once or the permanent rule, and the reason. | Passed | [slice4-test.log](../../.handoff/evidence/slice4-test.log) |
 | F-581 | <a id="f-581"></a>Pending — [acceptance](FEATURES.md#f-581) | Pending | Pending |
 | F-582 | <a id="f-582"></a>Pending — [acceptance](FEATURES.md#f-582) | Pending | Pending |
 | F-583 | <a id="f-583"></a>Pending — [acceptance](FEATURES.md#f-583) | Pending | Pending |

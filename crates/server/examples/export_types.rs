@@ -48,6 +48,7 @@ fn generate(dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
     SteerResponse::export_all(&config)?;
     AllowRulesResponse::export_all(&config)?;
     PermissionsRequest::export_all(&config)?;
+    GoalRequest::export_all(&config)?;
     fs::write(
         dir.join("routes.ts"),
         format!(

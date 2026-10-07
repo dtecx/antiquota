@@ -14,10 +14,12 @@ mod attempt;
 mod turns;
 pub use account_service::AccountService;
 mod defaults;
+mod goals;
+pub use goals::TurnOutcome;
 mod handoff;
 use antiquota_core::{
-    AccountStore, AgentRunner, Cancellation, Clock, EventRecord, PortError, Session, SessionStore,
-    Settings, StreamEvent,
+    AccountStore, AgentRunner, Cancellation, Clock, CommandOutcome, EventRecord, PortError,
+    PortFuture, QuotaProbe, Session, SessionStore, Settings, ShellRunner, StreamEvent,
 };
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -51,6 +53,7 @@ pub struct Service {
     pub account_service: Arc<AccountService>,
     pub(crate) runner: Arc<dyn AgentRunner>,
     pub(crate) clock: Arc<dyn Clock>,
+    pub(crate) shell: Arc<dyn ShellRunner>,
     pub(crate) reserved: Mutex<BTreeSet<String>>,
     pub(crate) cells: RwLock<BTreeMap<String, Arc<Cell>>>,
     pub(crate) events: broadcast::Sender<StreamEvent>,
@@ -79,6 +82,55 @@ impl Clock for SystemClock {
             .unwrap_or_default()
             .as_secs_f64()
     }
+    fn local_hhmm(&self, instant: f64) -> String {
+        if instant <= 0.0 || !instant.is_finite() {
+            return "?".into();
+        }
+        chrono::DateTime::from_timestamp(instant as i64, 0)
+            .map(|t| t.with_timezone(&chrono::Local).format("%H:%M").to_string())
+            .unwrap_or_else(|| "?".into())
+    }
+}
+
+/// Used until a shell adapter is supplied: goal checks report that they cannot run.
+struct NoShell;
+impl ShellRunner for NoShell {
+    fn run<'a>(
+        &'a self,
+        _cwd: &'a str,
+        _command: &'a str,
+        _timeout: f64,
+        _cancel: Cancellation,
+    ) -> PortFuture<'a, CommandOutcome> {
+        Box::pin(async {
+            Err(PortError::Unavailable(
+                "no shell is available to run the check".into(),
+            ))
+        })
+    }
+}
+
+/// Every adapter the service needs; `shell` and `quota` are optional for tests.
+pub struct Ports {
+    pub store: Arc<dyn SessionStore>,
+    pub settings: Settings,
+    pub accounts: Arc<dyn AccountStore>,
+    pub runner: Arc<dyn AgentRunner>,
+    pub clock: Arc<dyn Clock>,
+    pub quota: Option<Arc<dyn QuotaProbe>>,
+    pub shell: Option<Arc<dyn ShellRunner>>,
+}
+
+/// Python-compatible truthiness for loosely typed stored values.
+pub(crate) fn http_truthy(value: &serde_json::Value) -> bool {
+    match value {
+        serde_json::Value::Null => false,
+        serde_json::Value::Bool(b) => *b,
+        serde_json::Value::Number(n) => n.as_f64() != Some(0.0),
+        serde_json::Value::String(s) => !s.is_empty(),
+        serde_json::Value::Array(a) => !a.is_empty(),
+        serde_json::Value::Object(o) => !o.is_empty(),
+    }
 }
 impl Service {
     pub fn open(
@@ -98,6 +150,26 @@ impl Service {
         clock: Arc<dyn Clock>,
         quota: Option<Arc<dyn antiquota_core::QuotaProbe>>,
     ) -> Result<Arc<Self>, AppError> {
+        Self::compose(Ports {
+            store,
+            settings,
+            accounts,
+            runner,
+            clock,
+            quota,
+            shell: None,
+        })
+    }
+    pub fn compose(ports: Ports) -> Result<Arc<Self>, AppError> {
+        let Ports {
+            store,
+            settings,
+            accounts,
+            runner,
+            clock,
+            quota,
+            shell,
+        } = ports;
         let mut cells = BTreeMap::new();
         for (mut meta, records) in store.load()? {
             store.project_usage(&meta.id, &records)?;
@@ -132,6 +204,7 @@ impl Service {
             account_service,
             runner,
             clock,
+            shell: shell.unwrap_or_else(|| Arc::new(NoShell)),
             reserved: Mutex::new(BTreeSet::new()),
             cells: RwLock::new(cells),
             events,

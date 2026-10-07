@@ -1,4 +1,5 @@
 //! Owns pure feature hooks; implemented feature modules join this trait later.
+pub mod goal;
 pub mod handoff;
 use antiquota_core::{Command, Event, PortError, Session, Turn};
 pub trait Feature: Send + Sync {

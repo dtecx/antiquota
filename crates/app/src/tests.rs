@@ -1,5 +1,6 @@
 //! Proves application turns, queue control, and replay with only in-memory ports.
 mod approvals;
+mod goals;
 mod lifecycle;
 use super::*;
 use antiquota_core::{

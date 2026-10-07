@@ -1,4 +1,5 @@
 //! Owns isolated agy subprocesses and current-turn stream decoding.
+mod ask;
 mod file_diff;
 mod output;
 mod parser;
@@ -7,7 +8,8 @@ pub use raw::RawResult;
 mod preflight;
 mod process_tree;
 use antiquota_core::{
-    AgentRunner, Cancellation, PortError, PortFuture, TurnRequest, TurnResult, TurnSink,
+    AgentRunner, AskRequest, AskResult, Cancellation, PortError, PortFuture, TurnRequest,
+    TurnResult, TurnSink,
 };
 pub use parser::Decoder;
 pub use preflight::isolated_fake;
@@ -20,6 +22,9 @@ pub struct AgyRunner {
     pub isolated_fake: bool,
 }
 impl AgentRunner for AgyRunner {
+    fn ask<'a>(&'a self, request: AskRequest, cancel: Cancellation) -> PortFuture<'a, AskResult> {
+        Box::pin(self.ask_agy(request, cancel))
+    }
     fn run<'a>(
         &'a self,
         request: TurnRequest,
@@ -29,10 +34,16 @@ impl AgentRunner for AgyRunner {
         Box::pin(async move {
             self.ensure_executable()?;
             let gate = self.preflight(&request).await?;
+            let prompt =
+                if gate == preflight::Gate::Hook && request.mode == antiquota_core::Mode::Plan {
+                    format!("{}\n\n{}", antiquota_core::plan::PLAN_NOTE, request.prompt)
+                } else {
+                    request.prompt.clone()
+                };
             let mut command = Command::new(&self.executable);
             command.args([
                 "-p",
-                &request.prompt,
+                &prompt,
                 "--output-format",
                 "stream-json",
                 "--model",

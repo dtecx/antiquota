@@ -10,6 +10,7 @@ publish.workspace = true
 antiquota-core.workspace = true
 antiquota-app.workspace = true
 antiquota-store.workspace = true
+antiquota-shell.workspace = true
 antiquota-accounts.workspace = true
 antiquota-agy.workspace = true
 serde.workspace = true

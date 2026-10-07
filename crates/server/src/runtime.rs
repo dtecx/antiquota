@@ -55,14 +55,15 @@ pub async fn serve(port: u16, open_browser: bool) -> Result<(), ServerError> {
     // Tool calls and mid-turn messages of this engine's turns reach it through its own hook.
     accounts.seed_stack(false)?;
     accounts.install_hook(&std::env::current_exe()?)?;
-    let service = Service::open_with_quota(
+    let service = Service::compose(antiquota_app::Ports {
         store,
-        antiquota_store::read_settings(&root)?,
-        accounts.clone(),
+        settings: antiquota_store::read_settings(&root)?,
+        accounts: accounts.clone(),
         runner,
-        Arc::new(SystemClock),
-        Some(accounts),
-    )?;
+        clock: Arc::new(SystemClock),
+        quota: Some(accounts),
+        shell: Some(Arc::new(antiquota_shell::Shell)),
+    })?;
     let listener = match TcpListener::bind(("127.0.0.1", port)).await {
         Ok(x) => x,
         Err(_) if port != 0 => TcpListener::bind(("127.0.0.1", 0)).await?,

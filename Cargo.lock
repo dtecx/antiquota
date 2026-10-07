@@ -94,6 +94,7 @@ name = "antiquota-agy"
 version = "0.5.0"
 dependencies = [
  "antiquota-core",
+ "antiquota-shell",
  "process-wrap",
  "serde_json",
  "similar",
@@ -108,6 +109,7 @@ version = "0.5.0"
 dependencies = [
  "antiquota-core",
  "antiquota-features",
+ "chrono",
  "serde_json",
  "thiserror 2.0.21",
  "tokio",
@@ -176,6 +178,7 @@ dependencies = [
  "antiquota-app",
  "antiquota-core",
  "antiquota-pty",
+ "antiquota-shell",
  "antiquota-store",
  "axum",
  "futures-util",
@@ -185,6 +188,15 @@ dependencies = [
  "tokio",
  "tracing",
  "ts-rs",
+]
+
+[[package]]
+name = "antiquota-shell"
+version = "0.5.0"
+dependencies = [
+ "antiquota-core",
+ "process-wrap",
+ "tokio",
 ]
 
 [[package]]

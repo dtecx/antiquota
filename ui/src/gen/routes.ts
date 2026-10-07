@@ -214,17 +214,17 @@ export const routes = [
   {
     "method": "POST",
     "path": "/api/sessions/{sid}/goal",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "POST",
     "path": "/api/sessions/{sid}/goal/resume",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "DELETE",
     "path": "/api/sessions/{sid}/goal",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "GET",
