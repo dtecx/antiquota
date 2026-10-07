@@ -305,3 +305,55 @@ def test_user_job_stop_and_loop(home, work):
 
 def calls_exist(work):
     return (work / ".stub_calls.jsonl").exists()
+
+
+def test_rate_limit_with_quota_left_only_rests_the_account(home, work, monkeypatch):
+    monkeypatch.setenv("STUB_429", ONE)            # the panel still shows 90% left
+    eng = Engine()
+    sid = eng.create(str(work), "gemini-3.8-flash-low")["id"]
+    eng.sessions[sid].meta["last_slot"] = ONE  # its account
+    eng.send(sid, "go")
+    finish(eng, sid, timeout=30)
+    rest = a.walled_until(ONE, "gemini") - time.time()
+    assert 0 < rest <= a.COOLDOWN[0] + 1
+    assert any("rate limited" in e["text"] for e in eng.events(sid) if e["t"] == "notice")
+    assert [e["event"] for e in a.routes() if e.get("slot") == ONE][-1] == "cooldown"
+
+
+def test_temporary_errors_retry_then_move_on_and_bad_sign_in_parks(home, work, monkeypatch):
+    monkeypatch.setattr("agyloop.engine.RETRY_WAITS", (0, 0))
+    monkeypatch.setenv("STUB_ERROR", f"{ONE}:UNAVAILABLE: model overloaded, try again later")
+    eng = Engine()
+    sid = eng.create(str(work), "gemini-3.8-flash-low")["id"]
+    eng.sessions[sid].meta["last_slot"] = ONE
+    eng.send(sid, "go")
+    finish(eng, sid, timeout=30)
+    assert [c["slot"] for c in calls(work)] == [ONE, ONE, ONE, TWO]  # two retries, then the next account
+    assert a.walled_until(ONE, "gemini") and eng.events(sid)[-1]["t"] == "turn_end"
+    monkeypatch.setenv("STUB_ERROR", f"{TWO}:UNAUTHENTICATED: invalid_grant")
+    a.clear_wall(ONE, "gemini")
+    monkeypatch.delenv("STUB_429", raising=False)
+    eng.sessions[sid].meta["last_slot"] = TWO
+    eng.send(sid, "again")
+    finish(eng, sid, timeout=30)
+    assert a.walled_until(TWO, "cg") > time.time() + 86400  # parked until it signs in again
+    assert calls(work)[-1]["slot"] == ONE
+
+
+def test_handoff_state_and_picking_up_another_session(home, work):
+    eng = Engine()
+    sid = eng.create(str(work), "gemini-3.8-flash-low", mode="accept-edits")["id"]
+    eng.send(sid, "write the notes")
+    finish(eng, sid)
+    state = (eng.sessions[sid].dir + "/STATE.md")
+    text = open(state).read()
+    assert "## Requests" in text and "write the notes" in text
+    assert "edited notes.txt" in text and "## Files changed in this session\n- notes.txt" in text
+    assert "## Last reply" in text and "one@example.com" not in text.split("## Work log")[1].split("\n")[1]
+    new = eng.create(str(work), "gemini-3.8-flash-low")["id"]
+    eng.inherit(new, sid)
+    eng.send(new, "carry on")
+    finish(eng, new)
+    prompt = calls(work)[-1]["args"][1]
+    assert "continuing work from an earlier agy-loop session" in prompt and "write the notes" in prompt
+    assert prompt.rstrip().endswith("carry on")

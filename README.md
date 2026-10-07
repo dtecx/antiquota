@@ -30,6 +30,31 @@ python3 -m agyloop goal "all tests pass" --check "pytest -q" --cwd ~/code/app
   of quota it sleeps until the first reset. The verifier defaults to Gemini 3.1
   Pro, a different model on the same Google quota; if a chosen Claude/GPT
   verifier runs out of its (small) quota everywhere, the session's model judges.
+- **Routing like a multi-account gateway**: a session keeps its account while
+  that account has headroom (its conversation is warm there); below 3% it moves
+  on before failing mid-turn. Which account it moves to follows *Rotation* in
+  Settings: the allowance that resets soonest first (default, so no quota
+  expires unused), one by one, or round robin. Errors are told apart: a spent
+  quota walls the account until its reset; a rate limit while the quota panel
+  still shows quota only rests it (1, 5, then 15 minutes); temporary errors
+  retry twice on the same account, then move on; a rejected sign-in parks the
+  account until it signs in again. Quota panels are re-read every 10 minutes
+  (no tokens). Every decision lands in a routing log (Accounts drawer).
+- **Handoff without a memory service**: the turn continues in the same agy
+  conversation on the next account. When a conversation cannot be resumed, or
+  a new session should pick up an earlier one, agy-loop's own handoff state
+  (`STATE.md` in the session folder: objective, requests, a per-turn work log,
+  files changed, jobs, open problems, last reply; `/state` shows it) goes in
+  front of the next message.
+- **Background jobs and /loop**: the agent ends a reply with
+  `RUN_IN_BACKGROUND: <cmd>` (or you type `/bg <cmd>`); the job runs detached
+  with its own log, and agy gets the end of the log when it exits. A goal waits
+  for its jobs instead of nudging. `/loop 15m <prompt>` repeats a prompt while
+  the session is idle.
+- **Claude Code habits**: `!cmd` runs a shell command (agy sees the output with
+  your next message), `# note` appends to the project's GEMINI.md, `/init`,
+  `/memory`, `@file` mentions, images and files by +, drag and drop or paste,
+  rewind, `/compact`, `/export`; agy's file links open in a viewer.
 - **Accounts by email**: *Add account* opens Google sign-in; click "Copy to
   Clipboard" on Google's page and come back: the code goes in by itself (agy
   allows 60 seconds). Accounts Google wants verified first are kept, parked with

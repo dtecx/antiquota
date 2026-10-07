@@ -40,6 +40,7 @@ META_KEYS = {"id": "", "title": "", "cwd": "", "model": "", "effort": "", "mode"
 DENIED_NOTE = ("These commands were denied: headless agy cannot ask for permission, so the turn ended. "
                "Do not retry them or reword them; carry on without them: {cmds}")
 AUTO_CONTINUES = 2  # follow-ups after denials per user message, so a stuck agent cannot loop forever
+RETRY_WAITS = (10, 30)   # seconds before retrying a temporary agy error on the same account
 CONTINUE_AFTER_QUOTA = ("Continue exactly where you stopped. Your previous attempt was cut off by an "
                         "account quota limit; do not redo work that is already finished.")
 
@@ -379,6 +380,7 @@ class Engine:
                 ok, reply, denied = self._turn(s, prompt)
                 if ok:
                     self._jobs_from_reply(s, reply)
+                self.save_state(s)
                 waiting = [j for j in m["jobs"] if not j["ended"] and j["notify"]]
                 text = None
                 note = DENIED_NOTE.format(cmds=", ".join(f"`{c}`" for c in denied)) if denied else ""
@@ -428,10 +430,10 @@ class Engine:
             return False, "", []
         bucket = a.bucket_of(["--model", m["model"]])
         pool = a.BUCKETS[bucket]
-        failovers = 0
+        failovers = retries = 0
         while failovers <= 2 * len(a.slots()) + 1:  # bounded: every account walled twice is enough
             self.status(s, "waiting")
-            slot, fd = a.acquire(bucket, stop=s.stop)
+            slot, fd = a.acquire(bucket, stop=s.stop, prefer=m.get("last_slot"))
             if s.stop.is_set():
                 return False, "", []
             if slot is None:
@@ -446,17 +448,51 @@ class Engine:
                 if s.stop.wait(max(5, nxt - time.time() + 30)):
                     return False, "", []
                 continue
+            if slot != m.get("last_slot"):
+                a.route(slot=slot, bucket=bucket, event="pick", session=m["id"], previous=m.get("last_slot"))
             try:
                 r = self._run_agy(s, slot, prompt)
-                if r["quota"]:
-                    a.wall_after_quota_error(slot, bucket)
+                outcome = a.wall_after_quota_error(slot, bucket) if r["fail"] == "quota" else None
+                if r["fail"] == "auth":
+                    a.mark_signed_out(slot)
+                elif r["ok"] and time.time() - a.probed_at(slot) > a.QUOTA_FRESH:
+                    # Still holding the lease: a fresh reading keeps rotation and the reserve honest.
+                    a.probe_slot(slot)
+                    self.publish(None, {"t": "accounts", "accounts": a.overview()})
             finally:
                 os.close(fd)
-            if r["quota"]:
-                self.notice(s, "handoff", f"{slot} ran out of {pool} quota (back {hhmm(a.walled_until(slot, bucket))}). "
-                                          "Passing the turn to the next account.", slot=slot)
-                prompt = CONTINUE_AFTER_QUOTA
-                failovers += 1
+            # agy stores the request in the conversation before the model call that fails, so the
+            # next account resumes it with a nudge; without a conversation the request goes again.
+            again = CONTINUE_AFTER_QUOTA if m.get("conversation_id") else prompt
+            if r["fail"] == "quota":
+                if outcome == "quota":
+                    why = f"{slot} ran out of {pool} quota (back {hhmm(a.walled_until(slot, bucket))})"
+                else:
+                    why = f"{slot} is rate limited but has quota left; it rests {int(a.walled_until(slot, bucket) - time.time())}s"
+                self.notice(s, "handoff", why + ". Passing the turn to the next account.", slot=slot)
+                prompt, failovers = again, failovers + 1
+                continue
+            if r["fail"] == "auth":
+                self.notice(s, "handoff", f"Google rejected {slot}'s sign-in: sign it in again. Passing the turn "
+                                          "to the next account.", slot=slot)
+                prompt, failovers = again, failovers + 1
+                continue
+            if r["fail"] == "transient":
+                retries += 1
+                if retries <= len(RETRY_WAITS):
+                    wait = RETRY_WAITS[retries - 1]
+                    self.notice(s, "info", f"agy hit a temporary error on {slot}; retrying in {wait}s. "
+                                           f"({r['error'][-200:]})")
+                    a.route(slot=slot, bucket=bucket, event="retry", session=m["id"], wait=wait, why=r["error"][-200:])
+                    if s.stop.wait(wait):
+                        return False, "", []
+                else:  # this account keeps failing: rest it and move on
+                    a.set_wall(slot, bucket, time.time() + a.COOLDOWN[1], "repeated errors")
+                    a.route(slot=slot, bucket=bucket, event="cooldown", secs=a.COOLDOWN[1], why="repeated errors")
+                    self.notice(s, "handoff", f"{slot} keeps failing; it rests {a.COOLDOWN[1] // 60} min. "
+                                              "Passing the turn to the next account.", slot=slot)
+                    retries, failovers = 0, failovers + 1
+                prompt = again
                 continue
             if r["conv_lost"]:
                 self.notice(s, "handoff", "The conversation could not be resumed on this account; "
@@ -489,7 +525,7 @@ class Engine:
         reader = threading.Thread(target=lambda: err.append(proc.stderr.read()), daemon=True)
         reader.start()
         texts, before, tail, result, denied = {}, {}, [], {}, []
-        last = None                       # (step_type, state) of this turn's latest step
+        last, steps = None, 0             # (step_type, state) of this turn's latest step; steps seen
         usage = {"input_tokens": 0, "output_tokens": 0, "thinking_tokens": 0, "total_tokens": 0}
         context = 0  # the largest prompt this turn sent: history + tools + cached part
         for line in proc.stdout:
@@ -505,7 +541,7 @@ class Engine:
             elif ev == "step_update":
                 su = d.get("step_update") or {}
                 self._step(s, turn, su, texts, before, denied)
-                last = (su.get("step_type"), su.get("state"))
+                last, steps = (su.get("step_type"), su.get("state")), steps + 1
                 step_usage = (su.get("usage") or {}) if su.get("state") == "DONE" else {}
                 for k in usage:  # per step: agy's result totals the whole conversation
                     usage[k] += step_usage.get(k, 0)
@@ -526,9 +562,10 @@ class Engine:
         # quota error from the account that failed before this one. A turn that ends with a
         # finished reply worked, whatever that result says.
         replied = last == ("agent_response", "DONE")
-        quota = not stopped and not replied and a.is_quota_error(proc.returncode, "".join(tail), err)
-        ok = not stopped and not quota and (replied or (proc.returncode == 0 and result.get("status") == "SUCCESS"))
-        conv_lost = (resumed and not ok and not quota and not stopped
+        fail = None if stopped or replied else a.classify(proc.returncode, "".join(tail), err)
+        quota = fail == "quota"
+        ok = not stopped and not fail and (replied or (proc.returncode == 0 and result.get("status") == "SUCCESS"))
+        conv_lost = (resumed and not ok and not fail and not stopped
                      and bool(re.search(r"conversation", err + json.dumps(result), re.I)))
         m["usage"]["input"] += usage.get("input_tokens", 0)
         m["usage"]["output"] += usage.get("output_tokens", 0)
@@ -544,15 +581,16 @@ class Engine:
         if result.get("denied_actions") or denied:
             self.notice(s, "denied", "agy denied a tool call that headless mode cannot ask about.",
                         actions=result.get("denied_actions") or [], commands=denied)
-        elif err and not ok and not quota and not stopped and not conv_lost:
+        elif err and not ok and not fail and not stopped and not conv_lost:
             self.notice(s, "error", err[-4000:])
-        status = ("stopped" if stopped else "quota" if quota else "SUCCESS" if ok else
+        status = ("stopped" if stopped else fail if fail else "SUCCESS" if ok else
                   result.get("status") or f"exit {proc.returncode}")
         self.publish(sid, {"t": "turn_end", "turn": turn, "slot": slot, "status": status, "usage": usage,
                            "secs": round(time.time() - t0, 1)}, persist=True)
         self.save(s)
         final = (texts[max(texts)] if texts else "") or result.get("response") or ""
-        return {"ok": ok, "quota": quota, "conv_lost": conv_lost, "text": final, "denied": [c for c in denied if c]}
+        return {"ok": ok, "fail": fail, "quota": quota, "conv_lost": conv_lost, "steps": steps, "text": final,
+                "denied": [c for c in denied if c], "error": (err or a.error_text(proc.returncode, "".join(tail), ""))[-600:]}
 
     def _step(self, s, turn, su, texts, before, denied):
         sid, step, state = s.meta["id"], su.get("step_index"), su.get("state")
@@ -776,14 +814,23 @@ class Engine:
             s.stop.clear()
 
     def _scheduler(self):
+        polled = time.time()
         while True:
             time.sleep(5)
+            if time.time() - polled > a.QUOTA_FRESH:  # idle accounts: keep their gauges and walls current
+                polled = time.time()
+                threading.Thread(target=self._poll_quota, daemon=True).start()
             for sid, s in list(self.sessions.items()):
                 lp = s.meta.get("loop")
                 if lp and time.time() >= lp["next"] and not s.busy and not s.stop.is_set():
                     s.meta["loop"] = {**lp, "next": time.time() + lp["every"]}
                     self.save(s)
                     self.send(sid, lp["prompt"], kind="loop")
+
+    def _poll_quota(self):
+        changed = [s for s in a.slots() if a.refresh(s, max_age=a.QUOTA_FRESH)]
+        if changed:
+            self.publish(None, {"t": "accounts", "accounts": a.overview()})
 
     def shell(self, sid, cmd, timeout=SHELL_TIMEOUT):
         """The user's own `!command`, run in the project folder. agy sees it with the next message."""
@@ -950,17 +997,83 @@ class Engine:
 
     def _handoff(self, s, prompt):
         """Prompt for a fresh conversation that picks up a session's work."""
-        evs = self.events(s.meta["id"])[-300:]
-        users = [e["text"] for e in evs if e["t"] == "user" and e.get("kind") == "user"][-5:]
-        says = [e["text"][-1500:] for e in evs if e["t"] == "assistant"][-3:]
-        tools = [f"- {e['name']} {e['params'].get('TargetFile') or e['params'].get('CommandLine') or e['params'].get('AbsolutePath') or ''}"
-                 for e in evs if e["t"] == "tool"][-25:]
-        g = s.meta.get("goal")
-        parts = ["You are taking over work from an earlier agent session whose conversation could not be resumed."]
+        return ("You are taking over work from an earlier agent session whose conversation could not be "
+                "resumed. Its handoff state follows; check the current files yourself before relying on it.\n\n"
+                + self.state_md(s) + "\n\nContinue. Current request:\n" + prompt)
+
+    def state_md(self, s):
+        """The session's handoff document, built from its own record (no model, no memory service):
+        objective, requests, what each turn did, files changed, jobs, open problems, last reply.
+        agy-loop keeps it current in <session>/STATE.md after every turn."""
+        m, evs = s.meta, self.events(s.meta["id"])
+        cwd = m["cwd"]
+        rel = lambda p: os.path.relpath(p, cwd) if p and p.startswith(cwd) else (p or "?")
+        out = [f"# Handoff: {m['title'] or 'untitled session'}",
+               f"Folder: {cwd}  ·  model {m['model']}  ·  {m['turns']} turns  ·  "
+               f"accounts used: {', '.join(dict.fromkeys(e['slot'] for e in evs if e['t'] == 'turn_start')) or 'none yet'}"]
+        g = m.get("goal")
         if g:
-            parts.append("Objective: " + g["objective"])
-        parts += ["Recent user requests:\n" + "\n".join(f"- {u[:500]}" for u in users),
-                  "Recent tool steps:\n" + "\n".join(tools),
-                  "The earlier agent's last messages:\n" + "\n---\n".join(says),
-                  "Check the current state of the files yourself, then continue. Current request:\n" + prompt]
-        return "\n\n".join(parts)
+            out += ["", "## Objective", g["objective"],
+                    f"State: {g['state']}, round {g['round']}/{g['max_rounds']}" + (f", check `{g['check']}`" if g.get("check") else "")]
+            judged = [e for e in evs if e["t"] == "notice" and e.get("kind") in ("check", "verdict")][-2:]
+            for e in judged:
+                d = e.get("data") or {}
+                out.append(f"- {e['kind']}: {e['text'][:300]}" + "".join(f"\n  - {x}" for x in (d.get("missing") or [])[:8]))
+        asks = [e for e in evs if e["t"] == "user"][-8:]
+        if asks:
+            out += ["", "## Requests (oldest first)"] + [f"- [{e.get('kind', 'user')}] {e['text'][:400].strip()}" for e in asks]
+        turns, cur = [], None
+        for e in evs:
+            if e["t"] == "turn_start":
+                cur = {"n": e["turn"], "slot": e["slot"], "edits": [], "ran": [], "status": "?"}
+                turns.append(cur)
+            elif cur and e["t"] == "tool":
+                p = e.get("params") or {}
+                if e.get("diff") or e["name"] in ("write_to_file", "replace_file_content", "multi_replace_file_content"):
+                    f = rel(p.get("TargetFile") or p.get("File"))
+                    if f not in cur["edits"]:
+                        cur["edits"].append(f)
+                elif e["name"] == "run_command" and p.get("CommandLine"):
+                    cur["ran"].append(p["CommandLine"][:120] + (" (failed)" if e.get("error") else ""))
+            elif cur and e["t"] == "turn_end":
+                cur["status"] = e["status"]
+        if turns:
+            out += ["", "## Work log (latest turns)"]
+            for t in turns[-12:]:
+                line = f"- #{t['n']} {t['slot'].split('@')[0]} {t['status']}"
+                if t["edits"]:
+                    line += " · edited " + ", ".join(t["edits"][:8])
+                if t["ran"]:
+                    line += " · ran " + "; ".join(f"`{c}`" for c in t["ran"][-4:])
+                out.append(line)
+        files = sorted({f for t in turns for f in t["edits"]})
+        if files:
+            out += ["", "## Files changed in this session"] + [f"- {f}" for f in files[:60]]
+        if m["jobs"]:
+            out += ["", "## Background jobs"] + [
+                f"- `{j['cmd']}`: " + ("running" if not j["ended"] else "stopped" if j["stopped"] else f"exit {j['code']}")
+                + f", log {j['log']}" for j in m["jobs"][-6:]]
+        problems = [e for e in evs[-80:] if e["t"] == "notice" and e.get("kind") in ("error", "denied")][-3:]
+        if problems:
+            out += ["", "## Open problems"] + [f"- {e['kind']}: {e['text'][:300]}" for e in problems]
+        last = [e["text"] for e in evs if e["t"] == "assistant"][-1:]
+        if last:
+            out += ["", "## Last reply", last[0][-1500:].strip()]
+        return "\n".join(out)
+
+    def save_state(self, s):
+        try:
+            a.write_atomic(os.path.join(s.dir, "STATE.md"), self.state_md(s) + "\n")
+        except OSError:
+            pass
+
+    def inherit(self, sid, from_sid):
+        """Start this session from another one's handoff state (same folder or not)."""
+        s, src = self.sessions[sid], self.sessions[from_sid]
+        if s.busy:
+            raise ValueError("stop the running turn first")
+        note = ("You are continuing work from an earlier agy-loop session. Its handoff state follows; check "
+                "the current files yourself before relying on it.\n\n" + self.state_md(src))
+        s.meta["pending_note"] = "\n\n".join(x for x in (s.meta["pending_note"], note) if x)
+        self.save(s)
+        self.notice(s, "info", f"Picks up from \"{src.meta['title'] or from_sid}\" with the next message.", source=from_sid)

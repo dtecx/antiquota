@@ -362,12 +362,24 @@ function blankFor(m) {
     h('p', {}, `Runs headless in ${m.cwd.replace(/^\/Users\/[^/]+/, '~')} on the first account with quota left. `
       + 'Goal mode keeps the agent going until it is done and your checks agree, passing the work between accounts as quota runs out.'),
     h('div', { class: 'row' }, h('button', { class: 'btn', onclick: openGoal }, '◎ Set a goal')),
+    pickUp(m),
     h('div', { class: 'keys' },
       h('kbd', {}, 'Enter'), h('span', {}, 'send'),
       h('kbd', {}, '⇧ Enter'), h('span', {}, 'new line'),
       h('kbd', {}, '/'), h('span', {}, 'commands'),
       h('kbd', {}, 'Esc'), h('span', {}, 'stop the running turn'),
       h('kbd', {}, '⌘N'), h('span', {}, 'new session')));
+}
+/* A new session can start from an earlier one's handoff state: agy-loop's own record of it. */
+function pickUp(m) {
+  const earlier = [...S.sessions.values()].filter(x => x.id !== m.id && x.cwd === m.cwd && x.turns > 0)
+    .sort((x, y) => y.updated - x.updated).slice(0, 3);
+  if (!earlier.length) return null;
+  return h('div', { class: 'pickup' }, h('span', { class: 'cap' }, 'Pick up from an earlier session here:'),
+    ...earlier.map(x => h('button', {
+      class: 'btn small', title: 'Its handoff state (requests, work log, files, last reply) goes in front of your next message',
+      onclick: () => api('POST', `sessions/${m.id}/inherit`, { from: x.id }).then(() => toast('Picks up from ' + (x.title || 'that session'))).catch(fail),
+    }, x.title || 'Untitled', h('span', { class: 'when' }, ' · ' + ago(x.updated)))));
 }
 function renderBlank() {
   $('#transcript').replaceChildren(h('div', { class: 'blank' },
@@ -853,6 +865,7 @@ const SLASH = [
   ['/bg', 'run a command in the background; agy gets its log when it exits: /bg <command>'],
   ['/loop', 'send a prompt now and every interval while idle: /loop 15m <prompt> · /loop off'],
   ['/memory', 'show this project\'s GEMINI.md (add lines with # note)'],
+  ['/state', 'show the handoff state agy-loop keeps for this session'],
   ['/stop', 'stop the running turn, pause the goal'],
   ['/resume', 'resume a paused goal'],
   ['/cleargoal', 'remove the goal'],
@@ -1045,6 +1058,11 @@ async function slash(text) {
         await api('POST', `sessions/${m.id}/loop`, { every, prompt: p.join(' ') });
         return toast(`Every ${every}: ${p.join(' ').slice(0, 60)}`);
       }
+      case '/state': {
+        need();
+        const r = await api('GET', `sessions/${m.id}/state`);
+        return showFile({ rel: 'handoff state · ' + (m.title || m.id), path: 'STATE.md', text: r.text });
+      }
       case '/memory': {
         need();
         const f = await api('GET', `sessions/${m.id}/file?path=GEMINI.md`).catch(() => api('GET', `sessions/${m.id}/file?path=AGENTS.md`)).catch(() => null);
@@ -1118,12 +1136,19 @@ function verifyBlock(email, url) {
         },
       }, 'Check again')));
 }
+const ROTATION_CAP = {
+  perishable: 'Rotation spends the allowance that resets soonest first, so no quota expires unused.',
+  sticky: 'Rotation drains accounts one by one, in order.',
+  'round-robin': 'Rotation takes the least recently used account.',
+};
+const short = s => (s || '').split('@')[0];
+const shortWhy = w => !w ? 'walled' : /^rate limited/.test(w) ? 'resting' : /^signed out/.test(w) ? 'signed out' : /verify/.test(w) ? 'verify' : /errors/.test(w) ? 'resting' : 'walled';
 function winLabel(w) { return w === '5h' ? '5 hour' : w; }
 async function renderPane() {
   const pane = $('#pane');
   if (S.tab === 'accounts') {
     pane.replaceChildren(...[
-      h('p', { class: 'cap' }, 'Accounts are used in order: one drains before the next takes over. Gemini and Claude/GPT quotas run out separately; a spent pool is walled until its reset.'),
+      h('p', { class: 'cap' }, ROTATION_CAP[S.defaults.rotation || 'perishable'] + ' A session stays on its account while it has headroom; below 3% it moves on before failing mid-turn. A spent pool is walled until its reset; a short rate limit only rests the account.'),
       !S.accounts.length && h('p', { class: 'cap' }, 'No account yet. Add one: agy-loop signs it in separately from your agy CLI.'),
       ...S.accounts.map(acct => h('div', { class: 'card' + (acct.verify ? ' verify' : '') },
         h('div', { class: 'card-head' }, h('b', {}, acct.slot),
@@ -1133,7 +1158,7 @@ async function renderPane() {
           `today  ↑ ${fmtK(acct.today.input)}  ↓ ${fmtK(acct.today.output)}` + (acct.today.thinking ? `  ✻ ${fmtK(acct.today.thinking)}` : '') +
           `  · ${acct.today.turns} turn${acct.today.turns > 1 ? 's' : ''}`) : null,
         !acct.verify && Object.entries({ gemini: 'Gemini', cg: 'Claude / GPT' }).map(([b, label]) => h('div', { class: 'pool' },
-          h('div', { class: 'pool-name' }, h('span', {}, label), acct.walls[b] ? h('em', {}, 'walled until ' + clock(acct.walls[b])) : null),
+          h('div', { class: 'pool-name' }, h('span', {}, label), acct.walls[b] ? h('em', { title: (acct.why || {})[b] || '' }, `${shortWhy((acct.why || {})[b])} until ${clock(acct.walls[b])}`) : null),
           Object.entries(acct.quota[b] || {}).map(([w, [frac, reset]]) => h('div', { class: 'win', title: reset ? 'resets ' + new Date(reset * 1000).toLocaleString() : 'disabled until the other window resets' },
             h('span', {}, winLabel(w)),
             h('div', { class: 'bar' + (frac <= .02 ? ' wall' : frac < .2 ? ' low' : '') }, h('i', { style: `width:${Math.max(2, frac * 100)}%` })),
@@ -1147,7 +1172,25 @@ async function renderPane() {
       h('div', { class: 'add-row' },
         h('button', { class: 'primary', onclick: () => openAcct() }, 'Add account'),
         h('button', { class: 'btn', onclick: () => api('POST', 'accounts/probe').then(() => toast('Probing accounts…')).catch(fail) }, 'Probe now')),
+      h('h3', {}, 'Routing'),
+      h('div', { class: 'routing', id: 'routing' }, h('p', { class: 'cap' }, 'Loading…')),
     ].filter(Boolean));
+    api('GET', 'routing?n=40').then(rows => {
+      const box = $('#routing');
+      if (!box) return;
+      const title = sid => S.sessions.get(sid)?.title || sid;
+      const line = e => ({
+        pick: [`→ ${short(e.slot)}`, `serves ${title(e.session)}` + (e.previous ? ` (was ${short(e.previous)})` : '')],
+        wall: [`▮ ${short(e.slot)}`, `${e.why}, walled until ${clock(e.until)}`],
+        cooldown: [`◌ ${short(e.slot)}`, `${e.why}, rests ${Math.round(e.secs / 60) || 1} min`],
+        retry: [`↻ ${short(e.slot)}`, `temporary error, retry in ${e.wait}s`],
+        'signed-out': [`✕ ${short(e.slot)}`, 'sign-in rejected: sign in again'],
+      })[e.event] || [e.event, e.slot || ''];
+      box.replaceChildren(...(rows.length ? rows.slice().reverse().map(e => {
+        const [k, text] = line(e);
+        return h('div', { class: 'rt ' + e.event, title: e.why || '' }, h('span', { class: 't' }, clock(e.ts)), h('span', { class: 'k' }, k), h('span', {}, text));
+      }) : [h('p', { class: 'cap' }, 'No routing decisions yet.')]));
+    }).catch(() => {});
   } else if (S.tab === 'changes') {
     const files = new Map();
     for (const e of S.events) {
@@ -1470,6 +1513,9 @@ function defaultsForm(df) {
   const mode = h('select', { id: 'df-mode' }, [['default', 'default'], ['accept-edits', 'accept edits'], ['plan', 'plan'], ['bypass', 'bypass']]
     .map(([v, t]) => h('option', { value: v }, t)));
   const ver = h('select', { id: 'df-vmodel' });
+  const rot = h('select', { id: 'df-rotation' }, [['perishable', 'soonest reset first'], ['sticky', 'one by one'], ['round-robin', 'round robin']]
+    .map(([v, t]) => h('option', { value: v }, t)));
+  rot.value = df.rotation || 'perishable';
   setPicker(fam, eff, df.model);
   fam.addEventListener('change', () => pickFamily(fam, eff, eff.value));
   mode.value = df.mode;
@@ -1481,10 +1527,13 @@ function defaultsForm(df) {
       h('label', { class: 'field' }, h('span', {}, 'Effort'), eff),
       h('label', { class: 'field' }, h('span', {}, 'Mode'), mode),
       h('label', { class: 'field' }, h('span', {}, 'Goal verifier'), ver)),
+    h('h3', {}, 'Accounts'),
+    h('div', { class: 'row3' }, h('label', { class: 'field' }, h('span', {}, 'Rotation'), rot)),
+    h('p', { class: 'cap' }, 'Sessions keep their account while it has headroom; rotation decides which account a session moves to.'),
     h('div', { class: 'add-row' }, h('button', {
       class: 'primary', onclick: async () => {
         try {
-          S.defaults = { ...S.defaults, ...await api('PUT', 'settings/defaults', { model: eff.value, mode: mode.value, verifier_model: ver.value }) };
+          S.defaults = { ...S.defaults, ...await api('PUT', 'settings/defaults', { model: eff.value, mode: mode.value, verifier_model: ver.value, rotation: rot.value }) };
           toast('Defaults saved');
         } catch (e) { fail(e); }
       },

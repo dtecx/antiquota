@@ -148,3 +148,30 @@ def test_usage_is_visible_where_ccusage_reads_antigravity(home, monkeypatch):
     os.unlink(link)
     (home / ".config/antigravity").mkdir()           # something else owns the path: leave it alone
     assert not a.expose_usage() and not os.path.islink(link)
+
+
+def _quota(slot, gemini_frac, weekly_reset):
+    with open(a.state("quota", slot + ".json"), "w") as f:
+        json.dump({"at": time.time(), "quota": {"gemini": {"5h": [gemini_frac, time.time() + 3600],
+                                                          "weekly": [gemini_frac, weekly_reset]}}}, f)
+
+
+def test_rank_spends_the_soonest_reset_first_but_keeps_a_warm_account(home):
+    now = time.time()
+    _quota(ONE, 0.8, now + 5 * 86400)
+    _quota(TWO, 0.5, now + 1 * 86400)          # its weekly allowance expires first
+    assert a.rank("gemini") == [TWO, ONE]
+    assert a.rank("gemini", prefer=ONE) == [ONE, TWO]   # the session's account while it has headroom
+    _quota(ONE, 0.01, now + 5 * 86400)         # under the reserve: rotate before it fails mid-turn
+    assert a.rank("gemini", prefer=ONE) == [TWO, ONE]
+    assert a.rank("gemini", strategy="sticky") == [TWO, ONE]  # the reserve applies to every strategy
+    a.set_wall(TWO, "gemini", now + 60, "test")
+    assert a.rank("gemini") == [ONE]
+
+
+def test_classify_reads_only_agys_error_channels():
+    err = lambda text: json.dumps({"event": "result", "result": {"status": "ERROR", "error": text, "response": "quota"}})
+    assert a.classify(1, err("RESOURCE_EXHAUSTED: Individual quota reached"), "") == "quota"
+    assert a.classify(1, err("UNAVAILABLE: the model is overloaded"), "") == "transient"
+    assert a.classify(1, err("UNAUTHENTICATED: invalid_grant"), "") == "auth"
+    assert a.classify(0, json.dumps({"event": "result", "result": {"status": "SUCCESS", "response": "quota 429"}}), "") is None

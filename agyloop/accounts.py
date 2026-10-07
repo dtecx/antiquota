@@ -51,6 +51,15 @@ WALL_FRACTION = 0.02          # calibration knob: wall a basket at or below 2% l
 FALLBACK_WALL = 5 * 3600 + 600
 TEMPFAIL = 75                 # EX_TEMPFAIL: out of quota, retry later
 QUOTA_RE = re.compile(r"RESOURCE_EXHAUSTED|quota|\b429\b|rate.?limit|usage limit", re.I)
+# Errors that say nothing about the account's quota: retry after a pause, then try another account.
+TRANSIENT_RE = re.compile(r"UNAVAILABLE|overloaded|capacity|\b50[0234]\b|deadline.?exceeded|internal error|"
+                          r"temporar|connection (reset|refused)|timed? ?out|try again", re.I)
+AUTH_RE = re.compile(r"UNAUTHENTICATED|invalid_grant|token (has been )?(expired|revoked)|Authentication required|"
+                     r"not (signed|logged) in|re-?authenticate", re.I)
+COOLDOWN = (60, 300, 900)     # seconds an account rests after a short rate limit: 1st, 2nd, 3rd+ time
+AFFINITY_WAIT = 10            # seconds a session waits for its own busy account before taking another
+QUOTA_FRESH = 600             # seconds a quota reading counts as fresh
+RESERVE = 0.03                # rotate away from an account below this fraction before it fails mid-turn
 
 
 def home():
@@ -541,6 +550,56 @@ def walled_until(slot, bucket):
     return t if t > time.time() else 0
 
 
+def wall_reason(slot, bucket):
+    try:
+        with open(state("walls", f"{slot}.{bucket}")) as f:
+            t, _, why = f.read().strip().partition(" ")
+        return why if float(t) > time.time() else ""
+    except (OSError, ValueError):
+        return ""
+
+
+def probed_at(slot):
+    try:
+        with open(state("quota", slot + ".json")) as f:
+            return json.load(f).get("at") or 0
+    except (OSError, ValueError):
+        return 0
+
+
+def refresh(slot, max_age=0):
+    """Re-read one idle account's quota panel (no model tokens). Skipped while a call holds the
+    account (its own turn refreshes it) or when the last reading is younger than max_age."""
+    if time.time() - probed_at(slot) < max_age:
+        return False
+    fd = try_lease(slot)
+    if fd is None:
+        return False
+    try:
+        sync(slot_home(slot))
+        return probe_slot(slot) is not None
+    finally:
+        os.close(fd)
+
+
+def overview():
+    """Every account with its quota, walls (and why), verification state and today's usage."""
+    out, today = [], usage_today()
+    for s in slots():
+        try:
+            with open(state("quota", s + ".json")) as f:
+                q = json.load(f)
+        except (OSError, ValueError):
+            q = {}
+        fd = try_lease(s)
+        if fd is not None:
+            os.close(fd)
+        out.append({"slot": s, "busy": fd is None, "probed": q.get("at"), "quota": q.get("quota", {}),
+                    "walls": {b: walled_until(s, b) for b in BUCKETS}, "why": {b: wall_reason(s, b) for b in BUCKETS},
+                    "verify": needs_verify(s), "today": today.get(s, {})})
+    return out
+
+
 def write_atomic(path, text):
     """Replace a file in one step. The temp name is per process and thread, because the GUI's
     session threads, its request threads and a CLI run can write the same file at once."""
@@ -575,14 +634,18 @@ def try_lease(slot):
         return None
 
 
-def acquire(bucket, pin=None, stop=None):
-    """Lease the first live slot. Sticky: one account drains before the next starts.
-
-    (None, None) when every slot is walled, or when `stop` (an Event) is set."""
+def acquire(bucket, pin=None, stop=None, prefer=None):
+    """Lease the best live slot (see rank). (None, None) when every slot is walled, or when
+    `stop` (an Event) is set."""
+    t0 = time.time()
     while not (stop and stop.is_set()):
-        live = [s for s in ([pin] if pin else slots()) if not walled_until(s, bucket)]
+        live = [s for s in ([pin] if pin else rank(bucket, prefer)) if not walled_until(s, bucket)]
         if not live:
             return None, None
+        # The session's own account may be busy for a moment (a quota probe): wait a little for it
+        # rather than hop accounts and lose its warm conversation.
+        if live[0] == prefer and time.time() - t0 < AFFINITY_WAIT:
+            live = live[:1]
         for s in live:
             fd = try_lease(s)
             if fd is not None:
@@ -597,9 +660,149 @@ def next_reset(bucket):
 
 
 def wall_after_quota_error(slot, bucket):
-    # The quota panel knows the real reset; fall back to the 5-hour window.
-    if probe_slot(slot) is None or not walled_until(slot, bucket):
+    """After a quota-looking error, ask the quota panel what it was. Returns "quota" when the account
+    is really spent (walled until its reset) or "rate" when it still has quota: a short rate limit,
+    so it only rests a little, longer each time it repeats."""
+    q = probe_slot(slot)
+    if walled_until(slot, bucket):
+        route(slot=slot, bucket=bucket, event="wall", until=walled_until(slot, bucket), why="quota spent")
+        return "quota"
+    if q is None:  # the panel could not be read: assume the 5-hour window
         set_wall(slot, bucket, time.time() + FALLBACK_WALL, "quota error")
+        route(slot=slot, bucket=bucket, event="wall", until=time.time() + FALLBACK_WALL, why="quota error, panel unreadable")
+        return "quota"
+    strikes = _strikes(slot, bucket)
+    rest = COOLDOWN[min(strikes, len(COOLDOWN) - 1)]
+    set_wall(slot, bucket, time.time() + rest, f"rate limited ({strikes + 1}x)")
+    route(slot=slot, bucket=bucket, event="cooldown", secs=rest, why="rate limited, quota left")
+    return "rate"
+
+
+def _strikes(slot, bucket, window=3600):
+    """Rate-limit cooldowns of this account in the last hour (counted from the routing log)."""
+    now, n = time.time(), 0
+    for e in routes(400):
+        if e.get("slot") == slot and e.get("bucket") == bucket and e.get("event") == "cooldown" and now - e["ts"] < window:
+            n += 1
+    return n
+
+
+def classify(rc, out, err):
+    """What a failed agy call means for the account: "quota", "auth", "transient" or None.
+    Only agy's own error channels count, never the model's answer text."""
+    text = error_text(rc, out, err)
+    if not text:
+        return None
+    if AUTH_RE.search(text):
+        return "auth"
+    if QUOTA_RE.search(text):
+        return "quota"
+    if TRANSIENT_RE.search(text):
+        return "transient"
+    return None
+
+
+def error_text(rc, out, err):
+    parts = [err] if rc != 0 and err else []
+    for chunk in [out, *out.splitlines()]:
+        try:
+            d = json.loads(chunk)
+        except ValueError:
+            continue
+        if isinstance(d, dict) and isinstance(d.get("result"), dict):  # stream-json result event
+            d = d["result"]
+        if isinstance(d, dict) and (d.get("type") == "error" or d.get("error")
+                                    or d.get("status") not in (None, "SUCCESS")):
+            parts.append(json.dumps({k: v for k, v in d.items() if k != "response"}))
+    return "\n".join(parts)
+
+
+def mark_signed_out(slot):
+    """agy says the account's sign-in is gone: park it until it signs in again (a probe clears it)."""
+    for b in BUCKETS:
+        set_wall(slot, b, time.time() + 30 * 86400, "signed out: sign in again")
+    route(slot=slot, event="signed-out", why="agy rejected the account's token")
+
+
+# --- routing: which account serves the next call -------------------------------
+
+def setting(key, default):
+    """agy-loop's own settings (~/.agyloop/settings.json), read fresh each time."""
+    try:
+        with open(os.path.join(base(), "settings.json")) as f:
+            return json.load(f).get(key, default)
+    except (OSError, ValueError, AttributeError):
+        return default
+
+
+def headroom(slot, bucket):
+    """(usable fraction now, weekly reset epoch) from the last quota probe; (None, None) unknown."""
+    try:
+        with open(state("quota", slot + ".json")) as f:
+            windows = json.load(f)["quota"][bucket]
+    except (OSError, ValueError, KeyError, TypeError):
+        return None, None
+    fracs = [f for f, _ in windows.values()]
+    resets = [r for _, r in windows.values() if r]
+    return (min(fracs) if fracs else None), (max(resets) if resets else None)
+
+
+def rank(bucket, prefer=None, strategy=None):
+    """Live accounts for `bucket`, best first.
+
+    perishable (default): spend the allowance that resets soonest first, so none expires unused
+    sticky: drain accounts one by one in a fixed order
+    round-robin: least recently used first
+    Whatever the strategy, an account under the reserve goes last (rotate before it fails
+    mid-turn), and the session's previous account stays first while it has headroom: its
+    conversation is warm there."""
+    strategy = strategy or setting("rotation", "perishable")
+    order = slots()
+    live = [s for s in order if not walled_until(s, bucket)]
+    used = {}
+    if strategy == "round-robin":
+        for e in routes(400):
+            if e.get("event") == "pick":
+                used[e["slot"]] = e["ts"]
+
+    def key(s):
+        rem, reset = headroom(s, bucket)
+        low = rem is not None and rem < RESERVE
+        if strategy == "sticky":
+            k = (order.index(s),)
+        elif strategy == "round-robin":
+            k = (used.get(s, 0),)
+        else:
+            k = (reset or float("inf"), -(rem if rem is not None else 0.5))
+        return (low, s != prefer, *k)
+    return sorted(live, key=key)
+
+
+def route(**event):
+    """Append one routing decision to state/routing.jsonl (the audit trail the GUI shows)."""
+    event.setdefault("ts", time.time())
+    p = state("routing.jsonl")
+    with open(p, "a") as f:
+        f.write(json.dumps(event) + "\n")
+    if os.path.getsize(p) > 2_000_000:  # keep the newest part
+        with open(p) as f:
+            keep = f.readlines()[-5000:]
+        write_atomic(p, "".join(keep))
+
+
+def routes(n=200):
+    try:
+        with open(state("routing.jsonl")) as f:
+            lines = f.readlines()[-n:]
+    except OSError:
+        return []
+    out = []
+    for line in lines:
+        try:
+            out.append(json.loads(line))
+        except ValueError:
+            pass
+    return out
 
 
 def bucket_of(args):
@@ -727,21 +930,7 @@ def _tee(cmd, env):
 
 
 def is_quota_error(rc, out, err):
-    """Only agy's own error channels count, never the model's answer text."""
-    if rc != 0 and QUOTA_RE.search(err):
-        return True
-    for chunk in [out, *out.splitlines()]:
-        try:
-            d = json.loads(chunk)
-        except ValueError:
-            continue
-        if isinstance(d, dict) and isinstance(d.get("result"), dict):  # stream-json result event
-            d = d["result"]
-        if isinstance(d, dict) and (d.get("type") == "error" or d.get("error")
-                                    or d.get("status") not in (None, "SUCCESS")):
-            if QUOTA_RE.search(json.dumps({k: v for k, v in d.items() if k != "response"})):
-                return True
-    return False
+    return classify(rc, out, err) == "quota"
 
 
 def run(args, pin=None):

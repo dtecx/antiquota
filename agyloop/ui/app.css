@@ -759,3 +759,17 @@ a.path:hover { color: var(--baton); text-decoration-color: var(--baton); }
 }
 .jobline .k { font: 600 11px var(--mono); color: var(--ok); }
 .jobline.bad .k { color: var(--bad); }
+
+/* ---------- routing log ---------- */
+.routing { display: grid; gap: 1px; font: 11.5px var(--mono); max-height: 320px; overflow-y: auto; }
+.routing .rt { display: grid; grid-template-columns: 44px 120px minmax(0, 1fr); gap: 8px; padding: 3px 2px; color: var(--ink-3); }
+.routing .rt .t { color: var(--ink-4); font-variant-numeric: tabular-nums; }
+.routing .rt .k { color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.routing .rt span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.routing .rt.wall .k, .routing .rt.signed-out .k { color: var(--bad); }
+.routing .rt.cooldown .k, .routing .rt.retry .k { color: var(--baton); }
+.routing .rt.pick .k { color: var(--ok); }
+
+.pickup { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 4px 0 18px; }
+.pickup .cap { margin: 0 4px 0 0; }
+.pickup .when { color: var(--ink-4); font-size: 11px; }

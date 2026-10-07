@@ -78,20 +78,7 @@ class App:
             threading.Event().wait(PROBE_EVERY)
 
     def accounts(self):
-        out, today = [], a.usage_today()
-        for s in a.slots():
-            try:
-                with open(a.state("quota", s + ".json")) as f:
-                    q = json.load(f)
-            except (OSError, ValueError):
-                q = {}
-            fd = a.try_lease(s)
-            if fd is not None:
-                os.close(fd)
-            out.append({"slot": s, "busy": fd is None, "probed": q.get("at"), "quota": q.get("quota", {}),
-                        "walls": {b: a.walled_until(s, b) for b in a.BUCKETS}, "verify": a.needs_verify(s),
-                        "today": today.get(s, {})})
-        return out
+        return a.overview()
 
     def check(self, name):
         """Probe one account now (e.g. right after verifying it with Google)."""
@@ -342,6 +329,11 @@ class Handler(BaseHTTPRequestHandler):
             case ("DELETE", ["sessions", sid, "loop"]):
                 e.set_loop(sid, 0, "")
                 return {"ok": True}
+            case ("GET", ["sessions", sid, "state"]):
+                return {"text": e.state_md(e.sessions[sid])}
+            case ("POST", ["sessions", sid, "inherit"]):
+                e.inherit(sid, str(b.get("from", "")))
+                return {"ok": True}
             case ("POST", ["sessions", sid, "shell"]):
                 if not str(b.get("cmd", "")).strip():
                     raise ValueError("empty command")
@@ -371,6 +363,8 @@ class Handler(BaseHTTPRequestHandler):
             case ("DELETE", ["sessions", sid, "goal"]):
                 e.clear_goal(sid)
                 return {"ok": True}
+            case ("GET", ["routing"]):
+                return a.routes(int((qs.get("n") or ["60"])[0]))
             case ("GET", ["accounts"]):
                 return app.accounts()
             case ("POST", ["accounts", "probe"]):

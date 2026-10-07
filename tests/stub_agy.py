@@ -2,6 +2,7 @@
 """Stand-in for agy: names the account by its HOME and spends no quota.
 
 STUB_429=<name>    that account fails with a quota error
+STUB_ERROR=<name>:<text>  that account's turns fail with this agy error
 STUB_SPENT=<name>  that account's quota panel shows the Gemini 5h window spent
 STUB_SAY=<text>    extra stdout line, as if the model said it
 
@@ -89,6 +90,10 @@ if args[:1] == ["-p"] and "--output-format" in args and not args[1].startswith("
         reply = "All good.\n**VERDICT: DONE**" if ok else "Not yet.\n- tests are missing\nVERDICT: NOT_DONE"
         emit(conversation_id=conv, status="SUCCESS", response=reply)
         sys.exit(0)
+    if os.environ.get("STUB_ERROR", ":").split(":", 1)[0] == name:  # STUB_ERROR=<name>:<agy error text>
+        emit(event="init", conversation_id=conv, init={"model": "stub", "cwd": os.getcwd()})
+        emit(event="result", result={"conversation_id": conv, "status": "ERROR", "error": os.environ["STUB_ERROR"].split(":", 1)[1]})
+        sys.exit(1)
     if os.environ.get("STUB_429") == name:
         emit(event="result", result={"conversation_id": conv, "status": "ERROR",
                                      "error": "RESOURCE_EXHAUSTED: Individual quota reached"})
