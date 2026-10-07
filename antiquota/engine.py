@@ -427,6 +427,45 @@ class Engine:
                     break
         return sorted(hits, key=lambda h: -h["ts"])[:limit]
 
+    def transcribe(self, data, ext="wav"):
+        """Dictation: agy (Gemini) turns a short recording into text, on the account with the most
+        headroom. No session or conversation is involved; the recording is deleted afterwards."""
+        if not data or len(data) > 25_000_000:
+            raise ValueError("record between a second and a few minutes")
+        folder = os.path.join(a.base(), "state", "dictation")
+        os.makedirs(folder, exist_ok=True)
+        path = os.path.join(folder, f"{uuid.uuid4().hex[:10]}.{re.sub(r'[^a-z0-9]', '', ext.lower())[:5] or 'wav'}")
+        with open(path, "wb") as f:
+            f.write(data)
+        try:
+            slot, fd = a.acquire("gemini")
+            if slot is None:
+                raise ValueError("no account has Gemini quota for dictation right now")
+            try:
+                a.sync(a.slot_home(slot))
+                cmd, env = a.agy_cmd(a.slot_home(slot), [
+                    "-p", f"Listen to the audio file {path}. If it contains clear human speech, transcribe it "
+                          "verbatim in the language spoken, as plain text with normal punctuation, and reply with only "
+                          "that text. If there is no clear human speech (silence, noise, tones, music), reply with "
+                          "exactly NO_SPEECH. Never guess or invent words.",
+                    # flash-low invents words for non-speech; flash-high says NO_SPEECH (checked on a tone)
+                    "--output-format", "json", "--model", "gemini-3.8-flash-high", "--dangerously-skip-permissions",
+                    "--add-dir", folder])
+                r = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=180, stdin=subprocess.DEVNULL, cwd=folder)
+            finally:
+                os.close(fd)
+            try:
+                text = json.loads(r.stdout).get("response") or ""
+            except ValueError:
+                raise ValueError("agy could not transcribe the recording") from None
+            text = text.strip()
+            return {"text": "" if not text or "NO_SPEECH" in text else text, "slot": slot}
+        finally:
+            try:
+                os.remove(path)
+            except OSError:
+                pass
+
     def term(self, sid, cols=100, rows=30, restart=False):
         """The session's shell, started in its folder if it is not running."""
         from .terminal import Terminal

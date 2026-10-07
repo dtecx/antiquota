@@ -293,6 +293,11 @@ class Handler(BaseHTTPRequestHandler):
                 return self._events()
             if len(parts) == 4 and parts[0] == "sessions" and parts[2:] == ["term", "stream"] and method == "GET":
                 return self._term_stream(parts[1])
+            if parts == ["transcribe"] and method == "POST":
+                n = int(self.headers.get("Content-Length") or 0)
+                if n > 25_000_000:
+                    raise ValueError("recording too long")
+                return self._json(200, app.engine.transcribe(self.rfile.read(n), self.headers.get("X-Audio-Type", "wav")))
             if parts[:1] == ["sessions"] and len(parts) == 3 and parts[2] == "attach" and method == "POST":
                 n = int(self.headers.get("Content-Length") or 0)
                 if n > 25_000_000:

@@ -195,3 +195,9 @@ def test_approvals_through_the_hook_and_messages_mid_turn(gui, work):
     assert _hook("pre-tool", run("ls"), sid, state_dir) == {"decision": "allow"}
     gone = _hook("pre-tool", run("curl example.com"), sid, state_dir)
     assert gone["decision"] == "deny" and "not running" in gone["reason"]
+
+
+def test_transcribe_route_needs_audio(gui):
+    srv, app = gui
+    code, body = call(srv, "POST", "/api/transcribe", token=app.token)
+    assert code == 400 and b"record" in body

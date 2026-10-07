@@ -1032,3 +1032,9 @@ body.no-stamps .turn > span:last-child { display: none; }
 .embed .app { grid-template-columns: minmax(0, 1fr) !important; }
 #split-btn.on { color: var(--baton); }
 .ctx-cap { padding: 6px 10px 4px; font: 500 10.5px var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--ink-4); }
+
+/* ---------- dictation ---------- */
+.mic-btn svg { display: block; }
+.mic-btn.rec { border-color: var(--bad); color: var(--bad); animation: pulse 1.2s var(--ease) infinite; }
+.mic-btn.busy { border-color: var(--baton); color: var(--baton); opacity: .7; }
+.mic-state { font: 11px var(--mono); color: var(--bad); margin-left: 2px; white-space: nowrap; }

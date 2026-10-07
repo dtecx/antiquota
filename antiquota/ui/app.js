@@ -1230,6 +1230,104 @@ function showFile(f, [from, to] = [0, 0]) {
   else body.scrollTop = 0;
 }
 
+/* ---------- dictation: live speech recognition where the browser has it, otherwise a WAV
+   recording that agy (Gemini) transcribes on an account with quota ---------- */
+const SPEECH = !NATIVE && (window.SpeechRecognition || window.webkitSpeechRecognition);
+const DICT = { state: 'idle', rec: null, timer: null };
+function setDict(state) {
+  DICT.state = state;
+  const b = $('#mic-btn'), lab = $('#mic-state');
+  b.classList.toggle('rec', state === 'listening' || state === 'recording');
+  b.classList.toggle('busy', state === 'transcribing');
+  b.title = { idle: 'Dictate a message', listening: 'Listening: click to stop', recording: 'Recording: click to stop and transcribe', transcribing: 'Transcribing…' }[state];
+  clearInterval(DICT.timer);
+  lab.hidden = state === 'idle';
+  if (state === 'recording') {
+    const t0 = Date.now(), tick = () => { const s = Math.floor((Date.now() - t0) / 1000); lab.textContent = `● ${s / 60 | 0}:${String(s % 60).padStart(2, '0')} · Esc cancels`; };
+    tick(); DICT.timer = setInterval(tick, 500);
+  } else lab.textContent = state === 'listening' ? '● listening' : state === 'transcribing' ? 'transcribing…' : '';
+}
+function insertText(text) {
+  const t = $('#input'), at = t.selectionStart ?? t.value.length;
+  const before = t.value.slice(0, at), after = t.value.slice(t.selectionEnd ?? at);
+  const pad = before && !/\s$/.test(before) ? ' ' : '';
+  t.value = before + pad + text + after;
+  t.selectionStart = t.selectionEnd = (before + pad + text).length;
+  autosize(); syncSend(); t.focus();
+}
+function toggleDictation() {
+  if (DICT.state === 'listening') return DICT.rec.stop();
+  if (DICT.state === 'recording') return stopRecording(false);
+  if (DICT.state === 'transcribing') return;
+  SPEECH ? startSpeech() : startRecording();
+}
+function startSpeech() {
+  const rec = new SPEECH(), t = $('#input'), base = t.value ? t.value.trimEnd() + ' ' : '';
+  rec.continuous = true; rec.interimResults = true; rec.lang = navigator.language || 'en-US';
+  rec.onresult = e => { let txt = ''; for (const r of e.results) txt += r[0].transcript; t.value = base + txt.trim(); autosize(); syncSend(); };
+  rec.onerror = e => {
+    setDict('idle');
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed' || e.error === 'network') startRecording();
+    else if (e.error !== 'aborted' && e.error !== 'no-speech') toast('Dictation: ' + e.error);
+  };
+  rec.onend = () => { if (DICT.state === 'listening') setDict('idle'); };
+  DICT.rec = rec;
+  rec.start();
+  setDict('listening');
+}
+async function startRecording() {
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } }); }
+  catch (e) { return toast('No microphone access: ' + (e.message || e.name)); }
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const src = ctx.createMediaStreamSource(stream), proc = ctx.createScriptProcessor(4096, 1, 1), chunks = [];
+  proc.onaudioprocess = e => chunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+  src.connect(proc); proc.connect(ctx.destination);
+  DICT.rec = { stream, ctx, proc, src, chunks };
+  setDict('recording');
+}
+async function stopRecording(cancel) {
+  const r = DICT.rec;
+  r.proc.disconnect(); r.src.disconnect(); r.stream.getTracks().forEach(x => x.stop());
+  const rate = r.ctx.sampleRate;
+  await r.ctx.close();
+  if (cancel) return setDict('idle');
+  const samples = r.chunks.reduce((n, c) => n + c.length, 0);
+  if (samples < rate * 0.5) { setDict('idle'); return toast('Too short: hold on a little longer'); }
+  let peak = 0;
+  for (const c of r.chunks) for (let i = 0; i < c.length; i += 16) peak = Math.max(peak, Math.abs(c[i]));
+  if (peak < 0.01) { setDict('idle'); return toast('Nothing heard: is the right microphone selected?'); }
+  setDict('transcribing');
+  try {
+    const res = await fetch('/api/transcribe', { method: 'POST', body: encodeWav(r.chunks, rate, 16000),
+      headers: { 'X-Antiquota-Token': TOKEN, 'X-Audio-Type': 'wav' } });
+    const j = await res.json();
+    if (!res.ok) throw new Error(j.error || res.statusText);
+    j.text ? insertText(j.text) : toast('Nothing heard');
+  } catch (e) { fail(e); }
+  setDict('idle');
+}
+/* Mono 16-bit PCM WAV at `to` Hz: small, and every model reads it. */
+function encodeWav(chunks, from, to) {
+  const all = new Float32Array(chunks.reduce((n, c) => n + c.length, 0));
+  let o = 0; for (const c of chunks) { all.set(c, o); o += c.length; }
+  const ratio = from / to, n = Math.floor(all.length / ratio), pcm = new Int16Array(n);
+  for (let i = 0; i < n; i++) {
+    const a0 = Math.floor(i * ratio), a1 = Math.min(all.length, Math.floor((i + 1) * ratio));
+    let sum = 0; for (let j = a0; j < a1; j++) sum += all[j];
+    const v = Math.max(-1, Math.min(1, sum / Math.max(1, a1 - a0)));
+    pcm[i] = v < 0 ? v * 0x8000 : v * 0x7fff;
+  }
+  const buf = new ArrayBuffer(44 + pcm.length * 2), dv = new DataView(buf);
+  const str = (off, s) => { for (let i = 0; i < s.length; i++) dv.setUint8(off + i, s.charCodeAt(i)); };
+  str(0, 'RIFF'); dv.setUint32(4, 36 + pcm.length * 2, true); str(8, 'WAVE'); str(12, 'fmt ');
+  dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true); dv.setUint32(24, to, true);
+  dv.setUint32(28, to * 2, true); dv.setUint16(32, 2, true); dv.setUint16(34, 16, true); str(36, 'data');
+  dv.setUint32(40, pcm.length * 2, true);
+  new Int16Array(buf, 44).set(pcm);
+  return new Blob([buf], { type: 'audio/wav' });
+}
+
 /* ---------- attachments: + button, drag and drop, pasted screenshots ---------- */
 const attUrl = (sid, name) => `/api/sessions/${sid}/attachments/${encodeURIComponent(name)}?token=${encodeURIComponent(TOKEN)}`;
 function renderTray() {
@@ -1408,7 +1506,7 @@ async function slash(text) {
 }
 
 /* ---------- keyboard shortcuts and commands (⌘/ or /help) ---------- */
-const KEYS = [['⌘= ⌘− ⌘0', 'interface larger / smaller / actual size'], ['⌘N', 'new session'], ['⌘K', 'find a session or message'], ['⌘J', 'focus the message box'],
+const KEYS = [['⌘= ⌘− ⌘0', 'interface larger / smaller / actual size'], ['⌘⇧M', 'dictate a message (again to stop)'], ['⌘N', 'new session'], ['⌘K', 'find a session or message'], ['⌘J', 'focus the message box'],
   ['⌘⇧[  ⌘⇧]', 'previous / next session'], ['⌘B', 'show or hide the side panel'], ['⌘.', 'stop the running turn'],
   ['⌘,', 'settings'], ['⌘/', 'this sheet'], ['Enter', 'send · ⇧Enter new line'], ['↑ ↓', 'earlier messages (empty box)'],
   ['Esc', 'stop the running turn'], ['@', 'mention a file'], ['!', 'run a shell command'], ['#', 'add a note to GEMINI.md']];
@@ -2474,6 +2572,11 @@ function wire() {
   $('#goal-dlg').addEventListener('close', () => { if ($('#goal-dlg').returnValue === 'ok') startGoal(); });
   $('#set-open').addEventListener('click', () => openSettings());
   $('#attach-btn').addEventListener('click', () => $('#attach-input').click());
+  $('#mic-btn').addEventListener('click', toggleDictation);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && DICT.state === 'recording') { e.preventDefault(); e.stopPropagation(); stopRecording(true); }
+    if (e.key === 'Escape' && DICT.state === 'listening') { e.preventDefault(); e.stopPropagation(); DICT.rec.abort(); setDict('idle'); }
+  }, true);
   if (NATIVE) {  // the app's web view does not open new windows: links go to the default browser
     document.documentElement.classList.add('native');
     if (/Mac/.test(navigator.platform)) document.documentElement.classList.add('mac');
@@ -2562,6 +2665,7 @@ function wire() {
     if (mod && e.key === '.') { e.preventDefault(); stop(); }
     if (mod && e.key === ',') { e.preventDefault(); openSettings(); }
     if (mod && e.key === '/') { e.preventDefault(); showShortcuts(); }
+    if (mod && e.shiftKey && e.key.toLowerCase() === 'm') { e.preventDefault(); toggleDictation(); }
     if (mod && (e.key === '=' || e.key === '+')) { e.preventDefault(); zoomBy(0.1); }
     if (mod && (e.key === '-' || e.key === '_')) { e.preventDefault(); zoomBy(-0.1); }
     if (mod && e.key === '0') { e.preventDefault(); zoomBy(0); }
