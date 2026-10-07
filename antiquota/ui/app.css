@@ -785,8 +785,9 @@ a.path:hover { color: var(--baton); text-decoration-color: var(--baton); }
 
 /* ---------- desktop app (macOS: content runs under the title bar) ---------- */
 .native.mac .side { padding-top: 10px; }
-.native.mac .brand { min-height: 32px; padding-left: 72px; }
-.native.mac .brand .mark { display: none; }
+/* the window buttons sit at the left of this row: the name goes to its right end */
+.native.mac .brand { min-height: 32px; padding-left: 72px; padding-right: 8px; }
+.native.mac .brand .mark { margin-left: auto; }
 .native .top, .native .brand { -webkit-user-select: none; user-select: none; }
 
 /* ---------- approvals ---------- */
