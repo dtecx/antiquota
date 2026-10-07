@@ -1,0 +1,684 @@
+{
+  "format": 1,
+  "source": "tests/fixtures/api/manifest.json",
+  "chronologicalFixtures": [
+    "health",
+    "bad-host",
+    "missing-token",
+    "wrong-token",
+    "state-initial",
+    "events-wrong-token",
+    "unknown-static",
+    "vendor-traversal",
+    "body-limit",
+    "invalid-json",
+    "session-create",
+    "session-get-empty",
+    "session-patch",
+    "session-patch-invalid",
+    "session-missing",
+    "session-create-invalid",
+    "send-empty",
+    "shutdown"
+  ],
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/api/state",
+      "featureId": "F-329",
+      "sliceOne": true,
+      "capturedFixturesSelected": [
+        "missing-token",
+        "wrong-token",
+        "state-initial"
+      ],
+      "status": "Passing selected Slice 1 cases; additional acceptance pending"
+    },
+    {
+      "method": "POST",
+      "path": "/api/approvals",
+      "featureId": "F-330",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "GET",
+      "path": "/api/approvals/{aid}",
+      "featureId": "F-331",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "POST",
+      "path": "/api/approvals/{aid}/answer",
+      "featureId": "F-332",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/fork",
+      "featureId": "F-333",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "GET",
+      "path": "/api/search",
+      "featureId": "F-334",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "POST",
+      "path": "/api/accounts/{name}/pause",
+      "featureId": "F-335",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/steer",
+      "featureId": "F-336",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "GET",
+      "path": "/api/engine",
+      "featureId": "F-337",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "GET",
+      "path": "/api/engine/log",
+      "featureId": "F-338",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "POST",
+      "path": "/api/shutdown",
+      "featureId": "F-339",
+      "sliceOne": true,
+      "capturedFixturesSelected": [
+        "shutdown"
+      ],
+      "status": "Passing selected Slice 1 cases; additional acceptance pending"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions",
+      "featureId": "F-340",
+      "sliceOne": true,
+      "capturedFixturesSelected": [
+        "body-limit",
+        "invalid-json",
+        "session-create",
+        "session-create-invalid"
+      ],
+      "status": "Passing selected Slice 1 cases; additional acceptance pending"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/term",
+      "featureId": "F-341",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/term/input",
+      "featureId": "F-342",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/term/resize",
+      "featureId": "F-343",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/term/kill",
+      "featureId": "F-344",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sessions/{sid}/tree",
+      "featureId": "F-345",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sessions/{sid}/git",
+      "featureId": "F-346",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sessions/{sid}/git/diff",
+      "featureId": "F-347",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/git/commit",
+      "featureId": "F-348",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/git/discard",
+      "featureId": "F-349",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/git/merge",
+      "featureId": "F-350",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/git/remove",
+      "featureId": "F-351",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sessions/{sid}",
+      "featureId": "F-352",
+      "sliceOne": true,
+      "capturedFixturesSelected": [
+        "session-get-empty",
+        "session-missing"
+      ],
+      "status": "Passing selected Slice 1 cases; additional acceptance pending"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/sessions/{sid}",
+      "featureId": "F-353",
+      "sliceOne": true,
+      "capturedFixturesSelected": [
+        "session-patch",
+        "session-patch-invalid"
+      ],
+      "status": "Passing selected Slice 1 cases; additional acceptance pending"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/sessions/{sid}",
+      "featureId": "F-354",
+      "sliceOne": true,
+      "capturedFixturesSelected": [
+        "session-delete"
+      ],
+      "status": "Passing selected Slice 1 cases; additional acceptance pending"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/send",
+      "featureId": "F-355",
+      "sliceOne": true,
+      "capturedFixturesSelected": [
+        "send-empty",
+        "send"
+      ],
+      "status": "Passing selected Slice 1 cases; additional acceptance pending"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/rewind",
+      "featureId": "F-356",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/clear",
+      "featureId": "F-357",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/jobs",
+      "featureId": "F-358",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/jobs/{jid}/stop",
+      "featureId": "F-359",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sessions/{sid}/jobs/{jid}/log",
+      "featureId": "F-360",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/loop",
+      "featureId": "F-361",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/sessions/{sid}/loop",
+      "featureId": "F-362",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sessions/{sid}/state",
+      "featureId": "F-363",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/inherit",
+      "featureId": "F-364",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/shell",
+      "featureId": "F-365",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/note",
+      "featureId": "F-366",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sessions/{sid}/file",
+      "featureId": "F-367",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/compact",
+      "featureId": "F-368",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sessions/{sid}/files",
+      "featureId": "F-369",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/stop",
+      "featureId": "F-370",
+      "sliceOne": true,
+      "capturedFixturesSelected": [
+        "session-stop"
+      ],
+      "status": "Passing selected Slice 1 cases; additional acceptance pending"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/goal",
+      "featureId": "F-371",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/goal/resume",
+      "featureId": "F-372",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/sessions/{sid}/goal",
+      "featureId": "F-373",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "GET",
+      "path": "/api/usage",
+      "featureId": "F-374",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "GET",
+      "path": "/api/routing",
+      "featureId": "F-375",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "GET",
+      "path": "/api/accounts",
+      "featureId": "F-376",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "POST",
+      "path": "/api/accounts/probe",
+      "featureId": "F-377",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "POST",
+      "path": "/api/accounts/login",
+      "featureId": "F-378",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "GET",
+      "path": "/api/accounts/login/{lid}",
+      "featureId": "F-379",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "POST",
+      "path": "/api/accounts/login/{lid}",
+      "featureId": "F-380",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/accounts/login/{lid}",
+      "featureId": "F-381",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "POST",
+      "path": "/api/accounts/{name}/check",
+      "featureId": "F-382",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/accounts/{name}",
+      "featureId": "F-383",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "GET",
+      "path": "/api/settings",
+      "featureId": "F-384",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/settings/defaults",
+      "featureId": "F-385",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "GET",
+      "path": "/api/settings/file",
+      "featureId": "F-386",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/settings/file",
+      "featureId": "F-387",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "GET",
+      "path": "/api/settings/{kind}/{name}",
+      "featureId": "F-388",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/settings/{kind}/{name}",
+      "featureId": "F-389",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/settings/{kind}/{name}",
+      "featureId": "F-390",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "POST",
+      "path": "/api/settings/{kind}/{name}/enabled",
+      "featureId": "F-391",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "POST",
+      "path": "/api/settings/copy",
+      "featureId": "F-392",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "GET",
+      "path": "/api/stack",
+      "featureId": "F-393",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "POST",
+      "path": "/api/stack/reseed",
+      "featureId": "F-394",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "GET",
+      "path": "/api/permissions",
+      "featureId": "F-395",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/permissions",
+      "featureId": "F-396",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "GET",
+      "path": "/api/fs",
+      "featureId": "F-397",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "GET",
+      "path": "/api/health",
+      "featureId": "F-323",
+      "sliceOne": true,
+      "capturedFixturesSelected": [
+        "health",
+        "bad-host"
+      ],
+      "status": "Passing selected Slice 1 cases; additional acceptance pending"
+    },
+    {
+      "method": "GET",
+      "path": "/api/events",
+      "featureId": "F-324",
+      "sliceOne": true,
+      "capturedFixturesSelected": [
+        "events-sse",
+        "events-wrong-token"
+      ],
+      "status": "Passing selected Slice 1 cases; additional acceptance pending"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sessions/{sid}/term/stream",
+      "featureId": "F-325",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "POST",
+      "path": "/api/transcribe",
+      "featureId": "F-326",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/attach",
+      "featureId": "F-327",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sessions/{sid}/attachments/{name}",
+      "featureId": "F-328",
+      "sliceOne": false,
+      "capturedFixturesSelected": [],
+      "status": "Pending owning slice"
+    }
+  ],
+  "additionalSequences": {
+    "firstTurn": [
+      "session-create",
+      "send",
+      "events-sse"
+    ],
+    "control": [
+      "session-stop",
+      "session-delete"
+    ]
+  },
+  "sseSampleIndices": [
+    7,
+    10,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17
+  ],
+  "setupBindings": {
+    "{{SESSION_1}}": "Actual POST /api/sessions id for control scenario",
+    "{{SESSION_2}}": "Actual fresh POST /api/sessions id for independent deletion scenario; fork replay is pending"
+  },
+  "evidence": ".handoff/evidence/slice1-http-integration-final.log",
+  "capturedCasesPassed": 22,
+  "runtimeSseSamplesPassed": 8
+}

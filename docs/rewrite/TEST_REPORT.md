@@ -1,8 +1,23 @@
 # Rewrite test report
 
-The rewrite has not been implemented or tested yet. All 1144 acceptance items are **Pending**. There are 1009 baseline items and 135 explicit rewrite requirements in [FEATURES.md](FEATURES.md). Source review, old tests and Python API captures are reference evidence only; none is reported as a passing rewrite test.
+Slice 1 implements Rust CLI/server sessions and one agy turn with the Svelte browser UI. **40 of 1144 acceptance items are Passed; 1104 remain Pending.** The inventory contains 1009 baseline items and 135 explicit rewrite requirements in [FEATURES.md](FEATURES.md). Source review, legacy tests and Python captures are references; the rows below name actual rewrite checks. A Pending row may have passing subset tests, but its remaining acceptance is explicit.
 
-Replace each Pending test entry with clickable passing test references and record the command, result and evidence path before changing its status. Use **Passed**, **Failed** or **Blocked** only when evidence supports the state. A Pending item has no proof yet. Evidence belongs in ignored `.handoff/evidence/`; local tokens and backup contents must not appear in the report or committed fixtures.
+The fresh independent macOS arm64 gate on 2026-10-07 ran against 440 unchanged source hashes. `main` remained clean at `17ec296`; no push or cutover occurred. Synthetic processes were stopped after validation. [Final verification](../../.handoff/evidence/slice1-independent-final-summary.json) records commands, hashes, counts and cleanup.
+
+| Command or review | Result | Evidence |
+| --- | --- | --- |
+| `just check` | Passed: generated-type freshness, rustfmt, all-target clippy with warnings denied, cargo-deny, strict Svelte/TypeScript, ESLint and Prettier | [Check log](../../.handoff/evidence/slice1-independent-final-check.log) |
+| `just test` | Passed: 51 Rust workspace tests, 28 Vitest tests in 6 files, and 6 Chromium scenarios; zero failures, ignored tests or flaky browser results | [Test log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| `just build` | Passed for Rust engine and browser UI. Sidecar desktop bundle remains Pending until Slice 10 | [Build log](../../.handoff/evidence/slice1-independent-final-build.log) |
+| Separate owned exporter regression | 1 passing example test, not included in the 51-test fresh workspace count; detects changed, missing and extra nested generated files | [Owned affected-crate test log](../../.handoff/evidence/slice1-fixes-tests.log) |
+| Independent source/architecture checks | GREEN for current Slice 1 sources; no runtime parity claim for future features | [Pattern review](../../.handoff/evidence/slice1-pattern-review.json) |
+| Independent failure-path review | GREEN after repairs: early conversation-ID durability, descendant cancellation/inherited pipes, deletion admission | [Quality review](../../.handoff/evidence/slice1-quality-review.log), [runtime reproduction](../../.handoff/evidence/slice1-quality-fixed-reproduction.json) |
+
+Runtime contract replay covers exactly **22 of 172 captured cases**, including one SSE case with eight original first-turn samples, across the ten currently implemented routes. The remaining 150 cases and 65 routes stay Pending. The separate [core round-trip test](../../crates/core/src/event_tests.rs) preserves every field in all 160 captured samples and 14 event kinds; schema round-trip proof does not imply runtime behavior for all those events. [Replay scope](../../tests/rewrite/slice1-scope.json) and [comparison rules](../../tests/rewrite/README.md) describe the tested subset.
+
+All application handoff, quota routing, approvals, goals/verifier, jobs, loop/schedule, worktrees, terminal, dictation and remaining UI parity retain their individual Pending rows. Native shell, zoom, window persistence, installation, Linux/Windows execution, full CI, real-account smoke and live cost records remain Pending. This validation used synthetic data under `~/Desktop/test`, with no paid agy calls or real-account changes. Existing local backup and continuity evidence do not establish final runtime migration compatibility.
+
+Mark a row Passed only when its full acceptance has passing tests and evidence. Passing architecture requirements describe the current sources; each future feature must still prove its own behavior. Logs and screenshots live in ignored `.handoff/evidence/`; local tokens and backup contents must never enter committed fixtures or this report.
 
 | Feature ID | Tests | Status | Evidence path |
 | --- | --- | --- | --- |
@@ -160,32 +175,32 @@ Replace each Pending test entry with clickable passing test references and recor
 | F-152 | <a id="f-152"></a>Pending — [acceptance](FEATURES.md#f-152) | Pending | Pending |
 | F-153 | <a id="f-153"></a>Pending — [acceptance](FEATURES.md#f-153) | Pending | Pending |
 | F-154 | <a id="f-154"></a>Pending — [acceptance](FEATURES.md#f-154) | Pending | Pending |
-| F-155 | <a id="f-155"></a>Pending — [acceptance](FEATURES.md#f-155) | Pending | Pending |
+| F-155 | <a id="f-155"></a>[captured_slice_one_requests_replay_with_exact_json_fields](../../crates/server/tests/rewrite_contract.rs). The actual session-create capture matches all fresh metadata fields, including timestamps under explicit pointer rules, idle status, zero usage/context/turns, empty queue/jobs, nullable conversation/goal/loop/worktree and false pinned/archived. | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-156 | <a id="f-156"></a>Pending — [acceptance](FEATURES.md#f-156) | Pending | Pending |
-| F-157 | <a id="f-157"></a>Pending — [acceptance](FEATURES.md#f-157) | Pending | Pending |
-| F-158 | <a id="f-158"></a>Pending — [acceptance](FEATURES.md#f-158) | Pending | Pending |
+| F-157 | <a id="f-157"></a>[whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs). A completed session restarts idle with an identical full session response and conversation, usage and final events retained. **Remaining:** Recovery of running, goal, queue, loop and job state remains for the owning slices. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-158 | <a id="f-158"></a>[captured_slice_one_requests_replay_with_exact_json_fields](../../crates/server/tests/rewrite_contract.rs). The actual session-patch capture matches title, mode, effort, pinned and archived changes; an invalid mode returns the captured error. **Remaining:** All update fields, ignored unknown keys and coercion edge cases remain to be proven. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-159 | <a id="f-159"></a>Pending — [acceptance](FEATURES.md#f-159) | Pending | Pending |
-| F-160 | <a id="f-160"></a>Pending — [acceptance](FEATURES.md#f-160) | Pending | Pending |
-| F-161 | <a id="f-161"></a>Pending — [acceptance](FEATURES.md#f-161) | Pending | Pending |
-| F-162 | <a id="f-162"></a>Pending — [acceptance](FEATURES.md#f-162) | Pending | Pending |
+| F-160 | <a id="f-160"></a>[queued_messages_stop_delete_and_crash_leave_recoverable_sessions](../../crates/server/tests/rewrite_contract.rs); [whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs). Idle text sends return started; a busy text send returns queued and completes as the second turn. **Remaining:** Structured attachments and message kinds remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-161 | <a id="f-161"></a>[queued_messages_stop_delete_and_crash_leave_recoverable_sessions](../../crates/server/tests/rewrite_contract.rs). Two FIFO text sends finish as two turns without a stranded queued message in the controlled scenario. **Remaining:** Concurrent admission at the exact worker-exit boundary requires the application concurrency tests. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-162 | <a id="f-162"></a>[whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs); [runtime::cli_without_accounts_exits_with_error_and_preserves_the_accepted_prompt](../../tests/rewrite/runtime.rs). A user event precedes the captured first turn, and an accepted CLI prompt remains durable when no account is available. **Remaining:** Goal, nudge, job, loop, attachment and pending note injection remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-163 | <a id="f-163"></a>Pending — [acceptance](FEATURES.md#f-163) | Pending | Pending |
-| F-164 | <a id="f-164"></a>Pending — [acceptance](FEATURES.md#f-164) | Pending | Pending |
-| F-165 | <a id="f-165"></a>Pending — [acceptance](FEATURES.md#f-165) | Pending | Pending |
-| F-166 | <a id="f-166"></a>Pending — [acceptance](FEATURES.md#f-166) | Pending | Pending |
+| F-164 | <a id="f-164"></a>[whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs); [queued_messages_stop_delete_and_crash_leave_recoverable_sessions](../../crates/server/tests/rewrite_contract.rs). The captured turn_start includes the correct account/model and timestamp; sequential attempts increment the turn count. **Remaining:** Account retry attempts and all intermediate metadata transitions remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-165 | <a id="f-165"></a>[whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs); [resumed_stale_and_duplicate_results_preserve_usage_and_success](../../crates/server/tests/rewrite_contract.rs); [abrupt_engine_exit_after_init_resumes_the_durable_conversation](../../crates/server/tests/interruptions.rs). The real fake-agy subprocess receives the stream-json invocation, model and stable resumed conversation. The original init conversation ID survives abrupt engine exit and is passed to the next runner. **Remaining:** Attachment and job add-dir access and permission flag behavior remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-166 | <a id="f-166"></a>[whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs); [process_plays_every_scenario_and_preserves_current_turn_usage](../../tests/fake-agy/tests/scenarios.rs). Safe invocation metadata proves the isolated account HOME, session/slot and SSH environment. **Remaining:** State/mode hook environment and compiled hook discovery remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-167 | <a id="f-167"></a>Pending — [acceptance](FEATURES.md#f-167) | Pending | Pending |
-| F-168 | <a id="f-168"></a>Pending — [acceptance](FEATURES.md#f-168) | Pending | Pending |
-| F-169 | <a id="f-169"></a>Pending — [acceptance](FEATURES.md#f-169) | Pending | Pending |
-| F-170 | <a id="f-170"></a>Pending — [acceptance](FEATURES.md#f-170) | Pending | Pending |
+| F-168 | <a id="f-168"></a>[whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs); [resumed_stale_and_duplicate_results_preserve_usage_and_success](../../crates/server/tests/rewrite_contract.rs). Both captured deltas arrive over real SSE; a single completed assistant message persists and survives restart; duplicate DONE does not duplicate the assistant. **Remaining:** All non-ACTIVE error completion cases remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-169 | <a id="f-169"></a>[whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs). Both captured tool states match every field, including parameters, elapsed seconds and completed diff. **Remaining:** ANSI removal, failed-tool output and the 20000-character output cap need adapter tests. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-170 | <a id="f-170"></a>[whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs). The first synthetic file edit emits the exact captured unified diff. **Remaining:** The 600-line cap, large/binary files, fast edits and remembered late snapshots need adapter tests. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-171 | <a id="f-171"></a>Pending — [acceptance](FEATURES.md#f-171) | Pending | Pending |
 | F-172 | <a id="f-172"></a>Pending — [acceptance](FEATURES.md#f-172) | Pending | Pending |
 | F-173 | <a id="f-173"></a>Pending — [acceptance](FEATURES.md#f-173) | Pending | Pending |
-| F-174 | <a id="f-174"></a>Pending — [acceptance](FEATURES.md#f-174) | Pending | Pending |
+| F-174 | <a id="f-174"></a>[resumed_stale_and_duplicate_results_preserve_usage_and_success](../../crates/server/tests/rewrite_contract.rs); [whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs); [protocol::tests::duplicate_done_and_stale_result_expose_usage_deduplication](../../tests/fake-agy/src/protocol.rs). Only current DONE usage is counted; cumulative result totals are ignored and duplicate DONE is counted once across resumed turns. **Remaining:** Cached-input accounting and largest-input context across multiple distinct steps need adapter/domain tests. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-175 | <a id="f-175"></a>Pending — [acceptance](FEATURES.md#f-175) | Pending | Pending |
-| F-176 | <a id="f-176"></a>Pending — [acceptance](FEATURES.md#f-176) | Pending | Pending |
-| F-177 | <a id="f-177"></a>Pending — [acceptance](FEATURES.md#f-177) | Pending | Pending |
+| F-176 | <a id="f-176"></a>[resumed_stale_and_duplicate_results_preserve_usage_and_success](../../crates/server/tests/rewrite_contract.rs); [queued_messages_stop_delete_and_crash_leave_recoverable_sessions](../../crates/server/tests/rewrite_contract.rs). A completed response wins over a stale resumed quota result; a genuine subprocess crash reports an error and returns idle. **Remaining:** All quota, auth and transient classifications remain for the account slice. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-177 | <a id="f-177"></a>[whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs); [queued_messages_stop_delete_and_crash_leave_recoverable_sessions](../../crates/server/tests/rewrite_contract.rs). The complete SUCCESS turn_end capture matches usage, account and elapsed fields; cancellation and crash terminate recoverably. **Remaining:** Exact stopped, quota, auth, transient and other error turn_end contract values remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-178 | <a id="f-178"></a>Pending — [acceptance](FEATURES.md#f-178) | Pending | Pending |
 | F-179 | <a id="f-179"></a>Pending — [acceptance](FEATURES.md#f-179) | Pending | Pending |
-| F-180 | <a id="f-180"></a>Pending — [acceptance](FEATURES.md#f-180) | Pending | Pending |
+| F-180 | <a id="f-180"></a>[runtime::cli_without_accounts_exits_with_error_and_preserves_the_accepted_prompt](../../tests/rewrite/runtime.rs). No-account CLI execution fails promptly, retains the accepted prompt, reports an error notice, returns idle and does not start a runner. **Remaining:** The legacy noaccount notice kind and all-paused wall explanation need exact parity proof. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-181 | <a id="f-181"></a>Pending — [acceptance](FEATURES.md#f-181) | Pending | Pending |
 | F-182 | <a id="f-182"></a>Pending — [acceptance](FEATURES.md#f-182) | Pending | Pending |
 | F-183 | <a id="f-183"></a>Pending — [acceptance](FEATURES.md#f-183) | Pending | Pending |
@@ -194,7 +209,7 @@ Replace each Pending test entry with clickable passing test references and recor
 | F-186 | <a id="f-186"></a>Pending — [acceptance](FEATURES.md#f-186) | Pending | Pending |
 | F-187 | <a id="f-187"></a>Pending — [acceptance](FEATURES.md#f-187) | Pending | Pending |
 | F-188 | <a id="f-188"></a>Pending — [acceptance](FEATURES.md#f-188) | Pending | Pending |
-| F-189 | <a id="f-189"></a>Pending — [acceptance](FEATURES.md#f-189) | Pending | Pending |
+| F-189 | <a id="f-189"></a>[whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs). All eight captured first-turn events match timestamps under explicit numeric pointer rules, and the complete persisted session replays identically after restart. **Remaining:** Append concurrency/property proof and future feature event types remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-190 | <a id="f-190"></a>Pending — [acceptance](FEATURES.md#f-190) | Pending | Pending |
 | F-191 | <a id="f-191"></a>Pending — [acceptance](FEATURES.md#f-191) | Pending | Pending |
 | F-192 | <a id="f-192"></a>Pending — [acceptance](FEATURES.md#f-192) | Pending | Pending |
@@ -305,36 +320,36 @@ Replace each Pending test entry with clickable passing test references and recor
 | F-297 | <a id="f-297"></a>Pending — [acceptance](FEATURES.md#f-297) | Pending | Pending |
 | F-298 | <a id="f-298"></a>Pending — [acceptance](FEATURES.md#f-298) | Pending | Pending |
 | F-299 | <a id="f-299"></a>Pending — [acceptance](FEATURES.md#f-299) | Pending | Pending |
-| F-300 | <a id="f-300"></a>Pending — [acceptance](FEATURES.md#f-300) | Pending | Pending |
-| F-301 | <a id="f-301"></a>Pending — [acceptance](FEATURES.md#f-301) | Pending | Pending |
+| F-300 | <a id="f-300"></a>[runtime::serve_defaults_to_no_browser_and_gui_respects_no_open](../../tests/rewrite/runtime.rs). On Unix, gui --no-open never invokes the isolated opener; gui invokes it once with the discovered URL. **Remaining:** Default port 8765, a requested fixed port and Windows opener behavior remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-301 | <a id="f-301"></a>[runtime::serve_defaults_to_no_browser_and_gui_respects_no_open](../../tests/rewrite/runtime.rs); [engine_discovery_reuses_lock_and_static_auth_remains_local](../../crates/server/tests/rewrite_contract.rs). serve accepts ephemeral port 0, shares discovery and does not invoke the isolated browser opener. **Remaining:** Default port 8765, a requested fixed port and Windows behavior remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-302 | <a id="f-302"></a>Pending — [acceptance](FEATURES.md#f-302) | Pending | Pending |
 | F-303 | <a id="f-303"></a>Pending — [acceptance](FEATURES.md#f-303) | Pending | Pending |
 | F-304 | <a id="f-304"></a>Pending — [acceptance](FEATURES.md#f-304) | Pending | Pending |
 | F-305 | <a id="f-305"></a>Pending — [acceptance](FEATURES.md#f-305) | Pending | Pending |
-| F-306 | <a id="f-306"></a>Pending — [acceptance](FEATURES.md#f-306) | Pending | Pending |
-| F-307 | <a id="f-307"></a>Pending — [acceptance](FEATURES.md#f-307) | Pending | Pending |
-| F-308 | <a id="f-308"></a>Pending — [acceptance](FEATURES.md#f-308) | Pending | Pending |
-| F-309 | <a id="f-309"></a>Pending — [acceptance](FEATURES.md#f-309) | Pending | Pending |
-| F-310 | <a id="f-310"></a>Pending — [acceptance](FEATURES.md#f-310) | Pending | Pending |
-| F-311 | <a id="f-311"></a>Pending — [acceptance](FEATURES.md#f-311) | Pending | Pending |
-| F-312 | <a id="f-312"></a>Pending — [acceptance](FEATURES.md#f-312) | Pending | Pending |
+| F-306 | <a id="f-306"></a>[captured_slice_one_requests_replay_with_exact_json_fields](../../crates/server/tests/rewrite_contract.rs); [engine_discovery_reuses_lock_and_static_auth_remains_local](../../crates/server/tests/rewrite_contract.rs). The captured bad Host is rejected; localhost Host and token-free health work; a bounded connection to 127.0.0.2 fails; static traversal is rejected. **Remaining:** Further invalid Host forms and cross-platform bind proof remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-307 | <a id="f-307"></a>[whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs); [short_token_regenerates_then_reuses](../../crates/adapters/store/src/tests.rs). The same GUI token survives a real shutdown and restart. **Remaining:** Missing-token creation and exact private mode assertions remain Pending; short-token regeneration and minimum length now pass. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-308 | <a id="f-308"></a>[captured_slice_one_requests_replay_with_exact_json_fields](../../crates/server/tests/rewrite_contract.rs); [engine_discovery_reuses_lock_and_static_auth_remains_local](../../crates/server/tests/rewrite_contract.rs). Missing and wrong ordinary API header tokens match captured forbidden responses; a query token does not authorize state. **Remaining:** Constant-time comparison is a code/security property, and all future routes remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-309 | <a id="f-309"></a>[captured_slice_one_requests_replay_with_exact_json_fields](../../crates/server/tests/rewrite_contract.rs); [whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs); [engine_discovery_reuses_lock_and_static_auth_remains_local](../../crates/server/tests/rewrite_contract.rs). SSE accepts the correct query token and rejects wrong/missing query tokens even with an ordinary header; state rejects query-only authentication. **Remaining:** Terminal stream and attachment GET authentication remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-310 | <a id="f-310"></a>[captured_slice_one_requests_replay_with_exact_json_fields](../../crates/server/tests/rewrite_contract.rs); [engine_discovery_reuses_lock_and_static_auth_remains_local](../../crates/server/tests/rewrite_contract.rs). The root substitutes the GUI token; unknown static and vendor traversal match captured errors; escaped asset symlinks are refused. **Remaining:** All legacy vendor files, hidden names and built asset MIME/cache behavior remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-311 | <a id="f-311"></a>[captured_slice_one_requests_replay_with_exact_json_fields](../../crates/server/tests/rewrite_contract.rs); [whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs); [queued_messages_stop_delete_and_crash_leave_recoverable_sessions](../../crates/server/tests/rewrite_contract.rs). Every selected captured ordinary HTTP response checks application/json, actual byte Content-Length, no-store, nosniff and captured status; HTTP Date is validated. **Remaining:** The remaining 150 captured cases and later route responses remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-312 | <a id="f-312"></a>[captured_slice_one_requests_replay_with_exact_json_fields](../../crates/server/tests/rewrite_contract.rs); [support::replay::tests::recorded_raw_bodies_decode_and_http_dates_are_checked](../../tests/rewrite/support/replay.rs). Recorded malformed raw JSON is decoded without alteration and returns the captured error; the declared oversized body returns the captured error; an absent mutation body is used for shutdown. **Remaining:** Exact limit boundaries, empty byte body variants and non-object JSON forms remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-313 | <a id="f-313"></a>Pending — [acceptance](FEATURES.md#f-313) | Pending | Pending |
-| F-314 | <a id="f-314"></a>Pending — [acceptance](FEATURES.md#f-314) | Pending | Pending |
-| F-315 | <a id="f-315"></a>Pending — [acceptance](FEATURES.md#f-315) | Pending | Pending |
-| F-316 | <a id="f-316"></a>Pending — [acceptance](FEATURES.md#f-316) | Pending | Pending |
-| F-317 | <a id="f-317"></a>Pending — [acceptance](FEATURES.md#f-317) | Pending | Pending |
+| F-314 | <a id="f-314"></a>[captured_slice_one_requests_replay_with_exact_json_fields](../../crates/server/tests/rewrite_contract.rs). Captured unknown session, invalid mode, malformed JSON and missing cwd requests return their precise captured errors. **Remaining:** Unknown later items/routes and missing-file errors remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-315 | <a id="f-315"></a>[whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs); [support::http::tests::sse_lines_survive_transport_chunks_and_utf8_boundaries](../../tests/rewrite/support/http.rs). Real SSE emits data JSON with session ids and no-store, and correctly decodes split HTTP chunks and UTF-8; HTTP shutdown closes an open stream. **Remaining:** The 15-second keepalive timer, subscriber removal after disconnect and future global events remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-316 | <a id="f-316"></a>[engine_discovery_reuses_lock_and_static_auth_remains_local](../../crates/server/tests/rewrite_contract.rs). A second Rust serve command uses the existing locked engine and exits successfully; shutting down removes discovery and permits a fresh engine. **Remaining:** Mixed Python/Rust lock interoperability remains a separate compatibility gate. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-317 | <a id="f-317"></a>[engine_discovery_reuses_lock_and_static_auth_remains_local](../../crates/server/tests/rewrite_contract.rs); [cli_run_shares_the_discovered_engine_and_durable_session](../../crates/server/tests/rewrite_contract.rs). CLI execution leaves the discovered engine record unchanged, and shutdown removes discovery before restart. **Remaining:** Every discovery field, stale unlocked discovery and mixed Python/Rust interoperability still need explicit assertions. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-318 | <a id="f-318"></a>Pending — [acceptance](FEATURES.md#f-318) | Pending | Pending |
 | F-319 | <a id="f-319"></a>Pending — [acceptance](FEATURES.md#f-319) | Pending | Pending |
-| F-320 | <a id="f-320"></a>Pending — [acceptance](FEATURES.md#f-320) | Pending | Pending |
+| F-320 | <a id="f-320"></a>[whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs); [queued_messages_stop_delete_and_crash_leave_recoverable_sessions](../../crates/server/tests/rewrite_contract.rs); [engine_discovery_reuses_lock_and_static_auth_remains_local](../../crates/server/tests/rewrite_contract.rs). HTTP shutdown closes an open SSE connection, removes discovery, releases the engine lock and permits restart; stop cancels an active turn. **Remaining:** OS signal variants, keep-awake, goal pausing and background-job retention remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-321 | <a id="f-321"></a>Pending — [acceptance](FEATURES.md#f-321) | Pending | Pending |
 | F-322 | <a id="f-322"></a>Pending — [acceptance](FEATURES.md#f-322) | Pending | Pending |
-| F-323 | <a id="f-323"></a>Pending — [acceptance](FEATURES.md#f-323) | Pending | Pending |
-| F-324 | <a id="f-324"></a>Pending — [acceptance](FEATURES.md#f-324) | Pending | Pending |
+| F-323 | <a id="f-323"></a>[captured_slice_one_requests_replay_with_exact_json_fields](../../crates/server/tests/rewrite_contract.rs); [engine_discovery_reuses_lock_and_static_auth_remains_local](../../crates/server/tests/rewrite_contract.rs). The complete actual health capture matches ok/app/version/pid, requires no token and obeys Host validation. | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-324 | <a id="f-324"></a>[whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs); [captured_slice_one_requests_replay_with_exact_json_fields](../../crates/server/tests/rewrite_contract.rs). The real shared SSE route matches all fields of eight selected first-turn samples and the captured wrong-token response. **Remaining:** Global account, goal, approval, job and terminal events and timed keepalive comments remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-325 | <a id="f-325"></a>Pending — [acceptance](FEATURES.md#f-325) | Pending | Pending |
 | F-326 | <a id="f-326"></a>Pending — [acceptance](FEATURES.md#f-326) | Pending | Pending |
 | F-327 | <a id="f-327"></a>Pending — [acceptance](FEATURES.md#f-327) | Pending | Pending |
 | F-328 | <a id="f-328"></a>Pending — [acceptance](FEATURES.md#f-328) | Pending | Pending |
-| F-329 | <a id="f-329"></a>Pending — [acceptance](FEATURES.md#f-329) | Pending | Pending |
+| F-329 | <a id="f-329"></a>[captured_slice_one_requests_replay_with_exact_json_fields](../../crates/server/tests/rewrite_contract.rs); [whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs). The complete two-account empty state capture matches every field, including an actual busy lease; a newly created idle session appears in state. **Remaining:** Multi-session ordering, a populated refreshed model catalog, quota probes and account routing transitions remain Pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-330 | <a id="f-330"></a>Pending — [acceptance](FEATURES.md#f-330) | Pending | Pending |
 | F-331 | <a id="f-331"></a>Pending — [acceptance](FEATURES.md#f-331) | Pending | Pending |
 | F-332 | <a id="f-332"></a>Pending — [acceptance](FEATURES.md#f-332) | Pending | Pending |
@@ -344,8 +359,8 @@ Replace each Pending test entry with clickable passing test references and recor
 | F-336 | <a id="f-336"></a>Pending — [acceptance](FEATURES.md#f-336) | Pending | Pending |
 | F-337 | <a id="f-337"></a>Pending — [acceptance](FEATURES.md#f-337) | Pending | Pending |
 | F-338 | <a id="f-338"></a>Pending — [acceptance](FEATURES.md#f-338) | Pending | Pending |
-| F-339 | <a id="f-339"></a>Pending — [acceptance](FEATURES.md#f-339) | Pending | Pending |
-| F-340 | <a id="f-340"></a>Pending — [acceptance](FEATURES.md#f-340) | Pending | Pending |
+| F-339 | <a id="f-339"></a>[captured_slice_one_requests_replay_with_exact_json_fields](../../crates/server/tests/rewrite_contract.rs); [whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs). The actual shutdown capture matches ok=true and the real process terminates while an SSE client remains connected. | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-340 | <a id="f-340"></a>[captured_slice_one_requests_replay_with_exact_json_fields](../../crates/server/tests/rewrite_contract.rs). The captured create metadata and invalid cwd error match exactly; the accepted request includes cwd/model/title and empty legacy effort. **Remaining:** All mode/default combinations, absent cwd and worktree creation remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-341 | <a id="f-341"></a>Pending — [acceptance](FEATURES.md#f-341) | Pending | Pending |
 | F-342 | <a id="f-342"></a>Pending — [acceptance](FEATURES.md#f-342) | Pending | Pending |
 | F-343 | <a id="f-343"></a>Pending — [acceptance](FEATURES.md#f-343) | Pending | Pending |
@@ -357,10 +372,10 @@ Replace each Pending test entry with clickable passing test references and recor
 | F-349 | <a id="f-349"></a>Pending — [acceptance](FEATURES.md#f-349) | Pending | Pending |
 | F-350 | <a id="f-350"></a>Pending — [acceptance](FEATURES.md#f-350) | Pending | Pending |
 | F-351 | <a id="f-351"></a>Pending — [acceptance](FEATURES.md#f-351) | Pending | Pending |
-| F-352 | <a id="f-352"></a>Pending — [acceptance](FEATURES.md#f-352) | Pending | Pending |
-| F-353 | <a id="f-353"></a>Pending — [acceptance](FEATURES.md#f-353) | Pending | Pending |
-| F-354 | <a id="f-354"></a>Pending — [acceptance](FEATURES.md#f-354) | Pending | Pending |
-| F-355 | <a id="f-355"></a>Pending — [acceptance](FEATURES.md#f-355) | Pending | Pending |
+| F-352 | <a id="f-352"></a>[captured_slice_one_requests_replay_with_exact_json_fields](../../crates/server/tests/rewrite_contract.rs); [whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs). The captured empty session and missing-session error match; a complete session response is identical after real engine restart. **Remaining:** Sessions containing later feature event types remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-353 | <a id="f-353"></a>[captured_slice_one_requests_replay_with_exact_json_fields](../../crates/server/tests/rewrite_contract.rs). Captured patch success and invalid-mode error match every field. **Remaining:** All update fields, boolean coercion and ignored-key cases remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-354 | <a id="f-354"></a>[queued_messages_stop_delete_and_crash_leave_recoverable_sessions](../../crates/server/tests/rewrite_contract.rs); [deletion_refuses_admission_through_a_previously_cloned_cell](../../crates/app/src/tests/lifecycle.rs). The actual deletion capture matches; subsequent GET is 404. SESSION_2 binds from a fresh created session. The barrier regression rejects admission through a pre-cloned cell during deletion and proves no resurrection after reopening. **Remaining:** Exact unknown-session DELETE response and deletion of an active HTTP session remain Pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-355 | <a id="f-355"></a>[captured_slice_one_requests_replay_with_exact_json_fields](../../crates/server/tests/rewrite_contract.rs); [whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs); [queued_messages_stop_delete_and_crash_leave_recoverable_sessions](../../crates/server/tests/rewrite_contract.rs). Captured empty send and successful send responses match; controlled busy text sends queue and finish. **Remaining:** Attachments and structured kinds remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-356 | <a id="f-356"></a>Pending — [acceptance](FEATURES.md#f-356) | Pending | Pending |
 | F-357 | <a id="f-357"></a>Pending — [acceptance](FEATURES.md#f-357) | Pending | Pending |
 | F-358 | <a id="f-358"></a>Pending — [acceptance](FEATURES.md#f-358) | Pending | Pending |
@@ -375,7 +390,7 @@ Replace each Pending test entry with clickable passing test references and recor
 | F-367 | <a id="f-367"></a>Pending — [acceptance](FEATURES.md#f-367) | Pending | Pending |
 | F-368 | <a id="f-368"></a>Pending — [acceptance](FEATURES.md#f-368) | Pending | Pending |
 | F-369 | <a id="f-369"></a>Pending — [acceptance](FEATURES.md#f-369) | Pending | Pending |
-| F-370 | <a id="f-370"></a>Pending — [acceptance](FEATURES.md#f-370) | Pending | Pending |
+| F-370 | <a id="f-370"></a>[queued_messages_stop_delete_and_crash_leave_recoverable_sessions](../../crates/server/tests/rewrite_contract.rs); [stop_and_shutdown_finish_a_turn_with_inherited_descendant_pipes](../../crates/server/tests/interruptions.rs). Captured stop response matches during an active fake turn, the session becomes idle and its queue is empty. Descendant/inherited-pipe stop now ends promptly with one stopped TurnEnd and no delayed write. **Remaining:** Approval waits, goals and other paused state remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-371 | <a id="f-371"></a>Pending — [acceptance](FEATURES.md#f-371) | Pending | Pending |
 | F-372 | <a id="f-372"></a>Pending — [acceptance](FEATURES.md#f-372) | Pending | Pending |
 | F-373 | <a id="f-373"></a>Pending — [acceptance](FEATURES.md#f-373) | Pending | Pending |
@@ -404,10 +419,10 @@ Replace each Pending test entry with clickable passing test references and recor
 | F-396 | <a id="f-396"></a>Pending — [acceptance](FEATURES.md#f-396) | Pending | Pending |
 | F-397 | <a id="f-397"></a>Pending — [acceptance](FEATURES.md#f-397) | Pending | Pending |
 | F-398 | <a id="f-398"></a>Pending — [acceptance](FEATURES.md#f-398) | Pending | Pending |
-| F-399 | <a id="f-399"></a>Pending — [acceptance](FEATURES.md#f-399) | Pending | Pending |
-| F-400 | <a id="f-400"></a>Pending — [acceptance](FEATURES.md#f-400) | Pending | Pending |
-| F-401 | <a id="f-401"></a>Pending — [acceptance](FEATURES.md#f-401) | Pending | Pending |
-| F-402 | <a id="f-402"></a>Pending — [acceptance](FEATURES.md#f-402) | Pending | Pending |
+| F-399 | <a id="f-399"></a>[lists sessions through state and encodes identifiers and the SSE token](../../ui/src/lib/api.test.ts); [creates sends streams groups renames and reloads a session](../../ui/e2e/sessions.spec.ts) | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-400 | <a id="f-400"></a>[uses one connection and requests a fresh snapshot on reconnect or invalid frames](../../ui/src/lib/stream.test.ts); [replays frames arriving while the authoritative snapshot is loading](../../ui/src/lib/workbench.test.ts); [recovers after an engine restart and keeps the unsent draft](../../ui/e2e/sessions.spec.ts) | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-401 | <a id="f-401"></a>[creates sends streams groups renames and reloads a session](../../ui/e2e/sessions.spec.ts); [recovers after an engine restart and keeps the unsent draft](../../ui/e2e/sessions.spec.ts). Reload restores the existing fragment session. Invalid fragment fallback is not claimed. **Remaining:** The reload scenarios each contain only one session. Add a multiple-session assertion that a valid fragment wins over the first-session fallback. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-402 | <a id="f-402"></a>[creates sends streams groups renames and reloads a session](../../ui/e2e/sessions.spec.ts) **Remaining:** Valid fragment restoration is tested; invalid-fragment and archived-only fallback still need parity. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-403 | <a id="f-403"></a>Pending — [acceptance](FEATURES.md#f-403) | Pending | Pending |
 | F-404 | <a id="f-404"></a>Pending — [acceptance](FEATURES.md#f-404) | Pending | Pending |
 | F-405 | <a id="f-405"></a>Pending — [acceptance](FEATURES.md#f-405) | Pending | Pending |
@@ -430,7 +445,7 @@ Replace each Pending test entry with clickable passing test references and recor
 | F-422 | <a id="f-422"></a>Pending — [acceptance](FEATURES.md#f-422) | Pending | Pending |
 | F-423 | <a id="f-423"></a>Pending — [acceptance](FEATURES.md#f-423) | Pending | Pending |
 | F-424 | <a id="f-424"></a>Pending — [acceptance](FEATURES.md#f-424) | Pending | Pending |
-| F-425 | <a id="f-425"></a>Pending — [acceptance](FEATURES.md#f-425) | Pending | Pending |
+| F-425 | <a id="f-425"></a>[groups folders, pins before recent sessions, and combines filter terms](../../ui/src/lib/navigation.test.ts); [supports light theme narrow navigation filtering and validation errors](../../ui/e2e/sessions.spec.ts) | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-426 | <a id="f-426"></a>Pending — [acceptance](FEATURES.md#f-426) | Pending | Pending |
 | F-427 | <a id="f-427"></a>Pending — [acceptance](FEATURES.md#f-427) | Pending | Pending |
 | F-428 | <a id="f-428"></a>Pending — [acceptance](FEATURES.md#f-428) | Pending | Pending |
@@ -438,8 +453,8 @@ Replace each Pending test entry with clickable passing test references and recor
 | F-430 | <a id="f-430"></a>Pending — [acceptance](FEATURES.md#f-430) | Pending | Pending |
 | F-431 | <a id="f-431"></a>Pending — [acceptance](FEATURES.md#f-431) | Pending | Pending |
 | F-432 | <a id="f-432"></a>Pending — [acceptance](FEATURES.md#f-432) | Pending | Pending |
-| F-433 | <a id="f-433"></a>Pending — [acceptance](FEATURES.md#f-433) | Pending | Pending |
-| F-434 | <a id="f-434"></a>Pending — [acceptance](FEATURES.md#f-434) | Pending | Pending |
+| F-433 | <a id="f-433"></a>[creates sends streams groups renames and reloads a session](../../ui/e2e/sessions.spec.ts) **Remaining:** Pin is exercised, but full persistence and separate pinned-navigation parity are not yet proved. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-434 | <a id="f-434"></a>Pending **Remaining:** Unpin control exists; its action is not yet exercised by the browser suite. | Pending | Pending |
 | F-435 | <a id="f-435"></a>Pending — [acceptance](FEATURES.md#f-435) | Pending | Pending |
 | F-436 | <a id="f-436"></a>Pending — [acceptance](FEATURES.md#f-436) | Pending | Pending |
 | F-437 | <a id="f-437"></a>Pending — [acceptance](FEATURES.md#f-437) | Pending | Pending |
@@ -457,9 +472,9 @@ Replace each Pending test entry with clickable passing test references and recor
 | F-449 | <a id="f-449"></a>Pending — [acceptance](FEATURES.md#f-449) | Pending | Pending |
 | F-450 | <a id="f-450"></a>Pending — [acceptance](FEATURES.md#f-450) | Pending | Pending |
 | F-451 | <a id="f-451"></a>Pending — [acceptance](FEATURES.md#f-451) | Pending | Pending |
-| F-452 | <a id="f-452"></a>Pending — [acceptance](FEATURES.md#f-452) | Pending | Pending |
+| F-452 | <a id="f-452"></a>[ignores an old selection response after choosing another session](../../ui/src/lib/workbench.test.ts) **Remaining:** Selection behavior is tested; automatic composer focus remains unproved. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-453 | <a id="f-453"></a>Pending — [acceptance](FEATURES.md#f-453) | Pending | Pending |
-| F-454 | <a id="f-454"></a>Pending — [acceptance](FEATURES.md#f-454) | Pending | Pending |
+| F-454 | <a id="f-454"></a>[ignores an old selection response after choosing another session](../../ui/src/lib/workbench.test.ts) | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-455 | <a id="f-455"></a>Pending — [acceptance](FEATURES.md#f-455) | Pending | Pending |
 | F-456 | <a id="f-456"></a>Pending — [acceptance](FEATURES.md#f-456) | Pending | Pending |
 | F-457 | <a id="f-457"></a>Pending — [acceptance](FEATURES.md#f-457) | Pending | Pending |
@@ -473,15 +488,15 @@ Replace each Pending test entry with clickable passing test references and recor
 | F-465 | <a id="f-465"></a>Pending — [acceptance](FEATURES.md#f-465) | Pending | Pending |
 | F-466 | <a id="f-466"></a>Pending — [acceptance](FEATURES.md#f-466) | Pending | Pending |
 | F-467 | <a id="f-467"></a>Pending — [acceptance](FEATURES.md#f-467) | Pending | Pending |
-| F-468 | <a id="f-468"></a>Pending — [acceptance](FEATURES.md#f-468) | Pending | Pending |
-| F-469 | <a id="f-469"></a>Pending — [acceptance](FEATURES.md#f-469) | Pending | Pending |
+| F-468 | <a id="f-468"></a>[queues a second message then stops the running turn](../../ui/e2e/sessions.spec.ts) | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-469 | <a id="f-469"></a>[queues a second message then stops the running turn](../../ui/e2e/sessions.spec.ts) | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-470 | <a id="f-470"></a>Pending — [acceptance](FEATURES.md#f-470) | Pending | Pending |
 | F-471 | <a id="f-471"></a>Pending — [acceptance](FEATURES.md#f-471) | Pending | Pending |
 | F-472 | <a id="f-472"></a>Pending — [acceptance](FEATURES.md#f-472) | Pending | Pending |
-| F-473 | <a id="f-473"></a>Pending — [acceptance](FEATURES.md#f-473) | Pending | Pending |
+| F-473 | <a id="f-473"></a>[keeps a failed-send draft and clears it only after successful queue acceptance](../../ui/src/lib/workbench.test.ts); [preserves a newer draft typed while sending the earlier one](../../ui/src/lib/workbench.test.ts) | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-474 | <a id="f-474"></a>Pending — [acceptance](FEATURES.md#f-474) | Pending | Pending |
 | F-475 | <a id="f-475"></a>Pending — [acceptance](FEATURES.md#f-475) | Pending | Pending |
-| F-476 | <a id="f-476"></a>Pending — [acceptance](FEATURES.md#f-476) | Pending | Pending |
+| F-476 | <a id="f-476"></a>[queues a second message then stops the running turn](../../ui/e2e/sessions.spec.ts) **Remaining:** The current busy composer queues a message for the next turn; live mid-turn steering belongs to a later slice. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-477 | <a id="f-477"></a>Pending — [acceptance](FEATURES.md#f-477) | Pending | Pending |
 | F-478 | <a id="f-478"></a>Pending — [acceptance](FEATURES.md#f-478) | Pending | Pending |
 | F-479 | <a id="f-479"></a>Pending — [acceptance](FEATURES.md#f-479) | Pending | Pending |
@@ -520,7 +535,7 @@ Replace each Pending test entry with clickable passing test references and recor
 | F-512 | <a id="f-512"></a>Pending — [acceptance](FEATURES.md#f-512) | Pending | Pending |
 | F-513 | <a id="f-513"></a>Pending — [acceptance](FEATURES.md#f-513) | Pending | Pending |
 | F-514 | <a id="f-514"></a>Pending — [acceptance](FEATURES.md#f-514) | Pending | Pending |
-| F-515 | <a id="f-515"></a>Pending — [acceptance](FEATURES.md#f-515) | Pending | Pending |
+| F-515 | <a id="f-515"></a>[replaces a streamed assistant step with its authoritative final text](../../ui/src/lib/transcript.test.ts); [drops obsolete buffered deltas after replay and removes matching fragments on final](../../ui/src/lib/transcript.test.ts); [creates sends streams groups renames and reloads a session](../../ui/e2e/sessions.spec.ts) | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-516 | <a id="f-516"></a>Pending — [acceptance](FEATURES.md#f-516) | Pending | Pending |
 | F-517 | <a id="f-517"></a>Pending — [acceptance](FEATURES.md#f-517) | Pending | Pending |
 | F-518 | <a id="f-518"></a>Pending — [acceptance](FEATURES.md#f-518) | Pending | Pending |
@@ -530,20 +545,20 @@ Replace each Pending test entry with clickable passing test references and recor
 | F-522 | <a id="f-522"></a>Pending — [acceptance](FEATURES.md#f-522) | Pending | Pending |
 | F-523 | <a id="f-523"></a>Pending — [acceptance](FEATURES.md#f-523) | Pending | Pending |
 | F-524 | <a id="f-524"></a>Pending — [acceptance](FEATURES.md#f-524) | Pending | Pending |
-| F-525 | <a id="f-525"></a>Pending — [acceptance](FEATURES.md#f-525) | Pending | Pending |
-| F-526 | <a id="f-526"></a>Pending — [acceptance](FEATURES.md#f-526) | Pending | Pending |
+| F-525 | <a id="f-525"></a>[creates sends streams groups renames and reloads a session](../../ui/e2e/sessions.spec.ts) **Remaining:** JSON parameter fallback is exercised. Complete extended-error behavior remains unproved. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-526 | <a id="f-526"></a>[creates sends streams groups renames and reloads a session](../../ui/e2e/sessions.spec.ts) **Remaining:** Tool header expansion is exercised. Legacy preview-click and complete-output parity remain unproved. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-527 | <a id="f-527"></a>Pending — [acceptance](FEATURES.md#f-527) | Pending | Pending |
 | F-528 | <a id="f-528"></a>Pending — [acceptance](FEATURES.md#f-528) | Pending | Pending |
 | F-529 | <a id="f-529"></a>Pending — [acceptance](FEATURES.md#f-529) | Pending | Pending |
 | F-530 | <a id="f-530"></a>Pending — [acceptance](FEATURES.md#f-530) | Pending | Pending |
-| F-531 | <a id="f-531"></a>Pending — [acceptance](FEATURES.md#f-531) | Pending | Pending |
+| F-531 | <a id="f-531"></a>[reads expandable thinking from compatible durable history](../../ui/e2e/sessions.spec.ts) **Remaining:** Preserved thinking text and token count are exercised. Thinking Markdown rendering remains Pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-532 | <a id="f-532"></a>Pending — [acceptance](FEATURES.md#f-532) | Pending | Pending |
 | F-533 | <a id="f-533"></a>Pending — [acceptance](FEATURES.md#f-533) | Pending | Pending |
 | F-534 | <a id="f-534"></a>Pending — [acceptance](FEATURES.md#f-534) | Pending | Pending |
 | F-535 | <a id="f-535"></a>Pending — [acceptance](FEATURES.md#f-535) | Pending | Pending |
 | F-536 | <a id="f-536"></a>Pending — [acceptance](FEATURES.md#f-536) | Pending | Pending |
-| F-537 | <a id="f-537"></a>Pending — [acceptance](FEATURES.md#f-537) | Pending | Pending |
-| F-538 | <a id="f-538"></a>Pending — [acceptance](FEATURES.md#f-538) | Pending | Pending |
+| F-537 | <a id="f-537"></a>[shows an agent crash and allows the next turn to recover](../../ui/e2e/sessions.spec.ts) **Remaining:** Turn status returns idle after completion/crash; complete legacy marker cleanup is not separately asserted. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-538 | <a id="f-538"></a>Pending **Remaining:** Scroll follow currently uses a 100-pixel threshold; the legacy 120-pixel acceptance remains Pending. | Pending | Pending |
 | F-539 | <a id="f-539"></a>Pending — [acceptance](FEATURES.md#f-539) | Pending | Pending |
 | F-540 | <a id="f-540"></a>Pending — [acceptance](FEATURES.md#f-540) | Pending | Pending |
 | F-541 | <a id="f-541"></a>Pending — [acceptance](FEATURES.md#f-541) | Pending | Pending |
@@ -983,16 +998,16 @@ Replace each Pending test entry with clickable passing test references and recor
 | F-975 | <a id="f-975"></a>Pending — [acceptance](FEATURES.md#f-975) | Pending | Pending |
 | F-976 | <a id="f-976"></a>Pending — [acceptance](FEATURES.md#f-976) | Pending | Pending |
 | F-977 | <a id="f-977"></a>Pending — [acceptance](FEATURES.md#f-977) | Pending | Pending |
-| F-978 | <a id="f-978"></a>Pending — [acceptance](FEATURES.md#f-978) | Pending | Pending |
+| F-978 | <a id="f-978"></a>[prefers an explicit default folder when there is no selected session](../../ui/src/lib/workbench.test.ts) **Remaining:** Default folder and model creation work; all legacy create-dialog model/mode controls remain Pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-979 | <a id="f-979"></a>Pending — [acceptance](FEATURES.md#f-979) | Pending | Pending |
 | F-980 | <a id="f-980"></a>Pending — [acceptance](FEATURES.md#f-980) | Pending | Pending |
 | F-981 | <a id="f-981"></a>Pending — [acceptance](FEATURES.md#f-981) | Pending | Pending |
 | F-982 | <a id="f-982"></a>Pending — [acceptance](FEATURES.md#f-982) | Pending | Pending |
 | F-983 | <a id="f-983"></a>Pending — [acceptance](FEATURES.md#f-983) | Pending | Pending |
 | F-984 | <a id="f-984"></a>Pending — [acceptance](FEATURES.md#f-984) | Pending | Pending |
-| F-985 | <a id="f-985"></a>Pending — [acceptance](FEATURES.md#f-985) | Pending | Pending |
-| F-986 | <a id="f-986"></a>Pending — [acceptance](FEATURES.md#f-986) | Pending | Pending |
-| F-987 | <a id="f-987"></a>Pending — [acceptance](FEATURES.md#f-987) | Pending | Pending |
+| F-985 | <a id="f-985"></a>[creates sends streams groups renames and reloads a session](../../ui/e2e/sessions.spec.ts) **Remaining:** Worktree and mode creation options remain Pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-986 | <a id="f-986"></a>[retains a newly created session target when another refresh is already in flight](../../ui/src/lib/workbench.test.ts); [creates sends streams groups renames and reloads a session](../../ui/e2e/sessions.spec.ts); [supports light theme narrow navigation filtering and validation errors](../../ui/e2e/sessions.spec.ts) | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-987 | <a id="f-987"></a>[uses the runtime default folder and keeps validation failures in the dialog](../../ui/src/lib/workbench.test.ts) **Remaining:** The API error and open dialog are tested; no-fake-session invariants need an explicit assertion. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-988 | <a id="f-988"></a>Pending — [acceptance](FEATURES.md#f-988) | Pending | Pending |
 | F-989 | <a id="f-989"></a>Pending — [acceptance](FEATURES.md#f-989) | Pending | Pending |
 | F-990 | <a id="f-990"></a>Pending — [acceptance](FEATURES.md#f-990) | Pending | Pending |
@@ -1049,76 +1064,76 @@ Replace each Pending test entry with clickable passing test references and recor
 | F-1041 | <a id="f-1041"></a>Pending — [acceptance](FEATURES.md#f-1041) | Pending | Pending |
 | F-1042 | <a id="f-1042"></a>Pending — [acceptance](FEATURES.md#f-1042) | Pending | Pending |
 | F-1043 | <a id="f-1043"></a>Pending — [acceptance](FEATURES.md#f-1043) | Pending | Pending |
-| F-1044 | <a id="f-1044"></a>Pending — [acceptance](FEATURES.md#f-1044) | Pending | Pending |
+| F-1044 | <a id="f-1044"></a>[creates sends streams groups renames and reloads a session](../../ui/e2e/sessions.spec.ts) | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-1045 | <a id="f-1045"></a>Pending — [acceptance](FEATURES.md#f-1045) | Pending | Pending |
 | F-1046 | <a id="f-1046"></a>Pending — [acceptance](FEATURES.md#f-1046) | Pending | Pending |
-| F-1047 | <a id="f-1047"></a>Pending — [acceptance](FEATURES.md#f-1047) | Pending | Pending |
-| F-1048 | <a id="f-1048"></a>Pending — [acceptance](FEATURES.md#f-1048) | Pending | Pending |
-| F-1049 | <a id="f-1049"></a>Pending — [acceptance](FEATURES.md#f-1049) | Pending | Pending |
-| F-1050 | <a id="f-1050"></a>Pending — [acceptance](FEATURES.md#f-1050) | Pending | Pending |
-| F-1051 | <a id="f-1051"></a>Pending — [acceptance](FEATURES.md#f-1051) | Pending | Pending |
-| F-1052 | <a id="f-1052"></a>Pending — [acceptance](FEATURES.md#f-1052) | Pending | Pending |
+| F-1047 | <a id="f-1047"></a>[pnpm install --frozen-lockfile](../../ui/pnpm-lock.yaml); [pnpm check](../../ui/package.json); [pnpm build](../../ui/package.json). Pinned Svelte 5.57.2, TypeScript 6.0.3, Vite 8.3.3 and pnpm 11.19.0; runtime Node 26.10.0. | Passed | [slice1-independent-final-check.log](../../.handoff/evidence/slice1-independent-final-check.log); [slice1-independent-final-build.log](../../.handoff/evidence/slice1-independent-final-build.log) |
+| F-1048 | <a id="f-1048"></a>[tests::recursive_stale_check_detects_changed_missing_and_extra_nested_files](../../crates/server/examples/export_types.rs); [just check / check-types](../../justfile). ts-rs exports all current core/server API types, including the recursive JsonValue binding. The fresh stale check matches all generated bytes. | Passed | [slice1-independent-final-check.log](../../.handoff/evidence/slice1-independent-final-check.log); [slice1-fixes-tests.log](../../.handoff/evidence/slice1-fixes-tests.log) |
+| F-1049 | <a id="f-1049"></a>[tests::recursive_stale_check_detects_changed_missing_and_extra_nested_files](../../crates/server/examples/export_types.rs); [just check / check-types](../../justfile). The separate owned exporter regression detects changed, missing and extra nested files. Fresh just check verifies the final generated bytes without editing them. | Passed | [slice1-independent-final-check.log](../../.handoff/evidence/slice1-independent-final-check.log); [slice1-fixes-tests.log](../../.handoff/evidence/slice1-fixes-tests.log) |
+| F-1050 | <a id="f-1050"></a>[pnpm check](../../ui/package.json); [pnpm lint](../../ui/package.json); [Static inspection of generated type imports in API, validators, stores and components](../../ui/src/lib/api.ts). The current Rust/TypeScript sources satisfy this architectural requirement. This does not complete any later feature, view or event behavior. | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log); [slice1-pattern-review.json](../../.handoff/evidence/slice1-pattern-review.json); [slice1-independent-final-check.log](../../.handoff/evidence/slice1-independent-final-check.log) |
+| F-1051 | <a id="f-1051"></a>[sends the token and exact JSON request through the captured route](../../ui/src/lib/api.test.ts); [Static inspection of browser fetch references](../../ui/src/lib/api.ts). The current Rust/TypeScript sources satisfy this architectural requirement. This does not complete any later feature, view or event behavior. | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log); [slice1-pattern-review.json](../../.handoff/evidence/slice1-pattern-review.json); [slice1-independent-final-check.log](../../.handoff/evidence/slice1-independent-final-check.log) |
+| F-1052 | <a id="f-1052"></a>[uses one connection and requests a fresh snapshot on reconnect or invalid frames](../../ui/src/lib/stream.test.ts); [replaces a streamed assistant step with its authoritative final text](../../ui/src/lib/transcript.test.ts); [ignores an old selection response after choosing another session](../../ui/src/lib/workbench.test.ts). The current Rust/TypeScript sources satisfy this architectural requirement. This does not complete any later feature, view or event behavior. | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log); [slice1-pattern-review.json](../../.handoff/evidence/slice1-pattern-review.json); [slice1-independent-final-check.log](../../.handoff/evidence/slice1-independent-final-check.log) |
 | F-1053 | <a id="f-1053"></a>Pending — [acceptance](FEATURES.md#f-1053) | Pending | Pending |
 | F-1054 | <a id="f-1054"></a>Pending — [acceptance](FEATURES.md#f-1054) | Pending | Pending |
 | F-1055 | <a id="f-1055"></a>Pending — [acceptance](FEATURES.md#f-1055) | Pending | Pending |
-| F-1056 | <a id="f-1056"></a>Pending — [acceptance](FEATURES.md#f-1056) | Pending | Pending |
-| F-1057 | <a id="f-1057"></a>Pending — [acceptance](FEATURES.md#f-1057) | Pending | Pending |
-| F-1058 | <a id="f-1058"></a>Pending — [acceptance](FEATURES.md#f-1058) | Pending | Pending |
-| F-1059 | <a id="f-1059"></a>Pending — [acceptance](FEATURES.md#f-1059) | Pending | Pending |
+| F-1056 | <a id="f-1056"></a>[creates sends streams groups renames and reloads a session](../../ui/e2e/sessions.spec.ts); [supports light theme narrow navigation filtering and validation errors](../../ui/e2e/sessions.spec.ts); [Static inspection of ui/src/styles/tokens.css](../../ui/src/styles/tokens.css). The current Rust/TypeScript sources satisfy this architectural requirement. This does not complete any later feature, view or event behavior. | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log); [slice1-pattern-review.json](../../.handoff/evidence/slice1-pattern-review.json); [slice1-independent-final-check.log](../../.handoff/evidence/slice1-independent-final-check.log) |
+| F-1057 | <a id="f-1057"></a>[supports light theme narrow navigation filtering and validation errors](../../ui/e2e/sessions.spec.ts); [Parent visual review of dark expanded/collapsed and narrow light screenshots](../../.handoff/evidence/ui-slice1/desktop-dark-expanded.png). The dark expanded/collapsed transcript and narrow light screenshots were visually reviewed. Later views, split panes and native rendering retain their own Pending acceptance. | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log); [desktop-dark-expanded.png](../../.handoff/evidence/ui-slice1/desktop-dark-expanded.png); [desktop-dark-collapsed.png](../../.handoff/evidence/ui-slice1/desktop-dark-collapsed.png); [narrow-light.png](../../.handoff/evidence/ui-slice1/narrow-light.png) |
+| F-1058 | <a id="f-1058"></a>[creates sends streams groups renames and reloads a session](../../ui/e2e/sessions.spec.ts) **Remaining:** The browser build is tested. The Tauri shell remains Pending until Slice 10. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-1059 | <a id="f-1059"></a>[preserves a newer draft typed while sending the earlier one](../../ui/src/lib/workbench.test.ts); [ignores an old selection response after choosing another session](../../ui/src/lib/workbench.test.ts); [Static inspection of focused component ownership and derived store data](../../ui/src/lib/workbench.ts). The current Rust/TypeScript sources satisfy this architectural requirement. This does not complete any later feature, view or event behavior. | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log); [slice1-pattern-review.json](../../.handoff/evidence/slice1-pattern-review.json); [slice1-independent-final-check.log](../../.handoff/evidence/slice1-independent-final-check.log) |
 | F-1060 | <a id="f-1060"></a>Pending — [acceptance](FEATURES.md#f-1060) | Pending | Pending |
 | F-1061 | <a id="f-1061"></a>Pending — [acceptance](FEATURES.md#f-1061) | Pending | Pending |
 | F-1062 | <a id="f-1062"></a>Pending — [acceptance](FEATURES.md#f-1062) | Pending | Pending |
 | F-1063 | <a id="f-1063"></a>Pending — [acceptance](FEATURES.md#f-1063) | Pending | Pending |
 | F-1064 | <a id="f-1064"></a>Pending — [acceptance](FEATURES.md#f-1064) | Pending | Pending |
 | F-1065 | <a id="f-1065"></a>Pending — [acceptance](FEATURES.md#f-1065) | Pending | Pending |
-| F-1066 | <a id="f-1066"></a>Pending — [acceptance](FEATURES.md#f-1066) | Pending | Pending |
-| F-1067 | <a id="f-1067"></a>Pending — [acceptance](FEATURES.md#f-1067) | Pending | Pending |
-| F-1068 | <a id="f-1068"></a>Pending — [acceptance](FEATURES.md#f-1068) | Pending | Pending |
-| F-1069 | <a id="f-1069"></a>Pending — [acceptance](FEATURES.md#f-1069) | Pending | Pending |
-| F-1070 | <a id="f-1070"></a>Pending — [acceptance](FEATURES.md#f-1070) | Pending | Pending |
+| F-1066 | <a id="f-1066"></a>[just dev background smoke: create and complete a synthetic turn through the Vite proxy](../../justfile). Actual discovery port is passed to Vite; all fixture data and child account homes are under Desktop/test. **Remaining:** The owned development smoke passed before the backend lifetime repairs; independently repeat the complete just dev browser/engine smoke with the final backend. | Pending | [ui-slice1-dev-smoke.json](../../.handoff/evidence/ui-slice1-dev-smoke.json) |
+| F-1067 | <a id="f-1067"></a>[just test](../../justfile). Fresh just test runs 51 Rust workspace tests, 28 Vitest tests and 6 Chromium scenarios. The separate exporter example test is excluded from this count. | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-1068 | <a id="f-1068"></a>[just check](../../justfile). Fresh just check passes stale generation, rustfmt, all-target clippy, cargo-deny, strict Svelte/TypeScript, ESLint and Prettier. | Passed | [slice1-independent-final-check.log](../../.handoff/evidence/slice1-independent-final-check.log) |
+| F-1069 | <a id="f-1069"></a>[just build](../../justfile). Fresh just build successfully builds the Rust engine and browser UI. **Remaining:** Engine and browser builds run. Desktop bundle build remains Pending; build-shell fails honestly. | Pending | [slice1-independent-final-build.log](../../.handoff/evidence/slice1-independent-final-build.log) |
+| F-1070 | <a id="f-1070"></a>[tests::recursive_stale_check_detects_changed_missing_and_extra_nested_files](../../crates/server/examples/export_types.rs) **Remaining:** The exporter generation/regression passes; execute and verify the just gen-types recipe explicitly. | Pending | [slice1-fixes-tests.log](../../.handoff/evidence/slice1-fixes-tests.log); [slice1-generation.log](../../.handoff/evidence/slice1-generation.log) |
 | F-1071 | <a id="f-1071"></a>Pending — [acceptance](FEATURES.md#f-1071) | Pending | Pending |
 | F-1072 | <a id="f-1072"></a>Pending — [acceptance](FEATURES.md#f-1072) | Pending | Pending |
-| F-1073 | <a id="f-1073"></a>Pending — [acceptance](FEATURES.md#f-1073) | Pending | Pending |
-| F-1074 | <a id="f-1074"></a>Pending — [acceptance](FEATURES.md#f-1074) | Pending | Pending |
+| F-1073 | <a id="f-1073"></a>[cargo clippy --workspace --all-targets --jobs 2 -- -D warnings](../../justfile). Fresh all-targets command passes; suppression policy remains part of the blocking code review. | Passed | [slice1-independent-final-check.log](../../.handoff/evidence/slice1-independent-final-check.log) |
+| F-1074 | <a id="f-1074"></a>[cargo fmt --all -- --check](../../justfile); [cargo deny --config .cargo/deny.toml check](../../.cargo/deny.toml). Fresh formatting and dependency policy commands pass. | Passed | [slice1-independent-final-check.log](../../.handoff/evidence/slice1-independent-final-check.log) |
 | F-1075 | <a id="f-1075"></a>Pending — [acceptance](FEATURES.md#f-1075) | Pending | Pending |
-| F-1076 | <a id="f-1076"></a>Pending — [acceptance](FEATURES.md#f-1076) | Pending | Pending |
-| F-1077 | <a id="f-1077"></a>Pending — [acceptance](FEATURES.md#f-1077) | Pending | Pending |
-| F-1078 | <a id="f-1078"></a>Pending — [acceptance](FEATURES.md#f-1078) | Pending | Pending |
+| F-1076 | <a id="f-1076"></a>[pnpm check](../../ui/package.json) | Passed | [slice1-independent-final-check.log](../../.handoff/evidence/slice1-independent-final-check.log) |
+| F-1077 | <a id="f-1077"></a>[pnpm lint](../../ui/package.json); [pnpm format](../../ui/package.json); [Static scan for any types in owned UI source](../../ui/tsconfig.json) | Passed | [slice1-independent-final-check.log](../../.handoff/evidence/slice1-independent-final-check.log) |
+| F-1078 | <a id="f-1078"></a>[cargo fmt --all -- --check](../../justfile); [cargo clippy --workspace --all-targets --jobs 2 -- -D warnings](../../justfile). Independent static checks find no current module above 400 lines and no missing ownership comment; Rust formatting and lint checks pass. **Remaining:** Retain this condition as later modules and components are added; full final-tree acceptance remains Pending. | Pending | [slice1-pattern-review.json](../../.handoff/evidence/slice1-pattern-review.json); [slice1-independent-final-check.log](../../.handoff/evidence/slice1-independent-final-check.log) |
 | F-1079 | <a id="f-1079"></a>Pending — [acceptance](FEATURES.md#f-1079) | Pending | Pending |
 | F-1080 | <a id="f-1080"></a>Pending — [acceptance](FEATURES.md#f-1080) | Pending | Pending |
 | F-1081 | <a id="f-1081"></a>Pending — [acceptance](FEATURES.md#f-1081) | Pending | Pending |
 | F-1082 | <a id="f-1082"></a>Pending — [acceptance](FEATURES.md#f-1082) | Pending | Pending |
 | F-1083 | <a id="f-1083"></a>Pending — [acceptance](FEATURES.md#f-1083) | Pending | Pending |
 | F-1084 | <a id="f-1084"></a>Pending — [acceptance](FEATURES.md#f-1084) | Pending | Pending |
-| F-1085 | <a id="f-1085"></a>Pending — [acceptance](FEATURES.md#f-1085) | Pending | Pending |
-| F-1086 | <a id="f-1086"></a>Pending — [acceptance](FEATURES.md#f-1086) | Pending | Pending |
-| F-1087 | <a id="f-1087"></a>Pending — [acceptance](FEATURES.md#f-1087) | Pending | Pending |
-| F-1088 | <a id="f-1088"></a>Pending — [acceptance](FEATURES.md#f-1088) | Pending | Pending |
-| F-1089 | <a id="f-1089"></a>Pending — [acceptance](FEATURES.md#f-1089) | Pending | Pending |
-| F-1090 | <a id="f-1090"></a>Pending — [acceptance](FEATURES.md#f-1090) | Pending | Pending |
-| F-1091 | <a id="f-1091"></a>Pending — [acceptance](FEATURES.md#f-1091) | Pending | Pending |
-| F-1092 | <a id="f-1092"></a>Pending — [acceptance](FEATURES.md#f-1092) | Pending | Pending |
-| F-1093 | <a id="f-1093"></a>Pending — [acceptance](FEATURES.md#f-1093) | Pending | Pending |
-| F-1094 | <a id="f-1094"></a>Pending — [acceptance](FEATURES.md#f-1094) | Pending | Pending |
-| F-1095 | <a id="f-1095"></a>Pending — [acceptance](FEATURES.md#f-1095) | Pending | Pending |
-| F-1096 | <a id="f-1096"></a>Pending — [acceptance](FEATURES.md#f-1096) | Pending | Pending |
-| F-1097 | <a id="f-1097"></a>Pending — [acceptance](FEATURES.md#f-1097) | Pending | Pending |
+| F-1085 | <a id="f-1085"></a>[uses one connection and requests a fresh snapshot on reconnect or invalid frames](../../ui/src/lib/stream.test.ts); [preserves identical durable user occurrences even with the same timestamp](../../ui/src/lib/transcript.test.ts); [replays frames arriving while the authoritative snapshot is loading](../../ui/src/lib/workbench.test.ts) | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-1086 | <a id="f-1086"></a>[sends the token and exact JSON request through the captured route](../../ui/src/lib/api.test.ts); [lists sessions through state and encodes identifiers and the SSE token](../../ui/src/lib/api.test.ts); [surfaces engine errors, malformed responses, and lost connections](../../ui/src/lib/api.test.ts); [refuses a missing bootstrap token before any network request](../../ui/src/lib/api.test.ts) | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-1087 | <a id="f-1087"></a>[keeps counters legible across thousands and millions](../../ui/src/lib/format.test.ts); [handles future timestamps and minute/hour boundaries](../../ui/src/lib/format.test.ts); [names folders on all three supported platforms](../../ui/src/lib/format.test.ts); [formats short and long turn durations](../../ui/src/lib/format.test.ts) | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-1088 | <a id="f-1088"></a>[process_plays_every_scenario_and_preserves_current_turn_usage](../../tests/fake-agy/tests/scenarios.rs); [protocol::tests::every_scenario_uses_real_envelopes_and_retains_resume_identity](../../tests/fake-agy/src/protocol.rs); [whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs). The fake binary emits a successful real-envelope turn, and the whole server consumes its exact first-turn stream. | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-1089 | <a id="f-1089"></a>[process_plays_every_scenario_and_preserves_current_turn_usage](../../tests/fake-agy/tests/scenarios.rs); [protocol::tests::every_scenario_uses_real_envelopes_and_retains_resume_identity](../../tests/fake-agy/src/protocol.rs). The quota scenario runs as a subprocess with real envelopes, the resumed id and failure code 1. **Remaining:** A focused assertion of the mid-turn partial response and quota error text remains pending; application handoff is not claimed. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-1090 | <a id="f-1090"></a>[process_plays_every_scenario_and_preserves_current_turn_usage](../../tests/fake-agy/tests/scenarios.rs); [protocol::tests::every_scenario_uses_real_envelopes_and_retains_resume_identity](../../tests/fake-agy/src/protocol.rs). The rate scenario runs as a subprocess with real envelopes, the resumed id and failure code 1. **Remaining:** A focused assertion of the rate-limit payload remains pending; application cooldowns are not claimed. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-1091 | <a id="f-1091"></a>[custom_script_and_slot_overrides_are_reproducible](../../tests/fake-agy/tests/scenarios.rs); [process_plays_every_scenario_and_preserves_current_turn_usage](../../tests/fake-agy/tests/scenarios.rs). The auth scenario emits UNAUTHENTICATED and code 1, including a deterministic per-slot script override. | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-1092 | <a id="f-1092"></a>[process_plays_every_scenario_and_preserves_current_turn_usage](../../tests/fake-agy/tests/scenarios.rs); [protocol::tests::every_scenario_uses_real_envelopes_and_retains_resume_identity](../../tests/fake-agy/src/protocol.rs). The approval scenario runs as a successful fake subprocess with real envelopes. **Remaining:** A focused risky tool payload assertion and application approval flow remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-1093 | <a id="f-1093"></a>[hook_invocation_obeys_denial_without_executing_a_tool_command](../../tests/fake-agy/tests/scenarios.rs). The fake executable invokes the supplied synthetic PreToolUse hook and obeys denial without a tool edit. Application hook policy and approval handling remain separate Pending items. | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-1094 | <a id="f-1094"></a>[process_plays_every_scenario_and_preserves_current_turn_usage](../../tests/fake-agy/tests/scenarios.rs). The subprocess output is asserted to contain RUN_IN_BACKGROUND:. Application job creation remains Pending. | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-1095 | <a id="f-1095"></a>[whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs); [process_plays_every_scenario_and_preserves_current_turn_usage](../../tests/fake-agy/tests/scenarios.rs). The whole-server first-turn fixture comparison asserts the exact assistant text containing GOAL_COMPLETE. Application completion verification remains Pending. | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-1096 | <a id="f-1096"></a>[process_plays_every_scenario_and_preserves_current_turn_usage](../../tests/fake-agy/tests/scenarios.rs); [resumed_stale_and_duplicate_results_preserve_usage_and_success](../../crates/server/tests/rewrite_contract.rs). A 2 MB fake response preserves exactly one complete assistant event, conversation ID, per-turn usage and SUCCESS. This is the tested huge-output size; no 8 MB success claim is made. | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-1097 | <a id="f-1097"></a>[process_plays_every_scenario_and_preserves_current_turn_usage](../../tests/fake-agy/tests/scenarios.rs); [shows an agent crash and allows the next turn to recover](../../ui/e2e/sessions.spec.ts). The fake exits with code 23; the engine records the failure, returns idle, and the browser completes the next turn successfully. | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-1098 | <a id="f-1098"></a>Pending — [acceptance](FEATURES.md#f-1098) | Pending | Pending |
 | F-1099 | <a id="f-1099"></a>Pending — [acceptance](FEATURES.md#f-1099) | Pending | Pending |
 | F-1100 | <a id="f-1100"></a>Pending — [acceptance](FEATURES.md#f-1100) | Pending | Pending |
 | F-1101 | <a id="f-1101"></a>Pending — [acceptance](FEATURES.md#f-1101) | Pending | Pending |
 | F-1102 | <a id="f-1102"></a>Pending — [acceptance](FEATURES.md#f-1102) | Pending | Pending |
-| F-1103 | <a id="f-1103"></a>Pending — [acceptance](FEATURES.md#f-1103) | Pending | Pending |
-| F-1104 | <a id="f-1104"></a>Pending — [acceptance](FEATURES.md#f-1104) | Pending | Pending |
-| F-1105 | <a id="f-1105"></a>Pending — [acceptance](FEATURES.md#f-1105) | Pending | Pending |
-| F-1106 | <a id="f-1106"></a>Pending — [acceptance](FEATURES.md#f-1106) | Pending | Pending |
-| F-1107 | <a id="f-1107"></a>Pending — [acceptance](FEATURES.md#f-1107) | Pending | Pending |
-| F-1108 | <a id="f-1108"></a>Pending — [acceptance](FEATURES.md#f-1108) | Pending | Pending |
-| F-1109 | <a id="f-1109"></a>Pending — [acceptance](FEATURES.md#f-1109) | Pending | Pending |
-| F-1110 | <a id="f-1110"></a>Pending — [acceptance](FEATURES.md#f-1110) | Pending | Pending |
-| F-1111 | <a id="f-1111"></a>Pending — [acceptance](FEATURES.md#f-1111) | Pending | Pending |
-| F-1112 | <a id="f-1112"></a>Pending — [acceptance](FEATURES.md#f-1112) | Pending | Pending |
-| F-1113 | <a id="f-1113"></a>Pending — [acceptance](FEATURES.md#f-1113) | Pending | Pending |
+| F-1103 | <a id="f-1103"></a>[captured_slice_one_requests_replay_with_exact_json_fields](../../crates/server/tests/rewrite_contract.rs); [whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs); [queued_messages_stop_delete_and_crash_leave_recoverable_sessions](../../crates/server/tests/rewrite_contract.rs); [support::numbers::tests::equal_decimal_values_keep_sign_scale_and_exponents_exact](../../tests/rewrite/support/numbers.rs); [support::numbers::tests::different_huge_integers_and_close_decimals_never_round_to_equal](../../tests/rewrite/support/numbers.rs); [support::replay::tests::recorded_raw_bodies_decode_and_http_dates_are_checked](../../tests/rewrite/support/replay.rs); [support::replay::tests::unknown_dynamic_rule_is_never_silently_ignored](../../tests/rewrite/support/replay.rs); [support::http::tests::sse_lines_survive_transport_chunks_and_utf8_boundaries](../../tests/rewrite/support/http.rs). Exactly 22 distinct of 172 captured cases pass, including one events-sse case with eight original samples. Exact decimal equality preserves large distinct integers; unknown dynamic rules fail. **Remaining:** The other 150 cases and the remaining 65 routes stay pending; no broad field exclusions or full-contract parity claim. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-1104 | <a id="f-1104"></a>[creates sends streams groups renames and reloads a session](../../ui/e2e/sessions.spec.ts) **Remaining:** Only the Slice 1 view is exercised; the settings views remain Pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-1105 | <a id="f-1105"></a>[queues a second message then stops the running turn](../../ui/e2e/sessions.spec.ts) **Remaining:** Enter sending is exercised; all other shortcuts and context menus remain Pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-1106 | <a id="f-1106"></a>Pending **Remaining:** Approval cards remain Pending. | Pending | Pending |
+| F-1107 | <a id="f-1107"></a>[creates sends streams groups renames and reloads a session](../../ui/e2e/sessions.spec.ts); [reads expandable thinking from compatible durable history](../../ui/e2e/sessions.spec.ts). Uses real HTTP/SSE for a grouped tool turn; thinking is seeded into compatible durable history rather than invented in agy output. | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-1108 | <a id="f-1108"></a>Pending **Remaining:** Split panes and required zoom levels remain Pending. | Pending | Pending |
+| F-1109 | <a id="f-1109"></a>Pending **Remaining:** Terminal interaction remains Pending. | Pending | Pending |
+| F-1110 | <a id="f-1110"></a>Pending **Remaining:** Dictation and silence tests remain Pending. | Pending | Pending |
+| F-1111 | <a id="f-1111"></a>Pending **Remaining:** Usage charts and tooltips remain Pending. | Pending | Pending |
+| F-1112 | <a id="f-1112"></a>[creates sends streams groups renames and reloads a session](../../ui/e2e/sessions.spec.ts) **Remaining:** Native project/session context menus remain Pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
+| F-1113 | <a id="f-1113"></a>[supports light theme narrow navigation filtering and validation errors](../../ui/e2e/sessions.spec.ts); [creates sends streams groups renames and reloads a session](../../ui/e2e/sessions.spec.ts) | Passed | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-1114 | <a id="f-1114"></a>Pending — [acceptance](FEATURES.md#f-1114) | Pending | Pending |
 | F-1115 | <a id="f-1115"></a>Pending — [acceptance](FEATURES.md#f-1115) | Pending | Pending |
 | F-1116 | <a id="f-1116"></a>Pending — [acceptance](FEATURES.md#f-1116) | Pending | Pending |
@@ -1138,7 +1153,7 @@ Replace each Pending test entry with clickable passing test references and recor
 | F-1130 | <a id="f-1130"></a>Pending — [acceptance](FEATURES.md#f-1130) | Pending | Pending |
 | F-1131 | <a id="f-1131"></a>Pending — [acceptance](FEATURES.md#f-1131) | Pending | Pending |
 | F-1132 | <a id="f-1132"></a>Pending — [acceptance](FEATURES.md#f-1132) | Pending | Pending |
-| F-1133 | <a id="f-1133"></a>Pending — [acceptance](FEATURES.md#f-1133) | Pending | Pending |
+| F-1133 | <a id="f-1133"></a>[captured_slice_one_requests_replay_with_exact_json_fields](../../crates/server/tests/rewrite_contract.rs); [whole_server_streams_one_turn_and_replays_after_restart](../../crates/server/tests/rewrite_contract.rs); [metadata_commands_are_json_or_model_rows_and_never_edit_project](../../tests/fake-agy/tests/scenarios.rs). The captured defaults contain gemini-3.8-flash-high and the real fake turn uses that default model. **Remaining:** A real verifier invocation and the settings update path remain pending. | Pending | [slice1-independent-final-test.log](../../.handoff/evidence/slice1-independent-final-test.log) |
 | F-1134 | <a id="f-1134"></a>Pending — [acceptance](FEATURES.md#f-1134) | Pending | Pending |
 | F-1135 | <a id="f-1135"></a>Pending — [acceptance](FEATURES.md#f-1135) | Pending | Pending |
 | F-1136 | <a id="f-1136"></a>Pending — [acceptance](FEATURES.md#f-1136) | Pending | Pending |
@@ -1150,15 +1165,3 @@ Replace each Pending test entry with clickable passing test references and recor
 | F-1142 | <a id="f-1142"></a>Pending — [acceptance](FEATURES.md#f-1142) | Pending | Pending |
 | F-1143 | <a id="f-1143"></a>Pending — [acceptance](FEATURES.md#f-1143) | Pending | Pending |
 | F-1144 | <a id="f-1144"></a>Pending — [acceptance](FEATURES.md#f-1144) | Pending | Pending |
-
-## Live scenario costs
-
-No live rewrite scenario has run. Record the feature IDs, scenario, model, account label, quota checked before the call, input/output tokens, cost and evidence path for each live run. Use short gemini-3.8-flash prompts only inside `~/Desktop/test`, and preserve the five signed-in accounts.
-
-## Contract differences
-
-No Rust contract replay has run. Record each intentional API difference with affected feature IDs, captured cases, reason and passing correction tests. A captured legacy defect is not an instruction to retain that defect.
-
-## Phase 1 evidence
-
-The full-read manifests, API fixtures and data-format specimens establish the baseline. Consolidation validation is recorded in `.handoff/evidence/phase1-consolidation.log`, and transfer hashes in `.handoff/evidence/phase1-transfer.json`. These checks prove document and fixture consistency only.

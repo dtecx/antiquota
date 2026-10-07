@@ -21,11 +21,12 @@ flowchart TB
     Shell -.->|runtime: same built UI| UI
     CLI --> App
     CLI --> Server
+    CLI -->|discovery files| Adapters
     Server --> App
+    Server -->|startup composition| Adapters
     App --> Features
     Features --> Core
     App --> Core
-    App --> Adapters
     Adapters -->|imports port traits| Core
     Adapters -.->|runtime: file access| Data
     Adapters -.->|runtime: process| Agy
@@ -33,20 +34,20 @@ flowchart TB
     Server -.->|generated ts-rs output| UI
 ```
 
-Solid edges show Rust crate imports. Dashed edges show labeled runtime connections or generated output, not imports. Dependencies point toward the domain. Core never imports Tokio, filesystem APIs, process APIs, HTTP, or shell APIs. Features depend on core and return decisions; application services execute those decisions through ports. Adapters do not call feature modules or HTTP handlers. Server handlers translate transport inputs and delegate to application services. The CLI is the composition root and owns executable startup.
+Solid edges show Rust crate imports. Dashed edges show labeled runtime connections or generated output, not imports. Dependencies point toward the domain. Core never imports Tokio, filesystem APIs, process APIs, HTTP, or shell APIs. Features depend on core and return decisions; application services execute those decisions through ports. App imports no concrete adapter. Adapters do not call feature modules or HTTP handlers. Server handlers translate transport inputs and delegate to application services. CLI owns executable startup; server startup owns HTTP-runtime composition and supplies concrete adapters through app's core ports. Discovery file access remains at those executable/runtime boundaries.
 
 | Location | Owns |
 | --- | --- |
 | `crates/core` | `Session`, `Turn`, one `Event` enum, `Command`, `Account`, `Slot`, `Quota`, `Goal`, `Approval`, `Rule`, `Settings`; pure reducers; routing and permission decisions; port traits. |
 | `crates/features` | `Feature` hooks and separate modules for goals, verifier, plan, loop, schedule, jobs, handoff, steering, fork, and keep-awake. |
-| `crates/app` | Session command serialization, turn execution, cancellation, subscriptions, approvals, scheduling, projections, and concrete service wiring. Split these responsibilities into modules; no engine god object. |
+| `crates/app` | Session command serialization, turn execution, cancellation, subscriptions, approvals, scheduling, and projections through injected core ports. Split these responsibilities into modules; no engine god object. |
 | `crates/adapters/agy` | agy arguments, process lifetime, bounded stream-json decoding, stderr/error classification inputs, and conversation-step parsing. |
 | `crates/adapters/accounts` | Slot paths, leases, account HOME and file-token isolation, sign-in, quota/model probes, and owned configuration links. |
 | `crates/adapters/store` | Existing JSON/JSONL files, atomic snapshots, append-only event records, checkpoints, attachments, and read-only conversation database access. |
 | `crates/adapters/git` | Explicit `git` argument lists, status/diffs, worktree creation, commit, merge, and removal. |
 | `crates/adapters/pty` | Portable PTY/ConPTY lifecycle, input, resize, output, and safe process-tree cleanup. Project-owned unsafe code is allowed only here. |
 | `crates/adapters/transcribe` | Temporary audio, an isolated agy call using Flash High, NO_SPEECH handling, and cleanup. |
-| `crates/server` | Captured HTTP routes, Host/token checks, body limits, JSON errors, SSE encoding, and built UI serving. |
+| `crates/server` | HTTP-runtime startup composition, captured HTTP routes, Host/token checks, body limits, JSON errors, SSE encoding, and built UI serving. Handlers use application commands; startup alone chooses concrete adapters. |
 | `crates/cli` | One clap binary, legacy commands, `serve`, and the fast `hook` entry point. `anyhow` is confined to executables. |
 | `ui/src/lib` | Generated-type API client, one event connection, pure reducers, view stores, formatting, and platform actions. |
 | `ui/src/components` | Focused views/widgets subscribed to stores; no direct fetch or engine policy. |

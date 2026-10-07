@@ -1,0 +1,42 @@
+[workspace]
+resolver = "3"
+members = ["crates/core", "crates/features", "crates/app", "crates/server", "crates/cli", "crates/adapters/agy", "crates/adapters/accounts", "crates/adapters/store", "tests/fake-agy"]
+exclude = ["app/src-tauri"]
+
+[workspace.package]
+version = "0.5.0"
+edition = "2024"
+rust-version = "1.99"
+license = "MIT"
+publish = false
+
+[workspace.dependencies]
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = { version = "=1.0.151", features = ["arbitrary_precision", "float_roundtrip"] }
+thiserror = "=2.0.21"
+anyhow = "=1.0.104"
+ts-rs = { version = "=12.0.1", features = ["serde-compat", "serde-json-impl"] }
+tracing = "=0.1.44"
+tracing-subscriber = { version = "=0.3.23", features = ["env-filter"] }
+tokio = { version = "=1.53.2", features = ["rt-multi-thread", "macros", "net", "sync", "signal", "time", "process", "io-util", "fs"] }
+axum = "=0.8.9"
+clap = { version = "=4.6.7", features = ["derive"] }
+proptest = "=1.11.0"
+uuid = { version = "=1.27.0", features = ["v4"] }
+process-wrap = { version = "=10.0.1", default-features = false, features = ["tokio1", "process-group", "job-object", "kill-on-drop"] }
+similar = "=3.2.0"
+futures-util = "=0.3.34"
+reqwest = { version = "=0.13.5", default-features = false, features = ["blocking", "json"] }
+antiquota-core = { path = "crates/core" }
+antiquota-features = { path = "crates/features" }
+antiquota-app = { path = "crates/app" }
+antiquota-server = { path = "crates/server" }
+antiquota-agy = { path = "crates/adapters/agy" }
+antiquota-accounts = { path = "crates/adapters/accounts" }
+antiquota-store = { path = "crates/adapters/store" }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = "warn"

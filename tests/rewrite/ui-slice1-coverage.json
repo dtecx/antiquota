@@ -1,0 +1,593 @@
+{
+  "schema_version": 1,
+  "slice": 1,
+  "at": "2026-10-07T15:21:53.078214+00:00",
+  "scope": "Conservative UI evidence proposal. This file does not mark the canonical FEATURES.md or TEST_REPORT.md green. Every candidate requires independent review. All omitted IDs remain Pending.",
+  "results": {
+    "vitest_tests": 28,
+    "vitest_files": 6,
+    "chromium_tests": 6,
+    "chromium_flaky": 0,
+    "paid_calls": 0
+  },
+  "candidates": [
+    {
+      "feature_id": "F-399",
+      "acceptance": "The session event stream uses a token-authenticated EventSource.",
+      "tests": [
+        "ui/src/lib/api.test.ts::lists sessions through state and encodes identifiers and the SSE token",
+        "ui/e2e/sessions.spec.ts::creates sends streams groups renames and reloads a session"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice1-e2e.json",
+        ".handoff/evidence/ui-slice1-final.log"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-400",
+      "acceptance": "A reconnected event stream reloads authoritative state after a disconnect.",
+      "tests": [
+        "ui/src/lib/stream.test.ts::uses one connection and requests a fresh snapshot on reconnect or invalid frames",
+        "ui/src/lib/workbench.test.ts::replays frames arriving while the authoritative snapshot is loading",
+        "ui/e2e/sessions.spec.ts::recovers after an engine restart and keeps the unsent draft"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice1-e2e.json",
+        ".handoff/evidence/ui-slice1-final.log"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-401",
+      "acceptance": "Initial load selects the URL-fragment session when it exists.",
+      "tests": [
+        "ui/e2e/sessions.spec.ts::creates sends streams groups renames and reloads a session",
+        "ui/e2e/sessions.spec.ts::recovers after an engine restart and keeps the unsent draft"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice1-e2e.json"
+      ],
+      "scope_note": "Reload restores the existing fragment session. Invalid fragment fallback is not claimed."
+    },
+    {
+      "feature_id": "F-425",
+      "acceptance": "Session filtering matches title and working folder without case sensitivity.",
+      "tests": [
+        "ui/src/lib/navigation.test.ts::groups folders, pins before recent sessions, and combines filter terms",
+        "ui/e2e/sessions.spec.ts::supports light theme narrow navigation filtering and validation errors"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice1-e2e.json",
+        ".handoff/evidence/ui-slice1-final.log"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-454",
+      "acceptance": "A stale open-session response does not overwrite a newer selection.",
+      "tests": [
+        "ui/src/lib/workbench.test.ts::ignores an old selection response after choosing another session"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice1-final.log"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-468",
+      "acceptance": "A busy empty composer exposes Stop.",
+      "tests": [
+        "ui/e2e/sessions.spec.ts::queues a second message then stops the running turn"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice1-e2e.json",
+        ".handoff/evidence/ui-slice1/stopped-queued-turn.png"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-469",
+      "acceptance": "A busy nonempty composer exposes Queue.",
+      "tests": [
+        "ui/e2e/sessions.spec.ts::queues a second message then stops the running turn"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice1-e2e.json"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-473",
+      "acceptance": "A failed send restores message text for retry.",
+      "tests": [
+        "ui/src/lib/workbench.test.ts::keeps a failed-send draft and clears it only after successful queue acceptance",
+        "ui/src/lib/workbench.test.ts::preserves a newer draft typed while sending the earlier one"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice1-final.log"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-515",
+      "acceptance": "Streaming deltas update one assistant node until its completed reply replaces them.",
+      "tests": [
+        "ui/src/lib/transcript.test.ts::replaces a streamed assistant step with its authoritative final text",
+        "ui/src/lib/transcript.test.ts::drops obsolete buffered deltas after replay and removes matching fragments on final",
+        "ui/e2e/sessions.spec.ts::creates sends streams groups renames and reloads a session"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice1-e2e.json",
+        ".handoff/evidence/ui-slice1-final.log"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-986",
+      "acceptance": "Successful creation inserts the session into navigation and opens it.",
+      "tests": [
+        "ui/src/lib/workbench.test.ts::retains a newly created session target when another refresh is already in flight",
+        "ui/e2e/sessions.spec.ts::creates sends streams groups renames and reloads a session",
+        "ui/e2e/sessions.spec.ts::supports light theme narrow navigation filtering and validation errors"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice1-e2e.json",
+        ".handoff/evidence/ui-slice1-final.log"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-1044",
+      "acceptance": "antiquota serve hosts the built UI and the HTTP/SSE API for browser mode.",
+      "tests": [
+        "ui/e2e/sessions.spec.ts::creates sends streams groups renames and reloads a session"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice1-e2e.json",
+        ".handoff/evidence/ui-slice1-final.log"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-1047",
+      "acceptance": "Build ui/ with Svelte 5, TypeScript strict mode and Vite using pnpm.",
+      "tests": [
+        "pnpm install --frozen-lockfile",
+        "pnpm check",
+        "pnpm build"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice1-final.log",
+        ".handoff/evidence/ui-slice1-verification.json"
+      ],
+      "scope_note": "Pinned Svelte 5.57.2, TypeScript 6.0.3, Vite 8.3.3 and pnpm 11.19.0; runtime Node 26.10.0."
+    },
+    {
+      "feature_id": "F-1050",
+      "acceptance": "Use generated API types rather than hand-written duplicate API request, response or event interfaces.",
+      "tests": [
+        "pnpm check",
+        "pnpm lint",
+        "Static inspection of generated type imports in API, validators, stores and components"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice1-final.log",
+        ".handoff/evidence/ui-slice1-verification.json"
+      ],
+      "scope_note": "Backend exclusively owns ui/src/gen and the generator. UI-only state interfaces are not API definitions."
+    },
+    {
+      "feature_id": "F-1051",
+      "acceptance": "Use one typed API client at ui/src/lib/api.ts; UI components make no direct fetch calls.",
+      "tests": [
+        "ui/src/lib/api.test.ts::sends the token and exact JSON request through the captured route",
+        "Static inspection of browser fetch references"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice1-final.log",
+        ".handoff/evidence/ui-slice1-verification.json"
+      ],
+      "scope_note": "The API boundary injects fetch as request; components contain no fetch reference or call."
+    },
+    {
+      "feature_id": "F-1052",
+      "acceptance": "Use one SSE event store; test event reduction, reconnect recovery and session selection with the same generated Event types.",
+      "tests": [
+        "ui/src/lib/stream.test.ts",
+        "ui/src/lib/transcript.test.ts",
+        "ui/src/lib/workbench.test.ts",
+        "ui/e2e/sessions.spec.ts::recovers after an engine restart and keeps the unsent draft"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice1-e2e.json",
+        ".handoff/evidence/ui-slice1-final.log",
+        ".handoff/evidence/ui-slice1-verification.json"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-1056",
+      "acceptance": "Define design tokens as CSS variables in one file and render both light and dark themes.",
+      "tests": [
+        "ui/e2e/sessions.spec.ts::creates sends streams groups renames and reloads a session",
+        "ui/e2e/sessions.spec.ts::supports light theme narrow navigation filtering and validation errors",
+        "Static inspection of ui/src/styles/tokens.css"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice1-e2e.json",
+        ".handoff/evidence/ui-slice1/desktop-dark-expanded.png",
+        ".handoff/evidence/ui-slice1/desktop-light.png"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-1057",
+      "acceptance": "Preserve the dense, warm, dark tool appearance; keep the light palette and narrow-window states legible.",
+      "tests": [
+        "ui/e2e/sessions.spec.ts::supports light theme narrow navigation filtering and validation errors",
+        "Parent visual review of dark expanded/collapsed and narrow light screenshots"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-design-brief.md",
+        ".handoff/evidence/ui-slice1/desktop-dark-expanded.png",
+        ".handoff/evidence/ui-slice1/desktop-dark-collapsed.png",
+        ".handoff/evidence/ui-slice1/narrow-light.png"
+      ],
+      "scope_note": "Warm dense hierarchy reviewed by parent. Native shell and split-pane layout remain Pending."
+    },
+    {
+      "feature_id": "F-1059",
+      "acceptance": "Keep UI state in stores and use a focused component for each view or widget.",
+      "tests": [
+        "ui/src/lib/workbench.test.ts",
+        "Static inspection of focused component ownership and derived store data"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice1-final.log",
+        ".handoff/evidence/ui-slice1-verification.json"
+      ],
+      "scope_note": "Session, dialog, draft, filter and navigation state lives in stores. The transcript owns DOM scroll-follow bookkeeping."
+    },
+    {
+      "feature_id": "F-1066",
+      "acceptance": "just dev runs both development toolchains with a working UI and engine.",
+      "tests": [
+        "just dev background smoke: create and complete a synthetic turn through the Vite proxy"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice1-dev-smoke.json",
+        ".handoff/evidence/ui-slice1/just-dev-smoke.png"
+      ],
+      "scope_note": "Actual discovery port is passed to Vite; all fixture data and child account homes are under Desktop/test."
+    },
+    {
+      "feature_id": "F-1076",
+      "acceptance": "pnpm check passes svelte-check and strict TypeScript checking.",
+      "tests": [
+        "pnpm check"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice1-final.log"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-1077",
+      "acceptance": "TypeScript and Svelte source passes eslint and prettier and contains no any types.",
+      "tests": [
+        "pnpm lint",
+        "pnpm format",
+        "Static scan for any types in owned UI source"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice1-final.log",
+        ".handoff/evidence/ui-slice1-verification.json"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-1085",
+      "acceptance": "Use Vitest for UI stores, including event reducers and reconnect behavior.",
+      "tests": [
+        "ui/src/lib/stream.test.ts",
+        "ui/src/lib/transcript.test.ts",
+        "ui/src/lib/workbench.test.ts",
+        "ui/src/lib/navigation.test.ts"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice1-final.log"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-1086",
+      "acceptance": "Use Vitest for the typed API client and request/error handling.",
+      "tests": [
+        "ui/src/lib/api.test.ts"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice1-final.log"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-1087",
+      "acceptance": "Use Vitest for formatting functions and boundary values.",
+      "tests": [
+        "ui/src/lib/format.test.ts"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice1-final.log"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-1097",
+      "acceptance": "The fake-agy executable crashes and the engine reports and recovers the failure.",
+      "tests": [
+        "ui/e2e/sessions.spec.ts::shows an agent crash and allows the next turn to recover"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice1-e2e.json",
+        ".handoff/evidence/ui-slice1/agent-crash.png"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-1107",
+      "acceptance": "Playwright verifies grouped transcript steps in expanded and collapsed states.",
+      "tests": [
+        "ui/e2e/sessions.spec.ts::creates sends streams groups renames and reloads a session",
+        "ui/e2e/sessions.spec.ts::reads expandable thinking from compatible durable history"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice1-e2e.json",
+        ".handoff/evidence/ui-slice1/desktop-dark-expanded.png",
+        ".handoff/evidence/ui-slice1/desktop-dark-collapsed.png",
+        ".handoff/evidence/ui-slice1/thinking-history.png"
+      ],
+      "scope_note": "Uses real HTTP/SSE for a grouped tool turn; thinking is seeded into compatible durable history rather than invented in agy output."
+    },
+    {
+      "feature_id": "F-1113",
+      "acceptance": "Playwright captures light and dark themes and narrow-window states.",
+      "tests": [
+        "ui/e2e/sessions.spec.ts::supports light theme narrow navigation filtering and validation errors",
+        "ui/e2e/sessions.spec.ts::creates sends streams groups renames and reloads a session"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice1-e2e.json",
+        ".handoff/evidence/ui-slice1/narrow-light.png",
+        ".handoff/evidence/ui-slice1/desktop-light.png",
+        ".handoff/evidence/ui-slice1/desktop-dark-expanded.png"
+      ],
+      "scope_note": ""
+    }
+  ],
+  "partial_or_deferred": [
+    {
+      "feature_id": "F-402",
+      "acceptance": "Initial load otherwise opens the first session or the start screen.",
+      "status": "Pending",
+      "reason": "Valid fragment restoration is tested; invalid-fragment and archived-only fallback still need parity."
+    },
+    {
+      "feature_id": "F-433",
+      "acceptance": "Session Pin to top persists the pinned state.",
+      "status": "Pending",
+      "reason": "Pin is exercised, but full persistence and separate pinned-navigation parity are not yet proved."
+    },
+    {
+      "feature_id": "F-434",
+      "acceptance": "Session Unpin clears the pinned state.",
+      "status": "Pending",
+      "reason": "Unpin control exists; its action is not yet exercised by the browser suite."
+    },
+    {
+      "feature_id": "F-452",
+      "acceptance": "Opening a session replaces its transcript and focuses the composer.",
+      "status": "Pending",
+      "reason": "Selection behavior is tested; automatic composer focus remains unproved."
+    },
+    {
+      "feature_id": "F-476",
+      "acceptance": "Queued text explains mid-turn delivery at the next step.",
+      "status": "Pending",
+      "reason": "The current busy composer queues a message for the next turn; live mid-turn steering belongs to a later slice."
+    },
+    {
+      "feature_id": "F-525",
+      "acceptance": "Expanded tools include extended errors or JSON parameters when output is absent.",
+      "status": "Pending",
+      "reason": "JSON parameter fallback is exercised. Complete extended-error behavior remains unproved."
+    },
+    {
+      "feature_id": "F-526",
+      "acceptance": "Tool headers and previews toggle complete output expansion.",
+      "status": "Pending",
+      "reason": "Tool header expansion is exercised. Legacy preview-click and complete-output parity remain unproved."
+    },
+    {
+      "feature_id": "F-531",
+      "acceptance": "Thinking blocks display reasoning Markdown and token counts when present.",
+      "status": "Pending",
+      "reason": "Preserved thinking text and token count are exercised. Thinking Markdown rendering remains Pending."
+    },
+    {
+      "feature_id": "F-537",
+      "acceptance": "Completed and failed turns remove live transcript markers.",
+      "status": "Pending",
+      "reason": "Turn status returns idle after completion/crash; complete legacy marker cleanup is not separately asserted."
+    },
+    {
+      "feature_id": "F-538",
+      "acceptance": "Events auto-scroll only within 120 pixels of the transcript bottom.",
+      "status": "Pending",
+      "reason": "Scroll follow currently uses a 100-pixel threshold; the legacy 120-pixel acceptance remains Pending."
+    },
+    {
+      "feature_id": "F-978",
+      "acceptance": "New-session defaults use the current model/mode and project folder, or configured defaults without a session.",
+      "status": "Pending",
+      "reason": "Default folder and model creation work; all legacy create-dialog model/mode controls remain Pending."
+    },
+    {
+      "feature_id": "F-985",
+      "acceptance": "Create session posts folder, concrete effort/model, mode and worktree choice.",
+      "status": "Pending",
+      "reason": "Worktree and mode creation options remain Pending."
+    },
+    {
+      "feature_id": "F-987",
+      "acceptance": "A creation error shows the API error without creating a fake local session.",
+      "status": "Pending",
+      "reason": "The API error and open dialog are tested; no-fake-session invariants need an explicit assertion."
+    },
+    {
+      "feature_id": "F-1048",
+      "acceptance": "Generate API types from Rust core and server types with ts-rs into ui/src/gen/.",
+      "status": "Pending",
+      "reason": "Type generation is owned and verified by the backend agent; not claimed by this UI proposal."
+    },
+    {
+      "feature_id": "F-1049",
+      "acceptance": "Fail the stale-type check when committed generated API types differ from freshly generated output.",
+      "status": "Pending",
+      "reason": "The stale-type gate is owned and verified by the backend agent; not claimed by this UI proposal."
+    },
+    {
+      "feature_id": "F-1058",
+      "acceptance": "Run the same UI build in the Tauri webview and the browser served by antiquota serve.",
+      "status": "Pending",
+      "reason": "The browser build is tested. The Tauri shell remains Pending until Slice 10."
+    },
+    {
+      "feature_id": "F-1067",
+      "acceptance": "just test runs the Rust and TypeScript test suites.",
+      "status": "Pending",
+      "reason": "Recipes compose both suites; parent must independently run the complete just test gate."
+    },
+    {
+      "feature_id": "F-1068",
+      "acceptance": "just check runs the required Rust, TypeScript, formatting and generated-type checks.",
+      "status": "Pending",
+      "reason": "Recipes compose checks; parent must independently run the complete just check gate."
+    },
+    {
+      "feature_id": "F-1069",
+      "acceptance": "just build builds the engine, UI and sidecar desktop bundle.",
+      "status": "Pending",
+      "reason": "Engine and browser builds run. Desktop bundle build remains Pending; build-shell fails honestly."
+    },
+    {
+      "feature_id": "F-1070",
+      "acceptance": "just gen-types regenerates the TypeScript API types from Rust.",
+      "status": "Pending",
+      "reason": "Generation recipe delegates to the backend exporter; backend proof remains separately owned."
+    },
+    {
+      "feature_id": "F-1078",
+      "acceptance": "Keep modules and components near or below 400 lines, each with a doc comment that states its ownership.",
+      "status": "Pending",
+      "reason": "Owned UI modules are below 400 lines and document ownership; this proposal does not claim all Rust modules."
+    },
+    {
+      "feature_id": "F-1104",
+      "acceptance": "Playwright in Chromium drives antiquota serve backed by fake-agy through every UI view and settings section.",
+      "status": "Pending",
+      "reason": "Only the Slice 1 view is exercised; the settings views remain Pending."
+    },
+    {
+      "feature_id": "F-1105",
+      "acceptance": "Playwright exercises every shortcut and context menu action in the feature inventory.",
+      "status": "Pending",
+      "reason": "Enter sending is exercised; all other shortcuts and context menus remain Pending."
+    },
+    {
+      "feature_id": "F-1106",
+      "acceptance": "Playwright exercises approval cards and their allow, deny, expiry and resolved states.",
+      "status": "Pending",
+      "reason": "Approval cards remain Pending."
+    },
+    {
+      "feature_id": "F-1108",
+      "acceptance": "Playwright verifies both split panes at 80, 100, 125 and 150 percent zoom.",
+      "status": "Pending",
+      "reason": "Split panes and required zoom levels remain Pending."
+    },
+    {
+      "feature_id": "F-1109",
+      "acceptance": "Playwright types into the terminal, resizes it and restarts its process.",
+      "status": "Pending",
+      "reason": "Terminal interaction remains Pending."
+    },
+    {
+      "feature_id": "F-1110",
+      "acceptance": "Playwright uses recorded WAV audio and silence to verify dictation text and the silence guard.",
+      "status": "Pending",
+      "reason": "Dictation and silence tests remain Pending."
+    },
+    {
+      "feature_id": "F-1111",
+      "acceptance": "Playwright verifies the usage chart and its tooltips.",
+      "status": "Pending",
+      "reason": "Usage charts and tooltips remain Pending."
+    },
+    {
+      "feature_id": "F-1112",
+      "acceptance": "Playwright exercises project and session menus.",
+      "status": "Pending",
+      "reason": "Native project/session context menus remain Pending."
+    }
+  ],
+  "additional_regressions": [
+    {
+      "test": "ui/src/lib/transcript.test.ts::preserves identical durable user occurrences even with the same timestamp",
+      "evidence_path": ".handoff/evidence/ui-slice1-final.log"
+    },
+    {
+      "test": "ui/src/lib/transcript.test.ts::accepts a final reply even when the wall clock moved backwards",
+      "evidence_path": ".handoff/evidence/ui-slice1-final.log"
+    },
+    {
+      "test": "ui/src/lib/workbench.test.ts::uses stream order rather than wall-clock timestamps for live metadata",
+      "evidence_path": ".handoff/evidence/ui-slice1-final.log"
+    },
+    {
+      "test": "ui/src/lib/workbench.test.ts::keeps live frames received during a selection without reviving a completed delta",
+      "evidence_path": ".handoff/evidence/ui-slice1-final.log"
+    },
+    {
+      "test": "ui/src/lib/transcript.test.ts::accepts Rust discriminants and rejects malformed or unknown envelopes",
+      "evidence_path": ".handoff/evidence/ui-slice1-final.log"
+    }
+  ]
+}

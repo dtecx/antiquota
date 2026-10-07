@@ -1,0 +1,25 @@
+[package]
+name = "antiquota-server"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+antiquota-core.workspace = true
+antiquota-app.workspace = true
+antiquota-store.workspace = true
+antiquota-accounts.workspace = true
+antiquota-agy.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+ts-rs.workspace = true
+tracing.workspace = true
+tokio.workspace = true
+axum.workspace = true
+futures-util.workspace = true
+
+[lints]
+workspace = true

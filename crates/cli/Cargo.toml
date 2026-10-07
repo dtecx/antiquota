@@ -1,0 +1,28 @@
+[package]
+name = "antiquota-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+antiquota-core.workspace = true
+antiquota-app.workspace = true
+antiquota-server.workspace = true
+antiquota-store.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+tokio.workspace = true
+clap.workspace = true
+reqwest.workspace = true
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "antiquota"
+path = "src/main.rs"

@@ -12,3 +12,8 @@ app/dist/
 app/src-tauri/target/
 app/src-tauri/gen/
 .handoff/
+target/
+ui/node_modules/
+ui/dist/
+ui/test-results/
+ui/playwright-report/

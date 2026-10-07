@@ -2,7 +2,7 @@
 
 This is the canonical checklist for parity and cutover. It contains 1009 baseline acceptance items: 397 engine/API/CLI items (F-001–F-397) and 612 UI/shell items (F-398–F-1009), including the requested zoom and window-persistence repairs. The 135 additional items (F-1010–F-1144) record explicit requirements from the user's rewrite task. They are requirements, not claims about legacy behavior. No feature has been dropped.
 
-Every row is independently reviewable and links to its [test report](TEST_REPORT.md). All rewrite proofs are **Pending**. Legacy test names and captured Python responses explain the baseline; they are not passing Rust or TypeScript proof. Mark a row complete only after its passing tests and evidence have been recorded. Store logs, screenshots and live-cost records in ignored `.handoff/evidence/`.
+Every row is independently reviewable and links to its [test report](TEST_REPORT.md). Slice 1 has **40 Passed** acceptance items; the other **1104 remain Pending**. Legacy test names and captured Python responses explain the baseline; they are not passing Rust or TypeScript proof. Mark a row complete only after its passing tests and evidence have been recorded. Store logs, screenshots and live-cost records in ignored `.handoff/evidence/`.
 
 Legacy sources were read in full at commit `17ec296`; [engine](source-read-engine.md) and [UI/shell](source-read-ui.md) manifests record coverage and hashes. The sourced subsidiary inventories are [FEATURES-engine.md](FEATURES-engine.md) and [FEATURES-ui.md](FEATURES-ui.md). The canonical rows below contain their full acceptance text. UI identifiers were renumbered once from F-400–F-1011 to F-398–F-1009 to remove the unused gap; engine identifiers were unchanged.
 
@@ -198,7 +198,7 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
 | F-154 | [ ] <a id="f-154"></a>Create sessions with 12 character ids, absolute expanded existing cwd, validated mode, model/effort/title and all fixed metadata keys. | `antiquota/engine.py:44`; `antiquota/engine.py:320` | `tests/test_engine.py::test_turn_streams_persists_and_survives_restart` | [Pending](TEST_REPORT.md#f-154) |
-| F-155 | [ ] <a id="f-155"></a>Initialize session timestamps, idle status, zero usage/context/turns, empty queue/jobs, no conversation/goal/loop/worktree and false pinned/archived. | `antiquota/engine.py:44`; `antiquota/engine.py:331` | `tests/test_engine.py::test_turn_streams_persists_and_survives_restart` | [Pending](TEST_REPORT.md#f-155) |
+| F-155 | [x] <a id="f-155"></a>Initialize session timestamps, idle status, zero usage/context/turns, empty queue/jobs, no conversation/goal/loop/worktree and false pinned/archived. | `antiquota/engine.py:44`; `antiquota/engine.py:331` | `tests/test_engine.py::test_turn_streams_persists_and_survives_restart` | [Passed](TEST_REPORT.md#f-155) |
 | F-156 | [ ] <a id="f-156"></a>Load valid existing meta files on startup, skip missing/malformed files and add backward-compatible missing metadata/usage defaults. | `antiquota/engine.py:248` | `tests/test_engine.py::test_turn_streams_persists_and_survives_restart` | [Pending](TEST_REPORT.md#f-156) |
 | F-157 | [ ] <a id="f-157"></a>Reset loaded session status to idle without inventing a running process; retain persisted conversation/goal/queue/loop/job state for compatible recovery. | `antiquota/engine.py:259` | `tests/test_engine.py::test_turn_streams_persists_and_survives_restart` | [Pending](TEST_REPORT.md#f-157) |
 | F-158 | [ ] <a id="f-158"></a>Update only title/model/effort/mode/pinned/archived fields, coercing pins/archive to booleans and rejecting invalid mode. | `antiquota/engine.py:338` | `tests/test_engine.py::test_paused_accounts_sit_out_and_sessions_pin_fork_search` | [Pending](TEST_REPORT.md#f-158) |
@@ -398,7 +398,7 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-323 | [ ] <a id="f-323"></a>`GET /api/health` returns ok/app/version/pid without a token, after Host validation. | `antiquota/server.py:273` | `tests/test_server.py::test_engine_daemon_is_single_and_discoverable` | [Pending](TEST_REPORT.md#f-323) |
+| F-323 | [x] <a id="f-323"></a>`GET /api/health` returns ok/app/version/pid without a token, after Host validation. | `antiquota/server.py:273` | `tests/test_server.py::test_engine_daemon_is_single_and_discoverable` | [Passed](TEST_REPORT.md#f-323) |
 | F-324 | [ ] <a id="f-324"></a>`GET /api/events?token=…` opens the shared SSE stream with global/session events and keepalive comments. | `antiquota/server.py:292` | `tests/test_server.py::test_page_carries_token_and_api_demands_it` | [Pending](TEST_REPORT.md#f-324) |
 | F-325 | [ ] <a id="f-325"></a>`GET /api/sessions/{sid}/term/stream?token=…` returns terminal SSE; missing terminal returns 404. | `antiquota/server.py:294` | Not covered | [Pending](TEST_REPORT.md#f-325) |
 | F-326 | [ ] <a id="f-326"></a>`POST /api/transcribe` consumes raw audio plus X-Audio-Type(default wav), returns text/slot, rejects empty/overlarge recording. | `antiquota/server.py:296` | `tests/test_server.py::test_transcribe_route_needs_audio` | [Pending](TEST_REPORT.md#f-326) |
@@ -414,7 +414,7 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | F-336 | [ ] <a id="f-336"></a>`POST /api/sessions/{sid}/steer` drains eligible queued strings and returns messages for the hook. | `antiquota/server.py:349` | `tests/test_server.py::test_approvals_through_the_hook_and_messages_mid_turn` | [Pending](TEST_REPORT.md#f-336) |
 | F-337 | [ ] <a id="f-337"></a>`GET /api/engine` returns version/pid/url/by/started/base/stack/log/hook/agy/session-count/account-count. | `antiquota/server.py:351` | Not covered | [Pending](TEST_REPORT.md#f-337) |
 | F-338 | [ ] <a id="f-338"></a>`GET /api/engine/log` returns last 400 log lines or the no-engine-log explanation. | `antiquota/server.py:358` | Not covered | [Pending](TEST_REPORT.md#f-338) |
-| F-339 | [ ] <a id="f-339"></a>`POST /api/shutdown` returns ok true and initiates background server shutdown. | `antiquota/server.py:364` | `tests/test_server.py::test_engine_daemon_is_single_and_discoverable` | [Pending](TEST_REPORT.md#f-339) |
+| F-339 | [x] <a id="f-339"></a>`POST /api/shutdown` returns ok true and initiates background server shutdown. | `antiquota/server.py:364` | `tests/test_server.py::test_engine_daemon_is_single_and_discoverable` | [Passed](TEST_REPORT.md#f-339) |
 | F-340 | [ ] <a id="f-340"></a>`POST /api/sessions` accepts cwd/model/mode/title/worktree, defaults cwd to home and model/mode to persisted defaults, returns metadata; legacy effort is empty. | `antiquota/server.py:369` | `tests/test_server.py::test_session_round_trip_over_http` | [Pending](TEST_REPORT.md#f-340) |
 | F-341 | [ ] <a id="f-341"></a>`POST /api/sessions/{sid}/term` accepts cols 100/rows 30/restart false and returns alive/shell/cwd. | `antiquota/server.py:373` | `tests/test_engine.py::test_terminal_runs_a_shell_in_the_session_folder` | [Pending](TEST_REPORT.md#f-341) |
 | F-342 | [ ] <a id="f-342"></a>`POST /api/sessions/{sid}/term/input` accepts data string, returns ok true; no terminal 404, dead terminal 400. | `antiquota/server.py:376` | Not covered | [Pending](TEST_REPORT.md#f-342) |
@@ -481,8 +481,8 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
 | F-398 | [ ] <a id="f-398"></a>Authenticated JSON calls send X-Antiquota-Token and display API errors as a toast. | `antiquota/ui/app.js:98` | None identified | [Pending](TEST_REPORT.md#f-398) |
-| F-399 | [ ] <a id="f-399"></a>The session event stream uses a token-authenticated EventSource. | `antiquota/ui/app.js:1029` | None identified | [Pending](TEST_REPORT.md#f-399) |
-| F-400 | [ ] <a id="f-400"></a>A reconnected event stream reloads authoritative state after a disconnect. | `antiquota/ui/app.js:1029` | None identified | [Pending](TEST_REPORT.md#f-400) |
+| F-399 | [x] <a id="f-399"></a>The session event stream uses a token-authenticated EventSource. | `antiquota/ui/app.js:1029` | None identified | [Passed](TEST_REPORT.md#f-399) |
+| F-400 | [x] <a id="f-400"></a>A reconnected event stream reloads authoritative state after a disconnect. | `antiquota/ui/app.js:1029` | None identified | [Passed](TEST_REPORT.md#f-400) |
 | F-401 | [ ] <a id="f-401"></a>Initial load selects the URL-fragment session when it exists. | `antiquota/ui/app.js:2511` | None identified | [Pending](TEST_REPORT.md#f-401) |
 | F-402 | [ ] <a id="f-402"></a>Initial load otherwise opens the first session or the start screen. | `antiquota/ui/app.js:2511` | None identified | [Pending](TEST_REPORT.md#f-402) |
 | F-403 | [ ] <a id="f-403"></a>A missing initial model list is retried after four seconds. | `antiquota/ui/app.js:2511` | None identified | [Pending](TEST_REPORT.md#f-403) |
@@ -511,7 +511,7 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | F-422 | [ ] <a id="f-422"></a>The current session's project remains expanded despite a collapsed preference. | `antiquota/ui/app.js:246` | None identified | [Pending](TEST_REPORT.md#f-422) |
 | F-423 | [ ] <a id="f-423"></a>Collapsed projects show session count and working-session indicator. | `antiquota/ui/app.js:246` | None identified | [Pending](TEST_REPORT.md#f-423) |
 | F-424 | [ ] <a id="f-424"></a>Search temporarily expands matching project groups. | `antiquota/ui/app.js:246` | None identified | [Pending](TEST_REPORT.md#f-424) |
-| F-425 | [ ] <a id="f-425"></a>Session filtering matches title and working folder without case sensitivity. | `antiquota/ui/app.js:246` | None identified | [Pending](TEST_REPORT.md#f-425) |
+| F-425 | [x] <a id="f-425"></a>Session filtering matches title and working folder without case sensitivity. | `antiquota/ui/app.js:246` | None identified | [Passed](TEST_REPORT.md#f-425) |
 | F-426 | [ ] <a id="f-426"></a>No sessions and no title matches have distinct empty messages. | `antiquota/ui/app.js:246` | None identified | [Pending](TEST_REPORT.md#f-426) |
 | F-427 | [ ] <a id="f-427"></a>Searches of two or more characters query message contents after 220 ms. | `antiquota/ui/app.js:292` | None identified | [Pending](TEST_REPORT.md#f-427) |
 | F-428 | [ ] <a id="f-428"></a>Older message-search responses cannot replace newer results. | `antiquota/ui/app.js:292` | None identified | [Pending](TEST_REPORT.md#f-428) |
@@ -540,7 +540,7 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | F-451 | [ ] <a id="f-451"></a>Clicking outside a context menu closes it. | `antiquota/ui/app.js:367` | None identified | [Pending](TEST_REPORT.md#f-451) |
 | F-452 | [ ] <a id="f-452"></a>Opening a session replaces its transcript and focuses the composer. | `antiquota/ui/app.js:968` | None identified | [Pending](TEST_REPORT.md#f-452) |
 | F-453 | [ ] <a id="f-453"></a>Opening a session restores that session's user-prompt history. | `antiquota/ui/app.js:968` | None identified | [Pending](TEST_REPORT.md#f-453) |
-| F-454 | [ ] <a id="f-454"></a>A stale open-session response does not overwrite a newer selection. | `antiquota/ui/app.js:968` | None identified | [Pending](TEST_REPORT.md#f-454) |
+| F-454 | [x] <a id="f-454"></a>A stale open-session response does not overwrite a newer selection. | `antiquota/ui/app.js:968` | None identified | [Passed](TEST_REPORT.md#f-454) |
 | F-455 | [ ] <a id="f-455"></a>Switching sessions clears unsent attachment chips. | `antiquota/ui/app.js:968` | None identified | [Pending](TEST_REPORT.md#f-455) |
 | F-456 | [ ] <a id="f-456"></a>Deleting the current session opens the next recent session or start screen. | `antiquota/ui/app.js:996` | None identified | [Pending](TEST_REPORT.md#f-456) |
 | F-457 | [ ] <a id="f-457"></a>An empty session offers up to three earlier sessions from the same folder. | `antiquota/ui/app.js:606` | None identified | [Pending](TEST_REPORT.md#f-457) |
@@ -558,12 +558,12 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | F-465 | [ ] <a id="f-465"></a>The header shows cumulative input/output tokens and queued-message count. | `antiquota/ui/app.js:416` | None identified | [Pending](TEST_REPORT.md#f-465) |
 | F-466 | [ ] <a id="f-466"></a>The page title marks working state and includes the session title. | `antiquota/ui/app.js:416` | None identified | [Pending](TEST_REPORT.md#f-466) |
 | F-467 | [ ] <a id="f-467"></a>An idle empty composer disables Send. | `antiquota/ui/app.js:445` | None identified | [Pending](TEST_REPORT.md#f-467) |
-| F-468 | [ ] <a id="f-468"></a>A busy empty composer exposes Stop. | `antiquota/ui/app.js:445` | None identified | [Pending](TEST_REPORT.md#f-468) |
-| F-469 | [ ] <a id="f-469"></a>A busy nonempty composer exposes Queue. | `antiquota/ui/app.js:445` | None identified | [Pending](TEST_REPORT.md#f-469) |
+| F-468 | [x] <a id="f-468"></a>A busy empty composer exposes Stop. | `antiquota/ui/app.js:445` | None identified | [Passed](TEST_REPORT.md#f-468) |
+| F-469 | [x] <a id="f-469"></a>A busy nonempty composer exposes Queue. | `antiquota/ui/app.js:445` | None identified | [Passed](TEST_REPORT.md#f-469) |
 | F-470 | [ ] <a id="f-470"></a>The composer grows to fit text up to 40 percent of window height. | `antiquota/ui/app.js:1095` | None identified | [Pending](TEST_REPORT.md#f-470) |
 | F-471 | [ ] <a id="f-471"></a>Sending posts text and completed attachment paths to the current session. | `antiquota/ui/app.js:1100` | None identified | [Pending](TEST_REPORT.md#f-471) |
 | F-472 | [ ] <a id="f-472"></a>Sending is blocked while an attachment is uploading. | `antiquota/ui/app.js:1100` | None identified | [Pending](TEST_REPORT.md#f-472) |
-| F-473 | [ ] <a id="f-473"></a>A failed send restores message text for retry. | `antiquota/ui/app.js:1100` | None identified | [Pending](TEST_REPORT.md#f-473) |
+| F-473 | [x] <a id="f-473"></a>A failed send restores message text for retry. | `antiquota/ui/app.js:1100` | None identified | [Passed](TEST_REPORT.md#f-473) |
 | F-474 | [ ] <a id="f-474"></a>Text entered without a session is sent after creating a session. | `antiquota/ui/app.js:1100` | None identified | [Pending](TEST_REPORT.md#f-474) |
 | F-475 | [ ] <a id="f-475"></a>Attachment-only messages can be sent without text. | `antiquota/ui/app.js:1100` | None identified | [Pending](TEST_REPORT.md#f-475) |
 | F-476 | [ ] <a id="f-476"></a>Queued text explains mid-turn delivery at the next step. | `antiquota/ui/app.js:1100` | None identified | [Pending](TEST_REPORT.md#f-476) |
@@ -609,7 +609,7 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | F-512 | [ ] <a id="f-512"></a>Visible goal prompts omit repeated standing instructions but retain full tooltip text. | `antiquota/ui/app.js:626` | None identified | [Pending](TEST_REPORT.md#f-512) |
 | F-513 | [ ] <a id="f-513"></a>Steered messages are marked as arriving while the agent worked. | `antiquota/ui/app.js:626` | None identified | [Pending](TEST_REPORT.md#f-513) |
 | F-514 | [ ] <a id="f-514"></a>Turn markers show number, account, model, clock time and rewind. | `antiquota/ui/app.js:871` | None identified | [Pending](TEST_REPORT.md#f-514) |
-| F-515 | [ ] <a id="f-515"></a>Streaming deltas update one assistant node until its completed reply replaces them. | `antiquota/ui/app.js:871` | None identified | [Pending](TEST_REPORT.md#f-515) |
+| F-515 | [x] <a id="f-515"></a>Streaming deltas update one assistant node until its completed reply replaces them. | `antiquota/ui/app.js:871` | None identified | [Passed](TEST_REPORT.md#f-515) |
 | F-516 | [ ] <a id="f-516"></a>Completed tool rows replace running rows without losing expanded state. | `antiquota/ui/app.js:871` | None identified | [Pending](TEST_REPORT.md#f-516) |
 | F-517 | [ ] <a id="f-517"></a>Tool rows identify run, read, list, search, find, edit, web and MCP actions. | `antiquota/ui/app.js:636` | None identified | [Pending](TEST_REPORT.md#f-517) |
 | F-518 | [ ] <a id="f-518"></a>Unknown tool rows display a readable name and short string argument. | `antiquota/ui/app.js:636` | None identified | [Pending](TEST_REPORT.md#f-518) |
@@ -1188,7 +1188,7 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | F-983 | [ ] <a id="f-983"></a>Selecting a browser folder updates the working-folder input. | `antiquota/ui/app.js:1934` | None identified | [Pending](TEST_REPORT.md#f-983) |
 | F-984 | [ ] <a id="f-984"></a>Typing a working folder debounces filesystem browsing by 200 ms. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-984) |
 | F-985 | [ ] <a id="f-985"></a>Create session posts folder, concrete effort/model, mode and worktree choice. | `antiquota/ui/app.js:1959` | None identified | [Pending](TEST_REPORT.md#f-985) |
-| F-986 | [ ] <a id="f-986"></a>Successful creation inserts the session into navigation and opens it. | `antiquota/ui/app.js:1959` | None identified | [Pending](TEST_REPORT.md#f-986) |
+| F-986 | [x] <a id="f-986"></a>Successful creation inserts the session into navigation and opens it. | `antiquota/ui/app.js:1959` | None identified | [Passed](TEST_REPORT.md#f-986) |
 | F-987 | [ ] <a id="f-987"></a>A creation error shows the API error without creating a fake local session. | `antiquota/ui/app.js:1959` | None identified | [Pending](TEST_REPORT.md#f-987) |
 | F-988 | [ ] <a id="f-988"></a>Canceling New session closes its dialog without sending a create request. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-988) |
 | F-989 | [ ] <a id="f-989"></a>Canceling Goal closes its dialog without sending a goal request. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-989) |
@@ -1273,7 +1273,7 @@ The following acceptance items come from the authorized rewrite task, not from a
 | F-1041 | [ ] <a id="f-1041"></a>The pty adapter uses portable-pty and passes terminal interaction tests using ConPTY on Windows. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1041) |
 | F-1042 | [ ] <a id="f-1042"></a>The transcribe adapter uses agy with gemini-3.8-flash-high and returns no inserted text for NO_SPEECH. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1042) |
 | F-1043 | [ ] <a id="f-1043"></a>The axum server keeps the captured HTTP method, path, authentication, body, error and SSE contracts except documented intentional corrections. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1043) |
-| F-1044 | [ ] <a id="f-1044"></a>antiquota serve hosts the built UI and the HTTP/SSE API for browser mode. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1044) |
+| F-1044 | [x] <a id="f-1044"></a>antiquota serve hosts the built UI and the HTTP/SSE API for browser mode. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1044) |
 | F-1045 | [ ] <a id="f-1045"></a>Build one clap-based antiquota executable with serve, every existing CLI command and the new hook subcommand. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1045) |
 | F-1046 | [ ] <a id="f-1046"></a>The hook subcommand starts in milliseconds and applies the permission decision before the protected tool executes; record startup timings. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1046) |
 
@@ -1281,19 +1281,19 @@ The following acceptance items come from the authorized rewrite task, not from a
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-1047 | [ ] <a id="f-1047"></a>Build ui/ with Svelte 5, TypeScript strict mode and Vite using pnpm. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1047) |
-| F-1048 | [ ] <a id="f-1048"></a>Generate API types from Rust core and server types with ts-rs into ui/src/gen/. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1048) |
-| F-1049 | [ ] <a id="f-1049"></a>Fail the stale-type check when committed generated API types differ from freshly generated output. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1049) |
-| F-1050 | [ ] <a id="f-1050"></a>Use generated API types rather than hand-written duplicate API request, response or event interfaces. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1050) |
-| F-1051 | [ ] <a id="f-1051"></a>Use one typed API client at ui/src/lib/api.ts; UI components make no direct fetch calls. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1051) |
-| F-1052 | [ ] <a id="f-1052"></a>Use one SSE event store; test event reduction, reconnect recovery and session selection with the same generated Event types. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1052) |
+| F-1047 | [x] <a id="f-1047"></a>Build ui/ with Svelte 5, TypeScript strict mode and Vite using pnpm. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1047) |
+| F-1048 | [x] <a id="f-1048"></a>Generate API types from Rust core and server types with ts-rs into ui/src/gen/. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1048) |
+| F-1049 | [x] <a id="f-1049"></a>Fail the stale-type check when committed generated API types differ from freshly generated output. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1049) |
+| F-1050 | [x] <a id="f-1050"></a>Use generated API types rather than hand-written duplicate API request, response or event interfaces. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1050) |
+| F-1051 | [x] <a id="f-1051"></a>Use one typed API client at ui/src/lib/api.ts; UI components make no direct fetch calls. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1051) |
+| F-1052 | [x] <a id="f-1052"></a>Use one SSE event store; test event reduction, reconnect recovery and session selection with the same generated Event types. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1052) |
 | F-1053 | [ ] <a id="f-1053"></a>Use xterm.js and its fit addon directly for terminal interaction. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1053) |
 | F-1054 | [ ] <a id="f-1054"></a>Use the chart library directly for usage plots and tooltips. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1054) |
 | F-1055 | [ ] <a id="f-1055"></a>Use MediaRecorder directly and upload its supported container with the correct audio type while accepting recorded WAV test input. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1055) |
-| F-1056 | [ ] <a id="f-1056"></a>Define design tokens as CSS variables in one file and render both light and dark themes. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1056) |
-| F-1057 | [ ] <a id="f-1057"></a>Preserve the dense, warm, dark tool appearance; keep the light palette and narrow-window states legible. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1057) |
+| F-1056 | [x] <a id="f-1056"></a>Define design tokens as CSS variables in one file and render both light and dark themes. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1056) |
+| F-1057 | [x] <a id="f-1057"></a>Preserve the dense, warm, dark tool appearance; keep the light palette and narrow-window states legible. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1057) |
 | F-1058 | [ ] <a id="f-1058"></a>Run the same UI build in the Tauri webview and the browser served by antiquota serve. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1058) |
-| F-1059 | [ ] <a id="f-1059"></a>Keep UI state in stores and use a focused component for each view or widget. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1059) |
+| F-1059 | [x] <a id="f-1059"></a>Keep UI state in stores and use a focused component for each view or widget. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1059) |
 
 ### Thin desktop shell
 
@@ -1311,17 +1311,17 @@ The following acceptance items come from the authorized rewrite task, not from a
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
 | F-1066 | [ ] <a id="f-1066"></a>just dev runs both development toolchains with a working UI and engine. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1066) |
-| F-1067 | [ ] <a id="f-1067"></a>just test runs the Rust and TypeScript test suites. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1067) |
-| F-1068 | [ ] <a id="f-1068"></a>just check runs the required Rust, TypeScript, formatting and generated-type checks. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1068) |
+| F-1067 | [x] <a id="f-1067"></a>just test runs the Rust and TypeScript test suites. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1067) |
+| F-1068 | [x] <a id="f-1068"></a>just check runs the required Rust, TypeScript, formatting and generated-type checks. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1068) |
 | F-1069 | [ ] <a id="f-1069"></a>just build builds the engine, UI and sidecar desktop bundle. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1069) |
 | F-1070 | [ ] <a id="f-1070"></a>just gen-types regenerates the TypeScript API types from Rust. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1070) |
 | F-1071 | [ ] <a id="f-1071"></a>Use thiserror in library crates and reserve anyhow for executable binaries. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1071) |
 | F-1072 | [ ] <a id="f-1072"></a>Use tracing for Rust logs and serde for persisted and wire types. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1072) |
-| F-1073 | [ ] <a id="f-1073"></a>cargo clippy -- -D warnings passes without ignored warnings. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1073) |
-| F-1074 | [ ] <a id="f-1074"></a>Rust source passes rustfmt and dependency policy passes cargo-deny. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1074) |
+| F-1073 | [x] <a id="f-1073"></a>cargo clippy -- -D warnings passes without ignored warnings. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1073) |
+| F-1074 | [x] <a id="f-1074"></a>Rust source passes rustfmt and dependency policy passes cargo-deny. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1074) |
 | F-1075 | [ ] <a id="f-1075"></a>Unsafe Rust is confined to the pty adapter. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1075) |
-| F-1076 | [ ] <a id="f-1076"></a>pnpm check passes svelte-check and strict TypeScript checking. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1076) |
-| F-1077 | [ ] <a id="f-1077"></a>TypeScript and Svelte source passes eslint and prettier and contains no any types. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1077) |
+| F-1076 | [x] <a id="f-1076"></a>pnpm check passes svelte-check and strict TypeScript checking. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1076) |
+| F-1077 | [x] <a id="f-1077"></a>TypeScript and Svelte source passes eslint and prettier and contains no any types. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1077) |
 | F-1078 | [ ] <a id="f-1078"></a>Keep modules and components near or below 400 lines, each with a doc comment that states its ownership. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1078) |
 | F-1079 | [ ] <a id="f-1079"></a>docs/ARCHITECTURE.md explains crates, ports, adapters, UI and shell with a diagram; short ADRs record key implementation decisions. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1079) |
 | F-1080 | [ ] <a id="f-1080"></a>Each vertical slice works through engine, API and UI before the next slice; record passing checks with the slice commit. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1080) |
@@ -1334,19 +1334,19 @@ The following acceptance items come from the authorized rewrite task, not from a
 | F-1082 | [ ] <a id="f-1082"></a>Use proptest for permission policy, including shell-aware command splitting and the RISKY flag cases. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1082) |
 | F-1083 | [ ] <a id="f-1083"></a>Use proptest for account routing and rotation invariants. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1083) |
 | F-1084 | [ ] <a id="f-1084"></a>Use proptest for event-log replay invariants, including persistence and replay after interruption. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1084) |
-| F-1085 | [ ] <a id="f-1085"></a>Use Vitest for UI stores, including event reducers and reconnect behavior. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1085) |
-| F-1086 | [ ] <a id="f-1086"></a>Use Vitest for the typed API client and request/error handling. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1086) |
-| F-1087 | [ ] <a id="f-1087"></a>Use Vitest for formatting functions and boundary values. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1087) |
-| F-1088 | [ ] <a id="f-1088"></a>Provide a fake-agy test executable that plays a successful stream-json turn. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1088) |
+| F-1085 | [x] <a id="f-1085"></a>Use Vitest for UI stores, including event reducers and reconnect behavior. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1085) |
+| F-1086 | [x] <a id="f-1086"></a>Use Vitest for the typed API client and request/error handling. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1086) |
+| F-1087 | [x] <a id="f-1087"></a>Use Vitest for formatting functions and boundary values. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1087) |
+| F-1088 | [x] <a id="f-1088"></a>Provide a fake-agy test executable that plays a successful stream-json turn. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1088) |
 | F-1089 | [ ] <a id="f-1089"></a>The fake-agy executable plays a quota wall in the middle of a turn. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1089) |
 | F-1090 | [ ] <a id="f-1090"></a>The fake-agy executable plays a rate-limit response. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1090) |
-| F-1091 | [ ] <a id="f-1091"></a>The fake-agy executable plays an authentication failure. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1091) |
+| F-1091 | [x] <a id="f-1091"></a>The fake-agy executable plays an authentication failure. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1091) |
 | F-1092 | [ ] <a id="f-1092"></a>The fake-agy executable plays tool calls requiring approval. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1092) |
-| F-1093 | [ ] <a id="f-1093"></a>The fake-agy executable invokes the PreToolUse hook. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1093) |
-| F-1094 | [ ] <a id="f-1094"></a>The fake-agy executable emits a RUN_IN_BACKGROUND: line. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1094) |
-| F-1095 | [ ] <a id="f-1095"></a>The fake-agy executable emits GOAL_COMPLETE. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1095) |
-| F-1096 | [ ] <a id="f-1096"></a>The fake-agy executable emits huge output without losing required state or events. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1096) |
-| F-1097 | [ ] <a id="f-1097"></a>The fake-agy executable crashes and the engine reports and recovers the failure. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1097) |
+| F-1093 | [x] <a id="f-1093"></a>The fake-agy executable invokes the PreToolUse hook. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1093) |
+| F-1094 | [x] <a id="f-1094"></a>The fake-agy executable emits a RUN_IN_BACKGROUND: line. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1094) |
+| F-1095 | [x] <a id="f-1095"></a>The fake-agy executable emits GOAL_COMPLETE. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1095) |
+| F-1096 | [x] <a id="f-1096"></a>The fake-agy executable emits huge output without losing required state or events. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1096) |
+| F-1097 | [x] <a id="f-1097"></a>The fake-agy executable crashes and the engine reports and recovers the failure. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1097) |
 | F-1098 | [ ] <a id="f-1098"></a>Whole-engine tests with fake-agy prove handoff to the next account and cooldown enforcement. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1098) |
 | F-1099 | [ ] <a id="f-1099"></a>Whole-engine tests with fake-agy prove goal rounds, completion checks and the verifier. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1099) |
 | F-1100 | [ ] <a id="f-1100"></a>Whole-engine tests prove approval timeout behavior using a fake Clock. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1100) |
@@ -1361,13 +1361,13 @@ The following acceptance items come from the authorized rewrite task, not from a
 | F-1104 | [ ] <a id="f-1104"></a>Playwright in Chromium drives antiquota serve backed by fake-agy through every UI view and settings section. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1104) |
 | F-1105 | [ ] <a id="f-1105"></a>Playwright exercises every shortcut and context menu action in the feature inventory. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1105) |
 | F-1106 | [ ] <a id="f-1106"></a>Playwright exercises approval cards and their allow, deny, expiry and resolved states. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1106) |
-| F-1107 | [ ] <a id="f-1107"></a>Playwright verifies grouped transcript steps in expanded and collapsed states. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1107) |
+| F-1107 | [x] <a id="f-1107"></a>Playwright verifies grouped transcript steps in expanded and collapsed states. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1107) |
 | F-1108 | [ ] <a id="f-1108"></a>Playwright verifies both split panes at 80, 100, 125 and 150 percent zoom. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1108) |
 | F-1109 | [ ] <a id="f-1109"></a>Playwright types into the terminal, resizes it and restarts its process. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1109) |
 | F-1110 | [ ] <a id="f-1110"></a>Playwright uses recorded WAV audio and silence to verify dictation text and the silence guard. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1110) |
 | F-1111 | [ ] <a id="f-1111"></a>Playwright verifies the usage chart and its tooltips. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1111) |
 | F-1112 | [ ] <a id="f-1112"></a>Playwright exercises project and session menus. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1112) |
-| F-1113 | [ ] <a id="f-1113"></a>Playwright captures light and dark themes and narrow-window states. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1113) |
+| F-1113 | [x] <a id="f-1113"></a>Playwright captures light and dark themes and narrow-window states. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1113) |
 
 ### Native desktop proof
 

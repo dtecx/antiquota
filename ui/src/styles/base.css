@@ -1,0 +1,149 @@
+/* Owns native controls and shared layout primitives for every focused view. */
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#app {
+  height: 100%;
+}
+body {
+  margin: 0;
+  background: var(--night);
+  color: var(--ink);
+  font: 13px/1.5 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+button {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+button,
+a,
+input,
+textarea,
+summary {
+  -webkit-tap-highlight-color: transparent;
+}
+:focus-visible {
+  outline: 2px solid var(--baton);
+  outline-offset: 2px;
+}
+button {
+  border: 1px solid var(--rule-2);
+  border-radius: var(--r-sm);
+  background: var(--night-1);
+  padding: var(--space-2) var(--space-3);
+  min-height: 36px;
+  transition: background-color 120ms var(--ease);
+}
+button:hover:not(:disabled) {
+  background: var(--night-2);
+  border-color: var(--rule-3);
+}
+button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+button.primary {
+  background: var(--baton);
+  border-color: var(--baton);
+  color: var(--baton-ink);
+  font-weight: 600;
+}
+button.primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+  background: var(--baton);
+}
+button.quiet {
+  border-color: transparent;
+  background: transparent;
+}
+button.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  min-height: 40px;
+  padding: var(--space-2);
+}
+input,
+textarea,
+select {
+  width: 100%;
+  background: var(--well);
+  border: 1px solid var(--rule-2);
+  border-radius: var(--r-sm);
+  padding: var(--space-2) var(--space-3);
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--ink-3);
+}
+input:focus,
+textarea:focus {
+  border-color: var(--baton);
+}
+textarea {
+  resize: none;
+}
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: 12px/1.6 var(--mono);
+}
+code,
+kbd {
+  font-family: var(--mono);
+}
+kbd {
+  font-size: 10px;
+  color: var(--ink-3);
+  border: 1px solid var(--rule-2);
+  border-radius: var(--r-sm);
+  padding: 0 var(--space-1);
+}
+.muted {
+  color: var(--ink-3);
+}
+.number {
+  font-variant-numeric: tabular-nums;
+}
+.error {
+  color: var(--bad);
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

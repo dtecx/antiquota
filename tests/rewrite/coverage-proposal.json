@@ -1,0 +1,752 @@
+{
+  "format": 1,
+  "purpose": "Candidate evidence for the canonical feature report. This file owns Slice 1 test mappings only; it does not mark canonical features complete.",
+  "platform": "macOS arm64; Linux and Windows execution remain pending CI.",
+  "validation": {
+    "httpCommand": "cargo test -p antiquota-server --test rewrite_contract -- --nocapture",
+    "httpPassed": 13,
+    "httpFailed": 0,
+    "httpElapsedSeconds": 2.35,
+    "httpWholeServerTests": 8,
+    "httpHelperUnitTests": 5,
+    "fakeCommand": "cargo test -p fake-agy -- --nocapture",
+    "fakeUnitPassed": 2,
+    "fakeProcessPassed": 7,
+    "fakeFailed": 0,
+    "capturedCasesPassed": 22,
+    "totalCapturedCases": 172,
+    "runtimeSseSamplesPassed": 8,
+    "implementedRoutesWithCapturedAssertions": 10,
+    "pendingRoutes": 65,
+    "laterSchemaOnlySseSampleChecks": "The backend's separate 160-sample type proof is not runtime full-SSE replay evidence.",
+    "selectedScope": "tests/rewrite/slice1-scope.json",
+    "comparatorNotes": "tests/rewrite/README.md"
+  },
+  "tests": {
+    "contract": {
+      "path": "crates/server/tests/rewrite_contract.rs",
+      "filter": "captured_slice_one_requests_replay_with_exact_json_fields",
+      "command": "cargo test -p antiquota-server --test rewrite_contract captured_slice_one_requests_replay_with_exact_json_fields -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice1-http-integration-final.log",
+        ".handoff/evidence/slice1-contract.json"
+      ]
+    },
+    "stream_restart": {
+      "path": "crates/server/tests/rewrite_contract.rs",
+      "filter": "whole_server_streams_one_turn_and_replays_after_restart",
+      "command": "cargo test -p antiquota-server --test rewrite_contract whole_server_streams_one_turn_and_replays_after_restart -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice1-http-integration-final.log",
+        ".handoff/evidence/slice1-turn-restart.json"
+      ]
+    },
+    "control": {
+      "path": "crates/server/tests/rewrite_contract.rs",
+      "filter": "queued_messages_stop_delete_and_crash_leave_recoverable_sessions",
+      "command": "cargo test -p antiquota-server --test rewrite_contract queued_messages_stop_delete_and_crash_leave_recoverable_sessions -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice1-http-integration-final.log",
+        ".handoff/evidence/slice1-control.json"
+      ]
+    },
+    "discovery": {
+      "path": "crates/server/tests/rewrite_contract.rs",
+      "filter": "engine_discovery_reuses_lock_and_static_auth_remains_local",
+      "command": "cargo test -p antiquota-server --test rewrite_contract engine_discovery_reuses_lock_and_static_auth_remains_local -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice1-http-integration-final.log"
+      ]
+    },
+    "cli": {
+      "path": "crates/server/tests/rewrite_contract.rs",
+      "filter": "cli_run_shares_the_discovered_engine_and_durable_session",
+      "command": "cargo test -p antiquota-server --test rewrite_contract cli_run_shares_the_discovered_engine_and_durable_session -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice1-http-integration-final.log",
+        ".handoff/evidence/slice1-cli-run.json"
+      ]
+    },
+    "resume": {
+      "path": "crates/server/tests/rewrite_contract.rs",
+      "filter": "resumed_stale_and_duplicate_results_preserve_usage_and_success",
+      "command": "cargo test -p antiquota-server --test rewrite_contract resumed_stale_and_duplicate_results_preserve_usage_and_success -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice1-http-integration-final.log",
+        ".handoff/evidence/slice1-resume-scenarios.json"
+      ]
+    },
+    "no_accounts": {
+      "path": "tests/rewrite/runtime.rs",
+      "filter": "runtime::cli_without_accounts_exits_with_error_and_preserves_the_accepted_prompt",
+      "command": "cargo test -p antiquota-server --test rewrite_contract runtime::cli_without_accounts_exits_with_error_and_preserves_the_accepted_prompt -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice1-http-integration-final.log",
+        ".handoff/evidence/slice1-no-accounts.json"
+      ]
+    },
+    "browser": {
+      "path": "tests/rewrite/runtime.rs",
+      "filter": "runtime::serve_defaults_to_no_browser_and_gui_respects_no_open",
+      "command": "cargo test -p antiquota-server --test rewrite_contract runtime::serve_defaults_to_no_browser_and_gui_respects_no_open -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice1-http-integration-final.log",
+        ".handoff/evidence/slice1-browser-flags.json"
+      ]
+    },
+    "decimal_equal": {
+      "path": "tests/rewrite/support/numbers.rs",
+      "filter": "support::numbers::tests::equal_decimal_values_keep_sign_scale_and_exponents_exact",
+      "command": "cargo test -p antiquota-server --test rewrite_contract support::numbers::tests::equal_decimal_values_keep_sign_scale_and_exponents_exact -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice1-http-integration-final.log"
+      ]
+    },
+    "decimal_distinct": {
+      "path": "tests/rewrite/support/numbers.rs",
+      "filter": "support::numbers::tests::different_huge_integers_and_close_decimals_never_round_to_equal",
+      "command": "cargo test -p antiquota-server --test rewrite_contract support::numbers::tests::different_huge_integers_and_close_decimals_never_round_to_equal -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice1-http-integration-final.log"
+      ]
+    },
+    "raw_date": {
+      "path": "tests/rewrite/support/replay.rs",
+      "filter": "support::replay::tests::recorded_raw_bodies_decode_and_http_dates_are_checked",
+      "command": "cargo test -p antiquota-server --test rewrite_contract support::replay::tests::recorded_raw_bodies_decode_and_http_dates_are_checked -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice1-http-integration-final.log"
+      ]
+    },
+    "unknown_rule": {
+      "path": "tests/rewrite/support/replay.rs",
+      "filter": "support::replay::tests::unknown_dynamic_rule_is_never_silently_ignored",
+      "command": "cargo test -p antiquota-server --test rewrite_contract support::replay::tests::unknown_dynamic_rule_is_never_silently_ignored -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice1-http-integration-final.log"
+      ]
+    },
+    "chunking": {
+      "path": "tests/rewrite/support/http.rs",
+      "filter": "support::http::tests::sse_lines_survive_transport_chunks_and_utf8_boundaries",
+      "command": "cargo test -p antiquota-server --test rewrite_contract support::http::tests::sse_lines_survive_transport_chunks_and_utf8_boundaries -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice1-http-integration-final.log"
+      ]
+    },
+    "fake_envelopes": {
+      "path": "tests/fake-agy/src/protocol.rs",
+      "filter": "protocol::tests::every_scenario_uses_real_envelopes_and_retains_resume_identity",
+      "command": "cargo test -p fake-agy protocol::tests::every_scenario_uses_real_envelopes_and_retains_resume_identity",
+      "evidence": [
+        ".handoff/evidence/slice1-fake-agy-tests.log"
+      ]
+    },
+    "fake_usage": {
+      "path": "tests/fake-agy/src/protocol.rs",
+      "filter": "protocol::tests::duplicate_done_and_stale_result_expose_usage_deduplication",
+      "command": "cargo test -p fake-agy protocol::tests::duplicate_done_and_stale_result_expose_usage_deduplication",
+      "evidence": [
+        ".handoff/evidence/slice1-fake-agy-tests.log"
+      ]
+    },
+    "fake_process": {
+      "path": "tests/fake-agy/tests/scenarios.rs",
+      "filter": "process_plays_every_scenario_and_preserves_current_turn_usage",
+      "command": "cargo test -p fake-agy process_plays_every_scenario_and_preserves_current_turn_usage",
+      "evidence": [
+        ".handoff/evidence/slice1-fake-agy-tests.log"
+      ]
+    },
+    "fake_cancel": {
+      "path": "tests/fake-agy/tests/scenarios.rs",
+      "filter": "delay_can_be_cancelled_before_any_edit",
+      "command": "cargo test -p fake-agy delay_can_be_cancelled_before_any_edit",
+      "evidence": [
+        ".handoff/evidence/slice1-fake-agy-tests.log"
+      ]
+    },
+    "fake_metadata": {
+      "path": "tests/fake-agy/tests/scenarios.rs",
+      "filter": "metadata_commands_are_json_or_model_rows_and_never_edit_project",
+      "command": "cargo test -p fake-agy metadata_commands_are_json_or_model_rows_and_never_edit_project",
+      "evidence": [
+        ".handoff/evidence/slice1-fake-agy-tests.log"
+      ]
+    },
+    "fake_script": {
+      "path": "tests/fake-agy/tests/scenarios.rs",
+      "filter": "custom_script_and_slot_overrides_are_reproducible",
+      "command": "cargo test -p fake-agy custom_script_and_slot_overrides_are_reproducible",
+      "evidence": [
+        ".handoff/evidence/slice1-fake-agy-tests.log"
+      ]
+    },
+    "fake_isolation": {
+      "path": "tests/fake-agy/tests/scenarios.rs",
+      "filter": "missing_isolation_refuses_before_recording_or_editing",
+      "command": "cargo test -p fake-agy missing_isolation_refuses_before_recording_or_editing",
+      "evidence": [
+        ".handoff/evidence/slice1-fake-agy-tests.log"
+      ]
+    },
+    "fake_symlink": {
+      "path": "tests/fake-agy/tests/scenarios.rs",
+      "filter": "symlinked_home_escape_refuses_before_recording",
+      "command": "cargo test -p fake-agy symlinked_home_escape_refuses_before_recording",
+      "evidence": [
+        ".handoff/evidence/slice1-fake-agy-tests.log"
+      ]
+    },
+    "fake_hook": {
+      "path": "tests/fake-agy/tests/scenarios.rs",
+      "filter": "hook_invocation_obeys_denial_without_executing_a_tool_command",
+      "command": "cargo test -p fake-agy hook_invocation_obeys_denial_without_executing_a_tool_command",
+      "evidence": [
+        ".handoff/evidence/slice1-fake-agy-tests.log"
+      ]
+    }
+  },
+  "features": [
+    {
+      "featureId": "F-155",
+      "tests": [
+        "contract"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "The actual session-create capture matches all fresh metadata fields, including timestamps under explicit pointer rules, idle status, zero usage/context/turns, empty queue/jobs, nullable conversation/goal/loop/worktree and false pinned/archived.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-157",
+      "tests": [
+        "stream_restart"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "A completed session restarts idle with an identical full session response and conversation, usage and final events retained.",
+      "pending": "Recovery of running, goal, queue, loop and job state remains for the owning slices."
+    },
+    {
+      "featureId": "F-158",
+      "tests": [
+        "contract"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "The actual session-patch capture matches title, mode, effort, pinned and archived changes; an invalid mode returns the captured error.",
+      "pending": "All update fields, ignored unknown keys and coercion edge cases remain to be proven."
+    },
+    {
+      "featureId": "F-160",
+      "tests": [
+        "control",
+        "stream_restart"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Idle text sends return started; a busy text send returns queued and completes as the second turn.",
+      "pending": "Structured attachments and message kinds remain pending."
+    },
+    {
+      "featureId": "F-161",
+      "tests": [
+        "control"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Two FIFO text sends finish as two turns without a stranded queued message in the controlled scenario.",
+      "pending": "Concurrent admission at the exact worker-exit boundary requires the application concurrency tests."
+    },
+    {
+      "featureId": "F-162",
+      "tests": [
+        "stream_restart",
+        "no_accounts"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "A user event precedes the captured first turn, and an accepted CLI prompt remains durable when no account is available.",
+      "pending": "Goal, nudge, job, loop, attachment and pending note injection remain pending."
+    },
+    {
+      "featureId": "F-164",
+      "tests": [
+        "stream_restart",
+        "control"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "The captured turn_start includes the correct account/model and timestamp; sequential attempts increment the turn count.",
+      "pending": "Account retry attempts and all intermediate metadata transitions remain pending."
+    },
+    {
+      "featureId": "F-165",
+      "tests": [
+        "stream_restart",
+        "resume"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "The real fake-agy subprocess receives the stream-json invocation, model and stable resumed conversation.",
+      "pending": "Attachment and job add-dir access and permission flag behavior remain pending."
+    },
+    {
+      "featureId": "F-166",
+      "tests": [
+        "stream_restart",
+        "fake_process"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Safe invocation metadata proves the isolated account HOME, session/slot and SSH environment.",
+      "pending": "State/mode hook environment and compiled hook discovery remain pending."
+    },
+    {
+      "featureId": "F-168",
+      "tests": [
+        "stream_restart",
+        "resume"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Both captured deltas arrive over real SSE; a single completed assistant message persists and survives restart; duplicate DONE does not duplicate the assistant.",
+      "pending": "All non-ACTIVE error completion cases remain pending."
+    },
+    {
+      "featureId": "F-169",
+      "tests": [
+        "stream_restart"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Both captured tool states match every field, including parameters, elapsed seconds and completed diff.",
+      "pending": "ANSI removal, failed-tool output and the 20000-character output cap need adapter tests."
+    },
+    {
+      "featureId": "F-170",
+      "tests": [
+        "stream_restart"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "The first synthetic file edit emits the exact captured unified diff.",
+      "pending": "The 600-line cap, large/binary files, fast edits and remembered late snapshots need adapter tests."
+    },
+    {
+      "featureId": "F-174",
+      "tests": [
+        "resume",
+        "stream_restart",
+        "fake_usage"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Only current DONE usage is counted; cumulative result totals are ignored and duplicate DONE is counted once across resumed turns.",
+      "pending": "Cached-input accounting and largest-input context across multiple distinct steps need adapter/domain tests."
+    },
+    {
+      "featureId": "F-176",
+      "tests": [
+        "resume",
+        "control"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "A completed response wins over a stale resumed quota result; a genuine subprocess crash reports an error and returns idle.",
+      "pending": "All quota, auth and transient classifications remain for the account slice."
+    },
+    {
+      "featureId": "F-177",
+      "tests": [
+        "stream_restart",
+        "control"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "The complete SUCCESS turn_end capture matches usage, account and elapsed fields; cancellation and crash terminate recoverably.",
+      "pending": "Exact stopped, quota, auth, transient and other error turn_end contract values remain pending."
+    },
+    {
+      "featureId": "F-180",
+      "tests": [
+        "no_accounts"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "No-account CLI execution fails promptly, retains the accepted prompt, reports an error notice, returns idle and does not start a runner.",
+      "pending": "The legacy noaccount notice kind and all-paused wall explanation need exact parity proof."
+    },
+    {
+      "featureId": "F-189",
+      "tests": [
+        "stream_restart"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "All eight captured first-turn events match timestamps under explicit numeric pointer rules, and the complete persisted session replays identically after restart.",
+      "pending": "Append concurrency/property proof and future feature event types remain pending."
+    },
+    {
+      "featureId": "F-300",
+      "tests": [
+        "browser"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "On Unix, gui --no-open never invokes the isolated opener; gui invokes it once with the discovered URL.",
+      "pending": "Default port 8765, a requested fixed port and Windows opener behavior remain pending."
+    },
+    {
+      "featureId": "F-301",
+      "tests": [
+        "browser",
+        "discovery"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "serve accepts ephemeral port 0, shares discovery and does not invoke the isolated browser opener.",
+      "pending": "Default port 8765, a requested fixed port and Windows behavior remain pending."
+    },
+    {
+      "featureId": "F-306",
+      "tests": [
+        "contract",
+        "discovery"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "The captured bad Host is rejected; localhost Host and token-free health work; a bounded connection to 127.0.0.2 fails; static traversal is rejected.",
+      "pending": "Further invalid Host forms and cross-platform bind proof remain pending."
+    },
+    {
+      "featureId": "F-307",
+      "tests": [
+        "stream_restart"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "The same GUI token survives a real shutdown and restart.",
+      "pending": "Missing/short token regeneration, minimum length and private file-mode assertions need store tests."
+    },
+    {
+      "featureId": "F-308",
+      "tests": [
+        "contract",
+        "discovery"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Missing and wrong ordinary API header tokens match captured forbidden responses; a query token does not authorize state.",
+      "pending": "Constant-time comparison is a code/security property, and all future routes remain pending."
+    },
+    {
+      "featureId": "F-309",
+      "tests": [
+        "contract",
+        "stream_restart",
+        "discovery"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "SSE accepts the correct query token and rejects wrong/missing query tokens even with an ordinary header; state rejects query-only authentication.",
+      "pending": "Terminal stream and attachment GET authentication remain pending."
+    },
+    {
+      "featureId": "F-310",
+      "tests": [
+        "contract",
+        "discovery"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "The root substitutes the GUI token; unknown static and vendor traversal match captured errors; escaped asset symlinks are refused.",
+      "pending": "All legacy vendor files, hidden names and built asset MIME/cache behavior remain pending."
+    },
+    {
+      "featureId": "F-311",
+      "tests": [
+        "contract",
+        "stream_restart",
+        "control"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Every selected captured ordinary HTTP response checks application/json, actual byte Content-Length, no-store, nosniff and captured status; HTTP Date is validated.",
+      "pending": "The remaining 150 captured cases and later route responses remain pending."
+    },
+    {
+      "featureId": "F-312",
+      "tests": [
+        "contract",
+        "raw_date"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Recorded malformed raw JSON is decoded without alteration and returns the captured error; the declared oversized body returns the captured error; an absent mutation body is used for shutdown.",
+      "pending": "Exact limit boundaries, empty byte body variants and non-object JSON forms remain pending."
+    },
+    {
+      "featureId": "F-314",
+      "tests": [
+        "contract"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Captured unknown session, invalid mode, malformed JSON and missing cwd requests return their precise captured errors.",
+      "pending": "Unknown later items/routes and missing-file errors remain pending."
+    },
+    {
+      "featureId": "F-315",
+      "tests": [
+        "stream_restart",
+        "chunking"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Real SSE emits data JSON with session ids and no-store, and correctly decodes split HTTP chunks and UTF-8; HTTP shutdown closes an open stream.",
+      "pending": "The 15-second keepalive timer, subscriber removal after disconnect and future global events remain pending."
+    },
+    {
+      "featureId": "F-316",
+      "tests": [
+        "discovery"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "A second Rust serve command uses the existing locked engine and exits successfully; shutting down removes discovery and permits a fresh engine.",
+      "pending": "Mixed Python/Rust lock interoperability remains a separate compatibility gate."
+    },
+    {
+      "featureId": "F-317",
+      "tests": [
+        "discovery",
+        "cli"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "CLI execution leaves the discovered engine record unchanged, and shutdown removes discovery before restart.",
+      "pending": "Exact discovery fields and stale-file handling need store/CLI tests."
+    },
+    {
+      "featureId": "F-320",
+      "tests": [
+        "stream_restart",
+        "control",
+        "discovery"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "HTTP shutdown closes an open SSE connection, removes discovery, releases the engine lock and permits restart; stop cancels an active turn.",
+      "pending": "OS signal variants, keep-awake, goal pausing and background-job retention remain pending."
+    },
+    {
+      "featureId": "F-323",
+      "tests": [
+        "contract",
+        "discovery"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "The complete actual health capture matches ok/app/version/pid, requires no token and obeys Host validation.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-324",
+      "tests": [
+        "stream_restart",
+        "contract"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "The real shared SSE route matches all fields of eight selected first-turn samples and the captured wrong-token response.",
+      "pending": "Global account, goal, approval, job and terminal events and timed keepalive comments remain pending."
+    },
+    {
+      "featureId": "F-329",
+      "tests": [
+        "contract",
+        "stream_restart"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "The complete two-account empty state capture matches every field, including an actual busy lease; a newly created idle session appears in state.",
+      "pending": "Multi-session ordering, model refresh and account routing transitions remain pending."
+    },
+    {
+      "featureId": "F-339",
+      "tests": [
+        "contract",
+        "stream_restart"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "The actual shutdown capture matches ok=true and the real process terminates while an SSE client remains connected.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-340",
+      "tests": [
+        "contract"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "The captured create metadata and invalid cwd error match exactly; the accepted request includes cwd/model/title and empty legacy effort.",
+      "pending": "All mode/default combinations, absent cwd and worktree creation remain pending."
+    },
+    {
+      "featureId": "F-352",
+      "tests": [
+        "contract",
+        "stream_restart"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "The captured empty session and missing-session error match; a complete session response is identical after real engine restart.",
+      "pending": "Sessions containing later feature event types remain pending."
+    },
+    {
+      "featureId": "F-353",
+      "tests": [
+        "contract"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Captured patch success and invalid-mode error match every field.",
+      "pending": "All update fields, boolean coercion and ignored-key cases remain pending."
+    },
+    {
+      "featureId": "F-354",
+      "tests": [
+        "control"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "The actual deletion capture matches; subsequent GET is 404. SESSION_2 binds from a fresh created session.",
+      "pending": "The original captured fork preparation and deletion of unknown/running sessions remain pending."
+    },
+    {
+      "featureId": "F-355",
+      "tests": [
+        "contract",
+        "stream_restart",
+        "control"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Captured empty send and successful send responses match; controlled busy text sends queue and finish.",
+      "pending": "Attachments and structured kinds remain pending."
+    },
+    {
+      "featureId": "F-370",
+      "tests": [
+        "control"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Captured stop response matches during an active fake turn, the session becomes idle and its queue is empty.",
+      "pending": "Approval waits, goals and other paused state remain pending."
+    },
+    {
+      "featureId": "F-1088",
+      "tests": [
+        "fake_process",
+        "fake_envelopes",
+        "stream_restart"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "The fake binary emits a successful real-envelope turn, and the whole server consumes its exact first-turn stream.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-1089",
+      "tests": [
+        "fake_process",
+        "fake_envelopes"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "The quota scenario runs as a subprocess with real envelopes, the resumed id and failure code 1.",
+      "pending": "A focused assertion of the mid-turn partial response and quota error text remains pending; application handoff is not claimed."
+    },
+    {
+      "featureId": "F-1090",
+      "tests": [
+        "fake_process",
+        "fake_envelopes"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "The rate scenario runs as a subprocess with real envelopes, the resumed id and failure code 1.",
+      "pending": "A focused assertion of the rate-limit payload remains pending; application cooldowns are not claimed."
+    },
+    {
+      "featureId": "F-1091",
+      "tests": [
+        "fake_script",
+        "fake_process"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "The auth scenario emits UNAUTHENTICATED and code 1, including a deterministic per-slot script override.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-1092",
+      "tests": [
+        "fake_process",
+        "fake_envelopes"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "The approval scenario runs as a successful fake subprocess with real envelopes.",
+      "pending": "A focused risky tool payload assertion and application approval flow remain pending."
+    },
+    {
+      "featureId": "F-1093",
+      "tests": [
+        "fake_hook"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "The fake binary invokes the explicitly supplied fake-hook subprocess, obeys its deny response and performs neither the proposed command nor an edit.",
+      "pending": "The compiled antiquota PreToolUse implementation and approval timeout flow remain pending."
+    },
+    {
+      "featureId": "F-1094",
+      "tests": [
+        "fake_process"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "The fake subprocess response contains RUN_IN_BACKGROUND: with a deterministic command line.",
+      "pending": "Application background-job creation is a separate pending feature."
+    },
+    {
+      "featureId": "F-1095",
+      "tests": [
+        "stream_restart",
+        "fake_process"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "The fake default response emits GOAL_COMPLETE and matches the captured assistant/result marker.",
+      "pending": "A focused goal_complete scenario marker assertion is pending; application goal verification is not claimed."
+    },
+    {
+      "featureId": "F-1096",
+      "tests": [
+        "fake_process",
+        "resume"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "The fake emits at least 2 MB; the whole server preserves a single complete assistant response, usage, conversation and SUCCESS.",
+      "pending": "The fake supports up to 8 MB, but 8 MB and malformed oversized lines remain for adapter tests."
+    },
+    {
+      "featureId": "F-1097",
+      "tests": [
+        "fake_process",
+        "control"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "The fake exits with code 23; the whole engine reports a durable error notice, returns idle and accepts session deletion.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-1103",
+      "tests": [
+        "contract",
+        "stream_restart",
+        "control",
+        "decimal_equal",
+        "decimal_distinct",
+        "raw_date",
+        "unknown_rule",
+        "chunking"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Exactly 22 distinct of 172 captured cases pass, including one events-sse case with eight original samples. Exact decimal equality preserves large distinct integers; unknown dynamic rules fail.",
+      "pending": "The other 150 cases and the remaining 65 routes stay pending; no broad field exclusions or full-contract parity claim."
+    },
+    {
+      "featureId": "F-1133",
+      "tests": [
+        "contract",
+        "stream_restart",
+        "fake_metadata"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "The captured defaults contain gemini-3.8-flash-high and the real fake turn uses that default model.",
+      "pending": "A real verifier invocation and the settings update path remain pending."
+    }
+  ],
+  "pendingFeatureIds": [
+    "F-1098",
+    "F-1099",
+    "F-1100",
+    "F-1101",
+    "F-1102"
+  ],
+  "limitations": [
+    "Every Passing subset entry has additional acceptance behavior pending; combine other owned evidence before changing its canonical status.",
+    "All application goals, approval flows, handoff, cooldowns, jobs, loop, schedule, worktrees, terminal and dictation remain pending their slices.",
+    "The harness uses only disposable synthetic data under Desktop/test. No real agy calls or real credentials are used.",
+    "Fake protocol controls, cancellation and sandbox tests do not prove application implementations of the pending features.",
+    "Mixed Python/Rust locking, real account continuity, native desktop tests and paid live smoke tests remain separate gates.",
+    "Independent review found stop-descendant/stderr hangs and loss of an init conversation id on crash. The existing passing suite does not prove those cases; the overall slice remains held until targeted regressions and fixes pass."
+  ]
+}

@@ -1,0 +1,5 @@
+minimumReleaseAgeExclude:
+  - svelte@5.57.2
+nodeVersion: 26.10.0
+engineStrict: true
+strictPeerDependencies: true
