@@ -267,11 +267,29 @@ class Handler(BaseHTTPRequestHandler):
         token = self.headers.get("X-Agyloop-Token", "")
         if u.path == "/api/events":
             token = (qs.get("token") or [""])[0]
+        parts = u.path.split("/")[2:]
+        if parts[:1] == ["sessions"] and len(parts) == 4 and parts[2] == "attachments" and method == "GET":
+            token = (qs.get("token") or [""])[0]  # <img src> cannot send a header
         if not u.path.startswith("/api/") or not secrets.compare_digest(token, app.token):
             return self._json(403, {"error": "forbidden"})
         try:
             if u.path == "/api/events":
                 return self._events()
+            if parts[:1] == ["sessions"] and len(parts) == 3 and parts[2] == "attach" and method == "POST":
+                n = int(self.headers.get("Content-Length") or 0)
+                if n > 25_000_000:
+                    raise ValueError("attachments are limited to 25 MB")
+                from urllib.parse import unquote
+                return self._json(200, app.engine.attach(parts[1], unquote(self.headers.get("X-Filename", "file")),
+                                                         self.rfile.read(n)))
+            if parts[:1] == ["sessions"] and len(parts) == 4 and parts[2] == "attachments" and method == "GET":
+                d = os.path.realpath(app.engine.attachments_dir(parts[1]))
+                p = os.path.realpath(os.path.join(d, parts[3]))
+                if not p.startswith(d + os.sep) or not os.path.isfile(p):
+                    raise KeyError(parts[3])
+                import mimetypes
+                with open(p, "rb") as f:
+                    return self._send(200, f.read(), mimetypes.guess_type(p)[0] or "application/octet-stream")
             body = self._body() if method in ("POST", "PATCH", "PUT") else {}
             return self._json(200, self._api(method, u.path.split("/")[2:], body, qs))
         except KeyError as e:
@@ -296,9 +314,9 @@ class Handler(BaseHTTPRequestHandler):
                 e.delete(sid)
                 return {"ok": True}
             case ("POST", ["sessions", sid, "send"]):
-                if not str(b.get("text", "")).strip():
+                if not str(b.get("text", "")).strip() and not b.get("attachments"):
                     raise ValueError("empty message")
-                return {"result": e.send(sid, b["text"])}
+                return {"result": e.send(sid, str(b.get("text", "")), attachments=b.get("attachments") or [])}
             case ("POST", ["sessions", sid, "rewind"]):
                 return {"files": e.rewind(sid, int(b.get("turn", 0)))}
             case ("POST", ["sessions", sid, "clear"]):

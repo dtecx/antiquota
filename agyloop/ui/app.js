@@ -66,6 +66,7 @@ function ago(t) {
   return new Date(t * 1000).toLocaleDateString([], { month: 'short', day: 'numeric' });
 }
 const cur = () => S.sessions.get(S.cur);
+const ATT = [];  // attachments uploaded but not sent yet: {name, path, size, image, url}
 const who = email => String(email || '').split('@')[0];
 function rel(p) {
   const m = cur();
@@ -263,7 +264,7 @@ function renderHeader() {
 function syncSend() {
   const m = cur(), b = $('#send');
   const busy = m && m.status !== 'idle';
-  const text = $('#input').value.trim();
+  const text = $('#input').value.trim() || (ATT.length ? 'x' : '');
   b.classList.toggle('stop', !!busy && !text);
   b.textContent = busy ? (text ? 'Queue' : 'Stop') : 'Send';
   b.title = busy ? (text ? 'Queue after this turn (Enter)' : 'Stop (Esc)') : 'Send (Enter)';
@@ -333,7 +334,7 @@ function userNode(ev) {
   // A goal prompt carries standing instructions; the objective is what matters to read.
   const text = ev.kind === 'goal' ? ev.text.split('\n\n')[0].replace(/^Objective:\s*/, '') : ev.text;
   return h('div', { class: 'msg-user ' + (ev.kind || 'user'), title: ev.kind === 'goal' ? ev.text : null },
-    h('span', { class: 'who' }, WHO[ev.kind] || 'you'), text);
+    h('span', { class: 'who' }, WHO[ev.kind] || 'you'), text, attachmentChips(ev, S.cur));
 }
 function firstString(p) {
   for (const v of Object.values(p || {})) if (typeof v === 'string' && v.length < 300) return v;
@@ -604,6 +605,7 @@ function renderEvent(ev, live) {
 }
 
 async function open(sid) {
+  if (S.cur !== sid && ATT.length) { ATT.length = 0; renderTray(); }
   S.cur = sid;
   history.replaceState(null, '', '#' + sid);
   S.nodes.clear();
@@ -732,7 +734,9 @@ function autosize() {
 }
 async function submit() {
   const t = $('#input'), text = t.value.trim(), m = cur();
-  if (!text) { if (m && m.status !== 'idle') stop(); return; }
+  const ready = ATT.filter(f => !f.uploading && f.path);
+  if (ATT.some(f => f.uploading)) return toast('Still uploading…');
+  if (!text && !ready.length) { if (m && m.status !== 'idle') stop(); return; }
   if (text.startsWith('/')) { t.value = ''; autosize(); closeSlash(); return slash(text); }
   if (!m) return openNew(text);
   HIST.list.push(text);
@@ -742,7 +746,9 @@ async function submit() {
   autosize();
   syncSend();
   try {
-    const r = await api('POST', `sessions/${m.id}/send`, { text });
+    const r = await api('POST', `sessions/${m.id}/send`, { text, attachments: ready.map(f => f.path) });
+    ATT.length = 0;
+    renderTray();
     if (r.result === 'queued') toast('Queued after the current turn');
   } catch (e) { t.value = text; fail(e); }
 }
@@ -807,6 +813,51 @@ function openSlashMenu() {
   }).catch(() => {});
 }
 function closeSlash() { $('#slash').hidden = true; slashIdx = 0; menuItems = []; }
+
+/* ---------- attachments: + button, drag and drop, pasted screenshots ---------- */
+const attUrl = (sid, name) => `/api/sessions/${sid}/attachments/${encodeURIComponent(name)}?token=${encodeURIComponent(TOKEN)}`;
+function renderTray() {
+  const tray = $('#tray');
+  tray.hidden = !ATT.length;
+  tray.replaceChildren(...ATT.map((f, i) => h('div', { class: 'chip-att' + (f.uploading ? ' up' : ''), title: f.name },
+    f.image && f.url ? h('img', { src: f.url, alt: '' }) : h('span', { class: 'fi' }, (f.name.split('.').pop() || 'file').slice(0, 4)),
+    h('span', { class: 'fn' }, f.name),
+    h('span', { class: 'fs' }, f.uploading ? 'uploading…' : fmtSize(f.size)),
+    h('button', { type: 'button', title: 'Remove', 'aria-label': 'Remove ' + f.name, onclick: () => { ATT.splice(i, 1); renderTray(); syncSend(); } }, '×'))));
+}
+const fmtSize = n => n > 1e6 ? (n / 1e6).toFixed(1) + ' MB' : n > 1e3 ? Math.round(n / 1e3) + ' KB' : n + ' B';
+async function attachFiles(files) {
+  const m = cur();
+  if (!m) { toast('Open or create a session first'); return; }
+  for (const file of files) {
+    if (file.size > 25e6) { toast(`${file.name} is over 25 MB`); continue; }
+    const slot = { name: file.name || 'pasted.png', size: file.size, uploading: true,
+      image: /^image\//.test(file.type), url: /^image\//.test(file.type) ? URL.createObjectURL(file) : null };
+    ATT.push(slot);
+    renderTray();
+    try {
+      const r = await fetch(`/api/sessions/${m.id}/attach`, {
+        method: 'POST', body: file,
+        headers: { 'X-Agyloop-Token': TOKEN, 'X-Filename': encodeURIComponent(slot.name) },
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || r.statusText);
+      Object.assign(slot, j, { uploading: false });
+    } catch (e) {
+      ATT.splice(ATT.indexOf(slot), 1);
+      fail(e);
+    }
+    renderTray();
+    syncSend();
+  }
+  $('#input').focus();
+}
+function attachmentChips(ev, sid) {
+  if (!ev.attachments || !ev.attachments.length) return null;
+  return h('div', { class: 'msg-atts' }, ev.attachments.map(f => f.image
+    ? h('a', { href: attUrl(sid, f.name), target: '_blank', rel: 'noopener', title: f.name }, h('img', { src: attUrl(sid, f.name), alt: f.name }))
+    : h('span', { class: 'chip-att small' }, h('span', { class: 'fi' }, (f.name.split('.').pop() || 'file').slice(0, 4)), h('span', { class: 'fn' }, f.name))));
+}
 
 /* ---------- prompt history (↑ / ↓ in an empty or untouched composer) ---------- */
 const HIST = { list: [], pos: -1, draft: '' };
@@ -1488,6 +1539,24 @@ function wire() {
   $('#new-dlg').addEventListener('close', () => { if ($('#new-dlg').returnValue === 'ok') createFromDialog(); });
   $('#goal-dlg').addEventListener('close', () => { if ($('#goal-dlg').returnValue === 'ok') startGoal(); });
   $('#set-open').addEventListener('click', () => openSettings());
+  $('#attach-btn').addEventListener('click', () => $('#attach-input').click());
+  $('#attach-input').addEventListener('change', e => { attachFiles([...e.target.files]); e.target.value = ''; });
+  input.addEventListener('paste', e => {
+    const files = [...(e.clipboardData?.files || [])];
+    if (files.length) { e.preventDefault(); attachFiles(files); }
+  });
+  let dragDepth = 0;
+  const hasFiles = e => [...(e.dataTransfer?.types || [])].includes('Files');
+  window.addEventListener('dragenter', e => { if (!hasFiles(e)) return; e.preventDefault(); dragDepth++; $('#dropzone').hidden = false; });
+  window.addEventListener('dragover', e => { if (hasFiles(e)) e.preventDefault(); });
+  window.addEventListener('dragleave', e => { if (!hasFiles(e)) return; dragDepth = Math.max(0, dragDepth - 1); if (!dragDepth) $('#dropzone').hidden = true; });
+  window.addEventListener('drop', e => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    dragDepth = 0;
+    $('#dropzone').hidden = true;
+    attachFiles([...e.dataTransfer.files]);
+  });
   $('#detail-btn').addEventListener('click', () => setDetail(S.detail === 'detailed' ? 'compact' : 'detailed'));
   $('#expand-btn').addEventListener('click', () => {
     const open = !$('#expand-btn').classList.contains('on');

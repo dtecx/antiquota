@@ -68,8 +68,11 @@
       <div class="goalbar" id="goalbar" hidden></div>
       <div class="slash" id="slash" hidden role="listbox"></div>
       <form class="composer" id="composer">
-        <textarea id="input" rows="1" placeholder="Ask agy, or type / for commands" aria-label="Message"></textarea>
+        <div class="tray" id="tray" hidden></div>
+        <textarea id="input" rows="1" placeholder="Ask agy, @ to mention files, / for commands" aria-label="Message"></textarea>
         <div class="tools">
+          <button type="button" class="attach-btn" id="attach-btn" title="Add images or files (or drop them, or paste a screenshot)" aria-label="Add images or files">+</button>
+          <input type="file" id="attach-input" multiple hidden>
           <label class="pick"><span>model</span><select id="model"></select></label>
           <label class="pick" title="Gemini models come in effort variants; Claude and GPT-OSS models have a fixed one"><span>effort</span>
             <select id="effort"></select>
@@ -178,6 +181,7 @@
   <section class="set-body" id="set-body"></section>
 </div>
 
+<div class="dropzone" id="dropzone" hidden><div>Drop files to attach</div></div>
 <div class="toast" id="toast" role="status" hidden></div>
 <script src="/app.js"></script>
 </body>

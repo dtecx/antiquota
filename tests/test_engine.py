@@ -205,3 +205,20 @@ def test_mentions_clear_and_compact(home, work):
     finish(eng, sid)
     last = calls(work)[-1]["args"]
     assert "--conversation" not in last and "taking over work" in last[1] and last[1].rstrip().endswith("second")
+
+
+def test_attachments_reach_agy_through_add_dir(home, work, monkeypatch):
+    monkeypatch.setenv("STUB_SLEEP", "1")
+    eng = Engine()
+    sid = eng.create(str(work), "gemini-3.8-flash-low")["id"]
+    f = eng.attach(sid, "../../shot one.png", b"\x89PNG")
+    assert f["name"] == "shot one.png" and f["image"] and f["path"].startswith(eng.attachments_dir(sid))
+    assert eng.attach(sid, "shot one.png", b"x")["name"] == "shot one-2.png"
+    eng.send(sid, "first")
+    assert eng.send(sid, "what is this?", attachments=[f["path"], "/etc/passwd"]) == "queued"
+    finish(eng, sid)
+    args = calls(work)[-1]["args"]
+    assert args[args.index("--add-dir") + 1] == eng.attachments_dir(sid)
+    assert f["path"] in args[1] and "/etc/passwd" not in args[1]
+    user = [e for e in eng.events(sid) if e["t"] == "user"][-1]
+    assert [x["name"] for x in user["attachments"]] == ["shot one.png"]

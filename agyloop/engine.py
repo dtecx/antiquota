@@ -95,6 +95,14 @@ def _read(path):
         return None
 
 
+def _born_after(path, t):
+    try:
+        st = os.stat(path)
+    except OSError:
+        return False
+    return getattr(st, "st_birthtime", st.st_ctime) >= t - 1
+
+
 def _diff(path, before, after, cwd):
     if before is None or after is None:
         return ""
@@ -114,6 +122,7 @@ class Session:
         self.thread = None
         self.files = {}  # path -> last content seen, a fallback "before" for diffs
         self.thinking_due = []  # (turn, step, tokens) replies whose thinking was not in agy's db yet
+        self.turn_started = 0
 
     @property
     def dir(self):
@@ -172,10 +181,7 @@ class Engine:
         # One snapshot for disk and subscribers. meta's keys are fixed at creation, so another
         # thread changing a value cannot break the serialization half-way.
         text = json.dumps(s.meta)
-        p = os.path.join(s.dir, "meta.json")
-        with open(p + ".tmp", "w") as f:
-            f.write(text)
-        os.replace(p + ".tmp", p)
+        a.write_atomic(os.path.join(s.dir, "meta.json"), text)
         self.publish(s.meta["id"], {"t": "meta", "meta": json.loads(text)})
 
     def status(self, s, status, **extra):
@@ -222,15 +228,35 @@ class Engine:
         shutil.rmtree(s.dir, ignore_errors=True)
         self.publish(sid, {"t": "deleted"})
 
-    def send(self, sid, text, kind="user"):
+    def attachments_dir(self, sid):
+        return os.path.join(self.sessions[sid].dir, "attachments")
+
+    def attach(self, sid, filename, data):
+        """Keep an uploaded file with the session; agy sees the folder through --add-dir."""
+        name = re.sub(r"[^\w.\- ]+", "_", os.path.basename(filename or "file")).strip(" .") or "file"
+        d = self.attachments_dir(sid)
+        os.makedirs(d, exist_ok=True)
+        stem, ext = os.path.splitext(name)
+        path, n = os.path.join(d, name), 1
+        while os.path.exists(path):
+            n += 1
+            path = os.path.join(d, f"{stem}-{n}{ext}")
+        with open(path, "wb") as f:
+            f.write(data)
+        return {"name": os.path.basename(path), "path": path, "size": len(data),
+                "image": ext.lower() in (".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".heic")}
+
+    def send(self, sid, text, kind="user", attachments=None):
         s = self.sessions[sid]
+        d = os.path.realpath(self.attachments_dir(sid))
+        attachments = [p for p in (attachments or []) if os.path.realpath(p).startswith(d + os.sep) and os.path.isfile(p)]
         with s.lock:
             if s.busy:
-                s.meta["queue"].append(text)
+                s.meta["queue"].append({"text": text, "attachments": attachments} if attachments else text)
                 self.save(s)
                 return "queued"
             s.stop.clear()
-            s.thread = threading.Thread(target=self._loop, args=(s, text, kind), daemon=True)
+            s.thread = threading.Thread(target=self._loop, args=(s, text, kind, attachments), daemon=True)
             s.thread.start()
             return "started"
 
@@ -273,14 +299,21 @@ class Engine:
 
     # --- the loop ---------------------------------------------------------
 
-    def _loop(self, s, text, kind):
+    def _loop(self, s, text, kind, attachments=None):
         m, errors, continues = s.meta, 0, 0
         try:
             while True:
                 if not m["title"] and kind == "user":
-                    m["title"] = text.strip().splitlines()[0][:60]
-                self.publish(m["id"], {"t": "user", "text": text, "kind": kind}, persist=True)
+                    m["title"] = (text.strip().splitlines() or ["(attachment)"])[0][:60]
+                files = [{"name": os.path.basename(p), "path": p,
+                          "image": os.path.splitext(p)[1].lower() in (".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".heic")}
+                         for p in attachments or []]
+                self.publish(m["id"], {"t": "user", "text": text, "kind": kind, "attachments": files}, persist=True)
                 prompt = expand_mentions(text, m["cwd"])
+                if files:
+                    prompt += ("\n\nAttached files (open each with your file viewer; images are visible to you):\n"
+                               + "\n".join(f"- {f['path']}" for f in files))
+                attachments = None
                 if m.get("pending_note"):  # a rewind or compact happened since the last turn
                     prompt, m["pending_note"] = m["pending_note"] + "\n\n" + prompt, ""
                 ok, reply, denied = self._turn(s, prompt)
@@ -305,7 +338,8 @@ class Engine:
                     text, kind = note + "\n\nContinue the task.", "nudge"
                 with s.lock:  # decide under the lock, so a message sent right now is never stranded
                     if text is None and m["queue"] and not s.stop.is_set():
-                        text, kind = m["queue"].pop(0), "user"
+                        item, kind = m["queue"].pop(0), "user"
+                        text, attachments = (item["text"], item["attachments"]) if isinstance(item, dict) else (item, None)
                     if text is None or s.stop.is_set():
                         s.thread = None
                         self.status(s, "idle")
@@ -369,13 +403,14 @@ class Engine:
         resumed = bool(m.get("conversation_id"))
         args = ["-p", prompt, "--output-format", "stream-json", "--model", m["model"],
                 *MODES[m["mode"]],  # effort is part of the model id (gemini-3.8-flash-high/-medium/-low)
-                *(["--conversation", m["conversation_id"]] if resumed else [])]
+                *(["--conversation", m["conversation_id"]] if resumed else []),
+                *(["--add-dir", self.attachments_dir(sid)] if os.path.isdir(self.attachments_dir(sid)) else [])]
         a.sync(a.slot_home(slot))
         m["turns"] += 1
         turn, m["last_slot"] = m["turns"], slot
         self.status(s, "running")
         self.publish(sid, {"t": "turn_start", "turn": turn, "slot": slot, "model": m["model"]}, persist=True)
-        t0 = time.time()
+        t0 = s.turn_started = time.time()
         cmd, env = a.agy_cmd(a.slot_home(slot), args, {**os.environ, "AGYLOOP_SLOT": slot})
         proc = subprocess.Popen(cmd, cwd=m["cwd"], env=env, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                 text=True, bufsize=1)
@@ -486,6 +521,8 @@ class Engine:
                 b, after = before.get(step), _read(path)
                 if (b is None or b == after) and path in s.files:  # we read "before" too late
                     b = s.files[path]
+                elif b == after and name == "write_to_file" and _born_after(path, s.turn_started):
+                    b = ""  # created this turn, faster than our snapshot: all of it is new
                 ev["diff"] = _diff(path, b, after, s.meta["cwd"])
                 self._remember(s, path, after)
                 self._checkpoint(s, turn, path, b, after)
@@ -513,9 +550,7 @@ class Engine:
         except (OSError, ValueError):
             cp = {}
         cp.setdefault(path, {"before": before})["after"] = after
-        with open(p + ".tmp", "w") as f:
-            json.dump(cp, f)
-        os.replace(p + ".tmp", p)
+        a.write_atomic(p, json.dumps(cp))
 
     def rewind(self, sid, turn):
         """Put every file the agent changed in `turn` and later back as it was before `turn`."""

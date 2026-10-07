@@ -541,11 +541,17 @@ def walled_until(slot, bucket):
     return t if t > time.time() else 0
 
 
+def write_atomic(path, text):
+    """Replace a file in one step. The temp name is per process and thread, because the GUI's
+    session threads, its request threads and a CLI run can write the same file at once."""
+    tmp = f"{path}.{os.getpid()}.{threading.get_ident()}.tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        f.write(text)
+    os.replace(tmp, path)
+
+
 def set_wall(slot, bucket, until, why):
-    p = state("walls", f"{slot}.{bucket}")
-    with open(p + ".tmp", "w") as f:
-        f.write(f"{int(until)} {why}\n")
-    os.replace(p + ".tmp", p)
+    write_atomic(state("walls", f"{slot}.{bucket}"), f"{int(until)} {why}\n")
 
 
 def clear_wall(slot, bucket):
