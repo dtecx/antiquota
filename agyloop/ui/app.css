@@ -739,3 +739,23 @@ input:not([type=checkbox]), select, textarea { color: var(--ink); }
 .viewer-body .no { flex: none; width: 52px; padding-right: 14px; text-align: right; color: var(--ink-4); user-select: none; }
 a.path { color: inherit; text-decoration: underline dotted var(--ink-4); text-underline-offset: 3px; cursor: pointer; }
 a.path:hover { color: var(--baton); text-decoration-color: var(--baton); }
+
+/* ---------- background jobs and /loop ---------- */
+.jobbar { display: grid; gap: 6px; margin-bottom: 8px; }
+.jobbar .job {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto auto; gap: 10px; align-items: center;
+  padding: 7px 10px 7px 12px; border: 1px solid rgba(134, 184, 139, .22); border-radius: var(--r-lg);
+  background: linear-gradient(var(--ok-soft), var(--ok-soft)), var(--night-1);
+}
+.jobbar .job.loop { grid-template-columns: auto minmax(0, 1fr) auto auto; border-color: var(--rule-2); background: var(--night-1); }
+.jobbar code, .jobline code { font: 12px var(--mono); color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.jobbar .jm, .jobline .jm { font: 11px var(--mono); color: var(--ink-3); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.jobbar .g { color: var(--ink-3); font: 600 13px var(--mono); }
+.pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); animation: pulse 1.6s var(--ease) infinite; }
+@keyframes pulse { 50% { opacity: .35; } }
+.jobline {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 10px; align-items: center;
+  margin: 6px 0; padding: 4px 0; border-top: 1px dashed var(--rule-2);
+}
+.jobline .k { font: 600 11px var(--mono); color: var(--ok); }
+.jobline.bad .k { color: var(--bad); }

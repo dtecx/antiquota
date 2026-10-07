@@ -259,3 +259,49 @@ def test_shell_note_and_file_viewer(home, work):
             assert False, bad
         except ValueError:
             pass
+
+
+def test_background_job_from_reply_wakes_the_goal(home, work, monkeypatch):
+    monkeypatch.setenv("STUB_BG", "sleep 1; echo trained loss=0.01")
+    monkeypatch.setenv("STUB_DONE_AFTER", "2")
+    eng = Engine()
+    sid = eng.create(str(work), "gemini-3.8-flash-low", mode="accept-edits")["id"]
+    eng.set_goal(sid, "train", verifier=False)
+    deadline = time.time() + 20
+    while time.time() < deadline and eng.sessions[sid].meta["goal"]["state"] == "active":
+        time.sleep(0.1)
+    finish(eng, sid)
+    m = eng.sessions[sid].meta
+    assert m["goal"]["state"] == "met" and m["goal"]["round"] == 1  # waiting for the job costs no round
+    job = m["jobs"][0]
+    assert job["by"] == "agent" and job["code"] == 0 and job["cmd"] == "sleep 1; echo trained loss=0.01"
+    assert "RUN_IN_BACKGROUND" in calls(work)[0]["args"][1]  # a fresh conversation learns about jobs
+    users = [(e["kind"], e["text"]) for e in eng.events(sid) if e["t"] == "user"]
+    assert [k for k, _ in users] == ["goal", "job"] and "trained loss=0.01" in users[1][1]
+    assert any("Waiting for background job" in e["text"] for e in eng.events(sid) if e["t"] == "notice")
+    assert [e["phase"] for e in eng.events(sid) if e["t"] == "job"] == ["started", "ended"]
+
+
+def test_user_job_stop_and_loop(home, work):
+    eng = Engine()
+    sid = eng.create(str(work), "gemini-3.8-flash-low")["id"]
+    job = eng.job_start(sid, "sleep 30")
+    time.sleep(0.3)
+    eng.job_stop(sid, job["id"])
+    deadline = time.time() + 10
+    while not job["ended"] and time.time() < deadline:
+        time.sleep(0.1)
+    assert job["ended"] and job["stopped"] and not eng.sessions[sid].busy  # a stopped job wakes nobody
+    eng.set_loop(sid, 60, "check the run")
+    deadline = time.time() + 10
+    while not calls_exist(work) and time.time() < deadline:
+        time.sleep(0.1)
+    finish(eng, sid)
+    assert [e["kind"] for e in eng.events(sid) if e["t"] == "user"] == ["loop"]
+    assert eng.sessions[sid].meta["loop"]["next"] > time.time() + 50
+    eng.set_loop(sid, 0, "")
+    assert eng.sessions[sid].meta["loop"] is None
+
+
+def calls_exist(work):
+    return (work / ".stub_calls.jsonl").exists()

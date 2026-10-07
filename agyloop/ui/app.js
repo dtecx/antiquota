@@ -258,6 +258,7 @@ function renderHeader() {
   $('#goal-btn').classList.toggle('on', !!(m && m.goal && m.goal.state === 'active'));
   document.title = (busy ? '● ' : '') + (m ? (m.title || 'Untitled') + ' · ' : '') + 'agyloop';
   renderGoalbar();
+  renderJobbar();
   renderMeter();
   syncSend();
 }
@@ -299,6 +300,46 @@ function renderGoalbar() {
       h('button', { class: 'btn small', title: 'Remove goal', onclick: () => api('DELETE', `sessions/${m.id}/goal`).catch(fail) }, '✕')));
 }
 
+/* Background jobs (training runs and the like) and the /loop schedule, above the composer. */
+function renderJobbar() {
+  const m = cur(), bar = $('#jobbar');
+  const running = (m?.jobs || []).filter(j => !j.ended), lp = m?.loop;
+  bar.hidden = !running.length && !lp;
+  if (bar.hidden) return;
+  bar.replaceChildren(
+    ...running.map(j => h('div', { class: 'job' },
+      h('span', { class: 'pulse', 'aria-hidden': 'true' }),
+      h('code', { title: j.cmd }, j.cmd),
+      h('span', { class: 'jm', 'data-since': j.started }, elapsed(j.started) + (j.every ? ` · check-in every ${Math.round(j.every / 60)}m` : '') + (j.by === 'agent' ? ' · started by agy' : '')),
+      h('button', { class: 'btn small', onclick: () => showLog(m.id, j.id) }, 'Log'),
+      h('button', { class: 'btn small', onclick: () => api('POST', `sessions/${m.id}/jobs/${j.id}/stop`).then(() => toast('Stopped')).catch(fail) }, 'Stop'))),
+    lp && h('div', { class: 'job loop' },
+      h('span', { class: 'g' }, '↻'),
+      h('code', { title: lp.prompt }, lp.prompt),
+      h('span', { class: 'jm' }, `every ${fmtEvery(lp.every)} · next ${clock(lp.next)}`),
+      h('button', { class: 'btn small', onclick: () => api('DELETE', `sessions/${m.id}/loop`).then(() => toast('Loop stopped')).catch(fail) }, 'Stop loop')));
+}
+const elapsed = t => { const s = Math.max(0, Date.now() / 1000 - t) | 0; return s < 3600 ? `${s / 60 | 0}m${String(s % 60).padStart(2, '0')}s` : `${s / 3600 | 0}h${String((s / 60 | 0) % 60).padStart(2, '0')}m`; };
+const fmtEvery = s => s % 3600 === 0 ? s / 3600 + 'h' : s % 60 === 0 ? s / 60 + 'm' : s + 's';
+setInterval(() => $$('#jobbar .jm[data-since]').forEach(n => { n.firstChild.textContent = n.textContent.replace(/^\S+/, elapsed(+n.dataset.since)); }), 1000);
+async function showLog(sid, jid) {
+  try {
+    const j = await api('GET', `sessions/${sid}/jobs/${jid}/log`);
+    showFile({ rel: `job · ${j.cmd}`, path: j.log, text: j.text || '(no output yet)' });
+    const b = $('#viewer-body');
+    b.scrollTop = b.scrollHeight;
+  } catch (e) { fail(e); }
+}
+function jobNode(ev) {
+  const j = ev.job, end = ev.phase === 'ended';
+  const status = !end ? 'started' : j.stopped ? 'stopped' : j.code === 0 ? 'exit 0' : j.code == null ? 'finished' : `exit ${j.code}`;
+  return h('div', { class: 'jobline' + (end && j.code !== 0 && j.code != null ? ' bad' : '') },
+    h('span', { class: 'k' }, end ? '■ job' : '▶ job'),
+    h('code', { title: j.cmd }, j.cmd),
+    h('span', { class: 'jm' }, status + (end ? ' · ' + secs(j.ended - j.started) : j.by === 'agent' ? ' · by agy' : '')),
+    h('button', { class: 'btn small', onclick: () => showLog(S.cur, j.id) }, 'Log'));
+}
+
 /* ---------- transcript ---------- */
 function nearBottom() {
   const s = $('#scroll');
@@ -337,7 +378,7 @@ function renderBlank() {
   renderHeader();
 }
 
-const WHO = { user: 'you', goal: 'goal', nudge: 'goal push' };
+const WHO = { user: 'you', goal: 'goal', nudge: 'goal push', job: 'job', loop: 'loop' };
 function userNode(ev) {
   // A goal prompt carries standing instructions; the objective is what matters to read.
   const text = ev.kind === 'goal' ? ev.text.split('\n\n')[0].replace(/^Objective:\s*/, '') : ev.text;
@@ -607,6 +648,10 @@ function renderEvent(ev, live) {
     case 'shell':
       tr.append(shellNode(ev));
       break;
+    case 'job':
+      tr.append(jobNode(ev));
+      if (live && ev.phase === 'ended') notify(`Job finished: ${ev.job.cmd}`, cur()?.title || '');
+      break;
     case 'notice':
       if (live && ev.kind === 'goal' && (ev.data || {}).met) notify('Goal met', cur()?.title || '');
       if (live && ev.kind === 'wall') notify('Out of quota', ev.text);
@@ -805,6 +850,8 @@ const SLASH = [
   ['/rewind', 'put files back as they were before a turn: /rewind <turn>'],
   ['/export', 'download this transcript as markdown'],
   ['/init', 'have agy write a GEMINI.md that explains this project'],
+  ['/bg', 'run a command in the background; agy gets its log when it exits: /bg <command>'],
+  ['/loop', 'send a prompt now and every interval while idle: /loop 15m <prompt> · /loop off'],
   ['/memory', 'show this project\'s GEMINI.md (add lines with # note)'],
   ['/stop', 'stop the running turn, pause the goal'],
   ['/resume', 'resume a paused goal'],
@@ -986,6 +1033,18 @@ async function slash(text) {
         return api('POST', `sessions/${m.id}/send`, { text: 'Study this project and write a concise GEMINI.md at its root for '
           + 'future agents: what it is, how it is laid out, how to build, run and test it, and the conventions to follow. '
           + 'If GEMINI.md or AGENTS.md already exists, improve it instead of starting over. Keep it under 80 lines.' + (arg ? '\n\n' + arg : '') });
+      case '/bg':
+        need();
+        if (!arg) return toast('/bg <command>');
+        await api('POST', `sessions/${m.id}/jobs`, { cmd: arg });
+        return toast('Running in the background');
+      case '/loop': {
+        need();
+        if (!arg || /^(off|stop)$/i.test(arg)) { await api('DELETE', `sessions/${m.id}/loop`); return toast('Loop stopped'); }
+        const [every, ...p] = arg.split(/\s+/);
+        await api('POST', `sessions/${m.id}/loop`, { every, prompt: p.join(' ') });
+        return toast(`Every ${every}: ${p.join(' ').slice(0, 60)}`);
+      }
       case '/memory': {
         need();
         const f = await api('GET', `sessions/${m.id}/file?path=GEMINI.md`).catch(() => api('GET', `sessions/${m.id}/file?path=AGENTS.md`)).catch(() => null);

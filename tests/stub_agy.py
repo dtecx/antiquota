@@ -9,7 +9,7 @@ With -p <prompt> --output-format stream-json it plays one agent turn in the
 current folder: edits notes.txt, streams a reply, and logs its argv to
 .stub_calls.jsonl. The reply ends with GOAL_COMPLETE from turn STUB_DONE_AFTER
 (default 1). STUB_FLAG_AT=<n> creates the file "flag" on turn n. STUB_SLEEP
-pauses mid-turn. STUB_STALE_ERROR=1 ends with agy's stale conversation error. STUB_INELIGIBLE=<email>
+pauses mid-turn. STUB_BG=<cmd> asks for a background job on turn 1. STUB_STALE_ERROR=1 ends with agy's stale conversation error. STUB_INELIGIBLE=<email>
 makes Google's eligibility check fail for that account. Asked for a VERDICT it is the verifier: STUB_VERDICT=done|no.
 """
 import json
@@ -112,6 +112,8 @@ if args[:1] == ["-p"] and "--output-format" in args and not args[1].startswith("
         time.sleep(float(os.environ["STUB_SLEEP"]))
     emit(event="step_update", step_update={**step, "state": "DONE", "duration_seconds": 0.01})
     reply = f"turn {n} on {name}"
+    if os.environ.get("STUB_BG") and n == 1:  # hands a long command to agy-loop
+        reply += f"\nRUN_IN_BACKGROUND: `{os.environ['STUB_BG']}`"
     if n >= int(os.environ.get("STUB_DONE_AFTER", "1")):
         reply += "\nGOAL_COMPLETE"
     for part in (reply[:5], reply[5:]):

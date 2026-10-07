@@ -15,6 +15,7 @@ import os
 import queue
 import re
 import shutil
+import signal
 import subprocess
 import threading
 import time
@@ -35,7 +36,7 @@ VERDICT_RE = re.compile(r"^\W*VERDICT:\s*(DONE|NOT[_ ]DONE)\W*$", re.I | re.M)
 META_KEYS = {"id": "", "title": "", "cwd": "", "model": "", "effort": "", "mode": "default", "created": 0,
              "updated": 0, "status": "idle", "status_until": None, "conversation_id": None, "turns": 0,
              "queue": [], "goal": None, "last_slot": None, "usage": {"input": 0, "output": 0, "thinking": 0},
-             "context": 0, "pending_note": ""}
+             "context": 0, "pending_note": "", "jobs": [], "loop": None}
 DENIED_NOTE = ("These commands were denied: headless agy cannot ask for permission, so the turn ended. "
                "Do not retry them or reword them; carry on without them: {cmds}")
 AUTO_CONTINUES = 2  # follow-ups after denials per user message, so a stuck agent cannot loop forever
@@ -72,6 +73,51 @@ SHELL_TIMEOUT = 600      # seconds a `!command` may run
 SHELL_KEEP = 50_000      # characters of its output kept in the transcript
 SHELL_NOTE = 6_000       # characters of it passed on to agy
 FILE_VIEW_MAX = 2_000_000
+# Long commands run as agy-loop background jobs, so a turn never sits waiting on training.
+JOBS_HINT = ("(agy-loop) For a command that runs longer than about two minutes (training, long benchmarks, "
+             "big test suites), do not run it and wait. End your reply with a line\n"
+             "RUN_IN_BACKGROUND: <shell command>\n"
+             "and optionally CHECK_EVERY: <minutes>m on the next line for progress check-ins. agy-loop runs it "
+             "in this folder, logs its output and sends you the log when it exits.")
+BG_LINE = re.compile(r"^[ \t>*_]*RUN_IN_BACKGROUND:[*_]*[ \t]*`*(.+?)`*[ \t]*$", re.M)
+EVERY_LINE = re.compile(r"^[ \t>*_]*CHECK_EVERY:[*_]*[ \t]*(\d+(?:\.\d+)?)[ \t]*([smh]?)", re.M | re.I)
+JOB_TAIL = 4_000         # characters of a job's log passed to agy
+LOOP_MIN = 60            # seconds between /loop prompts, at least
+
+
+def parse_interval(text, unit="m"):
+    """'90s', '10m', '1.5h', '15' (in `unit`) as seconds; 0 if it does not parse."""
+    m = re.fullmatch(r"\s*(\d+(?:\.\d+)?)\s*([smh]?)\s*", str(text or ""), re.I)
+    if not m:
+        return 0
+    return int(float(m.group(1)) * {"s": 1, "m": 60, "h": 3600}[(m.group(2) or unit).lower()])
+
+
+def pid_alive(pid):
+    if os.name == "nt":
+        out = subprocess.run(["tasklist", "/FI", f"PID eq {pid}", "/NH"], capture_output=True, text=True).stdout
+        return str(pid) in out
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def took(secs):
+    secs = int(secs)
+    return f"{secs // 3600}h{secs // 60 % 60:02d}m" if secs >= 3600 else f"{secs // 60}m{secs % 60:02d}s"
+
+
+def tail(path, n=JOB_TAIL):
+    try:
+        with open(path, "rb") as f:
+            f.seek(max(0, os.path.getsize(path) - n * 2))
+            return ANSI.sub("", f.read().decode("utf-8", "replace"))[-n:]
+    except OSError:
+        return ""
 ANSI = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]")
 MENTION = re.compile(r"(?<![\w`])@([\w./~-]+[\w/])")
 
@@ -153,6 +199,11 @@ class Engine:
             meta = {**META_KEYS, **meta, "status": "idle"}  # nothing runs after a restart
             meta["usage"] = {"input": 0, "output": 0, "thinking": 0, **meta["usage"]}
             self.sessions[sid] = Session(meta)
+        for s in self.sessions.values():  # background jobs outlive agy-loop: keep watching them
+            for job in s.meta["jobs"]:
+                if not job["ended"]:
+                    threading.Thread(target=self._watch_job, args=(s, job), daemon=True).start()
+        threading.Thread(target=self._scheduler, daemon=True).start()
 
     # --- pub/sub and storage ----------------------------------------------
 
@@ -258,7 +309,8 @@ class Engine:
         attachments = [p for p in (attachments or []) if os.path.realpath(p).startswith(d + os.sep) and os.path.isfile(p)]
         with s.lock:
             if s.busy:
-                s.meta["queue"].append({"text": text, "attachments": attachments} if attachments else text)
+                s.meta["queue"].append({"text": text, "attachments": attachments, "kind": kind}
+                                       if attachments or kind != "user" else text)
                 self.save(s)
                 return "queued"
             s.stop.clear()
@@ -322,14 +374,23 @@ class Engine:
                 attachments = None
                 if m.get("pending_note"):  # a rewind or compact happened since the last turn
                     prompt, m["pending_note"] = m["pending_note"] + "\n\n" + prompt, ""
+                if not m.get("conversation_id"):  # the request itself stays last
+                    prompt = JOBS_HINT + "\n\n" + prompt
                 ok, reply, denied = self._turn(s, prompt)
+                if ok:
+                    self._jobs_from_reply(s, reply)
+                waiting = [j for j in m["jobs"] if not j["ended"] and j["notify"]]
                 text = None
                 note = DENIED_NOTE.format(cmds=", ".join(f"`{c}`" for c in denied)) if denied else ""
                 if kind == "user":
                     continues = 0
                 g = m.get("goal")
                 if g and g["state"] == "active" and not s.stop.is_set():
-                    if ok:
+                    if ok and waiting and DONE_MARK not in reply:
+                        self.notice(s, "goal", f"Waiting for background job `{waiting[0]['cmd']}`"
+                                               + (f" and {len(waiting) - 1} more" if len(waiting) > 1 else "")
+                                               + "; the goal continues when it finishes.")
+                    elif ok:
                         errors = 0
                         text, kind = self._goal_next(s, reply), "nudge"
                         if text and note:
@@ -344,8 +405,11 @@ class Engine:
                     text, kind = note + "\n\nContinue the task.", "nudge"
                 with s.lock:  # decide under the lock, so a message sent right now is never stranded
                     if text is None and m["queue"] and not s.stop.is_set():
-                        item, kind = m["queue"].pop(0), "user"
-                        text, attachments = (item["text"], item["attachments"]) if isinstance(item, dict) else (item, None)
+                        item = m["queue"].pop(0)
+                        if isinstance(item, dict):
+                            text, attachments, kind = item["text"], item.get("attachments"), item.get("kind", "user")
+                        else:
+                            text, attachments, kind = item, None, "user"
                     if text is None or s.stop.is_set():
                         s.thread = None
                         self.status(s, "idle")
@@ -410,7 +474,7 @@ class Engine:
         args = ["-p", prompt, "--output-format", "stream-json", "--model", m["model"],
                 *MODES[m["mode"]],  # effort is part of the model id (gemini-3.8-flash-high/-medium/-low)
                 *(["--conversation", m["conversation_id"]] if resumed else []),
-                *(["--add-dir", self.attachments_dir(sid)] if os.path.isdir(self.attachments_dir(sid)) else [])]
+                *[x for d in (self.attachments_dir(sid), self.jobs_dir(sid)) if os.path.isdir(d) for x in ("--add-dir", d)]]
         a.sync(a.slot_home(slot))
         m["turns"] += 1
         turn, m["last_slot"] = m["turns"], slot
@@ -615,6 +679,111 @@ class Engine:
         s.meta.update(conversation_id=None, context=0, pending_note=self._handoff(s, "(the next message follows)"))
         self.save(s)
         self.notice(s, "info", "Compacted: the next message starts a fresh conversation from a summary of this one.")
+
+    # --- background jobs and /loop ----------------------------------------
+
+    def jobs_dir(self, sid):
+        return os.path.join(self.sessions[sid].dir, "jobs")
+
+    def job_start(self, sid, cmd, every=0, notify=True, by="user"):
+        """Run `cmd` detached in the session folder, logging to a file. When it exits (and every
+        `every` seconds while it runs) agy gets the end of the log as the next message."""
+        s = self.sessions[sid]
+        jid = uuid.uuid4().hex[:8]
+        os.makedirs(self.jobs_dir(sid), exist_ok=True)
+        log = os.path.join(self.jobs_dir(sid), f"{jid}.log")
+        # Its own process group, so stopping agy-loop leaves training running and Stop kills it all.
+        detach = {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == "nt" else {"start_new_session": True}
+        with open(log, "wb") as out:
+            proc = subprocess.Popen(cmd, shell=True, cwd=s.meta["cwd"], stdin=subprocess.DEVNULL, stdout=out,
+                                    stderr=subprocess.STDOUT, env={**os.environ, "NO_COLOR": "1", "PYTHONUNBUFFERED": "1"},
+                                    **detach)
+        job = {"id": jid, "cmd": cmd, "pid": proc.pid, "log": log, "started": time.time(), "ended": None,
+               "code": None, "every": int(every or 0), "notify": bool(notify), "by": by, "stopped": False}
+        with s.lock:
+            s.meta["jobs"] = (s.meta["jobs"] + [job])[-20:]
+            self.save(s)
+        self.publish(sid, {"t": "job", "phase": "started", "job": dict(job)}, persist=True)
+        threading.Thread(target=self._watch_job, args=(s, job, proc), daemon=True).start()
+        return job
+
+    def _jobs_from_reply(self, s, reply):
+        every = EVERY_LINE.search(reply or "")
+        secs = parse_interval(every.group(1) + (every.group(2) or "m")) if every else 0
+        for cmd in BG_LINE.findall(reply or ""):
+            if cmd.strip() and not any(j["cmd"] == cmd.strip() and not j["ended"] for j in s.meta["jobs"]):
+                self.job_start(s.meta["id"], cmd.strip(), every=secs, by="agent")
+
+    def _watch_job(self, s, job, proc=None):
+        sid, last = s.meta["id"], time.time()
+        while True:
+            if proc is not None:
+                try:
+                    code = proc.wait(timeout=5)
+                    break
+                except subprocess.TimeoutExpired:
+                    pass
+            else:  # adopted after a restart: not our child, so poll the pid
+                if not pid_alive(job["pid"]):
+                    code = None
+                    break
+                time.sleep(5)
+            if job["every"] and time.time() - last >= job["every"]:
+                last = time.time()
+                if job["notify"] and not s.busy and not s.stop.is_set():
+                    self.send(sid, f"Background job `{job['cmd']}` is still running ({took(last - job['started'])}, "
+                                   f"pid {job['pid']}). End of its log:\n```\n{tail(job['log'])}\n```\nIf it is going "
+                                   f"wrong, stop it (`kill {job['pid']}`) and fix the cause; otherwise reply in one line "
+                                   "and do not wait for it.", kind="job")
+        with s.lock:
+            job.update(ended=time.time(), code=code)
+            self.save(s)
+        self.publish(sid, {"t": "job", "phase": "ended", "job": dict(job)}, persist=True)
+        if job["notify"] and not job["stopped"] and not s.stop.is_set():
+            status = f"exit {code}" if code is not None else "finished"
+            self.send(sid, f"Background job `{job['cmd']}` {status} after {took(job['ended'] - job['started'])}. "
+                           f"End of its log ({job['log']}):\n```\n{tail(job['log'])}\n```\n"
+                           "Analyze the result and continue.", kind="job")
+
+    def job_stop(self, sid, jid):
+        s = self.sessions[sid]
+        job = next(j for j in s.meta["jobs"] if j["id"] == jid)
+        if job["ended"]:
+            return job
+        job["stopped"] = True
+        try:
+            if os.name == "nt":
+                subprocess.run(["taskkill", "/T", "/F", "/PID", str(job["pid"])], capture_output=True)
+            else:
+                os.killpg(job["pid"], signal.SIGTERM)
+        except OSError:
+            pass
+        self.save(s)
+        return job
+
+    def job_log(self, sid, jid):
+        job = next(j for j in self.sessions[sid].meta["jobs"] if j["id"] == jid)
+        return {**job, "text": tail(job["log"], 200_000)}
+
+    def set_loop(self, sid, every, prompt):
+        """Send `prompt` now and then every `every` seconds while the session is idle (Stop pauses it)."""
+        s = self.sessions[sid]
+        if every and not str(prompt).strip():
+            raise ValueError("what should the loop send? /loop 10m <prompt>")
+        s.meta["loop"] = {"every": max(LOOP_MIN, int(every)), "prompt": prompt.strip(), "next": time.time()} if every else None
+        self.save(s)
+        if every:
+            s.stop.clear()
+
+    def _scheduler(self):
+        while True:
+            time.sleep(5)
+            for sid, s in list(self.sessions.items()):
+                lp = s.meta.get("loop")
+                if lp and time.time() >= lp["next"] and not s.busy and not s.stop.is_set():
+                    s.meta["loop"] = {**lp, "next": time.time() + lp["every"]}
+                    self.save(s)
+                    self.send(sid, lp["prompt"], kind="loop")
 
     def shell(self, sid, cmd, timeout=SHELL_TIMEOUT):
         """The user's own `!command`, run in the project folder. agy sees it with the next message."""

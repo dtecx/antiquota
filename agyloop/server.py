@@ -17,6 +17,7 @@ from urllib.parse import parse_qs, urlparse
 from . import accounts as a
 from . import stack
 from .engine import MODES, Engine
+from .engine import parse_interval as e_interval
 
 UI = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ui")
 STATIC = {"/": "index.html", "/app.js": "app.js", "/app.css": "app.css"}
@@ -323,6 +324,23 @@ class Handler(BaseHTTPRequestHandler):
                 return {"files": e.rewind(sid, int(b.get("turn", 0)))}
             case ("POST", ["sessions", sid, "clear"]):
                 e.clear(sid)
+                return {"ok": True}
+            case ("POST", ["sessions", sid, "jobs"]):
+                if not str(b.get("cmd", "")).strip():
+                    raise ValueError("empty command")
+                return e.job_start(sid, b["cmd"].strip(), every=e_interval(b.get("every")), notify=b.get("notify", True))
+            case ("POST", ["sessions", sid, "jobs", jid, "stop"]):
+                return e.job_stop(sid, jid)
+            case ("GET", ["sessions", sid, "jobs", jid, "log"]):
+                return e.job_log(sid, jid)
+            case ("POST", ["sessions", sid, "loop"]):
+                every = e_interval(b.get("every"))
+                if not every:
+                    raise ValueError("interval like 15m, 1h or 90s")
+                e.set_loop(sid, every, str(b.get("prompt", "")))
+                return {"ok": True}
+            case ("DELETE", ["sessions", sid, "loop"]):
+                e.set_loop(sid, 0, "")
                 return {"ok": True}
             case ("POST", ["sessions", sid, "shell"]):
                 if not str(b.get("cmd", "")).strip():
