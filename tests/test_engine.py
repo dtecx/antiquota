@@ -236,3 +236,26 @@ def test_verifier_falls_back_to_session_model_without_its_quota(home, work, monk
     verifier = [c for c in calls(work) if "VERDICT:" in c["args"][1]]
     assert len(verifier) == 1 and "gemini-3.8-flash-low" in verifier[0]["args"]
     assert any("verifies instead" in e["text"] for e in eng.events(sid) if e["t"] == "notice")
+
+
+def test_shell_note_and_file_viewer(home, work):
+    eng = Engine()
+    sid = eng.create(str(work), "gemini-3.8-flash-low")["id"]
+    ev = eng.shell(sid, "echo hi; echo oops >&2; exit 3")
+    assert ev["code"] == 3 and ev["output"] == "hi\noops\n"
+    assert "`echo hi; echo oops >&2; exit 3`" in eng.sessions[sid].meta["pending_note"]
+    assert eng.shell(sid, "sleep 5", timeout=0.3)["code"] is None
+    assert [e["t"] for e in eng.events(sid)] == ["shell", "shell"]
+    eng.send(sid, "go")
+    finish(eng, sid)
+    assert "exit 3" in calls(work)[-1]["args"][1] and not eng.sessions[sid].meta["pending_note"]
+    assert eng.note(sid, "run tests with pytest -q")["file"] == "GEMINI.md"
+    eng.note(sid, "use tabs")
+    assert (work / "GEMINI.md").read_text() == "- run tests with pytest -q\n- use tabs\n"
+    assert eng.read_file(sid, "GEMINI.md")["rel"] == "GEMINI.md"
+    for bad in ("../outside.txt", "/etc/hosts"):
+        try:
+            eng.read_file(sid, bad)
+            assert False, bad
+        except ValueError:
+            pass

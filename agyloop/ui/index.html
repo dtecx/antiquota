@@ -73,6 +73,7 @@
         <div class="tools">
           <button type="button" class="attach-btn" id="attach-btn" title="Add images or files (or drop them, or paste a screenshot)" aria-label="Add images or files">+</button>
           <input type="file" id="attach-input" multiple hidden>
+          <span class="mode-hint" id="mode-hint" hidden></span>
           <label class="pick"><span>model</span><select id="model"></select></label>
           <label class="pick" title="Gemini models come in effort variants; Claude and GPT-OSS models have a fixed one"><span>effort</span>
             <select id="effort"></select>
@@ -149,6 +150,13 @@
       <button value="ok" class="primary">Start goal</button>
     </div>
   </form>
+</dialog>
+
+<dialog id="viewer" class="dlg viewer" aria-label="File">
+  <header><code id="viewer-path"></code><span class="fill"></span>
+    <button type="button" class="btn small" id="viewer-copy">Copy</button>
+    <button type="button" class="btn small" id="viewer-close" aria-label="Close">Close</button></header>
+  <div class="viewer-body" id="viewer-body"></div>
 </dialog>
 
 <dialog id="acct-dlg" class="dlg">

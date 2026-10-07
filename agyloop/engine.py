@@ -64,9 +64,15 @@ def parse_verdict(text):
     body = text[:m.start()].strip()
     done = m.group(1).upper() == "DONE"
     missing = [] if done else [ln.strip()[2:] for ln in body.splitlines() if ln.strip().startswith(("- ", "* "))]
-    return {"done": done, "reason": body[-1500:], "missing": missing[:20]}
+    reason = body[-1500:] or ("Nothing missing." if done else "No reasons given.")
+    return {"done": done, "reason": reason, "missing": missing[:20]}
 
 
+SHELL_TIMEOUT = 600      # seconds a `!command` may run
+SHELL_KEEP = 50_000      # characters of its output kept in the transcript
+SHELL_NOTE = 6_000       # characters of it passed on to agy
+FILE_VIEW_MAX = 2_000_000
+ANSI = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]")
 MENTION = re.compile(r"(?<![\w`])@([\w./~-]+[\w/])")
 
 
@@ -510,7 +516,7 @@ class Engine:
                 self.publish(sid, {**ev, "state": "running"})
                 return
             ev.update(state="error" if state == "ERROR" else "done", secs=su.get("duration_seconds"),
-                      output=str(info.get("output") or "")[:OUT_CAP])
+                      output=ANSI.sub("", str(info.get("output") or ""))[:OUT_CAP])
             if name == "view_file" and params.get("AbsolutePath"):
                 self._remember(s, params["AbsolutePath"], _read(params["AbsolutePath"]))
             if info.get("error"):
@@ -610,6 +616,54 @@ class Engine:
         self.save(s)
         self.notice(s, "info", "Compacted: the next message starts a fresh conversation from a summary of this one.")
 
+    def shell(self, sid, cmd, timeout=SHELL_TIMEOUT):
+        """The user's own `!command`, run in the project folder. agy sees it with the next message."""
+        s = self.sessions[sid]
+        t0 = time.time()
+        try:
+            p = subprocess.run(cmd, shell=True, cwd=s.meta["cwd"], stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                               stderr=subprocess.STDOUT, timeout=timeout, env={**os.environ, "NO_COLOR": "1"})
+            out, code = p.stdout, p.returncode
+        except subprocess.TimeoutExpired as e:
+            out, code = (e.stdout or b"") + f"\n(stopped after {timeout}s)".encode(), None
+        out = ANSI.sub("", out.decode("utf-8", "replace"))[-SHELL_KEEP:]
+        ev = {"t": "shell", "cmd": cmd, "output": out, "code": code, "secs": round(time.time() - t0, 1)}
+        self.publish(sid, ev, persist=True)
+        tail = out[-SHELL_NOTE:]
+        note = (f"The user ran `{cmd}` in the project folder (exit {code if code is not None else 'timeout'}). "
+                f"Output{' (last part)' if len(out) > len(tail) else ''}:\n```\n{tail}\n```")
+        with s.lock:
+            s.meta["pending_note"] = "\n\n".join(x for x in (s.meta["pending_note"], note) if x)
+            self.save(s)
+        return ev
+
+    def note(self, sid, text):
+        """A `#` note: appended to the project's GEMINI.md (or AGENTS.md if that is the one in use),
+        which agy loads at the start of every conversation in this folder."""
+        cwd = self.sessions[sid].meta["cwd"]
+        path = next((os.path.join(cwd, n) for n in ("GEMINI.md", "AGENTS.md") if os.path.isfile(os.path.join(cwd, n))),
+                    os.path.join(cwd, "GEMINI.md"))
+        with open(path, "a+", encoding="utf-8") as f:
+            f.seek(0)
+            body = f.read()
+            f.write(("" if not body or body.endswith("\n") else "\n") + f"- {text.strip()}\n")
+        return {"path": path, "file": os.path.basename(path)}
+
+    def read_file(self, sid, path):
+        """A text file inside the session's folder or its attachments, for the GUI's file viewer."""
+        s = self.sessions[sid]
+        p = os.path.realpath(os.path.join(s.meta["cwd"], os.path.expanduser(path)))
+        roots = [os.path.realpath(s.meta["cwd"]), os.path.realpath(self.attachments_dir(sid))]
+        if not any(p == r or p.startswith(r + os.sep) for r in roots):
+            raise ValueError("only files inside the session folder can be opened here")
+        if os.path.getsize(p) > FILE_VIEW_MAX:
+            raise ValueError(f"{os.path.basename(p)} is over {FILE_VIEW_MAX // 1_000_000} MB")
+        with open(p, "rb") as f:
+            data = f.read()
+        if b"\0" in data[:8000]:
+            raise ValueError(f"{os.path.basename(p)} is not a text file")
+        return {"path": p, "rel": os.path.relpath(p, s.meta["cwd"]), "text": data.decode("utf-8", "replace")}
+
     @staticmethod
     def _remember(s, path, content):
         if content is None:
@@ -694,8 +748,9 @@ class Engine:
         prompt = ("You are a strict, independent verifier. Another agent claims this objective is complete:\n\n"
                   f"{g['objective']}\n\nThe work is in the current directory. Inspect it yourself with file "
                   "viewing and listing tools only: shell commands and edits are blocked here and would end your "
-                  "turn. Do not modify anything, do not plan fixes, and do not ask questions: only judge. List "
-                  "anything missing or broken as '- ' bullets, then end with exactly one final line: "
+                  "turn. Do not modify anything, do not plan fixes, and do not ask questions: only judge. Say in one "
+                  "or two sentences what you checked, list anything missing or broken as '- ' bullets, then "
+                  "end with exactly one final line: "
                   "VERDICT: DONE if the objective is fully achieved, or VERDICT: NOT_DONE otherwise.")
         try:
             a.sync(a.slot_home(slot))

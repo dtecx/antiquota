@@ -716,3 +716,26 @@ input:not([type=checkbox]), select, textarea { color: var(--ink); }
   padding: 22px 32px; border: 2px dashed var(--baton); border-radius: var(--r-lg);
   color: var(--baton); font: 500 15px var(--sans); background: var(--night-1);
 }
+
+/* ---------- shell and note modes ---------- */
+.composer.shell { border-color: rgba(134, 184, 139, .55); }
+.composer.note { border-color: rgba(232, 163, 61, .5); }
+.composer.shell textarea { font-family: var(--mono); font-size: 13px; }
+.mode-hint { font: 11px var(--mono); color: var(--ink-3); margin-left: 4px; }
+.composer.shell .mode-hint { color: var(--ok); }
+.composer.note .mode-hint { color: var(--baton); }
+.tool.mine .verb { color: var(--ok); }
+
+/* ---------- file viewer ---------- */
+.viewer { width: min(980px, calc(100vw - 32px)); height: min(80vh, 900px); }
+.viewer[open] { display: flex; flex-direction: column; }
+.viewer header { display: flex; align-items: center; gap: 8px; padding: 10px 12px 10px 16px; border-bottom: 1px solid var(--rule); }
+.viewer header .fill { flex: 1; }
+.viewer header code { font: 12px var(--mono); color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.viewer-body { flex: 1; overflow: auto; background: var(--well); }
+.viewer-body pre { margin: 0; padding: 8px 0; font: 12px/1.6 var(--mono); color: var(--ink-2); }
+.viewer-body .ln { display: flex; padding-right: 16px; white-space: pre; }
+.viewer-body .ln.hit { background: var(--baton-soft); }
+.viewer-body .no { flex: none; width: 52px; padding-right: 14px; text-align: right; color: var(--ink-4); user-select: none; }
+a.path { color: inherit; text-decoration: underline dotted var(--ink-4); text-underline-offset: 3px; cursor: pointer; }
+a.path:hover { color: var(--baton); text-decoration-color: var(--baton); }

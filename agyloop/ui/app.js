@@ -84,7 +84,7 @@ function inline(s) {
     .replace(/(^|[^*\w])\*([^*\n]+)\*(?!\w)/g, '$1<em>$2</em>')
     .replace(/\[([^\]\n]+)\]\(([^)\s]+)\)/g, (m, text, url) => {
       if (/^https?:\/\//i.test(url)) return `<a href="${url}" target="_blank" rel="noopener noreferrer">${text}</a>`;
-      if (/^file:\/\//i.test(url)) return `<span class="path" title="${url.replace(/^file:\/\//i, '')}">${text}</span>`;
+      if (/^file:\/\//i.test(url)) return `<a class="path" href="#" data-file="${url.replace(/^file:\/\//i, '')}" title="Open ${url.replace(/^file:\/\//i, '')}">${text}</a>`;
       return text;
     })
     .replace(/\n/g, '<br>');
@@ -269,6 +269,14 @@ function syncSend() {
   b.textContent = busy ? (text ? 'Queue' : 'Stop') : 'Send';
   b.title = busy ? (text ? 'Queue after this turn (Enter)' : 'Stop (Esc)') : 'Send (Enter)';
   b.disabled = !busy && !text;
+  const raw = $('#input').value, mode = raw.startsWith('!') ? 'shell' : raw.startsWith('#') ? 'note' : '';
+  $('#composer').classList.toggle('shell', mode === 'shell');
+  $('#composer').classList.toggle('note', mode === 'note');
+  const hint = $('#mode-hint');
+  hint.hidden = !mode;
+  hint.textContent = mode === 'shell' ? (S.shells ? 'running…' : 'shell · output goes to agy with your next message')
+    : mode === 'note' ? 'note · appended to this project\'s GEMINI.md' : '';
+  if (mode) { b.textContent = mode === 'shell' ? 'Run' : 'Save'; b.classList.remove('stop'); b.disabled = raw.trim().length < 2; }
 }
 function renderGoalbar() {
   const m = cur(), bar = $('#goalbar');
@@ -396,6 +404,7 @@ function fullBody(ev) {
   return body;
 }
 function toolNode(ev) {
+  if (ev.output) ev = { ...ev, output: ev.output.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '') };  // terminal colors
   const [verb, arg, ico] = toolInfo(ev);
   const stats = ev.diff ? diffStats(ev.diff) : null;
   const peek = peekOf(ev);
@@ -595,6 +604,9 @@ function renderEvent(ev, live) {
       for (const [k, st] of S.live) { st.node.classList.remove('live'); S.live.delete(k); }
       tr.append(turnEnd(ev));
       break;
+    case 'shell':
+      tr.append(shellNode(ev));
+      break;
     case 'notice':
       if (live && ev.kind === 'goal' && (ev.data || {}).met) notify('Goal met', cur()?.title || '');
       if (live && ev.kind === 'wall') notify('Out of quota', ev.text);
@@ -739,6 +751,7 @@ async function submit() {
   if (!text && !ready.length) { if (m && m.status !== 'idle') stop(); return; }
   if (text.startsWith('/')) { t.value = ''; autosize(); closeSlash(); return slash(text); }
   if (!m) return openNew(text);
+  if (/^[!#]/.test(text) && text.length > 1) return local(m, t, text);
   HIST.list.push(text);
   HIST.pos = -1;
   if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().catch(() => {});
@@ -752,6 +765,33 @@ async function submit() {
     if (r.result === 'queued') toast('Queued after the current turn');
   } catch (e) { t.value = text; fail(e); }
 }
+/* `!cmd` runs in the project folder and agy sees the output with the next message; `# note`
+   goes into the project's GEMINI.md. Both are Claude Code habits. */
+async function local(m, t, text) {
+  HIST.list.push(text);
+  HIST.pos = -1;
+  t.value = '';
+  autosize();
+  syncSend();
+  const body = text.slice(1).trim();
+  try {
+    if (text[0] === '#') {
+      const r = await api('POST', `sessions/${m.id}/note`, { text: body });
+      return toast(`Saved to ${r.file}; agy reads it in every conversation here`);
+    }
+    S.shells = (S.shells || 0) + 1;
+    syncSend();
+    await api('POST', `sessions/${m.id}/shell`, { cmd: body });
+  } catch (e) { t.value = text; fail(e); }
+  finally { if (text[0] === '!') { S.shells--; syncSend(); } }
+}
+function shellNode(ev) {
+  const node = toolNode({ name: 'run_command', params: { CommandLine: ev.cmd }, output: ev.output, secs: ev.secs,
+    state: ev.code === 0 ? 'done' : 'error', error: ev.code === 0 ? '' : ev.code === null ? 'timed out' : `exit ${ev.code}` });
+  node.classList.add('mine');
+  $('.verb', node).textContent = 'You ran';
+  return node;
+}
 function stop() {
   if (S.cur) api('POST', `sessions/${S.cur}/stop`).then(() => toast('Stopped')).catch(fail);
 }
@@ -764,6 +804,8 @@ const SLASH = [
   ['/compact', 'fresh conversation that starts from a summary of this one'],
   ['/rewind', 'put files back as they were before a turn: /rewind <turn>'],
   ['/export', 'download this transcript as markdown'],
+  ['/init', 'have agy write a GEMINI.md that explains this project'],
+  ['/memory', 'show this project\'s GEMINI.md (add lines with # note)'],
   ['/stop', 'stop the running turn, pause the goal'],
   ['/resume', 'resume a paused goal'],
   ['/cleargoal', 'remove the goal'],
@@ -813,6 +855,29 @@ function openSlashMenu() {
   }).catch(() => {});
 }
 function closeSlash() { $('#slash').hidden = true; slashIdx = 0; menuItems = []; }
+
+/* ---------- file viewer: agy's file:// links open here ---------- */
+async function openFile(path, lines) {
+  const m = cur();
+  if (!m) return;
+  try { showFile(await api('GET', `sessions/${m.id}/file?path=${encodeURIComponent(path)}`), lines); } catch (e) { fail(e); }
+}
+function showFile(f, [from, to] = [0, 0]) {
+  to = to || from;
+  const dlg = $('#viewer');
+  $('#viewer-path').textContent = f.rel;
+  $('#viewer-path').title = f.path;
+  $('#viewer-copy').onclick = () => navigator.clipboard.writeText(f.text).then(() => toast('Copied'));
+  const lines = f.text.replace(/\n$/, '').split('\n');
+  const body = $('#viewer-body');
+  body.replaceChildren(h('pre', {}, ...lines.map((l, i) => h('div', { class: 'ln' + (i + 1 >= from && i + 1 <= to ? ' hit' : '') },
+    h('span', { class: 'no' }, String(i + 1)), h('span', {}, l || ' ')))));
+  dlg.showModal();
+  $('#viewer-close').focus();
+  const hit = $('.hit', body);
+  if (hit) hit.scrollIntoView({ block: 'center' });
+  else body.scrollTop = 0;
+}
 
 /* ---------- attachments: + button, drag and drop, pasted screenshots ---------- */
 const attUrl = (sid, name) => `/api/sessions/${sid}/attachments/${encodeURIComponent(name)}?token=${encodeURIComponent(TOKEN)}`;
@@ -916,6 +981,16 @@ async function slash(text) {
       case '/compact': need(); await api('POST', `sessions/${m.id}/compact`); return toast('Compacted');
       case '/rewind': return rewindTo(+arg || 0);
       case '/export': return exportTranscript();
+      case '/init':
+        need();
+        return api('POST', `sessions/${m.id}/send`, { text: 'Study this project and write a concise GEMINI.md at its root for '
+          + 'future agents: what it is, how it is laid out, how to build, run and test it, and the conventions to follow. '
+          + 'If GEMINI.md or AGENTS.md already exists, improve it instead of starting over. Keep it under 80 lines.' + (arg ? '\n\n' + arg : '') });
+      case '/memory': {
+        need();
+        const f = await api('GET', `sessions/${m.id}/file?path=GEMINI.md`).catch(() => api('GET', `sessions/${m.id}/file?path=AGENTS.md`)).catch(() => null);
+        return f ? showFile(f) : toast('No GEMINI.md yet: add a line with "# …" or run /init');
+      }
       case '/resume': need(); return api('POST', `sessions/${m.id}/goal/resume`);
       case '/cleargoal': need(); return api('DELETE', `sessions/${m.id}/goal`);
       case '/new': return openNew();
@@ -1540,6 +1615,18 @@ function wire() {
   $('#goal-dlg').addEventListener('close', () => { if ($('#goal-dlg').returnValue === 'ok') startGoal(); });
   $('#set-open').addEventListener('click', () => openSettings());
   $('#attach-btn').addEventListener('click', () => $('#attach-input').click());
+  $('#transcript').addEventListener('click', e => {
+    const a = e.target.closest('a[data-file]');
+    if (!a) return;
+    e.preventDefault();
+    const [p, frag] = a.dataset.file.split('#');
+    let path = p;
+    try { path = decodeURIComponent(p); } catch {}
+    const r = (frag || '').match(/L(\d+)(?:-L?(\d+))?/) || [];
+    openFile(path, [+r[1] || 0, +r[2] || 0]);
+  });
+  $('#viewer-close').addEventListener('click', () => $('#viewer').close());
+  $('#viewer').addEventListener('click', e => { if (e.target === $('#viewer')) $('#viewer').close(); });
   $('#attach-input').addEventListener('change', e => { attachFiles([...e.target.files]); e.target.value = ''; });
   input.addEventListener('paste', e => {
     const stamp = new Date().toTimeString().slice(0, 8).replace(/:/g, '');

@@ -296,6 +296,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(404, {"error": f"not found: {e}"})
         except ValueError as e:
             return self._json(400, {"error": str(e)})
+        except FileNotFoundError as e:
+            return self._json(404, {"error": f"no such file: {e.filename}"})
 
     def _api(self, method, parts, b, qs):
         app, e = self.app, self.app.engine
@@ -322,6 +324,16 @@ class Handler(BaseHTTPRequestHandler):
             case ("POST", ["sessions", sid, "clear"]):
                 e.clear(sid)
                 return {"ok": True}
+            case ("POST", ["sessions", sid, "shell"]):
+                if not str(b.get("cmd", "")).strip():
+                    raise ValueError("empty command")
+                return e.shell(sid, b["cmd"])
+            case ("POST", ["sessions", sid, "note"]):
+                if not str(b.get("text", "")).strip():
+                    raise ValueError("empty note")
+                return e.note(sid, b["text"])
+            case ("GET", ["sessions", sid, "file"]):
+                return e.read_file(sid, (qs.get("path") or [""])[0])
             case ("POST", ["sessions", sid, "compact"]):
                 e.compact(sid)
                 return {"ok": True}
