@@ -28,3 +28,15 @@ def test_allow_rules_never_cover_risky_flags(home):
                 "git push -f origin main", "git push origin :main", "git push origin --delete feature",
                 "sed -i '' s/a/b/ x.go", "git reset --hard HEAD~3", "git stash clear", "ls && find / -delete"):
         assert d(cmd) == "ask", cmd
+
+
+def test_command_parts_respect_quotes_and_catch_hidden_commands(home):
+    for r in ("command(ps)", "command(grep)", "command(echo)", "command(ls)", "command(sed -n)"):
+        stack.allow_rule(r)
+    d = lambda cmd: policy.decide("default", "run_command", {"CommandLine": cmd})[0]
+    for cmd in ('ps aux | grep -i -E "agy|bin/olx-mcp" | grep -v grep', "grep -rn 'a;b' . 2>/dev/null",
+                "sed -n '1,5p' x.go", "ls >/dev/null 2>&1"):
+        assert d(cmd) == "allow", cmd
+    for cmd in ("ls\nrm -rf x", "echo $(rm -rf x)", "echo `rm x`", "echo hi > main.go", "ls & rm x",
+                "echo 'unbalanced"):
+        assert d(cmd) == "ask", cmd

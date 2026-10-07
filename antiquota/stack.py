@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 
@@ -379,13 +380,45 @@ RISKY = re.compile(r"^find\b.*\s-(exec|execdir|ok|okdir|delete|fprint\w*)\b"
                    r"|^sed\b.*\s-i|^git\s+(reset\s+--hard|clean\s+-\w*f|checkout\s+--\s|branch\s+-D|stash\s+(drop|clear))\b")
 
 
+SEPARATORS = {"&&", "||", ";", "|", "&", "|&", ";;", "\n"}
+REDIRECTS = {">", ">>", ">|", "&>", "&>>"}
+
+
+def _command_parts(cmd):
+    """Split a shell command line into its commands the way a shell would: quotes keep their
+    contents together, and newlines separate commands. None when the line can't be read safely
+    (unbalanced quotes, command substitution, or output redirected into a file)."""
+    if "$(" in cmd or "`" in cmd:
+        return None
+    lex = shlex.shlex(cmd, posix=True, punctuation_chars="();<>|&\n")
+    lex.whitespace, lex.whitespace_split, lex.commenters = " \t\r", True, ""
+    try:
+        tokens = list(lex)
+    except ValueError:
+        return None
+    parts, cur = [], []
+    for i, tok in enumerate(tokens):
+        if tok in SEPARATORS:
+            parts.append(cur)
+            cur = []
+            continue
+        if tok in REDIRECTS and (i + 1 >= len(tokens) or tokens[i + 1] != "/dev/null"):
+            return None
+        cur.append(tok)
+    parts.append(cur)
+    return [" ".join(p) for p in parts if p]
+
+
 def command_verdict(cmd):
     """"allow" or "deny" when antiquota's rules decide a shell command, else None.
-    A command line with several parts (&&, ||, ;, |) is allowed only when every part is, and no
-    part uses a flag that deletes, overwrites or runs something else (RISKY)."""
+    A command line with several parts (&&, ||, ;, |, newlines) is allowed only when every part
+    is, and no part uses a flag that deletes, overwrites or runs something else (RISKY)."""
     allow, deny = (_command_rules(r) for r in permissions())
-    parts = [p.strip() for p in re.split(r"&&|\|\||;|\|", cmd or "") if p.strip()]
     hit = lambda part, rules: any(r == "*" or part == r or part.startswith(r + " ") for r in rules)
+    loose = [p.strip() for p in re.split(r"&&|\|\||;|\||\n", cmd or "") if p.strip()]
+    if any(hit(p, deny) for p in loose):
+        return "deny"
+    parts = _command_parts(cmd or "")
     if not parts:
         return None
     if any(hit(p, deny) for p in parts):
