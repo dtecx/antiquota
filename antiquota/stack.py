@@ -310,7 +310,7 @@ def write_file(rel, text):
 
 # --- antiquota's own GUI defaults --------------------------------------------------
 
-DEFAULTS = {"model": "gemini-3.8-flash-high", "mode": "default", "verifier_model": "gemini-3.1-pro-high",
+DEFAULTS = {"model": "gemini-3.8-flash-high", "mode": "default", "verifier_model": "gemini-3.8-flash-high",
             "rotation": "perishable", "keep_awake": "on"}
 ROTATIONS = ("perishable", "sticky", "round-robin")
 
