@@ -1655,8 +1655,82 @@ function renderRouting(box) {
       }) : [h('p', { class: 'cap' }, 'No routing decisions yet.')]));
     }).catch(() => {});
 }
-function renderTerminal(pane) {
-  pane.replaceChildren(h('p', { class: 'cap' }, 'Terminal: coming up.'));
+/* ---------- terminal: a shell in the session folder (xterm.js, loaded on first use) ---------- */
+let xtermReady;
+function loadXterm() {
+  xtermReady = xtermReady || new Promise((resolve, reject) => {
+    document.head.append(h('link', { rel: 'stylesheet', href: '/vendor/xterm.css' }));
+    const s1 = h('script', { src: '/vendor/xterm.js' }), s2 = h('script', { src: '/vendor/xterm-addon-fit.js' });
+    let n = 0;
+    const done = () => { if (++n === 2) resolve(); };
+    s1.onload = s2.onload = done;
+    s1.onerror = s2.onerror = () => reject(new Error('could not load the terminal'));
+    document.head.append(s1, s2);
+  });
+  return xtermReady;
+}
+const TERMS = new Map();  // session id -> { el, term, fit, es }
+async function renderTerminal(pane) {
+  const m = cur();
+  if (!m) return pane.replaceChildren(h('p', { class: 'cap' }, 'Open a session for a terminal in its folder.'));
+  let t = TERMS.get(m.id);
+  if (!t) {
+    try { await loadXterm(); } catch (e) { return pane.replaceChildren(h('p', { class: 'cap' }, e.message)); }
+    const css = getComputedStyle(document.documentElement), v = n => css.getPropertyValue(n).trim();
+    const term = new window.Terminal({
+      fontFamily: v('--mono') || 'monospace', fontSize: 12.5, lineHeight: 1.2, cursorBlink: true, scrollback: 5000,
+      theme: { background: v('--well') || '#0a0b0c', foreground: v('--ink') || '#e8e6e1', cursor: v('--baton') || '#e8a33d',
+        selectionBackground: 'rgba(232, 163, 61, .3)', black: '#1a1c20', brightBlack: '#5b5954' },
+    });
+    const fit = new window.FitAddon.FitAddon();
+    term.loadAddon(fit);
+    const screen = h('div', { class: 'term-screen' });
+    const title = h('span', { class: 'term-title' }, 'starting…');
+    const el = h('div', { class: 'term-wrap' },
+      h('div', { class: 'term-bar' }, title, h('span', { class: 'fill' }),
+        h('button', { class: 'btn small', title: 'Clear the screen', onclick: () => term.clear() }, 'Clear'),
+        h('button', { class: 'btn small', title: 'Start a fresh shell', onclick: () => start(true) }, 'Restart'),
+        h('button', { class: 'btn small', title: 'End the shell', onclick: () => api('POST', `sessions/${m.id}/term/kill`).catch(fail) }, 'Kill')),
+      screen);
+    t = { el, term, fit, es: null, sid: m.id };
+    TERMS.set(m.id, t);
+    pane.replaceChildren(el);
+    term.open(screen);
+    const size = () => { try { fit.fit(); } catch {} return { cols: term.cols, rows: term.rows }; };
+    let resizeTimer;
+    new ResizeObserver(() => {
+      if (!el.isConnected) return;
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => api('POST', `sessions/${m.id}/term/resize`, size()).catch(() => {}), 80);
+    }).observe(screen);
+    term.onData(data => api('POST', `sessions/${m.id}/term/input`, { data }).catch(e => term.write(`\r\n\x1b[31m${e.message}\x1b[0m\r\n`)));
+    const start = async restart => {
+      try {
+        const r = await api('POST', `sessions/${m.id}/term`, { ...size(), restart });
+        title.textContent = `${r.shell} · ${r.cwd.replace(/^\/Users\/[^/]+/, '~')}`;
+        if (restart) term.reset();
+        t.es?.close();
+        t.es = new EventSource(`/api/sessions/${m.id}/term/stream?token=${encodeURIComponent(TOKEN)}`);
+        let first = true;
+        t.es.onmessage = e => {
+          const msg = JSON.parse(e.data);
+          if (msg.d) {
+            const bin = atob(msg.d), bytes = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            if (first) { term.reset(); first = false; }
+            term.write(bytes);
+          }
+          if (msg.exit) { title.textContent += ' · exited'; t.es.close(); }
+        };
+      } catch (e) { term.write(`\x1b[31m${e.message}\x1b[0m\r\n`); }
+    };
+    t.start = start;
+    start(false);
+  } else {
+    pane.replaceChildren(t.el);
+    requestAnimationFrame(() => { try { t.fit.fit(); } catch {} });
+  }
+  t.term.focus();
 }
 async function renderPane() {
   const pane = $('#pane');

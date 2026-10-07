@@ -266,6 +266,7 @@ class Engine:
         threading.Thread(target=self._scheduler, daemon=True).start()
         self.awake = KeepAwake()
         self.approvals, self.approval_cv = {}, threading.Condition()
+        self.terms = {}  # session id -> Terminal (the Terminal panel's shell)
 
     # --- pub/sub and storage ----------------------------------------------
 
@@ -426,7 +427,20 @@ class Engine:
                     break
         return sorted(hits, key=lambda h: -h["ts"])[:limit]
 
+    def term(self, sid, cols=100, rows=30, restart=False):
+        """The session's shell, started in its folder if it is not running."""
+        from .terminal import Terminal
+        t = self.terms.get(sid)
+        if t and (restart or not t.alive):
+            t.kill()
+            t = None
+        if t is None:
+            t = self.terms[sid] = Terminal(self.sessions[sid].meta["cwd"], cols, rows)
+        return t
+
     def delete(self, sid):
+        if sid in self.terms:
+            self.terms.pop(sid).kill()
         self.stop(sid)
         s = self.sessions.pop(sid)
         shutil.rmtree(s.dir, ignore_errors=True)

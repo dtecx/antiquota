@@ -1,3 +1,4 @@
+import os
 import json
 import threading
 import time
@@ -428,3 +429,26 @@ def test_files_tree_stays_inside_the_session_folder(home, work):
         assert False
     except ValueError:
         pass
+
+
+def test_terminal_runs_a_shell_in_the_session_folder(home, work, monkeypatch):
+    monkeypatch.setenv("SHELL", "/bin/sh")
+    eng = Engine()
+    sid = eng.create(str(work), "gemini-3.8-flash-low")["id"]
+    t = eng.term(sid, 80, 24)
+    recent, q = t.subscribe()
+    t.write("echo antiquota-$((40+2)); pwd\n")
+    out, deadline = b"", time.time() + 10
+    while time.time() < deadline and (b"antiquota-42" not in out or str(work).encode() not in out):
+        try:
+            out += q.get(timeout=0.5) or b""
+        except Exception:
+            pass
+    assert b"antiquota-42" in out and os.path.basename(str(work)).encode() in out  # ran, in the session folder
+    t.resize(120, 40)
+    assert eng.term(sid) is t  # same shell while it runs
+    eng.delete(sid)
+    deadline = time.time() + 5
+    while t.alive and time.time() < deadline:
+        time.sleep(0.05)
+    assert not t.alive

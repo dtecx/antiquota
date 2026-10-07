@@ -1014,3 +1014,12 @@ body.no-stamps .turn > span:last-child { display: none; }
 .tgroup.open > .tg-head .chev { transform: rotate(90deg); }
 .tg-body { margin: 2px 0 4px 13px; padding-left: 12px; border-left: 1px solid var(--rule-2); }
 .tg-body > .tool { margin: 2px 0; }
+
+/* ---------- terminal ---------- */
+.term-wrap { display: flex; flex-direction: column; height: calc(100vh - 92px); min-height: 240px; }
+.term-bar { display: flex; align-items: center; gap: 6px; padding: 0 0 8px; }
+.term-title { font: 12px var(--mono); color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.term-bar .fill { flex: 1; }
+.term-screen { flex: 1; min-height: 0; padding: 8px; border: 1px solid var(--rule-2); border-radius: var(--r-md); background: var(--well); }
+.term-screen .xterm { height: 100%; }
+.drawer:has(.term-wrap) { width: min(720px, 48vw); }

@@ -25,6 +25,16 @@ UI = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ui")
 STATIC = {"/": "index.html", "/app.js": "app.js", "/app.css": "app.css"}
 TYPES = {".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8",
          ".css": "text/css; charset=utf-8"}
+
+
+def static_file(path):
+    """index/app files and anything in ui/vendor (bundled libraries such as xterm.js)."""
+    if path in STATIC:
+        return STATIC[path]
+    if path.startswith("/vendor/") and "/" not in path[8:] and not path[8:].startswith(".") \
+            and os.path.splitext(path)[1] in TYPES and os.path.isfile(os.path.join(UI, "vendor", path[8:])):
+        return "vendor/" + path[8:]
+    return None
 PROBE_EVERY = 600
 
 
@@ -263,16 +273,16 @@ class Handler(BaseHTTPRequestHandler):
         if method == "GET" and u.path == "/api/health":  # lets the app find its engine; no secrets in it
             from . import __version__
             return self._json(200, {"ok": True, "app": "antiquota", "version": __version__, "pid": os.getpid()})
-        if method == "GET" and u.path in STATIC:
-            name = STATIC[u.path]
+        if method == "GET" and static_file(u.path):
+            name = static_file(u.path)
             with open(os.path.join(UI, name), "rb") as f:
                 body = f.read()
             if name == "index.html":
                 body = body.replace(b"__ANTIQUOTA_TOKEN__", app.token.encode())
             return self._send(200, body, TYPES[os.path.splitext(name)[1]])
         token = self.headers.get("X-Antiquota-Token", "")
-        if u.path == "/api/events":
-            token = (qs.get("token") or [""])[0]
+        if u.path == "/api/events" or (u.path.startswith("/api/sessions/") and u.path.endswith("/term/stream")):
+            token = (qs.get("token") or [""])[0]  # EventSource cannot send a header
         parts = u.path.split("/")[2:]
         if parts[:1] == ["sessions"] and len(parts) == 4 and parts[2] == "attachments" and method == "GET":
             token = (qs.get("token") or [""])[0]  # <img src> cannot send a header
@@ -281,6 +291,8 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if u.path == "/api/events":
                 return self._events()
+            if len(parts) == 4 and parts[0] == "sessions" and parts[2:] == ["term", "stream"] and method == "GET":
+                return self._term_stream(parts[1])
             if parts[:1] == ["sessions"] and len(parts) == 3 and parts[2] == "attach" and method == "POST":
                 n = int(self.headers.get("Content-Length") or 0)
                 if n > 25_000_000:
@@ -353,6 +365,25 @@ class Handler(BaseHTTPRequestHandler):
                 d = stack.defaults()
                 return e.create(b.get("cwd") or a.home(), b.get("model") or d["model"], "",
                                 b.get("mode") or d["mode"], b.get("title", ""), bool(b.get("worktree")))
+            case ("POST", ["sessions", sid, "term"]):
+                t = e.term(sid, int(b.get("cols", 100)), int(b.get("rows", 30)), bool(b.get("restart")))
+                return {"alive": t.alive, "shell": t.shell, "cwd": t.cwd}
+            case ("POST", ["sessions", sid, "term", "input"]):
+                t = e.terms.get(sid)
+                if not t:
+                    raise KeyError("no terminal")
+                t.write(str(b.get("data", "")))
+                return {"ok": True}
+            case ("POST", ["sessions", sid, "term", "resize"]):
+                t = e.terms.get(sid)
+                if t:
+                    t.resize(int(b.get("cols", 100)), int(b.get("rows", 30)))
+                return {"ok": True}
+            case ("POST", ["sessions", sid, "term", "kill"]):
+                t = e.terms.pop(sid, None)
+                if t:
+                    t.kill()
+                return {"ok": True}
             case ("GET", ["sessions", sid, "tree"]):
                 return e.tree(sid, (qs.get("path") or [""])[0])
             case ("GET", ["sessions", sid, "git"]):
@@ -508,6 +539,43 @@ class Handler(BaseHTTPRequestHandler):
             case ("GET", ["fs"]):
                 return app.listdir((qs.get("path") or [""])[0])
         raise KeyError("/".join(parts))
+
+    def _term_stream(self, sid):
+        t = self.app.engine.terms.get(sid)
+        if t is None:
+            raise KeyError("no terminal for this session")
+        self.send_response(200)
+        self.send_header("Content-Type", "text/event-stream")
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.close_connection = True
+        import base64
+        recent, q = t.subscribe()
+        send = lambda obj: (self.wfile.write(f"data: {json.dumps(obj)}\n\n".encode()), self.wfile.flush())
+        try:
+            send({"d": base64.b64encode(recent).decode(), "shell": t.shell, "cwd": t.cwd, "alive": t.alive})
+            while True:
+                try:
+                    chunk = q.get(timeout=15)
+                except queue.Empty:
+                    self.wfile.write(b": ping\n\n")
+                    self.wfile.flush()
+                    continue
+                if chunk is None:
+                    send({"exit": True})
+                    break
+                more = [chunk]
+                while not q.empty() and len(more) < 64:  # coalesce bursts
+                    nxt = q.get_nowait()
+                    if nxt is None:
+                        q.put(None)
+                        break
+                    more.append(nxt)
+                send({"d": base64.b64encode(b"".join(more)).decode()})
+        except (BrokenPipeError, ConnectionResetError):
+            pass
+        finally:
+            t.unsubscribe(q)
 
     def _events(self):
         self.send_response(200)
