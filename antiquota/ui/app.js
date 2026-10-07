@@ -328,7 +328,7 @@ function renderHeader() {
   const m = cur();
   const busy = m && m.status !== 'idle';
   $('#title').textContent = m ? (m.title || 'Untitled') : 'antiquota';
-  $('#cwd').textContent = !m ? '' : m.worktree ? '⎇ ' + m.worktree.branch
+  $('#cwd').textContent = !m ? '' : m.worktree ? '\u200e⎇ ' + m.worktree.branch + '\u200e'
     : '\u200e' + m.cwd.replace(/^\/Users\/[^/]+/, '~') + '\u200e';
   $('#cwd').title = m ? (m.worktree ? `Worktree of ${m.worktree.repo} (from ${m.worktree.base}) in ${m.cwd}` : m.cwd) : '';
   const st = $('#status');
