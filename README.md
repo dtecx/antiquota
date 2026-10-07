@@ -2,7 +2,8 @@
 
 Long-running agent loops on the Antigravity CLI (`agy`), spread over several
 Google accounts. antiquota runs agy with its own copy of your agy setup, so your
-agy CLI and the Antigravity IDE are never changed by it.
+agy CLI and the Antigravity IDE are never changed by it. (It was called agy-loop;
+`~/.agyloop` moves to `~/.antiquota` on first start.)
 
 ```sh
 python3 -m antiquota gui          # web GUI on http://127.0.0.1:8765
@@ -104,7 +105,18 @@ Switching the hook off gives back agy's own headless behaviour.
   `RUN_IN_BACKGROUND: <cmd>` (or you type `/bg <cmd>`); the job runs detached
   with its own log, and agy gets the end of the log when it exits. A goal waits
   for its jobs instead of nudging. `/loop 15m <prompt>` repeats a prompt while
-  the session is idle.
+  the session is idle; `/schedule 03:00 <prompt>` sends one every day at that
+  time.
+- **Plan, then execute**: in *plan* mode agy only proposes a numbered plan
+  (edits are refused); a bar then offers *Execute plan*, *Execute with
+  approvals* or *Revise*.
+- **Git worktrees**: *New session → Separate git worktree* gives the session
+  its own branch (named after the first request) and folder, so parallel
+  sessions never touch the same files or your checkout. The Changes tab shows
+  uncommitted files with diffs, discard per file, *Commit all*, what the branch
+  adds, *Merge into <base>* (refused if your checkout has uncommitted changes)
+  and *Remove worktree*. Sessions in any repository get the same review and
+  commit.
 - **Claude Code habits**: `!cmd` runs a shell command (agy sees the output with
   your next message), `# note` appends to the project's GEMINI.md, `/init`,
   `/memory`, `@file` mentions, images and files by +, drag and drop or paste,
@@ -114,7 +126,14 @@ Switching the hook off gives back agy's own headless behaviour.
   allows 60 seconds). Accounts Google wants verified first are kept, parked with
   a *Verify with Google* link and *Check again*; they join the rotation once
   Google accepts them. Each card shows quota windows and today's tokens.
-- **Changes** panel: files the session edited, +/− counts, diffs on click.
+- **Changes** panel: git status and commit (above), plus every file agy
+  edited this session with diffs. **Files** panel: browse the session folder,
+  view a file, add it as an `@` mention, open it or show it in Finder/Explorer
+  (desktop app).
+- **Usage**: tokens per day for 14 days (hover for the split by account) and a
+  per-account table, in the Accounts panel.
+- **Sessions**: right-click or ⋯ to rename, pin, fork, archive, delete; ⌘K
+  searches titles and message text; ⌘/ lists every shortcut and command.
 - **Settings** (⌘,): antiquota's own rules (GEMINI.md, rules/), skills, hooks,
   MCP servers, plugins, permissions and session defaults, each compared with
   your agy CLI and the IDE, with one-click copy from either.
