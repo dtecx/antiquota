@@ -372,9 +372,17 @@ def _command_rules(rules):
     return [r[len("command("):-1].strip() for r in rules if r.startswith("command(") and r.endswith(")")]
 
 
+# Flags that turn an otherwise harmless, allowed command into one that deletes, overwrites or
+# runs other programs: an allow rule never covers them, so they still ask.
+RISKY = re.compile(r"^find\b.*\s-(exec|execdir|ok|okdir|delete|fprint\w*)\b"
+                   r"|^git\s+push\b.*\s(--force\S*|-f|--delete|--mirror|-d)\b|^git\s+push\b.*\s:\S"
+                   r"|^sed\b.*\s-i|^git\s+(reset\s+--hard|clean\s+-\w*f|checkout\s+--\s|branch\s+-D)\b")
+
+
 def command_verdict(cmd):
     """"allow" or "deny" when antiquota's rules decide a shell command, else None.
-    A command line with several parts (&&, ||, ;, |) is allowed only when every part is."""
+    A command line with several parts (&&, ||, ;, |) is allowed only when every part is, and no
+    part uses a flag that deletes, overwrites or runs something else (RISKY)."""
     allow, deny = (_command_rules(r) for r in permissions())
     parts = [p.strip() for p in re.split(r"&&|\|\||;|\|", cmd or "") if p.strip()]
     hit = lambda part, rules: any(r == "*" or part == r or part.startswith(r + " ") for r in rules)
@@ -382,7 +390,7 @@ def command_verdict(cmd):
         return None
     if any(hit(p, deny) for p in parts):
         return "deny"
-    if all(hit(p, allow) for p in parts):
+    if all(hit(p, allow) and not RISKY.search(p) for p in parts):
         return "allow"
     return None
 

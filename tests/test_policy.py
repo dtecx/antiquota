@@ -17,3 +17,14 @@ def test_policy_sorts_tools_by_risk(home):
     assert d("default", "call_mcp_tool", mcp) == "allow"
     assert policy.decide("default", "run_command", {"CommandLine": "npm test"})[2] == "command(npm test)"
     assert policy.decide("default", "run_command", {"CommandLine": "pytest -q"})[2] == "command(pytest)"
+
+
+def test_allow_rules_never_cover_risky_flags(home):
+    for r in ("command(find)", "command(git push)", "command(sed)", "command(git reset)"):
+        stack.allow_rule(r)
+    d = lambda cmd: policy.decide("default", "run_command", {"CommandLine": cmd})[0]
+    assert d("find . -name '*.go'") == "allow" and d("git push origin main") == "allow"
+    for cmd in ("find . -name '*.tmp' -delete", "find . -exec rm {} \;", "git push --force origin main",
+                "git push -f origin main", "git push origin :main", "git push origin --delete feature",
+                "sed -i '' s/a/b/ x.go", "git reset --hard HEAD~3", "ls && find / -delete"):
+        assert d(cmd) == "ask", cmd
