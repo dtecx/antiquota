@@ -266,6 +266,8 @@ async fn check_results_keep_the_last_output_and_report_timeouts() {
             clock: Arc::new(FixedClock),
             quota: None,
             shell: Some(Arc::new(ScriptedShell { timed_out })),
+            jobs: None,
+            awake: None,
         })
         .unwrap();
         let id = service

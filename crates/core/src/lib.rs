@@ -6,6 +6,7 @@ pub mod command;
 pub mod event;
 pub mod goal;
 pub mod hooks;
+pub mod jobs;
 pub mod mentions;
 pub mod plan;
 pub mod policy;

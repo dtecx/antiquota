@@ -11,5 +11,8 @@ antiquota-core.workspace = true
 tokio.workspace = true
 process-wrap.workspace = true
 
+[target.'cfg(unix)'.dependencies]
+nix = { version = "=0.31.3", default-features = false, features = ["signal", "process"] }
+
 [lints]
 workspace = true

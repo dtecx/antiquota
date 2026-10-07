@@ -179,6 +179,15 @@ impl SessionStore for FileStore {
     fn state_dir(&self) -> String {
         self.root.join("state").to_string_lossy().into_owned()
     }
+    fn job_log_path(&self, sid: &str, jid: &str) -> String {
+        self.root
+            .join("sessions")
+            .join(sid)
+            .join("jobs")
+            .join(format!("{jid}.log"))
+            .to_string_lossy()
+            .into_owned()
+    }
     fn resolve_mentions(&self, cwd: &str, candidates: &[String]) -> Vec<String> {
         let home = user_home().ok();
         let mut found: Vec<String> = vec![];

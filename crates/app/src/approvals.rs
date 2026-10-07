@@ -6,7 +6,7 @@ use antiquota_core::{
     policy::{self, DECLINED, STOPPED, WRITE_TOOLS},
 };
 use serde_json::{Value, json};
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
 /// Longest single string kept in an approval card; longer text is cut with a visible note.
 const KEEP_CHARS: usize = 4000;
@@ -136,7 +136,11 @@ impl Service {
 
     /// The decision, or the pending id again after `wait` seconds (the hook then asks again).
     /// An unanswered request is declined once its deadline passes.
-    pub async fn approval_wait(&self, id: &str, wait: f64) -> Result<ApprovalReply, AppError> {
+    pub async fn approval_wait(
+        self: &Arc<Self>,
+        id: &str,
+        wait: f64,
+    ) -> Result<ApprovalReply, AppError> {
         let wait = if wait.is_finite() {
             wait.clamp(0.0, MAX_WAIT)
         } else {
@@ -183,7 +187,7 @@ impl Service {
     /// Answers a pending request once; later answers return the first decision. "Always" adds
     /// the suggested rule for every account and session, or lets this session make edits.
     pub fn approval_answer(
-        &self,
+        self: &Arc<Self>,
         id: &str,
         allow: bool,
         always: bool,
@@ -206,6 +210,17 @@ impl Service {
             approval.clone()
         };
         self.approval_signal.notify_waiters();
+        let job = self
+            .pending_jobs
+            .lock()
+            .map_err(|_| AppError::Invalid("approvals are unavailable".into()))?
+            .remove(id);
+        if let Some((session, command, every)) = job
+            && allow
+            && let Err(error) = self.job_start(&session, &command, every, true, "agent")
+        {
+            self.notice(&session, "error", &error.to_string(), json!({}))?;
+        }
         let mut edits = false;
         let mut refused = None;
         if always && allow {
@@ -260,6 +275,74 @@ impl Service {
         Ok(ApprovalReply::of(&approval))
     }
 
+    /// Parks an agent's background job request on an approval card; the job starts if the
+    /// user allows it.
+    pub(crate) fn request_background(
+        &self,
+        id: &str,
+        command: &str,
+        every: u64,
+        rule: String,
+    ) -> Result<String, AppError> {
+        let minutes = self.approval_minutes();
+        let cell = self.cell(id)?;
+        let mut state = cell
+            .state
+            .lock()
+            .map_err(|_| AppError::Invalid("session unavailable".into()))?;
+        let aid = uuid::Uuid::new_v4().simple().to_string()[..10].to_owned();
+        let approval = Approval {
+            id: aid.clone(),
+            session: id.into(),
+            tool: "run_in_background".into(),
+            args: json!({"CommandLine": command, "every": every}),
+            rule,
+            state: "pending".into(),
+            why: String::new(),
+            deadline: self.clock.now() + minutes * 60.0,
+            extra: Default::default(),
+        };
+        self.approval_map()?.insert(aid.clone(), approval.clone());
+        self.pending_jobs
+            .lock()
+            .map_err(|_| AppError::Invalid("approvals are unavailable".into()))?
+            .insert(aid.clone(), (id.into(), command.into(), every));
+        self.append(&mut state, Event::Approval { approval })?;
+        let mut next = state.meta.clone();
+        next.status = "approval".into();
+        self.replace_meta(&mut state, next)?;
+        Ok(aid)
+    }
+
+    /// Declines background job requests nobody answered before their deadline (no hook
+    /// waits on them, so the scheduler does it).
+    pub(crate) fn expire_background_approvals(self: &Arc<Self>) {
+        let now = self.clock.now();
+        let expired: Vec<String> = {
+            let Ok(jobs) = self.pending_jobs.lock() else {
+                return;
+            };
+            let Ok(map) = self.approval_map() else {
+                return;
+            };
+            jobs.keys()
+                .filter(|aid| {
+                    map.get(*aid)
+                        .is_some_and(|a| a.state == "pending" && a.deadline <= now)
+                })
+                .cloned()
+                .collect()
+        };
+        let minutes = self.approval_minutes();
+        for aid in expired {
+            let why = format!(
+                "No answer from the user within {} minutes; the background job did not start.",
+                minutes as u64
+            );
+            let _ = self.approval_answer(&aid, false, false, &why);
+        }
+    }
+
     /// Declines every pending request of a stopped session and records each answer.
     pub(crate) fn deny_pending(&self, state: &mut SessionState) -> Result<(), AppError> {
         let declined: Vec<Approval> = {
@@ -276,11 +359,26 @@ impl Service {
         if declined.is_empty() {
             return Ok(());
         }
+        if let Ok(mut jobs) = self.pending_jobs.lock() {
+            for approval in &declined {
+                jobs.remove(&approval.id);
+            }
+        }
         self.approval_signal.notify_waiters();
         for approval in declined {
             self.append(state, Event::Approval { approval })?;
         }
         Ok(())
+    }
+
+    pub(crate) fn has_pending_approval(&self, id: &str) -> bool {
+        self.approvals
+            .lock()
+            .map(|map| {
+                map.values()
+                    .any(|a| a.session == id && a.state == "pending")
+            })
+            .unwrap_or(false)
     }
 
     fn approval_map(

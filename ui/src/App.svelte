@@ -15,6 +15,8 @@
   import ConfirmRemoval from './components/ConfirmRemoval.svelte';
   import GoalBar from './components/GoalBar.svelte';
   import GoalDialog from './components/GoalDialog.svelte';
+  import JobBar from './components/JobBar.svelte';
+  import JobLog from './components/JobLog.svelte';
   import { revising } from './lib/goals';
   import { createAccounts } from './lib/accounts';
   import { createLogin } from './lib/login';
@@ -93,7 +95,7 @@
     {#if $view.selected}<Transcript {workbench} {login} /><GoalBar
         {workbench}
         onrevise={() => revising.set(true)}
-      /><Composer {workbench} connected={$connection === 'live'} />
+      /><JobBar {workbench} /><Composer {workbench} connected={$connection === 'live'} />
     {:else}<div class="welcome">
         <span class="eyebrow">YOUR WORKBENCH</span>
         <h1>A place for the next idea.</h1>
@@ -113,6 +115,7 @@
   </main>
   <SessionDialog {workbench} />
   <GoalDialog {workbench} />
+  <JobLog />
   <AccountsPanel {accounts} {login} {permissions} sessions={$view.snapshot?.sessions ?? []} />
   <LoginDialog {login} {accounts} />
   <ConfirmRemoval {accounts} />

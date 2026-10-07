@@ -149,27 +149,27 @@ export const routes = [
   {
     "method": "POST",
     "path": "/api/sessions/{sid}/jobs",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "POST",
     "path": "/api/sessions/{sid}/jobs/{jid}/stop",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "GET",
     "path": "/api/sessions/{sid}/jobs/{jid}/log",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "POST",
     "path": "/api/sessions/{sid}/loop",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "DELETE",
     "path": "/api/sessions/{sid}/loop",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "GET",

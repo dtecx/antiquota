@@ -64,11 +64,23 @@ fn quota_wall_hands_off_same_conversation_and_counts_current_steps_once() {
     );
     assert_eq!(
         setup::argument(&calls[0], "-p"),
-        Some("Original handoff request.")
+        Some(
+            format!(
+                "{}\n\nOriginal handoff request.",
+                antiquota_core::jobs::JOBS_HINT
+            )
+            .as_str()
+        )
     );
     assert_ne!(
         setup::argument(&calls[1], "-p"),
-        Some("Original handoff request.")
+        Some(
+            format!(
+                "{}\n\nOriginal handoff request.",
+                antiquota_core::jobs::JOBS_HINT
+            )
+            .as_str()
+        )
     );
     let events = completed["events"].as_array().unwrap();
     assert_eq!(
@@ -139,7 +151,13 @@ fn quota_without_initialization_retries_original_prompt_without_resume_flag() {
     for call in &calls {
         assert_eq!(
             setup::argument(call, "-p"),
-            Some("Request before conversation existed.")
+            Some(
+                format!(
+                    "{}\n\nRequest before conversation existed.",
+                    antiquota_core::jobs::JOBS_HINT
+                )
+                .as_str()
+            )
         );
         assert_eq!(setup::argument(call, "--conversation"), None);
     }

@@ -36,7 +36,7 @@ export function relativePath(path: string, cwd: string): string {
 export type ApprovalKind = 'command' | 'edit' | 'mcp' | 'tool';
 
 export function approvalKind(event: ApprovalEvent): ApprovalKind {
-  if (event.tool === 'run_command' || event.tool === 'git_commit') return 'command';
+  if (['run_command', 'git_commit', 'run_in_background'].includes(event.tool)) return 'command';
   if (WRITE_TOOLS.has(event.tool)) return 'edit';
   if (field(event.args, 'ServerName', 'server')) return 'mcp';
   return 'tool';
@@ -63,7 +63,9 @@ export function approvalTitle(event: ApprovalEvent, cwd: string): string {
   const target = approvalTarget(event, cwd);
   switch (approvalKind(event)) {
     case 'command':
-      return 'agy wants to run a command';
+      return event.tool === 'run_in_background'
+        ? 'agy wants to start a background job'
+        : 'agy wants to run a command';
     case 'edit':
       return target ? `agy wants to edit ${target}` : 'agy wants to change files';
     case 'mcp':

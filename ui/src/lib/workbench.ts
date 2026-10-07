@@ -9,6 +9,7 @@ import type { Api } from './api';
 import { projectHistory, reduceTranscript } from './transcript';
 import type { GoalRequest } from '../gen/GoalRequest';
 import { EXECUTE_PLAN } from './goals';
+import { jobLog } from './jobs';
 
 export interface DialogState {
   kind: 'create' | 'rename';
@@ -293,6 +294,21 @@ export function createWorkbench(api: Api, remember: (id: string) => void = () =>
               ? 'Executing the plan.'
               : 'Executing: edits and commands ask you first.',
         }));
+      }),
+    stopJob: (jid: string) =>
+      mutate(async () => {
+        if (wanted) await api.stopJob(wanted, jid);
+      }),
+    openJobLog: async (jid: string) => {
+      try {
+        if (wanted) jobLog.set(await api.jobLog(wanted, jid));
+      } catch (error) {
+        fail(error);
+      }
+    },
+    deleteLoop: () =>
+      mutate(async () => {
+        if (wanted) await api.deleteLoop(wanted);
       }),
     answer: async (id: string, decision: 'allow' | 'deny', always: boolean) => {
       try {

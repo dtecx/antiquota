@@ -21,6 +21,8 @@ import type { ApprovalAnswerRequest } from '../gen/ApprovalAnswerRequest';
 import type { ApprovalResponse } from '../gen/ApprovalResponse';
 import type { PermissionsRequest } from '../gen/PermissionsRequest';
 import type { GoalRequest } from '../gen/GoalRequest';
+import type { Job } from '../gen/Job';
+import type { JobLogResponse } from '../gen/JobLogResponse';
 import { routes } from '../gen/routes';
 
 export class RequestError extends Error {
@@ -39,7 +41,8 @@ export function createApi(token: string, request: typeof fetch = fetch) {
       .replace(/\/accounts\/login\/[^/]+/, '/accounts/login/{lid}')
       .replace(/\/accounts\/(?!login(?:\/|$)|probe$)[^/]+/, '/accounts/{name}')
       .replace(/\/sessions\/[^/]+/, '/sessions/{sid}')
-      .replace(/\/approvals\/[^/]+/, '/approvals/{aid}');
+      .replace(/\/approvals\/[^/]+/, '/approvals/{aid}')
+      .replace(/\/jobs\/[^/]+/, '/jobs/{jid}');
     if (
       !routes.some(
         (route) =>
@@ -111,6 +114,11 @@ export function createApi(token: string, request: typeof fetch = fetch) {
       call<Session>('POST', `${sessionPath(id)}/goal`, body),
     resumeGoal: (id: string) => call<OkResponse>('POST', `${sessionPath(id)}/goal/resume`, {}),
     clearGoal: (id: string) => call<OkResponse>('DELETE', `${sessionPath(id)}/goal`),
+    stopJob: (id: string, jid: string) =>
+      call<Job>('POST', `${sessionPath(id)}/jobs/${encodeURIComponent(jid)}/stop`, {}),
+    jobLog: (id: string, jid: string) =>
+      call<JobLogResponse>('GET', `${sessionPath(id)}/jobs/${encodeURIComponent(jid)}/log`),
+    deleteLoop: (id: string) => call<OkResponse>('DELETE', `${sessionPath(id)}/loop`),
     savePermissions: (body: PermissionsRequest) =>
       call<PermissionsRequest>('PUT', '/api/permissions', body),
     streamUrl: () => `/api/events?token=${encodeURIComponent(token)}`,

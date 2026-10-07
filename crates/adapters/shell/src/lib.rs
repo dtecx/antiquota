@@ -1,6 +1,10 @@
 //! Owns bounded child processes: whole process-tree lifetime, output caps, timeouts and
-//! cancellation, plus the shell runner used for goal checks.
+//! cancellation, plus the shell runner used for goal checks, background jobs and keep-awake.
+mod awake;
+mod jobs;
 use antiquota_core::{Cancellation, CommandOutcome, PortError, PortFuture, ShellRunner};
+pub use awake::KeepAwake;
+pub use jobs::Jobs;
 use process_wrap::tokio::{CommandWrap, KillOnDrop};
 use std::{process::Stdio, time::Duration};
 use tokio::{io::AsyncReadExt, process::Command};

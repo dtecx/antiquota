@@ -183,7 +183,13 @@ async fn transient_retries_use_fake_time_then_park_and_resume_on_next_account() 
     );
     assert_eq!(
         setup::argument(&rows[0], "-p"),
-        Some("Retry this request once through policy.")
+        Some(
+            format!(
+                "{}\n\nRetry this request once through policy.",
+                antiquota_core::jobs::JOBS_HINT
+            )
+            .as_str()
+        )
     );
     for row in &rows[1..] {
         assert_eq!(

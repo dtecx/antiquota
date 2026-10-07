@@ -295,6 +295,41 @@ async fn route(
             service.clear_goal(id)?;
             value(OkResponse { ok: true })
         }
+        ("POST", ["sessions", id, "jobs"]) => {
+            let command = loose_text(body.get("cmd"));
+            if command.trim().is_empty() {
+                return Err(AppError::Invalid("empty command".into()));
+            }
+            let every = antiquota_core::jobs::parse_interval(&loose_text(body.get("every")), 'm');
+            let notify = body.get("notify").is_none_or(truthy);
+            value(service.job_start(id, command.trim(), every, notify, "user")?)
+        }
+        ("POST", ["sessions", id, "jobs", jid, "stop"]) => value(service.job_stop(id, jid)?),
+        ("GET", ["sessions", id, "jobs", jid, "log"]) => {
+            let (job, text) = service.job_log(id, jid)?;
+            value(JobLogResponse { job, text })
+        }
+        ("POST", ["sessions", id, "loop"]) => {
+            let at = body
+                .get("at")
+                .filter(|v| truthy(v))
+                .map(|v| loose_text(Some(v)));
+            let prompt = loose_text(body.get("prompt"));
+            if let Some(at) = at {
+                let next = service.set_loop(id, 0, &prompt, Some(&at))?;
+                return Ok(json!({"ok": true, "next": next}));
+            }
+            let every = antiquota_core::jobs::parse_interval(&loose_text(body.get("every")), 'm');
+            if every == 0 {
+                return Err(AppError::Invalid("interval like 15m, 1h or 90s".into()));
+            }
+            service.set_loop(id, every, &prompt, None)?;
+            value(OkResponse { ok: true })
+        }
+        ("DELETE", ["sessions", id, "loop"]) => {
+            service.set_loop(id, 0, "", None)?;
+            value(OkResponse { ok: true })
+        }
         ("POST", ["sessions", id, "steer"]) => value(SteerResponse {
             messages: service.steer(id)?,
         }),
@@ -354,6 +389,16 @@ fn patch_fields(body: &Value) -> Result<SessionPatch, AppError> {
         pinned: body.get("pinned").map(truthy),
         archived: body.get("archived").map(truthy),
     })
+}
+/// Python's `str(value or "")` for loosely typed request fields.
+fn loose_text(value: Option<&Value>) -> String {
+    match value {
+        None | Some(Value::Null) => String::new(),
+        Some(Value::String(s)) => s.clone(),
+        Some(Value::Bool(false)) => String::new(),
+        Some(Value::Number(n)) if n.as_f64() == Some(0.0) => String::new(),
+        Some(other) => other.to_string(),
+    }
 }
 fn approval(reply: antiquota_app::ApprovalReply) -> Result<Value, AppError> {
     value(match reply {

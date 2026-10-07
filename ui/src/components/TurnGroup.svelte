@@ -4,16 +4,19 @@
   import { duration, formatTokens } from '../lib/format';
   import ToolStep from './ToolStep.svelte';
   import ApprovalCard from './ApprovalCard.svelte';
+  import { asJob, jobFailed, jobStatus } from '../lib/jobs';
   let {
     group,
     running = false,
     cwd = '',
     onanswer,
+    onlog,
   }: {
     group: TranscriptGroup;
     running?: boolean;
     cwd?: string;
     onanswer: (id: string, decision: 'allow' | 'deny', always: boolean) => Promise<void>;
+    onlog: (jid: string) => void;
   } = $props();
   const activity = $derived(
     group.events.filter((event) => event.t === 'tool' || event.t === 'thinking'),
@@ -78,6 +81,17 @@
         {event.text}
       </p>
     {:else if event.t === 'approval'}<ApprovalCard {event} {cwd} {onanswer} />
+    {:else if event.t === 'job' && asJob(event.job)}{@const job = asJob(event.job)!}
+      <p class="jobline" class:bad={jobFailed(event.phase, job)}>
+        <span class="mark">{event.phase === 'ended' ? '■ job' : '▶ job'}</span>
+        <code title={job.cmd}>{job.cmd}</code>
+        <span class="detail"
+          >{jobStatus(event.phase, job)}{event.phase !== 'ended' && job.by === 'agent'
+            ? ' · by agy'
+            : ''}</span
+        >
+        <button class="small" onclick={() => onlog(job.id)}>Log</button>
+      </p>
     {:else if event.t === 'shell'}<details class="shell">
         <summary><code>{event.cmd}</code></summary>
         <pre>{event.output}</pre>
@@ -121,6 +135,38 @@
     white-space: pre-wrap;
     overflow-wrap: anywhere;
     line-height: 1.7;
+  }
+  .jobline {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: var(--space-2) 0;
+    font: 11px var(--mono);
+    color: var(--ink-3);
+    min-width: 0;
+  }
+  .jobline .mark {
+    color: var(--baton);
+    flex-shrink: 0;
+  }
+  .jobline.bad .mark {
+    color: var(--bad);
+  }
+  .jobline code {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--ink-2);
+  }
+  .jobline .detail {
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+  .jobline .small {
+    font-size: 10px;
+    min-height: 22px;
+    padding: 0 var(--space-2);
   }
   .steered {
     display: block;

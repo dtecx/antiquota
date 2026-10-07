@@ -69,6 +69,24 @@ pub trait ShellRunner: Send + Sync {
         cancel: Cancellation,
     ) -> PortFuture<'a, CommandOutcome>;
 }
+/// Detached background jobs: they log to a file, survive the engine, and stop as a tree.
+pub trait JobRunner: Send + Sync {
+    /// Starts `command` with the platform shell in `cwd`, appending its output to `log`;
+    /// returns its process id.
+    fn start(&self, cwd: &str, command: &str, log: &str) -> Result<u32, PortError>;
+    /// Resolves when the job ends: its exit code for jobs this engine started, `None` for jobs
+    /// adopted after a restart (their status cannot be read).
+    fn wait<'a>(&'a self, pid: u32) -> PortFuture<'a, Option<i32>>;
+    /// Ends the job's whole process tree.
+    fn stop(&self, pid: u32) -> Result<(), PortError>;
+    /// The last `max_bytes` of a log file, empty when it does not exist yet.
+    fn read_log(&self, log: &str, max_bytes: usize) -> Result<String, PortError>;
+}
+/// Keeps the computer awake (not the display) while agents or jobs run.
+pub trait Awake: Send + Sync {
+    fn hold(&self);
+    fn release(&self);
+}
 pub trait TurnSink: Send {
     fn event(&mut self, event: Event) -> Result<(), PortError>;
     fn conversation_id(&mut self, conversation_id: &str) -> Result<(), PortError>;
@@ -196,6 +214,10 @@ pub trait SessionStore: Send + Sync {
     ) -> Result<f64, PortError>;
     fn project_usage(&self, sid: &str, records: &[EventRecord]) -> Result<(), PortError>;
     fn state_dir(&self) -> String;
+    /// Where a job of this session writes its log.
+    fn job_log_path(&self, _sid: &str, _jid: &str) -> String {
+        String::new()
+    }
     /// Absolute paths of the mentioned files or folders that exist, relative to `cwd`.
     fn resolve_mentions(&self, _cwd: &str, _candidates: &[String]) -> Vec<String> {
         vec![]
@@ -223,6 +245,13 @@ pub trait Clock: Send + Sync {
     /// The local wall-clock time of an instant as HH:MM, for messages to the user.
     fn local_hhmm(&self, _instant: f64) -> String {
         "?".into()
+    }
+    /// The next instant a daily local time is reached: later today, or tomorrow when it is now
+    /// or has passed. The default uses UTC days.
+    fn next_daily(&self, hour: u32, minute: u32, now: f64) -> f64 {
+        let day = (now / 86400.0).floor() * 86400.0;
+        let at = day + f64::from(hour * 3600 + minute * 60);
+        if at <= now { at + 86400.0 } else { at }
     }
     fn wait(&self, _seconds: f64, _cancel: Cancellation) -> PortFuture<'_, ()> {
         Box::pin(async { unavailable() })

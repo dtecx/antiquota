@@ -217,3 +217,16 @@ pub struct GoalRequest {
     #[ts(optional)]
     pub max_rounds: Option<u64>,
 }
+/// A job with the end of its log, for the log view.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct JobLogResponse {
+    #[serde(flatten)]
+    pub job: antiquota_core::jobs::Job,
+    pub text: String,
+}
+#[derive(Debug, Clone, Default, Serialize, Deserialize, TS)]
+pub struct LoopResponse {
+    pub ok: bool,
+    #[ts(optional)]
+    pub next: Option<f64>,
+}

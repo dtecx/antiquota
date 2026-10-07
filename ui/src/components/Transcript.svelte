@@ -52,6 +52,7 @@
           running={index === groups.length - 1 && isBusy($view.selected?.status)}
           cwd={$view.selected?.cwd ?? ''}
           onanswer={workbench.answer}
+          onlog={workbench.openJobLog}
         />{/each}{/if}
   </div>
 </div>

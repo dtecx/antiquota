@@ -71,6 +71,11 @@ impl Service {
                     Default::default()
                 }
             };
+            if outcome.ok
+                && let Err(error) = self.jobs_from_reply(&id, &outcome.reply)
+            {
+                self.error_notice(&id, &error);
+            }
             if kind == "user" {
                 continues = 0;
             }
@@ -117,7 +122,13 @@ impl Service {
                 continue;
             }
             state.busy = false;
-            state.meta.status = "idle".into();
+            // A background job request may still wait on an approval card.
+            state.meta.status = if self.has_pending_approval(&id) {
+                "approval"
+            } else {
+                "idle"
+            }
+            .into();
             state.meta.status_until = None;
             if let Err(e) = self.snapshot(&mut state) {
                 tracing::error!(error=%e,"idle persistence failed");

@@ -63,6 +63,8 @@ pub async fn serve(port: u16, open_browser: bool) -> Result<(), ServerError> {
         clock: Arc::new(SystemClock),
         quota: Some(accounts),
         shell: Some(Arc::new(antiquota_shell::Shell)),
+        jobs: Some(Arc::new(antiquota_shell::Jobs::default())),
+        awake: Some(Arc::new(antiquota_shell::KeepAwake::default())),
     })?;
     let listener = match TcpListener::bind(("127.0.0.1", port)).await {
         Ok(x) => x,
@@ -121,6 +123,7 @@ pub async fn serve(port: u16, open_browser: bool) -> Result<(), ServerError> {
     }
     write_json_atomic(&root.join("state/engine.json"), &info)?;
     service.account_service.start_account_polling();
+    service.start_scheduler();
     println!("antiquota on {} (Ctrl-C to stop)", info.url);
     if open_browser {
         open_url(&info.url);

@@ -51,6 +51,10 @@ impl Service {
         for attachment in attachments {
             prompt.push_str(&format!("\nAttached file: {}", attachment.path));
         }
+        if state.meta.conversation_id.is_none() {
+            // The request itself stays last.
+            prompt = format!("{}\n\n{prompt}", antiquota_core::jobs::JOBS_HINT);
+        }
         Ok(prompt)
     }
 }
