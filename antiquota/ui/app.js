@@ -847,6 +847,7 @@ async function openSession(sid) {
   renderSessions();
   renderHeader();
   scrollEnd();
+  if (S.drawer && S.tab !== 'accounts') renderPane();  // changes and files follow the open session
   $('#side').classList.remove('open');
   $('#input').focus();
 }
@@ -1012,6 +1013,7 @@ const patch = fields => S.cur && api('PATCH', 'sessions/' + S.cur, fields).catch
 
 /* ---------- slash commands ---------- */
 const SLASH = [
+  ['/help', 'keyboard shortcuts and every command'],
   ['/goal', 'set a goal; empty opens the goal panel'],
   ['/clear', 'start a fresh agy conversation (the transcript stays)'],
   ['/compact', 'fresh conversation that starts from a summary of this one'],
@@ -1199,6 +1201,7 @@ async function slash(text) {
         await api('POST', `sessions/${m.id}/goal`, { objective: arg, verifier: true, verifier_model: S.defaults.verifier_model });
         return toast('Goal started');
       case '/stop': return stop();
+      case '/help': return showShortcuts();
       case '/clear': need(); await api('POST', `sessions/${m.id}/clear`); return toast('Fresh conversation from the next message');
       case '/compact': need(); await api('POST', `sessions/${m.id}/compact`); return toast('Compacted');
       case '/rewind': return rewindTo(+arg || 0);
@@ -1268,6 +1271,25 @@ async function slash(text) {
         toast('Unknown command ' + cmd);
     }
   } catch (e) { fail(e); }
+}
+
+/* ---------- keyboard shortcuts and commands (⌘/ or /help) ---------- */
+const KEYS = [['⌘N', 'new session'], ['⌘K', 'find a session or message'], ['⌘J', 'focus the message box'],
+  ['⌘⇧[  ⌘⇧]', 'previous / next session'], ['⌘B', 'show or hide the side panel'], ['⌘.', 'stop the running turn'],
+  ['⌘,', 'settings'], ['⌘/', 'this sheet'], ['Enter', 'send · ⇧Enter new line'], ['↑ ↓', 'earlier messages (empty box)'],
+  ['Esc', 'stop the running turn'], ['@', 'mention a file'], ['!', 'run a shell command'], ['#', 'add a note to GEMINI.md']];
+function showShortcuts() {
+  const mac = /Mac/.test(navigator.platform), k = s => mac ? s : s.replace(/⌘/g, 'Ctrl+').replace(/⇧/g, 'Shift+');
+  const dlg = h('dialog', { class: 'dlg keys-dlg', 'aria-label': 'Keyboard shortcuts' },
+    h('form', { method: 'dialog' },
+      h('h2', {}, 'Shortcuts and commands'),
+      h('div', { class: 'keys-grid' },
+        h('div', {}, h('h3', {}, 'Keys'), h('dl', {}, ...KEYS.flatMap(([a, b]) => [h('dt', {}, h('kbd', {}, k(a))), h('dd', {}, b)]))),
+        h('div', {}, h('h3', {}, 'Commands'), h('dl', {}, ...SLASH.flatMap(([c, d]) => [h('dt', {}, h('code', {}, c)), h('dd', {}, d)])))),
+      h('div', { class: 'actions' }, h('button', { class: 'primary' }, 'Close'))));
+  dlg.addEventListener('close', () => dlg.remove());
+  document.body.append(dlg);
+  dlg.showModal();
 }
 
 /* ---------- files: browse the session folder ---------- */
@@ -2150,6 +2172,17 @@ function wire() {
     if (mod && e.key.toLowerCase() === 'n') { e.preventDefault(); openNew(); }
     if (mod && e.key === '.') { e.preventDefault(); stop(); }
     if (mod && e.key === ',') { e.preventDefault(); openSettings(); }
+    if (mod && e.key === '/') { e.preventDefault(); showShortcuts(); }
+    if (mod && e.key.toLowerCase() === 'k') { e.preventDefault(); $('#search').focus(); $('#search').select(); }
+    if (mod && e.key.toLowerCase() === 'j') { e.preventDefault(); $('#input').focus(); }
+    if (mod && e.key.toLowerCase() === 'b' && !e.shiftKey) { e.preventDefault(); $('#drawer-btn').click(); }
+    if (mod && e.shiftKey && (e.key === '[' || e.key === ']' || e.key === '{' || e.key === '}')) {
+      e.preventDefault();
+      const list = [...document.querySelectorAll('#sessions .sess-row .sess')];
+      const at = list.findIndex(b => b.classList.contains('on'));
+      const next = list[(at + ((e.key === ']' || e.key === '}') ? 1 : -1) + list.length) % list.length];
+      next?.click();
+    }
     if (e.key === 'Escape' && !$('#settings').hidden && !document.querySelector('dialog[open]')) closeSettings();
   });
   setInterval(renderSessions, 60000);  // keep relative times fresh

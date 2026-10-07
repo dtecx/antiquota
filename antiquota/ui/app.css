@@ -917,3 +917,13 @@ label.check input { margin-top: 3px; accent-color: var(--baton); }
 .facts { display: flex; gap: 4px; padding-right: 4px; opacity: 0; }
 .frow:hover .facts, .facts:focus-within { opacity: 1; }
 .facts .btn.small { height: 20px; padding: 0 6px; font-size: 11px; }
+
+/* ---------- shortcuts sheet ---------- */
+.dlg.keys-dlg { width: min(860px, calc(100vw - 32px)); }
+.keys-grid { display: grid; grid-template-columns: 1fr 1.4fr; gap: 28px; max-height: 64vh; overflow: auto; }
+.keys-grid h3 { margin: 0 0 8px; }
+.keys-grid dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 14px; margin: 0; align-items: baseline; }
+.keys-grid dt { white-space: nowrap; }
+.keys-grid dd { margin: 0; color: var(--ink-3); font-size: 12.5px; }
+.keys-grid kbd, .keys-grid code { font: 11.5px var(--mono); color: var(--ink-2); padding: 1px 6px; border: 1px solid var(--rule-2); border-radius: 4px; background: var(--well); }
+@media (max-width: 680px) { .keys-grid { grid-template-columns: 1fr; } }
