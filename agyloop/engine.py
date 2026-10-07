@@ -41,7 +41,7 @@ VERDICT_RE = re.compile(r"^\W*VERDICT:\s*(DONE|NOT[_ ]DONE)\W*$", re.I | re.M)
 META_KEYS = {"id": "", "title": "", "cwd": "", "model": "", "effort": "", "mode": "default", "created": 0,
              "updated": 0, "status": "idle", "status_until": None, "conversation_id": None, "turns": 0,
              "queue": [], "goal": None, "last_slot": None, "usage": {"input": 0, "output": 0, "thinking": 0},
-             "context": 0, "pending_note": "", "jobs": [], "loop": None}
+             "context": 0, "pending_note": "", "jobs": [], "loop": None, "pinned": False, "archived": False}
 DENIED_NOTE = ("These commands were denied: headless agy cannot ask for permission, so the turn ended. "
                "Do not retry them or reword them; carry on without them: {cmds}")
 AUTO_CONTINUES = 2  # follow-ups after denials per user message, so a stuck agent cannot loop forever
@@ -321,8 +321,34 @@ class Engine:
                 if k == "mode" and fields[k] not in MODES:
                     raise ValueError(f"unknown mode: {fields[k]}")
                 s.meta[k] = fields[k]
+        for k in ("pinned", "archived"):
+            if k in fields:
+                s.meta[k] = bool(fields[k])
         self.save(s)
         return s.meta
+
+    def fork(self, sid):
+        """A new session in the same folder that starts from this one's handoff state."""
+        src = self.sessions[sid].meta
+        new = self.create(src["cwd"], src["model"], src["effort"], src["mode"], f"{src['title'] or 'Untitled'} (fork)")
+        self.inherit(new["id"], sid)
+        return self.sessions[new["id"]].meta
+
+    def search(self, q, limit=40):
+        """Sessions whose messages mention q (case-insensitive), newest first, with a snippet."""
+        q = (q or "").strip().lower()
+        if len(q) < 2:
+            return []
+        hits = []
+        for sid, s in self.sessions.items():
+            for e in reversed(self.events(sid)):
+                text = e.get("text") if e.get("t") in ("user", "assistant") else None
+                i = text.lower().find(q) if isinstance(text, str) else -1
+                if i >= 0:
+                    hits.append({"id": sid, "title": s.meta["title"], "cwd": s.meta["cwd"], "ts": e.get("ts", 0),
+                                 "who": e["t"], "snippet": ("…" if i > 60 else "") + text[max(0, i - 60):i + 100].replace("\n", " ")})
+                    break
+        return sorted(hits, key=lambda h: -h["ts"])[:limit]
 
     def delete(self, sid):
         self.stop(sid)
@@ -483,6 +509,11 @@ class Engine:
             if s.stop.is_set():
                 return False, "", []
             if slot is None:
+                held = [x for x in a.slots() if a.paused(x) and not a.walled_until(x, bucket)]
+                if held:
+                    self.notice(s, "wall", f"Every account with {pool} quota is paused ({', '.join(held)}). "
+                                           "Resume one in the Accounts panel, then send again.")
+                    return False, "", []
                 nxt = a.next_reset(bucket)
                 if not (m.get("goal") or {}).get("state") == "active":
                     self.notice(s, "wall", f"Every account is out of {pool} quota. Next reset {hhmm(nxt)}. "

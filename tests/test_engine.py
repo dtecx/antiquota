@@ -357,3 +357,24 @@ def test_handoff_state_and_picking_up_another_session(home, work):
     prompt = calls(work)[-1]["args"][1]
     assert "continuing work from an earlier agy-loop session" in prompt and "write the notes" in prompt
     assert prompt.rstrip().endswith("carry on")
+
+
+def test_paused_accounts_sit_out_and_sessions_pin_fork_search(home, work):
+    eng = Engine()
+    sid = eng.create(str(work), "gemini-3.8-flash-low")["id"]
+    a.set_paused(ONE, True)
+    assert a.rank("gemini") == [TWO] and a.overview()[0]["paused"]
+    eng.send(sid, "find the needle please")
+    finish(eng, sid)
+    assert calls(work)[-1]["slot"] == TWO
+    a.set_paused(TWO, True)
+    eng.send(sid, "again")
+    finish(eng, sid)
+    assert "paused" in [e for e in eng.events(sid) if e["t"] == "notice"][-1]["text"]
+    a.set_paused(ONE, False)
+    eng.update(sid, {"pinned": 1, "archived": True})
+    assert eng.sessions[sid].meta["pinned"] is True and eng.sessions[sid].meta["archived"] is True
+    hits = eng.search("NEEDLE")
+    assert hits and hits[0]["id"] == sid and "needle" in hits[0]["snippet"]
+    fork = eng.fork(sid)
+    assert fork["cwd"] == str(work) and fork["title"].endswith("(fork)") and "find the needle" in fork["pending_note"]

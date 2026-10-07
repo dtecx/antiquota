@@ -309,6 +309,17 @@ class Handler(BaseHTTPRequestHandler):
                 if b.get("decision") not in ("allow", "deny"):
                     raise ValueError("decision: allow or deny")
                 return e.approval_answer(aid, b["decision"], bool(b.get("always")), str(b.get("why", ""))[:500])
+            case ("POST", ["sessions", sid, "fork"]):
+                return e.fork(sid)
+            case ("GET", ["search"]):
+                return e.search((qs.get("q") or [""])[0])
+            case ("POST", ["accounts", name, "pause"]):
+                if name not in a.slots():
+                    raise KeyError(name)
+                a.set_paused(name, bool(b.get("on", True)))
+                accts = self.app.accounts()
+                e.publish(None, {"t": "accounts", "accounts": accts})
+                return accts
             case ("POST", ["sessions", sid, "steer"]):
                 return e.steer(sid)
             case ("POST", ["shutdown"]):

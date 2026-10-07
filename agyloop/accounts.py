@@ -556,6 +556,20 @@ def walled_until(slot, bucket):
     return t if t > time.time() else 0
 
 
+def paused(slot):
+    return os.path.exists(state("paused", slot))
+
+
+def set_paused(slot, on):
+    """Hold an account out of rotation (it still answers when picked by name)."""
+    p = state("paused", slot)
+    if on:
+        open(p, "w").close()
+    elif os.path.exists(p):
+        os.remove(p)
+    route(slot=slot, event="paused" if on else "resumed", why="by the user")
+
+
 def wall_reason(slot, bucket):
     try:
         with open(state("walls", f"{slot}.{bucket}")) as f:
@@ -602,6 +616,7 @@ def overview():
             os.close(fd)
         out.append({"slot": s, "busy": fd is None, "probed": q.get("at"), "quota": q.get("quota", {}),
                     "walls": {b: walled_until(s, b) for b in BUCKETS}, "why": {b: wall_reason(s, b) for b in BUCKETS},
+                    "paused": paused(s),
                     "verify": needs_verify(s), "today": today.get(s, {})})
     return out
 
@@ -764,7 +779,7 @@ def rank(bucket, prefer=None, strategy=None):
     conversation is warm there."""
     strategy = strategy or setting("rotation", "perishable")
     order = slots()
-    live = [s for s in order if not walled_until(s, bucket)]
+    live = [s for s in order if not walled_until(s, bucket) and not paused(s)]
     used = {}
     if strategy == "round-robin":
         for e in routes(400):
@@ -843,6 +858,9 @@ def probe_slot(slot):
         url = VERIFY_URL.search(r.stdout + r.stderr)
         if url and "eligib" in (r.stdout + r.stderr).lower():
             mark_verify(slot, url.group(0))
+            return None
+        if r.returncode != 0 and AUTH_RE.search(r.stdout + r.stderr):
+            mark_signed_out(slot)
             return None
         q = parse_quota(json.loads(r.stdout))
     except (subprocess.TimeoutExpired, ValueError, KeyError, TypeError):

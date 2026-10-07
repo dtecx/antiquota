@@ -802,3 +802,34 @@ a.path:hover { color: var(--baton); text-decoration-color: var(--baton); }
 .approval.done.ok .k { color: var(--ok); }
 .approval.done.no .k { color: var(--bad); }
 .msg-user.steered .who { color: var(--baton); }
+
+.dlg.ask { width: min(440px, calc(100vw - 32px)); }
+.ask-msg { margin: 0 0 18px; color: var(--ink-2); font-size: 13px; line-height: 1.55; }
+.primary.danger { background: var(--bad); border-color: var(--bad); color: #1c0d0a; }
+
+/* ---------- session rows: ⋯ menu, pinned, archived, search hits ---------- */
+.sess-row { position: relative; }
+.sess-row .sess { padding-right: 26px; }
+.sess-more {
+  position: absolute; right: 4px; top: 4px; width: 22px; height: 22px; border: 0; border-radius: 4px; background: none;
+  color: var(--ink-4); font: 600 13px/1 var(--sans); opacity: 0; transition: opacity .12s var(--ease);
+}
+.sess-row:hover .sess-more, .sess-more:focus-visible { opacity: 1; }
+.sess-more:hover { background: var(--rule-2); color: var(--ink); }
+.sess-row:hover .sess .when { visibility: hidden; }
+.sess.archived .t { color: var(--ink-4); }
+.sess .sub.attn { color: var(--baton); }
+.sess.found .sub { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.show-archived { margin: 6px 8px; border: 0; background: none; color: var(--ink-4); font: 11px var(--mono); text-align: left; }
+.show-archived:hover { color: var(--ink-2); }
+.ctx {
+  position: fixed; z-index: 30; min-width: 220px; padding: 4px; display: grid;
+  border: 1px solid var(--rule-2); border-radius: var(--r-md); background: var(--night-2);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .45);
+}
+.ctx button { text-align: left; padding: 6px 10px; border: 0; border-radius: 4px; background: none; color: var(--ink-2); font-size: 13px; }
+.ctx button:hover, .ctx button:focus-visible { background: var(--rule-2); color: var(--ink); outline: none; }
+.ctx button.danger { color: var(--bad); }
+.ctx hr { border: 0; border-top: 1px solid var(--rule); margin: 4px 2px; }
+.paused-tag { margin-left: 8px; font: 500 10.5px var(--mono); font-style: normal; color: var(--ink-3); padding: 1px 6px; border: 1px solid var(--rule-2); border-radius: 999px; }
+.acct.paused { opacity: .45; }

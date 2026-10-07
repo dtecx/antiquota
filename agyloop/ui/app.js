@@ -10,6 +10,22 @@ const $ = (s, el = document) => el.querySelector(s);
 const NATIVE = window.__TAURI__ || null;
 const openExternal = url => NATIVE ? NATIVE.opener.openUrl(url) : window.open(url, '_blank', 'noopener');
 const readClipboard = () => NATIVE ? NATIVE.clipboardManager.readText() : navigator.clipboard.readText();
+/* In-app confirmation: the same everywhere (the app's web view may not show window.confirm). */
+function ask(message, { ok = 'Continue', danger = false, title = '' } = {}) {
+  return new Promise(resolve => {
+    const dlg = h('dialog', { class: 'dlg ask', 'aria-label': title || 'Confirm' });
+    const done = v => { dlg.close(); dlg.remove(); resolve(v); };
+    dlg.append(h('form', { method: 'dialog', onsubmit: e => { e.preventDefault(); done(true); } },
+      title ? h('h2', {}, title) : null,
+      h('p', { class: 'ask-msg' }, message),
+      h('div', { class: 'actions' },
+        h('button', { type: 'button', class: 'ghost', onclick: () => done(false) }, 'Cancel'),
+        h('button', { type: 'submit', class: danger ? 'primary danger' : 'primary', autofocus: '' }, ok))));
+    dlg.addEventListener('cancel', e => { e.preventDefault(); done(false); });
+    document.body.append(dlg);
+    dlg.showModal();
+  });
+}
 async function saveText(name, text, type = 'text/markdown') {
   if (NATIVE) {
     const where = await NATIVE.core.invoke('save_file', { name, contents: text });
@@ -173,39 +189,95 @@ const ICON = {
 };
 
 /* ---------- sessions list ---------- */
+function sessItem(m) {
+  const g = m.goal;
+  const goalOn = g && g.state === 'active';
+  let sub = '';
+  if (m.status === 'sleeping') sub = 'sleeping until ' + clock(m.status_until);
+  else if (m.status === 'approval') sub = '● needs your approval';
+  else if (g) sub = `◎ ${g.state === 'active' ? 'round ' + g.round + '/' + g.max_rounds : g.state}`;
+  return h('div', { class: 'sess-row', oncontextmenu: e => { e.preventDefault(); sessMenu(m, e.clientX, e.clientY); } },
+    h('button', {
+      class: 'sess' + (m.id === S.cur ? ' on' : '') + (m.archived ? ' archived' : ''), title: m.title || 'Untitled',
+      onclick: () => openSession(m.id),
+    },
+    h('span', { class: `dot ${m.status}${goalOn ? ' goal' : ''}` }),
+    h('span', { class: 't' }, (m.pinned ? '◆ ' : '') + (m.title || 'Untitled')),
+    h('span', { class: 'when' }, ago(m.updated)),
+    sub && h('span', { class: 'sub' + (m.status === 'approval' ? ' attn' : '') }, sub)),
+    h('button', {
+      class: 'sess-more', title: 'More', 'aria-label': 'Session actions',
+      onclick: e => { const r = e.currentTarget.getBoundingClientRect(); sessMenu(m, r.left, r.bottom + 4); },
+    }, '⋯'));
+}
 function renderSessions() {
   const q = $('#search').value.trim().toLowerCase();
-  const list = [...S.sessions.values()]
+  const all = [...S.sessions.values()];
+  const archived = all.filter(m => m.archived).length;
+  const list = all
+    .filter(m => (S.showArchived || !m.archived || m.id === S.cur))
     .filter(m => !q || (m.title || '').toLowerCase().includes(q) || m.cwd.toLowerCase().includes(q))
     .sort((a, b) => b.updated - a.updated);
   const groups = new Map();
-  for (const m of list) {
+  const pinned = list.filter(m => m.pinned);
+  if (pinned.length) groups.set('\u0000pinned', pinned);
+  for (const m of list.filter(m => !m.pinned)) {
     if (!groups.has(m.cwd)) groups.set(m.cwd, []);
     groups.get(m.cwd).push(m);
   }
   const nav = $('#sessions');
   nav.replaceChildren();
-  if (!list.length) nav.append(h('div', { class: 'relay-empty' }, q ? 'No match.' : 'No sessions yet.'));
+  if (!list.length) nav.append(h('div', { class: 'relay-empty' }, q ? 'No title matches.' : 'No sessions yet.'));
   for (const [cwd, ms] of groups) {
-    nav.append(h('div', { class: 'group' },
-      h('div', { class: 'group-name', title: cwd }, cwd.split('/').pop() || cwd),
-      ms.map(m => {
-        const g = m.goal;
-        const goalOn = g && g.state === 'active';
-        let sub = '';
-        if (m.status === 'sleeping') sub = 'sleeping until ' + clock(m.status_until);
-        else if (g) sub = `◎ ${g.state === 'active' ? 'round ' + g.round + '/' + g.max_rounds : g.state}`;
-        return h('button', {
-          class: 'sess' + (m.id === S.cur ? ' on' : ''), title: m.title || 'Untitled',
-          onclick: () => openSession(m.id),
-        },
-        h('span', { class: `dot ${m.status}${goalOn ? ' goal' : ''}` }),
-        h('span', { class: 't' }, m.title || 'Untitled'),
-        h('span', { class: 'when' }, ago(m.updated)),
-        sub && h('span', { class: 'sub' }, sub));
-      })));
+    const name = cwd === '\u0000pinned' ? 'Pinned' : cwd.split(/[\\/]/).pop() || cwd;
+    nav.append(h('div', { class: 'group' }, h('div', { class: 'group-name', title: cwd === '\u0000pinned' ? '' : cwd }, name),
+      ms.map(sessItem)));
   }
+  if (q.length >= 2) nav.append(h('div', { class: 'group', id: 'found' }, h('div', { class: 'group-name' }, 'In messages'),
+    h('div', { class: 'relay-empty' }, 'Searching…')));
+  if (archived) nav.append(h('button', { class: 'show-archived', onclick: () => { S.showArchived = !S.showArchived; renderSessions(); } },
+    S.showArchived ? 'Hide archived' : `Show archived (${archived})`));
+  if (q.length >= 2) searchMessages(q);
 }
+let searchSeq = 0;
+async function searchMessages(q) {
+  const seq = ++searchSeq;
+  await new Promise(r => setTimeout(r, 220));
+  if (seq !== searchSeq) return;
+  let hits = [];
+  try { hits = await api('GET', 'search?q=' + encodeURIComponent(q)); } catch { return; }
+  const box = $('#found');
+  if (seq !== searchSeq || !box) return;
+  box.replaceChildren(h('div', { class: 'group-name' }, 'In messages'),
+    ...(hits.length ? hits.map(x => h('button', { class: 'sess found', title: x.cwd, onclick: () => openSession(x.id) },
+      h('span', { class: 'dot' }), h('span', { class: 't' }, x.title || 'Untitled'), h('span', { class: 'when' }, ago(x.ts)),
+      h('span', { class: 'sub' }, (x.who === 'user' ? 'you: ' : 'agy: ') + x.snippet))) : [h('div', { class: 'relay-empty' }, 'Nothing found.')]));
+}
+/* Right-click or ⋯ on a session. */
+function sessMenu(m, x, y) {
+  closeMenu();
+  const act = (label, fn, cls = '') => h('button', { class: cls, role: 'menuitem', onclick: () => { closeMenu(); fn(); } }, label);
+  const menu = h('div', { class: 'ctx', id: 'ctx', role: 'menu' },
+    act('Rename', async () => { await openSession(m.id); $('#title').click(); }),
+    act(m.pinned ? 'Unpin' : 'Pin to top', () => api('PATCH', 'sessions/' + m.id, { pinned: !m.pinned }).catch(fail)),
+    act('Fork: new session from its state', async () => {
+      try { const f = await api('POST', `sessions/${m.id}/fork`); S.sessions.set(f.id, f); await openSession(f.id); toast('Forked: the next message starts from its handoff state'); } catch (e) { fail(e); }
+    }),
+    act(m.archived ? 'Unarchive' : 'Archive', () => api('PATCH', 'sessions/' + m.id, { archived: !m.archived }).catch(fail)),
+    h('hr'),
+    act('Delete…', async () => {
+      if (await ask('The transcript and its handoff state are deleted. Files in the project stay.',
+        { title: `Delete "${m.title || 'Untitled'}"?`, ok: 'Delete', danger: true })) api('DELETE', 'sessions/' + m.id).catch(fail);
+    }, 'danger'));
+  document.body.append(menu);
+  const r = menu.getBoundingClientRect();
+  menu.style.left = Math.min(x, innerWidth - r.width - 8) + 'px';
+  menu.style.top = Math.min(y, innerHeight - r.height - 8) + 'px';
+  menu.querySelector('button').focus();
+  setTimeout(() => document.addEventListener('mousedown', outsideMenu), 0);
+}
+function outsideMenu(e) { if (!e.target.closest('#ctx')) closeMenu(); }
+function closeMenu() { $('#ctx')?.remove(); document.removeEventListener('mousedown', outsideMenu); }
 
 /* ---------- the relay: accounts and their quota ---------- */
 function minFrac(windows) {
@@ -229,7 +301,7 @@ function renderRelay() {
       ? h('div', { class: 'acct verify', title: `${acct.slot}: Google wants this account verified before Antigravity serves it` },
         h('span', { class: 'name' }, who(acct.slot)),
         h('button', { class: 'verify-chip', onclick: () => showDrawer('accounts') }, 'needs verification'))
-      : h('div', { class: 'acct', title: acct.busy ? acct.slot + ' is running a call' : acct.slot },
+      : h('div', { class: 'acct' + (acct.paused ? ' paused' : ''), title: acct.paused ? acct.slot + ' is paused' : acct.busy ? acct.slot + ' is running a call' : acct.slot },
         h('span', { class: 'name' + (acct.busy ? ' busy' : '') }, who(acct.slot)),
         gauge('gemini', acct, 'gemini'), gauge('claude', acct, 'cg')));
   }
@@ -625,7 +697,8 @@ function paint(st) {
 async function rewindTo(turn) {
   const m = cur();
   if (!m || !turn) return toast('Which turn? /rewind <turn number>');
-  if (!confirm(`Put every file the agent changed in turn ${turn} and later back as it was before turn ${turn}?`)) return;
+  if (!await ask(`Every file the agent changed in turn ${turn} and later goes back to how it was before turn ${turn}.`,
+    { title: `Rewind to before turn ${turn}?`, ok: 'Rewind' })) return;
   try {
     const r = await api('POST', `sessions/${m.id}/rewind`, { turn });
     toast(`Rewound ${r.files.length} file${r.files.length > 1 ? 's' : ''}`);
@@ -1151,7 +1224,8 @@ async function slash(text) {
       case '/settings': return openSettings();
       case '/delete':
         need();
-        if (confirm(`Delete "${m.title || 'Untitled'}" and its transcript?`)) await api('DELETE', 'sessions/' + m.id);
+        if (await ask('The transcript and its handoff state are deleted. Files in the project stay.',
+          { title: `Delete "${m.title || 'Untitled'}"?`, ok: 'Delete', danger: true })) await api('DELETE', 'sessions/' + m.id);
         return;
       default:
         toast('Unknown command ' + cmd);
@@ -1210,7 +1284,7 @@ async function renderPane() {
       h('p', { class: 'cap' }, ROTATION_CAP[S.defaults.rotation || 'perishable'] + ' A session stays on its account while it has headroom; below 3% it moves on before failing mid-turn. A spent pool is walled until its reset; a short rate limit only rests the account.'),
       !S.accounts.length && h('p', { class: 'cap' }, 'No account yet. Add one: agy-loop signs it in separately from your agy CLI.'),
       ...S.accounts.map(acct => h('div', { class: 'card' + (acct.verify ? ' verify' : '') },
-        h('div', { class: 'card-head' }, h('b', {}, acct.slot),
+        h('div', { class: 'card-head' }, h('b', {}, acct.slot, acct.paused ? h('em', { class: 'paused-tag' }, 'paused') : null),
           h('span', {}, (acct.busy ? 'running · ' : '') + (acct.probed ? 'probed ' + ago(acct.probed) : 'not probed'))),
         acct.verify && verifyBlock(acct.slot, acct.verify),
         acct.today && acct.today.turns ? h('div', { class: 'today', title: 'Tokens this account used today through agy-loop' },
@@ -1223,9 +1297,14 @@ async function renderPane() {
             h('div', { class: 'bar' + (frac <= .02 ? ' wall' : frac < .2 ? ' low' : '') }, h('i', { style: `width:${Math.max(2, frac * 100)}%` })),
             h('span', { class: 'pct' }, Math.round(frac * 100) + '%'))))),
         h('div', { class: 'card-acts' },
+          h('button', { class: 'btn small', title: acct.paused ? 'Put it back into rotation' : 'Keep it out of rotation (for example to save it for something else)',
+            onclick: () => api('POST', `accounts/${encodeURIComponent(acct.slot)}/pause`, { on: !acct.paused }).then(a => { S.accounts = a; renderRelay(); }).catch(fail) },
+            acct.paused ? 'Resume' : 'Pause'),
+          h('button', { class: 'btn small', title: 'Read its quota and sign-in state now', onclick: () => api('POST', `accounts/${encodeURIComponent(acct.slot)}/check`).then(a => { S.accounts = a; renderRelay(); toast('Checked ' + acct.slot); }).catch(fail) }, 'Check'),
           h('button', { class: 'btn small', title: 'Sign in with the same Google account again (expired token)', onclick: () => openAcct() }, 'Sign in again'),
           h('button', {
-            class: 'btn small', onclick: () => confirm(`Remove ${acct.slot} from agy-loop? Your agy CLI keeps its own sign-in. You can add it again later.`)
+            class: 'btn small', onclick: async () => await ask('Your agy CLI keeps its own sign-in. You can add the account again later.',
+              { title: `Remove ${acct.slot}?`, ok: 'Remove', danger: true })
               && api('DELETE', 'accounts/' + encodeURIComponent(acct.slot)).then(() => toast('Removed ' + acct.slot)).catch(fail),
           }, 'Remove')))),
       h('div', { class: 'add-row' },
@@ -1244,6 +1323,8 @@ async function renderPane() {
         cooldown: [`◌ ${short(e.slot)}`, `${e.why}, rests ${Math.round(e.secs / 60) || 1} min`],
         retry: [`↻ ${short(e.slot)}`, `temporary error, retry in ${e.wait}s`],
         'signed-out': [`✕ ${short(e.slot)}`, 'sign-in rejected: sign in again'],
+        paused: [`⏸ ${short(e.slot)}`, 'paused by you'],
+        resumed: [`▶ ${short(e.slot)}`, 'resumed by you'],
       })[e.event] || [e.event, e.slot || ''];
       box.replaceChildren(...(rows.length ? rows.slice().reverse().map(e => {
         const [k, text] = line(e);
@@ -1542,7 +1623,7 @@ function itemRow(kind, r, sources) {
       (r.here ? 'Replace from ' : 'Copy from ') + SRC[src])),
     r.here && h('button', {
       class: 'btn small danger',
-      onclick: () => confirm(`Delete ${kind} "${r.name}" from agy-loop? Your agy CLI and the IDE keep theirs.`)
+      onclick: async () => await ask('Your agy CLI and the IDE keep theirs.', { title: `Delete ${kind} "${r.name}" from agy-loop?`, ok: 'Delete', danger: true })
         && api('DELETE', `settings/${kind}/${enc}`).then(reload).catch(fail),
     }, 'Delete'),
   ];
@@ -1618,7 +1699,8 @@ const RENDER = {
       h('h3', {}, 'agy-loop stack'),
       h('p', { class: 'cap' }, `Every agy-loop account runs with ${d.path.replace(/^\/Users\/[^/]+/, '~')}: your rules, skills, hooks, MCP servers, plugins and permissions, copied. Edits here never touch ~/.gemini (your agy CLI) or the Antigravity IDE, and theirs only arrive when you copy them.`),
       h('div', { class: 'add-row' }, h('button', {
-        class: 'btn', onclick: () => confirm("Replace agy-loop's whole config with a fresh copy of your agy CLI setup? Edits made here are lost; conversations stay.") && doCopy('cli', 'everything'),
+        class: 'btn', onclick: async () => await ask('Edits made here are lost; conversations stay.',
+          { title: "Replace agy-loop's config with a fresh copy of your agy CLI setup?", ok: 'Replace', danger: true }) && doCopy('cli', 'everything'),
       }, 'Copy everything again from agy CLI'))),
   ],
   rules: d => [
@@ -1763,12 +1845,13 @@ function wire() {
   $('#model').addEventListener('change', () => patch({ model: pickFamily($('#model'), $('#effort'), cur()?.model || S.defaults.model) }));
   $('#effort').addEventListener('change', e => patch({ model: e.target.value }));
   $('#new-model').addEventListener('change', () => pickFamily($('#new-model'), $('#new-effort'), $('#new-effort').value));
-  $('#mode').addEventListener('change', e => {
-    if (e.target.value === 'bypass' && !confirm('Bypass lets the agent run any command and edit any file without asking. Continue?')) {
-      e.target.value = cur()?.mode || 'default';
-      return;
-    }
-    patch({ mode: e.target.value });
+  $('#mode').addEventListener('change', async e => {
+    const want = e.target.value;
+    e.target.value = cur()?.mode || 'default';
+    if (want === 'bypass' && !await ask('The agent runs any command and edits any file without asking you.',
+      { title: 'Switch to bypass?', ok: 'Bypass', danger: true })) return;
+    e.target.value = want;
+    patch({ mode: want });
   });
   $('#goal-btn').addEventListener('click', openGoal);
   $('#new-btn').addEventListener('click', () => openNew());
@@ -1864,6 +1947,7 @@ function wire() {
   });
   title.addEventListener('blur', () => finish(true));
 
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#ctx')) { e.preventDefault(); closeMenu(); } }, true);
   document.addEventListener('keydown', e => {
     const mod = e.metaKey || e.ctrlKey;
     if (mod && e.key.toLowerCase() === 'n') { e.preventDefault(); openNew(); }
