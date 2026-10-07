@@ -377,11 +377,14 @@ def _command_rules(rules):
 # runs other programs: an allow rule never covers them, so they still ask.
 RISKY = re.compile(r"^find\b.*\s-(exec|execdir|ok|okdir|delete|fprint\w*)\b"
                    r"|^git\s+push\b.*\s(--force\S*|-f|--delete|--mirror|-d)\b|^git\s+push\b.*\s:\S"
-                   r"|^sed\b.*\s-i|^git\s+(reset\s+--hard|clean\s+-\w*f|checkout\s+--\s|branch\s+-D|stash\s+(drop|clear))\b")
+                   r"|^sed\b.*\s-i|^git\s+(reset\s+--hard|checkout\s+--\s|stash\s+(drop|clear))\b"
+                   r"|^git\s+clean\b.*\s(-\w*f\w*|--force)\b|^git\s+branch\b.*\s(-\w*[Df]\w*|--force)\b")
 
 
 SEPARATORS = {"&&", "||", ";", "|", "&", "|&", ";;", "\n"}
-REDIRECTS = {">", ">>", ">|", "&>", "&>>"}
+REDIRECTS = {">", ">>", ">|", "&>", "&>>", "<>"}
+SEPARATOR_CHARS, PUNCTUATION = set("\n;&|"), set("();<>|&\n")
+INLINE = {"<", "<<", "<<<", "(", ")"}  # input redirection and grouping stay inside a command
 
 
 def _command_parts(cmd):
@@ -398,11 +401,18 @@ def _command_parts(cmd):
         return None
     parts, cur = [], []
     for i, tok in enumerate(tokens):
-        if tok in SEPARATORS:
+        nxt = tokens[i + 1] if i + 1 < len(tokens) else None
+        chars = set(tok)
+        # A run such as a blank line, ";\n" or "&&\n" separates commands like a single operator.
+        if tok in SEPARATORS or (tok and chars <= SEPARATOR_CHARS | {"(", ")"} and chars & SEPARATOR_CHARS):
             parts.append(cur)
             cur = []
             continue
-        if tok in REDIRECTS and (i + 1 >= len(tokens) or tokens[i + 1] != "/dev/null"):
+        if tok in REDIRECTS and nxt != "/dev/null":
+            return None
+        if tok in (">&", "<&") and not (nxt == "-" or (nxt or "").isdigit()):
+            return None  # `>& file` writes a file; 2>&1 only duplicates a descriptor
+        if tok and chars <= PUNCTUATION and tok not in REDIRECTS | INLINE | {">&", "<&"}:
             return None
         cur.append(tok)
     parts.append(cur)
