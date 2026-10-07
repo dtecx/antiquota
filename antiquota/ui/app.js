@@ -428,8 +428,8 @@ function renderJobbar() {
     lp && h('div', { class: 'job loop' },
       h('span', { class: 'g' }, '↻'),
       h('code', { title: lp.prompt }, lp.prompt),
-      h('span', { class: 'jm' }, `every ${fmtEvery(lp.every)} · next ${clock(lp.next)}`),
-      h('button', { class: 'btn small', onclick: () => api('DELETE', `sessions/${m.id}/loop`).then(() => toast('Loop stopped')).catch(fail) }, 'Stop loop')));
+      h('span', { class: 'jm' }, (lp.at ? `daily at ${lp.at}` : `every ${fmtEvery(lp.every)}`) + ` · next ${new Date(lp.next * 1000).toLocaleString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' })}`),
+      h('button', { class: 'btn small', onclick: () => api('DELETE', `sessions/${m.id}/loop`).then(() => toast(lp.at ? 'Schedule removed' : 'Loop stopped')).catch(fail) }, lp.at ? 'Remove' : 'Stop loop')));
 }
 const elapsed = t => { const s = Math.max(0, Date.now() / 1000 - t) | 0; return s < 3600 ? `${s / 60 | 0}m${String(s % 60).padStart(2, '0')}s` : `${s / 3600 | 0}h${String((s / 60 | 0) % 60).padStart(2, '0')}m`; };
 const fmtEvery = s => s % 3600 === 0 ? s / 3600 + 'h' : s % 60 === 0 ? s / 60 + 'm' : s + 's';
@@ -1018,6 +1018,7 @@ const SLASH = [
   ['/init', 'have agy write a GEMINI.md that explains this project'],
   ['/bg', 'run a command in the background; agy gets its log when it exits: /bg <command>'],
   ['/loop', 'send a prompt now and every interval while idle: /loop 15m <prompt> · /loop off'],
+  ['/schedule', 'send a prompt every day at a time: /schedule 03:00 <prompt> · /schedule off'],
   ['/memory', 'show this project\'s GEMINI.md (add lines with # note)'],
   ['/state', 'show the handoff state antiquota keeps for this session'],
   ['/stop', 'stop the running turn, pause the goal'],
@@ -1221,6 +1222,13 @@ async function slash(text) {
         need();
         const r = await api('GET', `sessions/${m.id}/state`);
         return showFile({ rel: 'handoff state · ' + (m.title || m.id), path: 'STATE.md', text: r.text });
+      }
+      case '/schedule': {
+        need();
+        if (!arg || /^(off|stop)$/i.test(arg)) { await api('DELETE', `sessions/${m.id}/loop`); return toast('Schedule removed'); }
+        const [at, ...p] = arg.split(/\s+/);
+        const r = await api('POST', `sessions/${m.id}/loop`, { at, prompt: p.join(' ') });
+        return toast(`Every day at ${at}; next ${new Date(r.next * 1000).toLocaleString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' })}`);
       }
       case '/memory': {
         need();

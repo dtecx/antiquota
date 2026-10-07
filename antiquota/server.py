@@ -365,6 +365,9 @@ class Handler(BaseHTTPRequestHandler):
             case ("GET", ["sessions", sid, "jobs", jid, "log"]):
                 return e.job_log(sid, jid)
             case ("POST", ["sessions", sid, "loop"]):
+                if b.get("at"):
+                    e.set_loop(sid, 0, str(b.get("prompt", "")), at=str(b["at"]))
+                    return {"ok": True, "next": e.sessions[sid].meta["loop"]["next"]}
                 every = e_interval(b.get("every"))
                 if not every:
                     raise ValueError("interval like 15m, 1h or 90s")

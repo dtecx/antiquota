@@ -139,6 +139,19 @@ def parse_interval(text, unit="m"):
     return int(float(m.group(1)) * {"s": 1, "m": 60, "h": 3600}[(m.group(2) or unit).lower()])
 
 
+def next_at(hhmm, now=None):
+    """The next local time a daily "HH:MM" schedule fires (later today, or tomorrow)."""
+    from datetime import datetime, timedelta
+    m = re.fullmatch(r"([01]?\d|2[0-3]):([0-5]\d)", str(hhmm or "").strip())
+    if not m:
+        raise ValueError("time like 03:00 or 18:30")
+    now = datetime.fromtimestamp(now or time.time())
+    when = now.replace(hour=int(m.group(1)), minute=int(m.group(2)), second=0, microsecond=0)
+    if when <= now:
+        when += timedelta(days=1)
+    return when.timestamp()
+
+
 def pid_alive(pid):
     if os.name == "nt":
         out = subprocess.run(["tasklist", "/FI", f"PID eq {pid}", "/NH"], capture_output=True, text=True).stdout
@@ -888,14 +901,18 @@ class Engine:
         job = next(j for j in self.sessions[sid].meta["jobs"] if j["id"] == jid)
         return {**job, "text": tail(job["log"], 200_000)}
 
-    def set_loop(self, sid, every, prompt):
-        """Send `prompt` now and then every `every` seconds while the session is idle (Stop pauses it)."""
+    def set_loop(self, sid, every, prompt, at=None):
+        """Send `prompt` now and then every `every` seconds while the session is idle (Stop pauses it),
+        or, with `at` ("HH:MM"), every day at that local time."""
         s = self.sessions[sid]
-        if every and not str(prompt).strip():
-            raise ValueError("what should the loop send? /loop 10m <prompt>")
-        s.meta["loop"] = {"every": max(LOOP_MIN, int(every)), "prompt": prompt.strip(), "next": time.time()} if every else None
+        if (every or at) and not str(prompt).strip():
+            raise ValueError("what should it send? /loop 10m <prompt> or /schedule 03:00 <prompt>")
+        if at:
+            s.meta["loop"] = {"every": 86400, "at": at, "prompt": prompt.strip(), "next": next_at(at)}
+        else:
+            s.meta["loop"] = {"every": max(LOOP_MIN, int(every)), "prompt": prompt.strip(), "next": time.time()} if every else None
         self.save(s)
-        if every:
+        if every or at:
             s.stop.clear()
 
     def busy_count(self):
@@ -925,7 +942,7 @@ class Engine:
             for sid, s in list(self.sessions.items()):
                 lp = s.meta.get("loop")
                 if lp and time.time() >= lp["next"] and not s.busy and not s.stop.is_set():
-                    s.meta["loop"] = {**lp, "next": time.time() + lp["every"]}
+                    s.meta["loop"] = {**lp, "next": next_at(lp["at"]) if lp.get("at") else time.time() + lp["every"]}
                     self.save(s)
                     self.send(sid, lp["prompt"], kind="loop")
 

@@ -394,3 +394,21 @@ def test_plan_mode_plans_by_instruction_and_usage_history(home, work):
     h = a.usage_history(3)
     assert len(h["days"]) == 3 and h["days"][-1]["total"] == 110 and h["days"][-1]["turns"] == 1
     assert h["accounts"][calls(work)[-1]["slot"]]["today"] == 110
+
+
+def test_daily_schedule_fires_at_its_time(home, work):
+    from datetime import datetime
+    from antiquota.engine import next_at
+    base = datetime(2026, 10, 7, 10, 0).timestamp()
+    assert datetime.fromtimestamp(next_at("03:00", base)).strftime("%d %H:%M") == "08 03:00"  # tomorrow
+    assert datetime.fromtimestamp(next_at("18:30", base)).strftime("%d %H:%M") == "07 18:30"  # later today
+    eng = Engine()
+    sid = eng.create(str(work), "gemini-3.8-flash-low")["id"]
+    eng.set_loop(sid, 0, "nightly check", at="03:00")
+    lp = eng.sessions[sid].meta["loop"]
+    assert lp["at"] == "03:00" and lp["next"] > time.time() and not eng.sessions[sid].busy  # waits for its time
+    try:
+        eng.set_loop(sid, 0, "x", at="25:99")
+        assert False
+    except ValueError:
+        pass
