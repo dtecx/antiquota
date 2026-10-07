@@ -20,11 +20,11 @@ def test_policy_sorts_tools_by_risk(home):
 
 
 def test_allow_rules_never_cover_risky_flags(home):
-    for r in ("command(find)", "command(git push)", "command(sed)", "command(git reset)"):
+    for r in ("command(find)", "command(git push)", "command(sed)", "command(git reset)", "command(git stash)"):
         stack.allow_rule(r)
     d = lambda cmd: policy.decide("default", "run_command", {"CommandLine": cmd})[0]
     assert d("find . -name '*.go'") == "allow" and d("git push origin main") == "allow"
     for cmd in ("find . -name '*.tmp' -delete", "find . -exec rm {} \;", "git push --force origin main",
                 "git push -f origin main", "git push origin :main", "git push origin --delete feature",
-                "sed -i '' s/a/b/ x.go", "git reset --hard HEAD~3", "ls && find / -delete"):
+                "sed -i '' s/a/b/ x.go", "git reset --hard HEAD~3", "git stash clear", "ls && find / -delete"):
         assert d(cmd) == "ask", cmd

@@ -376,7 +376,7 @@ def _command_rules(rules):
 # runs other programs: an allow rule never covers them, so they still ask.
 RISKY = re.compile(r"^find\b.*\s-(exec|execdir|ok|okdir|delete|fprint\w*)\b"
                    r"|^git\s+push\b.*\s(--force\S*|-f|--delete|--mirror|-d)\b|^git\s+push\b.*\s:\S"
-                   r"|^sed\b.*\s-i|^git\s+(reset\s+--hard|clean\s+-\w*f|checkout\s+--\s|branch\s+-D)\b")
+                   r"|^sed\b.*\s-i|^git\s+(reset\s+--hard|clean\s+-\w*f|checkout\s+--\s|branch\s+-D|stash\s+(drop|clear))\b")
 
 
 def command_verdict(cmd):
