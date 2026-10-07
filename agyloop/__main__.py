@@ -108,14 +108,13 @@ def cmd_unwall(target):
     return 0
 
 
-def cmd_gui(rest):
-    p = argparse.ArgumentParser(prog="agyloop gui")
-    p.add_argument("--port", type=int, default=8765)
+def cmd_gui(rest, open_browser=True):
+    p = argparse.ArgumentParser(prog="agyloop gui" if open_browser else "agyloop serve")
+    p.add_argument("--port", type=int, default=8765, help="0 picks a free port")
     p.add_argument("--no-open", action="store_true", help="do not open a browser")
     o = p.parse_args(rest)
     from .server import serve
-    serve(o.port, not o.no_open)
-    return 0
+    return serve(o.port, open_browser and not o.no_open)
 
 
 def _print_event(ev, cwd):
@@ -183,6 +182,11 @@ def main(argv=None):
         return a.run(rest, pin)
     if cmd == "gui":
         return cmd_gui(rest)
+    if cmd == "serve":  # the engine alone, for the desktop app or a service manager
+        return cmd_gui(rest, open_browser=False)
+    if cmd == "hook":  # agy runs this (the bundled engine has no separate hook.py)
+        from .hook import main as hook_main
+        return hook_main(rest)
     if cmd == "goal":
         return cmd_goal(rest)
     if cmd == "login" and not rest:

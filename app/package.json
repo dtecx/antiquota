@@ -1,0 +1,15 @@
+{
+  "name": "agyloop-app",
+  "private": true,
+  "version": "0.5.0",
+  "description": "agy-loop desktop app: a native shell around the agy-loop engine",
+  "scripts": {
+    "tauri": "tauri",
+    "dev": "tauri dev",
+    "build": "sh scripts/build-app.sh",
+    "engine": "sh scripts/build-engine.sh"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.12.1"
+  }
+}

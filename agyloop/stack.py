@@ -325,3 +325,87 @@ def set_defaults(values):
         raise ValueError("rotation: " + " · ".join(ROTATIONS))
     _save(os.path.join(a.base(), "settings.json"), d)
     return d
+
+
+# --- agy-loop's own permission rules and the hooks that ask the user -------------------
+
+def _settings_file():
+    return os.path.join(a.stack_home(), ".gemini", "antigravity-cli", "settings.json")
+
+
+def permissions():
+    p = _load(_settings_file()).get("permissions") or {}
+    return list(p.get("allow") or []), list(p.get("deny") or [])
+
+
+def _command_rules(rules):
+    return [r[len("command("):-1].strip() for r in rules if r.startswith("command(") and r.endswith(")")]
+
+
+def command_verdict(cmd):
+    """"allow" or "deny" when agy-loop's rules decide a shell command, else None.
+    A command line with several parts (&&, ||, ;, |) is allowed only when every part is."""
+    allow, deny = (_command_rules(r) for r in permissions())
+    parts = [p.strip() for p in re.split(r"&&|\|\||;|\|", cmd or "") if p.strip()]
+    hit = lambda part, rules: any(r == "*" or part == r or part.startswith(r + " ") for r in rules)
+    if not parts:
+        return None
+    if any(hit(p, deny) for p in parts):
+        return "deny"
+    if all(hit(p, allow) for p in parts):
+        return "allow"
+    return None
+
+
+# Tools whose first word says little: "Always allow" covers the first two words for these.
+TWO_WORD = {"npm", "npx", "pnpm", "yarn", "bun", "git", "cargo", "go", "uv", "pip", "pip3", "python", "python3",
+            "node", "make", "docker", "kubectl", "gh", "brew", "poetry", "dotnet", "mvn", "gradle"}
+
+
+def suggest_rule(cmd):
+    words = (cmd or "").strip().split()
+    if not words:
+        return ""
+    n = 2 if words[0] in TWO_WORD and len(words) > 1 and not words[1].startswith("-") else 1
+    return f"command({' '.join(words[:n])})"
+
+
+def allow_rule(rule):
+    d = _load(_settings_file())
+    allow = d.setdefault("permissions", {}).setdefault("allow", [])
+    if rule and rule not in allow:
+        allow.append(rule)
+        _save(_settings_file(), d)
+
+
+def hook_command(kind):
+    """How agy calls agy-loop's hook: the bundled engine itself, or this source tree's hook.py."""
+    import sys
+    if getattr(sys, "frozen", False):
+        parts = [sys.executable, "hook", kind]
+    else:
+        parts = [sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), "hook.py"), kind]
+    if os.name == "nt":
+        return subprocess.list2cmdline(parts)
+    import shlex
+    return " ".join(shlex.quote(p) for p in parts)
+
+
+def hook_enabled():
+    entry = _load(os.path.join(a.stack_home(), ".gemini", "config", "hooks.json")).get("agyloop")
+    return bool(entry) and entry.get("enabled", True) is not False
+
+
+def install_hooks(gated):
+    """Keep the "agyloop" hook entry in the stack current (paths change between installs).
+    Switching it off in Settings is respected."""
+    path = os.path.join(a.stack_home(), ".gemini", "config", "hooks.json")
+    d = _load(path)
+    old = d.get("agyloop") or {}
+    entry = {"PreToolUse": [{"matcher": gated, "hooks": [{"type": "command", "command": hook_command("pre-tool"),
+                                                         "timeout": 3600}]}],
+             "PreInvocation": [{"type": "command", "command": hook_command("pre-invocation"), "timeout": 15}],
+             "enabled": old.get("enabled", True)}
+    if old != entry:
+        d["agyloop"] = entry
+        _save(path, d)

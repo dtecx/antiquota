@@ -8,15 +8,17 @@ import json
 import os
 import queue
 import secrets
+import signal
 import subprocess
 import threading
+import time
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
 from . import accounts as a
 from . import stack
-from .engine import MODES, Engine
+from .engine import GATED_TOOLS, MODES, Engine
 from .engine import parse_interval as e_interval
 
 UI = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ui")
@@ -54,6 +56,8 @@ class App:
         self.port = port
         self.token = gui_token()
         self.engine = Engine()
+        a.seed_stack()
+        stack.install_hooks(GATED_TOOLS)  # approvals and mid-turn messages reach this engine
         self.models = []
         self.stack = None
         self.logins = {}
@@ -195,9 +199,11 @@ class App:
 
     def state(self):
         e = self.engine
+        from . import __version__
         return {"sessions": sorted((s.meta for s in e.sessions.values()), key=lambda m: -m["updated"]),
                 "accounts": self.accounts(), "models": self.models, "modes": list(MODES),
-                "defaults": {**stack.defaults(), "cwd": a.home()}}
+                "defaults": {**stack.defaults(), "cwd": a.home()},
+                "engine": {"version": __version__, "agy": a.find_agy(), "busy": e.busy_count()}}
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -245,6 +251,9 @@ class Handler(BaseHTTPRequestHandler):
         qs = parse_qs(u.query)
         if self.headers.get("Host") not in (f"127.0.0.1:{app.port}", f"localhost:{app.port}"):
             return self._json(403, {"error": "bad host"})
+        if method == "GET" and u.path == "/api/health":  # lets the app find its engine; no secrets in it
+            from . import __version__
+            return self._json(200, {"ok": True, "app": "agyloop", "version": __version__, "pid": os.getpid()})
         if method == "GET" and u.path in STATIC:
             name = STATIC[u.path]
             with open(os.path.join(UI, name), "rb") as f:
@@ -292,6 +301,21 @@ class Handler(BaseHTTPRequestHandler):
         match (method, parts):
             case ("GET", ["state"]):
                 return app.state()
+            case ("POST", ["approvals"]):
+                return e.approval_request(str(b.get("session", "")), str(b.get("tool", "")), b.get("args") or {})
+            case ("GET", ["approvals", aid]):
+                return e.approval_wait(aid, float((qs.get("wait") or ["25"])[0]))
+            case ("POST", ["approvals", aid, "answer"]):
+                if b.get("decision") not in ("allow", "deny"):
+                    raise ValueError("decision: allow or deny")
+                return e.approval_answer(aid, b["decision"], bool(b.get("always")), str(b.get("why", ""))[:500])
+            case ("POST", ["sessions", sid, "steer"]):
+                return e.steer(sid)
+            case ("POST", ["shutdown"]):
+                srv = getattr(Handler, "server_ref", None)
+                if srv:
+                    threading.Thread(target=srv.shutdown, daemon=True).start()
+                return {"ok": True}
             case ("POST", ["sessions"]):
                 d = stack.defaults()
                 return e.create(b.get("cwd") or a.home(), b.get("model") or d["model"], "",
@@ -461,13 +485,83 @@ def make_server(port):
     return srv
 
 
+def running_engine():
+    """{pid, port, url, version} of the engine already serving this agy-loop folder, or None."""
+    try:
+        with open(a.state("engine.json")) as f:
+            info = json.load(f)
+    except (OSError, ValueError):
+        return None
+    fd = _engine_lock()
+    if fd is not None:  # nobody holds the lock: the file is stale
+        os.close(fd)
+        return None
+    return info
+
+
+def _engine_lock():
+    fd = os.open(a.state("engine.lock"), os.O_RDWR | os.O_CREAT, 0o600)
+    try:
+        if a.fcntl:
+            a.fcntl.flock(fd, a.fcntl.LOCK_EX | a.fcntl.LOCK_NB)
+        else:
+            a.msvcrt.locking(fd, a.msvcrt.LK_NBLCK, 1)
+        return fd
+    except OSError:
+        os.close(fd)
+        return None
+
+
+def login_path():
+    """The PATH of the user's login shell. An app started from the Dock or Finder gets a bare
+    PATH, so commands like `python3` would resolve differently from the user's terminal."""
+    shell = os.environ.get("SHELL") or "/bin/zsh"
+    try:
+        r = subprocess.run([shell, "-ilc", 'printf "\\n__PATH__%s" "$PATH"'], capture_output=True, text=True,
+                           timeout=5, stdin=subprocess.DEVNULL)
+        return r.stdout.rsplit("__PATH__", 1)[1].strip() if "__PATH__" in r.stdout else None
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+
+
 def serve(port=8765, open_browser=True):
-    srv = make_server(port)
+    """Run the engine: one per agy-loop folder. A second start points at the first and exits."""
+    lock = _engine_lock()
+    if lock is None:
+        info = running_engine() or {}
+        url = info.get("url", "")
+        print(f"agyloop already runs on {url} (pid {info.get('pid')})")
+        if open_browser and url:
+            webbrowser.open(url)
+        return 0
+    if os.environ.get("AGYLOOP_FIX_PATH") and os.name != "nt":
+        found = login_path()
+        if found:
+            os.environ["PATH"] = found
+    try:
+        srv = make_server(port)
+    except OSError:  # the usual port is taken by something else: any free one will do
+        srv = make_server(0)
+    port = srv.server_address[1]
     url = f"http://127.0.0.1:{port}/"
-    print(f"agyloop GUI on {url}  (Ctrl-C to stop)")
+    from . import __version__
+    a.write_atomic(a.state("engine.json"), json.dumps({"pid": os.getpid(), "port": port, "url": url,
+                                                       "version": __version__, "started": time.time(),
+                                                       "by": os.environ.get("AGYLOOP_LAUNCHED_BY", "cli")}))
+    signal.signal(signal.SIGTERM, lambda *_: threading.Thread(target=srv.shutdown, daemon=True).start())
+    Handler.server_ref = srv
+    print(f"agyloop on {url}  (Ctrl-C to stop)", flush=True)
     if open_browser:
         webbrowser.open(url)
     try:
         srv.serve_forever()
     except KeyboardInterrupt:
         pass
+    finally:
+        Handler.app.engine.shutdown()
+        try:
+            os.remove(a.state("engine.json"))
+        except OSError:
+            pass
+        os.close(lock)
+    return 0

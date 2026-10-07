@@ -6,6 +6,21 @@
 
 const TOKEN = document.querySelector('meta[name="agyloop-token"]').content;
 const $ = (s, el = document) => el.querySelector(s);
+/* Inside the desktop app (Tauri), a few browser features go through native APIs instead. */
+const NATIVE = window.__TAURI__ || null;
+const openExternal = url => NATIVE ? NATIVE.opener.openUrl(url) : window.open(url, '_blank', 'noopener');
+const readClipboard = () => NATIVE ? NATIVE.clipboardManager.readText() : navigator.clipboard.readText();
+async function saveText(name, text, type = 'text/markdown') {
+  if (NATIVE) {
+    const where = await NATIVE.core.invoke('save_file', { name, contents: text });
+    if (where) toast('Saved ' + where);
+    return;
+  }
+  const a = h('a', { href: URL.createObjectURL(new Blob([text], { type })), download: name });
+  document.body.append(a);
+  a.click();
+  a.remove();
+}
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 
 function h(tag, attrs = {}, ...kids) {
@@ -182,7 +197,7 @@ function renderSessions() {
         else if (g) sub = `◎ ${g.state === 'active' ? 'round ' + g.round + '/' + g.max_rounds : g.state}`;
         return h('button', {
           class: 'sess' + (m.id === S.cur ? ' on' : ''), title: m.title || 'Untitled',
-          onclick: () => open(m.id),
+          onclick: () => openSession(m.id),
         },
         h('span', { class: `dot ${m.status}${goalOn ? ' goal' : ''}` }),
         h('span', { class: 't' }, m.title || 'Untitled'),
@@ -233,7 +248,7 @@ function refreshAccounts() {
 
 /* ---------- header, goal bar, composer state ---------- */
 const STATUS = {
-  running: 'working', waiting: 'waiting for an account', checking: 'running check', verifying: 'verifier reviewing',
+  running: 'working', approval: 'needs your approval', waiting: 'waiting for an account', checking: 'running check', verifying: 'verifier reviewing',
 };
 function renderHeader() {
   const m = cur();
@@ -330,6 +345,35 @@ async function showLog(sid, jid) {
     b.scrollTop = b.scrollHeight;
   } catch (e) { fail(e); }
 }
+/* Approvals: agy asks before running a command or editing a file (PreToolUse hook). */
+function approvalNode(ev) {
+  const a = ev.args || {}, isCmd = ev.tool === 'run_command';
+  const target = isCmd ? a.CommandLine : rel(a.TargetFile || a.File || '');
+  if (ev.state !== 'pending') {
+    const ok = ev.state === 'allowed';
+    return h('div', { class: 'approval done ' + (ok ? 'ok' : 'no') },
+      h('span', { class: 'k' }, ok ? '✓ allowed' : '✕ declined'),
+      h('code', { title: target }, target),
+      h('span', { class: 'jm' }, ok ? (ev.always ? (isCmd ? `always: ${ev.rule}` : 'edits allowed for this session') : 'once')
+        : (ev.why || 'by you')));
+  }
+  const answer = (decision, always) => api('POST', `approvals/${ev.id}/answer`, { decision, always })
+    .catch(e => toast(/not found/.test(e.message) ? 'That request expired (the engine restarted)' : e.message));
+  const preview = isCmd ? h('pre', { class: 'cmd' }, a.CommandLine)
+    : a.CodeContent ? h('pre', { class: 'out' }, String(a.CodeContent).split('\n').slice(0, 14).join('\n'))
+    : a.ReplacementContent ? h('pre', { class: 'out' }, String(a.ReplacementContent).split('\n').slice(0, 14).join('\n'))
+    : null;
+  return h('div', { class: 'approval', role: 'group', 'aria-label': 'Approval needed' },
+    h('div', { class: 'ah' }, h('span', { class: 'k' }, 'Approval needed'),
+      h('span', {}, isCmd ? 'agy wants to run a command' : `agy wants to edit ${target}`),
+      h('span', { class: 'jm' }, 'waits ' + Math.round((ev.deadline - ev.ts) / 60) + ' min')),
+    preview,
+    h('div', { class: 'acts' },
+      h('button', { class: 'primary btn small', onclick: () => answer('allow', false) }, 'Allow once'),
+      isCmd && ev.rule ? h('button', { class: 'btn small', title: 'Added to agy-loop\'s allow rules for every session', onclick: () => answer('allow', true) }, `Always allow ${ev.rule}`)
+        : !isCmd ? h('button', { class: 'btn small', title: 'Switches this session to accept edits', onclick: () => answer('allow', true) }, 'Allow all edits in this session') : null,
+      h('button', { class: 'btn small', onclick: () => answer('deny', false) }, 'Decline')));
+}
 function jobNode(ev) {
   const j = ev.job, end = ev.phase === 'ended';
   const status = !end ? 'started' : j.stopped ? 'stopped' : j.code === 0 ? 'exit 0' : j.code == null ? 'finished' : `exit ${j.code}`;
@@ -394,8 +438,8 @@ const WHO = { user: 'you', goal: 'goal', nudge: 'goal push', job: 'job', loop: '
 function userNode(ev) {
   // A goal prompt carries standing instructions; the objective is what matters to read.
   const text = ev.kind === 'goal' ? ev.text.split('\n\n')[0].replace(/^Objective:\s*/, '') : ev.text;
-  return h('div', { class: 'msg-user ' + (ev.kind || 'user'), title: ev.kind === 'goal' ? ev.text : null },
-    h('span', { class: 'who' }, WHO[ev.kind] || 'you'), text, attachmentChips(ev, S.cur));
+  return h('div', { class: 'msg-user ' + (ev.kind || 'user') + (ev.steered ? ' steered' : ''), title: ev.kind === 'goal' ? ev.text : null },
+    h('span', { class: 'who' }, (WHO[ev.kind] || 'you') + (ev.steered ? ' · while it worked' : '')), text, attachmentChips(ev, S.cur));
 }
 function firstString(p) {
   for (const v of Object.values(p || {})) if (typeof v === 'string' && v.length < 300) return v;
@@ -660,6 +704,16 @@ function renderEvent(ev, live) {
     case 'shell':
       tr.append(shellNode(ev));
       break;
+    case 'approval': {
+      const key = 'ap' + ev.id, node = approvalNode(ev), old = S.nodes.get(key);
+      if (old) old.replaceWith(node); else tr.append(node);
+      S.nodes.set(key, node);
+      if (live && ev.state === 'pending') {
+        notify('Approval needed', (ev.args || {}).CommandLine || (ev.args || {}).TargetFile || ev.tool);
+        if (NATIVE) NATIVE.window.getCurrentWindow().requestUserAttention(1).catch(() => {});
+      }
+      break;
+    }
     case 'job':
       tr.append(jobNode(ev));
       if (live && ev.phase === 'ended') notify(`Job finished: ${ev.job.cmd}`, cur()?.title || '');
@@ -673,7 +727,7 @@ function renderEvent(ev, live) {
   if (stick) scrollEnd();
 }
 
-async function open(sid) {
+async function openSession(sid) {
   if (S.cur !== sid && ATT.length) { ATT.length = 0; renderTray(); }
   S.cur = sid;
   history.replaceState(null, '', '#' + sid);
@@ -718,7 +772,7 @@ function handle(m) {
     if (m.sid === S.cur) {
       S.cur = null;
       const next = [...S.sessions.values()].sort((a, b) => b.updated - a.updated)[0];
-      next ? open(next.id) : renderBlank();
+      next ? openSession(next.id) : renderBlank();
     }
     return;
   }
@@ -811,7 +865,7 @@ async function submit() {
   if (/^[!#]/.test(text) && text.length > 1) return local(m, t, text);
   HIST.list.push(text);
   HIST.pos = -1;
-  if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().catch(() => {});
+  if (!NATIVE && 'Notification' in window && Notification.permission === 'default') Notification.requestPermission().catch(() => {});
   t.value = '';
   autosize();
   syncSend();
@@ -819,7 +873,7 @@ async function submit() {
     const r = await api('POST', `sessions/${m.id}/send`, { text, attachments: ready.map(f => f.path) });
     ATT.length = 0;
     renderTray();
-    if (r.result === 'queued') toast('Queued after the current turn');
+    if (r.result === 'queued') toast(ready.length ? 'Queued after the current turn' : 'Sent: agy reads it at its next step');
   } catch (e) { t.value = text; fail(e); }
 }
 /* `!cmd` runs in the project folder and agy sees the output with the next message; `# note`
@@ -998,8 +1052,17 @@ function historyStep(dir) {
 }
 
 /* ---------- desktop notifications for long runs ---------- */
-function notify(title, body) {
-  if (!document.hidden || !('Notification' in window) || Notification.permission !== 'granted') return;
+async function notify(title, body) {
+  if (!document.hidden && document.hasFocus()) return;
+  if (NATIVE) {
+    try {
+      const n = NATIVE.notification;
+      if (!(await n.isPermissionGranted()) && (await n.requestPermission()) !== 'granted') return;
+      n.sendNotification({ title, body });
+    } catch {}
+    return;
+  }
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
   try { new Notification(title, { body, tag: 'agyloop' }); } catch {}
 }
 
@@ -1017,11 +1080,7 @@ async function exportTranscript() {
     else if (e.t === 'turn_start') out.push('', `---`, `*turn ${e.turn} · ${e.slot} · ${e.model}*`, '');
     else if (e.t === 'notice') out.push(`> **${e.kind}**: ${e.text}`, '');
   }
-  const a = h('a', { href: URL.createObjectURL(new Blob([out.join('\n')], { type: 'text/markdown' })),
-    download: (m.title || 'session').replace(/[^\w.-]+/g, '-').slice(0, 60) + '.md' });
-  document.body.append(a);
-  a.click();
-  a.remove();
+  await saveText((m.title || 'session').replace(/[^\w.-]+/g, '-').slice(0, 60) + '.md', out.join('\n'));
 }
 
 async function slash(text) {
@@ -1262,7 +1321,7 @@ async function createFromDialog() {
       cwd: $('#new-cwd').value.trim(), model: $('#new-effort').value, mode: $('#new-mode').value,
     });
     S.sessions.set(meta.id, meta);
-    await open(meta.id);
+    await openSession(meta.id);
     if (pendingText) { $('#input').value = pendingText; pendingText = ''; await submit(); }
   } catch (e) { fail(e); }
 }
@@ -1313,7 +1372,7 @@ async function startLogin() {
   stopLogin();
   // Open the tab inside the click, or the browser blocks it; point it at Google once agy gives the URL.
   let w = null;
-  try { w = window.open('', '_blank'); if (w) w.opener = null; } catch { w = null; }
+  if (!NATIVE) try { w = window.open('', '_blank'); if (w) w.opener = null; } catch { w = null; }
   acctMsg('Starting agy sign-in…');
   let r;
   try { r = await api('POST', 'accounts/login', {}); } catch (e) {
@@ -1324,6 +1383,7 @@ async function startLogin() {
   L.until = Date.now() + r.seconds * 1000;
   let opened = false;
   try { if (w && !w.closed) { w.location.href = r.url; opened = true; } } catch {}
+  if (NATIVE) { openExternal(r.url); opened = true; }
   const link = text => h('a', { href: r.url, target: '_blank', rel: 'noopener noreferrer' }, text);
   acctMsg('');
   $('#acct-msg').replaceChildren(...(opened
@@ -1372,7 +1432,7 @@ const CODE_RE = /^4\/[0-9A-Za-z_-]{20,}$/;
 async function pasteFromClipboard(quiet) {
   if (!L.id || $('#acct-code').disabled || $('#acct-code').value.trim()) return;
   try {
-    const text = (await navigator.clipboard.readText()).trim();
+    const text = (await readClipboard()).trim();
     if (CODE_RE.test(text)) {
       $('#acct-code').value = text;
       acctMsg('Code taken from the clipboard…');
@@ -1658,8 +1718,8 @@ async function load() {
   fillModels();
   renderRelay();
   const want = S.cur || location.hash.slice(1);
-  if (want && S.sessions.has(want)) await open(want);
-  else if (st.sessions.length) await open(st.sessions[0].id);
+  if (want && S.sessions.has(want)) await openSession(want);
+  else if (st.sessions.length) await openSession(st.sessions[0].id);
   else { renderSessions(); renderBlank(); }
   if (!S.models.length) setTimeout(() => api('GET', 'state').then(s => { S.models = s.models; if (S.models.length) { fillModels(); renderHeader(); } }), 4000);
 }
@@ -1723,6 +1783,19 @@ function wire() {
   $('#goal-dlg').addEventListener('close', () => { if ($('#goal-dlg').returnValue === 'ok') startGoal(); });
   $('#set-open').addEventListener('click', () => openSettings());
   $('#attach-btn').addEventListener('click', () => $('#attach-input').click());
+  if (NATIVE) {  // the app's web view does not open new windows: links go to the default browser
+    document.documentElement.classList.add('native');
+    if (/Mac/.test(navigator.platform)) document.documentElement.classList.add('mac');
+    for (const el of [$('.top'), $('.brand')]) el?.setAttribute('data-tauri-drag-region', '');
+    document.addEventListener('click', e => {
+      const a = e.target.closest('a[href]');
+      if (!a || a.dataset.file || a.hasAttribute('download')) return;
+      const url = new URL(a.href, location.href);
+      if (!/^https?:$/.test(url.protocol) || (url.origin === location.origin && a.target !== '_blank')) return;
+      e.preventDefault();
+      openExternal(url.href);
+    }, true);
+  }
   $('#transcript').addEventListener('click', e => {
     const a = e.target.closest('a[data-file]');
     if (!a) return;

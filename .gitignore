@@ -4,3 +4,10 @@ __pycache__/
 .DS_Store
 .gitnexus/
 .claude/launch.json
+app/node_modules/
+app/.venv/
+app/.build/
+app/engine-dist/
+app/dist/
+app/src-tauri/target/
+app/src-tauri/gen/

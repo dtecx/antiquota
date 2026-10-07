@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "splash",
+  "description": "The bundled start page: listens for engine status, may quit.",
+  "windows": ["main"],
+  "permissions": ["core:default", "allow-quit-app", "allow-app-info", "allow-retry-engine", "opener:default"]
+}

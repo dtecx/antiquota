@@ -773,3 +773,32 @@ a.path:hover { color: var(--baton); text-decoration-color: var(--baton); }
 .pickup { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 4px 0 18px; }
 .pickup .cap { margin: 0 4px 0 0; }
 .pickup .when { color: var(--ink-4); font-size: 11px; }
+
+/* ---------- desktop app (macOS: content runs under the title bar) ---------- */
+.native.mac .side { padding-top: 10px; }
+.native.mac .brand { min-height: 32px; padding-left: 72px; }
+.native.mac .brand .mark { display: none; }
+.native .top, .native .brand { -webkit-user-select: none; user-select: none; }
+
+/* ---------- approvals ---------- */
+.approval {
+  margin: 10px 0; padding: 12px 14px; border: 1px solid rgba(232, 163, 61, .45); border-radius: var(--r-lg);
+  background: linear-gradient(var(--baton-soft), var(--baton-soft)), var(--night-1);
+  box-shadow: 0 0 0 3px rgba(232, 163, 61, .06);
+}
+.approval .ah { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.approval .k { font: 600 11px var(--mono); color: var(--baton); text-transform: uppercase; letter-spacing: .04em; }
+.approval .jm { margin-left: auto; font: 11px var(--mono); color: var(--ink-4); }
+.approval pre { margin: 10px 0 0; padding: 8px 10px; border-radius: var(--r-md); background: var(--well); font: 12px/1.5 var(--mono);
+  white-space: pre-wrap; word-break: break-word; max-height: 240px; overflow: auto; }
+.approval pre.cmd { color: var(--ink); }
+.approval .acts { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.approval.done {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center;
+  margin: 4px 0; padding: 4px 0; border: 0; border-top: 1px dashed var(--rule-2); border-radius: 0; background: none; box-shadow: none;
+}
+.approval.done code { font: 12px var(--mono); color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.approval.done .jm { margin-left: 0; }
+.approval.done.ok .k { color: var(--ok); }
+.approval.done.no .k { color: var(--bad); }
+.msg-user.steered .who { color: var(--baton); }

@@ -79,10 +79,16 @@ def state(*parts):
     return p
 
 
+def find_agy():
+    """The agy binary, or None. ~/.local/bin first: apps, launchd and cron start with a bare PATH."""
+    extra = [os.path.join(home(), ".local/bin"), "/opt/homebrew/bin", "/usr/local/bin"]
+    if os.name == "nt":
+        extra.append(os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs", "agy"))
+    return os.environ.get("AGYLOOP_AGY") or shutil.which("agy", path=os.pathsep.join([*extra, os.environ.get("PATH", "")]))
+
+
 def agy_bin():
-    # ~/.local/bin first: launchd and cron start with a bare PATH.
-    found = os.environ.get("AGYLOOP_AGY") or shutil.which(
-        "agy", path=os.path.join(home(), ".local/bin") + os.pathsep + os.environ.get("PATH", ""))
+    found = find_agy()
     if not found:
         sys.exit("agyloop: real agy binary not found; set AGYLOOP_AGY")
     return found

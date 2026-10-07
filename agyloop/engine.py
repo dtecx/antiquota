@@ -17,15 +17,20 @@ import re
 import shutil
 import signal
 import subprocess
+import sys
 import threading
 import time
 import uuid
 from datetime import datetime
 
 from . import accounts as a
+from . import policy, stack
 from . import convdb
 
 EDIT_TOOLS = {"write_to_file", "replace_file_content", "multi_replace_file_content", "sed_file"}
+GATED_TOOLS = "*"      # the PreToolUse hook sees every tool; agyloop.policy decides
+APPROVAL_WAIT = 900    # seconds an approval waits for the user before agy hears "no"
+DECLINED = "The user declined this. Do not retry it; continue another way, or explain what you need."
 MODES = {"default": [], "accept-edits": ["--mode", "accept-edits"], "plan": ["--mode", "plan"],
          "bypass": ["--dangerously-skip-permissions"]}
 DONE_MARK = "GOAL_COMPLETE"
@@ -84,6 +89,43 @@ BG_LINE = re.compile(r"^[ \t>*_]*RUN_IN_BACKGROUND:[*_]*[ \t]*`*(.+?)`*[ \t]*$",
 EVERY_LINE = re.compile(r"^[ \t>*_]*CHECK_EVERY:[*_]*[ \t]*(\d+(?:\.\d+)?)[ \t]*([smh]?)", re.M | re.I)
 JOB_TAIL = 4_000         # characters of a job's log passed to agy
 LOOP_MIN = 60            # seconds between /loop prompts, at least
+
+
+class KeepAwake:
+    """Keeps the computer from sleeping while agents or jobs run (the display may still sleep)."""
+
+    def __init__(self):
+        self.proc, self.held = None, False
+
+    def hold(self):
+        if self.held:
+            return
+        try:
+            if sys.platform == "darwin":
+                self.proc = subprocess.Popen(["caffeinate", "-i", "-w", str(os.getpid())])
+            elif os.name == "nt":
+                import ctypes
+                ctypes.windll.kernel32.SetThreadExecutionState(0x80000000 | 0x00000001)  # CONTINUOUS | SYSTEM
+            elif shutil.which("systemd-inhibit"):
+                self.proc = subprocess.Popen(["systemd-inhibit", "--what=idle:sleep", "--who=agy-loop",
+                                              "--why=agents are running", "sleep", "infinity"],
+                                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            self.held = True
+        except (OSError, AttributeError):
+            pass
+
+    def release(self):
+        if not self.held:
+            return
+        if self.proc and self.proc.poll() is None:
+            self.proc.terminate()
+        if os.name == "nt":
+            try:
+                import ctypes
+                ctypes.windll.kernel32.SetThreadExecutionState(0x80000000)
+            except (OSError, AttributeError):
+                pass
+        self.proc, self.held = None, False
 
 
 def parse_interval(text, unit="m"):
@@ -205,6 +247,8 @@ class Engine:
                 if not job["ended"]:
                     threading.Thread(target=self._watch_job, args=(s, job), daemon=True).start()
         threading.Thread(target=self._scheduler, daemon=True).start()
+        self.awake = KeepAwake()
+        self.approvals, self.approval_cv = {}, threading.Condition()
 
     # --- pub/sub and storage ----------------------------------------------
 
@@ -322,6 +366,8 @@ class Engine:
     def stop(self, sid):
         s = self.sessions[sid]
         s.stop.set()
+        for ap in [x for x in self.approvals.values() if x["session"] == sid and x["state"] == "pending"]:
+            self.approval_answer(ap["id"], "deny", why="The user stopped this session.")
         s.meta["queue"] = []
         if s.proc and s.proc.poll() is None:
             s.proc.terminate()
@@ -508,7 +554,7 @@ class Engine:
         m, sid = s.meta, s.meta["id"]
         resumed = bool(m.get("conversation_id"))
         args = ["-p", prompt, "--output-format", "stream-json", "--model", m["model"],
-                *MODES[m["mode"]],  # effort is part of the model id (gemini-3.8-flash-high/-medium/-low)
+                *self._permission_flags(m["mode"]),  # effort is part of the model id (gemini-3.8-flash-high/...)
                 *(["--conversation", m["conversation_id"]] if resumed else []),
                 *[x for d in (self.attachments_dir(sid), self.jobs_dir(sid)) if os.path.isdir(d) for x in ("--add-dir", d)]]
         a.sync(a.slot_home(slot))
@@ -517,7 +563,10 @@ class Engine:
         self.status(s, "running")
         self.publish(sid, {"t": "turn_start", "turn": turn, "slot": slot, "model": m["model"]}, persist=True)
         t0 = s.turn_started = time.time()
-        cmd, env = a.agy_cmd(a.slot_home(slot), args, {**os.environ, "AGYLOOP_SLOT": slot})
+        # agy-loop's hooks find this session (approvals, messages sent mid-turn) through these.
+        cmd, env = a.agy_cmd(a.slot_home(slot), args, {**os.environ, "AGYLOOP_SLOT": slot, "AGYLOOP_SESSION": sid,
+                                                        "AGYLOOP_STATE": os.path.join(a.base(), "state"),
+                                                        "AGYLOOP_MODE": m["mode"]})
         proc = subprocess.Popen(cmd, cwd=m["cwd"], env=env, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                 text=True, bufsize=1)
         s.proc = proc
@@ -813,10 +862,27 @@ class Engine:
         if every:
             s.stop.clear()
 
+    def busy_count(self):
+        """Sessions running a turn plus background jobs still running."""
+        return (sum(1 for s in self.sessions.values() if s.busy)
+                + sum(1 for s in self.sessions.values() for j in s.meta["jobs"] if not j["ended"]))
+
+    def shutdown(self):
+        """Stop running turns (goals pause and can resume later). Background jobs keep running:
+        they belong to the user's machine, and the next engine watches them again."""
+        for sid, s in list(self.sessions.items()):
+            if s.busy:
+                self.stop(sid)
+        self.awake.release()
+
     def _scheduler(self):
         polled = time.time()
         while True:
             time.sleep(5)
+            if a.setting("keep_awake", True) and self.busy_count():
+                self.awake.hold()
+            else:
+                self.awake.release()
             if time.time() - polled > a.QUOTA_FRESH:  # idle accounts: keep their gauges and walls current
                 polled = time.time()
                 threading.Thread(target=self._poll_quota, daemon=True).start()
@@ -831,6 +897,94 @@ class Engine:
         changed = [s for s in a.slots() if a.refresh(s, max_age=a.QUOTA_FRESH)]
         if changed:
             self.publish(None, {"t": "accounts", "accounts": a.overview()})
+
+    # --- approvals asked by agy's PreToolUse hook, and messages sent mid-turn ---------
+
+    @staticmethod
+    def _permission_flags(mode):
+        """Headless agy cannot ask and ignores allow-rules, so while agy-loop's PreToolUse hook is on,
+        agy may run anything and the hook (agyloop.policy, plus the user) decides. Without the hook,
+        agy's own modes apply and anything that needs a yes ends the turn."""
+        if stack.hook_enabled():
+            return ["--dangerously-skip-permissions", *(["--mode", "plan"] if mode == "plan" else [])]
+        return MODES[mode]
+
+    def approval_request(self, sid, tool, args):
+        """Decide a gated tool call at once from the session's mode and agy-loop's rules, or park
+        it for the user ({"pending": id}). Unknown sessions get agy's own behaviour ("ask")."""
+        s = self.sessions.get(sid)
+        if s is None:
+            return {"decision": "ask"}
+        decision, reason, rule = policy.decide(s.meta["mode"], tool, args)
+        if decision != "ask":
+            return {"decision": decision, **({"reason": reason} if reason else {})}
+        if s.stop.is_set():
+            return {"decision": "deny", "reason": "The user stopped this session."}
+        keep = {k: (v[:4000] if isinstance(v, str) else v) for k, v in (args or {}).items()
+                if isinstance(v, (str, int, float, bool))}
+        ap = {"id": uuid.uuid4().hex[:10], "session": sid, "tool": tool, "args": keep, "rule": rule,
+              "state": "pending", "why": "", "ts": time.time(), "deadline": time.time() + APPROVAL_WAIT}
+        with self.approval_cv:
+            self.approvals[ap["id"]] = ap
+        self.publish(sid, {"t": "approval", **ap}, persist=True)
+        self.status(s, "approval")
+        return {"pending": ap["id"]}
+
+    def approval_wait(self, aid, wait=25):
+        """The decision, or {"pending": id} after `wait` seconds (the hook asks again)."""
+        until = time.time() + min(float(wait), 60)
+        with self.approval_cv:
+            while True:
+                ap = self.approvals.get(aid)
+                if ap is None:
+                    return {"decision": "ask"}
+                if ap["state"] != "pending":
+                    return self._decision(ap)
+                if time.time() >= ap["deadline"]:
+                    break
+                left = min(until, ap["deadline"]) - time.time()
+                if left <= 0:
+                    return {"pending": aid}
+                self.approval_cv.wait(left)
+        return self.approval_answer(aid, "deny", why=f"No answer from the user within {APPROVAL_WAIT // 60} minutes. "
+                                                     "Continue without it, or explain what you need.")
+
+    def approval_answer(self, aid, decision, always=False, why=""):
+        with self.approval_cv:
+            ap = self.approvals[aid]
+            if ap["state"] != "pending":
+                return self._decision(ap)
+            ap.update(state="allowed" if decision == "allow" else "denied", why=why, answered=time.time())
+            self.approval_cv.notify_all()
+        s = self.sessions.get(ap["session"])
+        if always and decision == "allow":
+            if ap["rule"]:
+                stack.allow_rule(ap["rule"])  # for every account and session, like agy's "always allow"
+            elif ap["tool"] in policy.WRITE_TOOLS and s:
+                s.meta["mode"] = "accept-edits"
+        self.publish(ap["session"], {"t": "approval", **ap, "always": bool(always)}, persist=True)
+        if s and s.meta["status"] == "approval" and not any(
+                x["session"] == ap["session"] and x["state"] == "pending" for x in self.approvals.values()):
+            self.status(s, "running")
+        return self._decision(ap)
+
+    @staticmethod
+    def _decision(ap):
+        if ap["state"] == "allowed":
+            return {"decision": "allow"}
+        return {"decision": "deny", "reason": ap.get("why") or DECLINED}
+
+    def steer(self, sid):
+        """Hand the messages the user sent while agy works to the running turn (PreInvocation hook)."""
+        s = self.sessions[sid]
+        with s.lock:
+            take = [x for x in s.meta["queue"] if isinstance(x, str)]
+            if take:
+                s.meta["queue"] = [x for x in s.meta["queue"] if not isinstance(x, str)]
+                self.save(s)
+        for t in take:
+            self.publish(sid, {"t": "user", "text": t, "kind": "user", "steered": True}, persist=True)
+        return {"messages": [expand_mentions(t, s.meta["cwd"]) for t in take]}
 
     def shell(self, sid, cmd, timeout=SHELL_TIMEOUT):
         """The user's own `!command`, run in the project folder. agy sees it with the next message."""
