@@ -10,7 +10,7 @@ flowchart TB
     Shell["app/src-tauri: window, tray, menus, sidecar"]
     CLI["crates/cli: antiquota binary"]
     Server["crates/server: HTTP, SSE, static UI"]
-    App["crates/app: session services and runtime"]
+    App["crates/app: session and account services"]
     Features["crates/features: small feature modules"]
     Core["crates/core: types, reducers, policy, ports"]
     Adapters["crates/adapters: agy, accounts, store, git, pty, transcribe"]
@@ -19,9 +19,10 @@ flowchart TB
     UI -.->|runtime: typed HTTP and SSE| Server
     Shell -.->|runtime: starts or discovers| CLI
     Shell -.->|runtime: same built UI| UI
+    CLI --> Core
     CLI --> App
     CLI --> Server
-    CLI -->|discovery files| Adapters
+    CLI -->|account startup and discovery| Adapters
     Server --> App
     Server -->|startup composition| Adapters
     App --> Features
@@ -40,7 +41,7 @@ Solid edges show Rust crate imports. Dashed edges show labeled runtime connectio
 | --- | --- |
 | `crates/core` | `Session`, `Turn`, one `Event` enum, `Command`, `Account`, `Slot`, `Quota`, `Goal`, `Approval`, `Rule`, `Settings`; pure reducers; routing and permission decisions; port traits. |
 | `crates/features` | `Feature` hooks and separate modules for goals, verifier, plan, loop, schedule, jobs, handoff, steering, fork, and keep-awake. |
-| `crates/app` | Session command serialization, turn execution, cancellation, subscriptions, approvals, scheduling, and projections through injected core ports. Split these responsibilities into modules; no engine god object. |
+| `crates/app` | Account-only maintenance and session command serialization, turn execution, cancellation, subscriptions, approvals, scheduling, and projections through injected core ports. Split these responsibilities into modules; no engine god object. |
 | `crates/adapters/agy` | agy arguments, process lifetime, bounded stream-json decoding, stderr/error classification inputs, and conversation-step parsing. |
 | `crates/adapters/accounts` | Slot paths, leases, account HOME and file-token isolation, sign-in, quota/model probes, and owned configuration links. |
 | `crates/adapters/store` | Existing JSON/JSONL files, atomic snapshots, append-only event records, checkpoints, attachments, and read-only conversation database access. |
@@ -128,3 +129,5 @@ One `justfile` exposes `dev`, `test`, `check`, `build`, and `gen-types`. `dev` d
 GitHub Actions validates macOS, Windows, and Linux, including ConPTY and sidecar paths/bundling. Workflow files can be prepared locally, but remote execution depends on a future user-authorized push; this gate cannot be claimed green before real CI results. Native computer use remains window-targeted in the background. Any paid live test needs an agreed capped scenario budget first.
 
 Only an entirely green feature report can proceed to user-approved cutover. Until then main retains Python and the original UI, no remotes are pushed, and no legacy implementation is deleted. Decisions and verified dependency choices are recorded in [ADRs](adr/).
+
+Slice 2 composes the session service with a shared account service. HTTP account commands and standalone account CLI commands use the same account policy and adapters; account-only maintenance never invokes session recovery or usage reconciliation. The account service publishes account changes through the existing typed event channel. The handoff feature owns continuation decisions, while the application owns leases and cancellable waits. The PTY adapter supplies only the authentication console at this stage; the general terminal remains pending. See [ADR 0009](adr/0009-account-services-and-authentication-console.md).

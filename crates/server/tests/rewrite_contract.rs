@@ -9,7 +9,13 @@ use support::{Server, http, replay::Replay};
 
 #[test]
 fn captured_slice_one_requests_replay_with_exact_json_fields() {
-    let mut server = Server::new_contract("replay");
+    let mut server = Server::new_stopped("replay", true);
+    let mut captured_lease = Some(
+        antiquota_store::lock_file(&server.data.join("state/leases/one@example.com.lock"))
+            .unwrap()
+            .expect("hold captured probe lease before background discovery"),
+    );
+    server.start();
     let mut replay = Replay::new(&server);
     for name in [
         "health",
@@ -31,12 +37,8 @@ fn captured_slice_one_requests_replay_with_exact_json_fields() {
     ] {
         replay.case(&server, name);
         if name == "wrong-token" {
-            let lease =
-                antiquota_store::lock_file(&server.data.join("state/leases/one@example.com.lock"))
-                    .unwrap()
-                    .expect("hold captured account probe lease");
             replay.case(&server, "state-initial");
-            drop(lease);
+            drop(captured_lease.take());
         }
     }
     replay.case(&server, "shutdown");
@@ -254,45 +256,6 @@ fn engine_discovery_reuses_lock_and_static_auth_remains_local() {
     server.stop();
     assert!(!server.data.join("state/engine.json").exists());
     server.start();
-    server.stop();
-}
-
-#[test]
-fn cli_run_shares_the_discovered_engine_and_durable_session() {
-    let mut server = Server::new("cli-run");
-    let info_before = fs::read(server.data.join("state/engine.json")).unwrap();
-    let output = support::bounded_output(server.command().args([
-        "run",
-        "--cwd",
-        server.project.to_str().unwrap(),
-        "Short CLI fixture.",
-    ]));
-    assert!(
-        output.status.success(),
-        "{}",
-        String::from_utf8_lossy(&output.stderr)
-    );
-    assert!(String::from_utf8_lossy(&output.stdout).contains("turn 1 on one@example.com"));
-    assert_eq!(
-        fs::read(server.data.join("state/engine.json")).unwrap(),
-        info_before
-    );
-    let state = server.call("GET", "/api/state", None).json();
-    assert_eq!(state["sessions"].as_array().unwrap().len(), 1);
-    let id = state["sessions"][0]["id"].as_str().unwrap();
-    let completed = server.idle(id);
-    assert_eq!(completed["meta"]["usage"]["input"], 100);
-    assert!(
-        completed["events"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .any(|e| e["t"] == "user" && e["text"] == "Short CLI fixture.")
-    );
-    server.evidence(
-        "cli-run",
-        &json!({"sharedEngine":true,"durableSession":true,"inputTokens":100}),
-    );
     server.stop();
 }
 

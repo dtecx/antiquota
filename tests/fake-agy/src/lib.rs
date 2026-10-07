@@ -2,6 +2,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
+pub mod metadata;
 pub mod protocol;
 
 #[derive(Debug, Default, Clone, Copy, Deserialize, Serialize, PartialEq, Eq)]
@@ -21,6 +22,9 @@ pub enum Scenario {
     Crash,
     StaleResult,
     DuplicateDone,
+    Transient,
+    ConversationLost,
+    QuotaNoInit,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -36,6 +40,10 @@ pub struct Script {
     pub scenario: Scenario,
     pub scenarios_by_slot: std::collections::BTreeMap<String, Scenario>,
     pub scenarios_by_turn: Vec<Scenario>,
+    pub scenarios_by_slot_and_turn: std::collections::BTreeMap<String, Vec<Scenario>>,
+    pub metadata: metadata::Metadata,
+    pub metadata_by_slot: std::collections::BTreeMap<String, metadata::Metadata>,
+    pub login: metadata::Login,
     pub delay_ms: u64,
     pub huge_bytes: usize,
     pub reply: Option<String>,
@@ -51,6 +59,8 @@ pub struct Script {
     pub actions: Vec<Action>,
     pub exit_code: Option<i32>,
     pub write_notes: bool,
+    pub output_inherited_pipe_ms: Option<u64>,
+    pub output_descendant_marker: Option<String>,
 }
 
 impl Default for Script {
@@ -59,6 +69,10 @@ impl Default for Script {
             scenario: Scenario::Success,
             scenarios_by_slot: Default::default(),
             scenarios_by_turn: Vec::new(),
+            scenarios_by_slot_and_turn: Default::default(),
+            metadata: Default::default(),
+            metadata_by_slot: Default::default(),
+            login: Default::default(),
             delay_ms: 0,
             huge_bytes: 2_000_000,
             reply: None,
@@ -74,6 +88,8 @@ impl Default for Script {
             actions: Vec::new(),
             exit_code: None,
             write_notes: true,
+            output_inherited_pipe_ms: None,
+            output_descendant_marker: None,
         }
     }
 }
@@ -88,15 +104,20 @@ pub struct TurnContext {
 
 impl Script {
     pub fn selected(&self, ctx: &TurnContext) -> Scenario {
-        self.scenarios_by_slot
+        self.scenarios_by_slot_and_turn
             .get(&ctx.slot)
+            .and_then(|turns| turns.get(ctx.turn.saturating_sub(1) as usize))
             .copied()
+            .or_else(|| self.scenarios_by_slot.get(&ctx.slot).copied())
             .or_else(|| {
                 self.scenarios_by_turn
                     .get(ctx.turn.saturating_sub(1) as usize)
                     .copied()
             })
             .unwrap_or(self.scenario)
+    }
+    pub fn metadata_for(&self, slot: &str) -> &metadata::Metadata {
+        self.metadata_by_slot.get(slot).unwrap_or(&self.metadata)
     }
 }
 

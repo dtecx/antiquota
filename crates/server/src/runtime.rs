@@ -40,20 +40,25 @@ pub async fn serve(port: u16, open_browser: bool) -> Result<(), ServerError> {
         return Ok(());
     };
     let store = Arc::new(FileStore::open(root.clone())?);
-    let executable = std::env::var_os("ANTIQUOTA_AGY")
-        .map(PathBuf::from)
-        .unwrap_or_else(|| PathBuf::from("agy"));
+    let home = antiquota_store::user_home()?;
+    let executable = antiquota_accounts::find_agy(&home).unwrap_or_else(|_| PathBuf::from("agy"));
     let runner = Arc::new(AgyRunner {
         executable: executable.clone(),
         hook_program: std::env::current_exe()?,
         isolated_fake: isolated_fake(&executable, &root),
     });
-    let service = Service::open(
+    let accounts = Arc::new(FileAccounts::with_runtime(
+        root.clone(),
+        home,
+        executable.clone(),
+    ));
+    let service = Service::open_with_quota(
         store,
         antiquota_store::read_settings(&root)?,
-        Arc::new(FileAccounts::new(root.clone())),
+        accounts.clone(),
         runner,
         Arc::new(SystemClock),
+        Some(accounts),
     )?;
     let listener = match TcpListener::bind(("127.0.0.1", port)).await {
         Ok(x) => x,
@@ -78,10 +83,13 @@ pub async fn serve(port: u16, open_browser: bool) -> Result<(), ServerError> {
         .fallback(crate::http::dispatch)
         .with_state(state);
     let wait = shutdown.clone();
+    let stopping = service.clone();
     let server = tokio::spawn(async move {
         axum::serve(listener, router)
             .with_graceful_shutdown(async move {
                 tokio::select! {_=wait.notified()=>{},_=signals()=>{}};
+                stopping.begin_shutdown();
+                let _ = stopping.accounts.cancel_logins().await;
                 closing.send_replace(true);
             })
             .await
@@ -108,6 +116,7 @@ pub async fn serve(port: u16, open_browser: bool) -> Result<(), ServerError> {
         return Err(ServerError::Invalid("engine did not become healthy".into()));
     }
     write_json_atomic(&root.join("state/engine.json"), &info)?;
+    service.account_service.start_account_polling();
     println!("antiquota on {} (Ctrl-C to stop)", info.url);
     if open_browser {
         open_url(&info.url);
@@ -158,7 +167,7 @@ async fn signals() {
         let _ = tokio::signal::ctrl_c().await;
     }
 }
-fn open_url(url: &str) {
+pub fn open_url(url: &str) {
     #[cfg(target_os = "macos")]
     let result = std::process::Command::new("open").arg(url).spawn();
     #[cfg(target_os = "windows")]

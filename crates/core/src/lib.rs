@@ -1,5 +1,7 @@
 //! Owns pure domain types, state transitions, and adapter contracts.
 pub mod accounts;
+pub mod routing;
+pub use routing::*;
 pub mod command;
 pub mod event;
 pub mod ports;

@@ -53,3 +53,32 @@ export function fixtureState(sessions = [fixtureSession()]): StateResponse {
     engine: { version: 'fixture', agy: 'fake-agy', busy: 0 },
   };
 }
+
+export function fixtureAccount(slot = 'one@example.com'): import('../gen/Account').Account {
+  return {
+    slot,
+    busy: false,
+    probed: 100,
+    quota: { gemini: { '5h': [0.9, 200], weekly: [0.8, 300] }, cg: { '5h': [0.3, null] } },
+    walls: {},
+    why: {},
+    paused: false,
+    verify: null,
+    today: { input: 12, output: 8, thinking: 2, turns: 1 },
+  };
+}
+export function fixtureSettings(): import('../gen/SettingsOverview').SettingsOverview {
+  const { cwd: _cwd, ...defaults } = fixtureState().defaults;
+  void _cwd;
+  return {
+    path: '/Desktop/test/data/stack',
+    skills: [],
+    plugins: [],
+    rules: [],
+    hooks: [],
+    mcps: [],
+    gemini_md: { cli: null },
+    permissions: { allow: [], deny: [], cli: '' },
+    defaults: { ...defaults, rotation: 'perishable', reserve: '3', quota_poll: '10' },
+  };
+}

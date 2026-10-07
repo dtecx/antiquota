@@ -92,7 +92,13 @@ impl antiquota_core::AccountLease for Lease {
 }
 impl AccountStore for Accounts {
     fn accounts(&self) -> Result<Vec<antiquota_core::Account>, PortError> {
-        Ok(vec![])
+        Ok(vec![antiquota_core::Account {
+            slot: "fake".into(),
+            ..Default::default()
+        }])
+    }
+    fn record_route(&self, _entry: &antiquota_core::RoutingEntry) -> Result<(), PortError> {
+        Ok(())
     }
     fn acquire(
         &self,

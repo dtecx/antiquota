@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/core", "crates/features", "crates/app", "crates/server", "crates/cli", "crates/adapters/agy", "crates/adapters/accounts", "crates/adapters/store", "tests/fake-agy"]
+members = ["crates/core", "crates/features", "crates/app", "crates/server", "crates/cli", "crates/adapters/agy", "crates/adapters/accounts", "crates/adapters/store", "crates/adapters/pty", "tests/fake-agy"]
 exclude = ["app/src-tauri"]
 
 [workspace.package]
@@ -25,6 +25,9 @@ proptest = "=1.11.0"
 uuid = { version = "=1.27.0", features = ["v4"] }
 process-wrap = { version = "=10.0.1", default-features = false, features = ["tokio1", "process-group", "job-object", "kill-on-drop"] }
 similar = "=3.2.0"
+regex = "=1.13.1"
+chrono = { version = "=0.4.45", default-features = false, features = ["clock", "std"] }
+portable-pty = "=0.9.0"
 futures-util = "=0.3.34"
 reqwest = { version = "=0.13.5", default-features = false, features = ["blocking", "json"] }
 antiquota-core = { path = "crates/core" }
@@ -34,6 +37,7 @@ antiquota-server = { path = "crates/server" }
 antiquota-agy = { path = "crates/adapters/agy" }
 antiquota-accounts = { path = "crates/adapters/accounts" }
 antiquota-store = { path = "crates/adapters/store" }
+antiquota-pty = { path = "crates/adapters/pty" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

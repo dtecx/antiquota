@@ -6,7 +6,13 @@ mod history;
 mod runner_sink;
 mod sessions;
 pub use sessions::mode as parse_mode;
+mod account_service;
+mod accounts;
+mod attempt;
 mod turns;
+pub use account_service::AccountService;
+mod defaults;
+mod handoff;
 use antiquota_core::{
     AccountStore, AgentRunner, Cancellation, Clock, EventRecord, PortError, Session, SessionStore,
     Settings, StreamEvent,
@@ -40,6 +46,7 @@ pub struct Service {
     pub store: Arc<dyn SessionStore>,
     pub accounts: Arc<dyn AccountStore>,
     pub settings: Settings,
+    pub account_service: Arc<AccountService>,
     pub(crate) runner: Arc<dyn AgentRunner>,
     pub(crate) clock: Arc<dyn Clock>,
     pub(crate) reserved: Mutex<BTreeSet<String>>,
@@ -48,6 +55,20 @@ pub struct Service {
 }
 pub struct SystemClock;
 impl Clock for SystemClock {
+    fn wait(&self, seconds: f64, cancel: Cancellation) -> antiquota_core::PortFuture<'_, ()> {
+        Box::pin(async move {
+            let deadline =
+                tokio::time::Instant::now() + std::time::Duration::from_secs_f64(seconds.max(0.0));
+            while !cancel.is_cancelled() && tokio::time::Instant::now() < deadline {
+                tokio::time::sleep(
+                    std::time::Duration::from_millis(20)
+                        .min(deadline.saturating_duration_since(tokio::time::Instant::now())),
+                )
+                .await;
+            }
+            Ok(())
+        })
+    }
     fn now(&self) -> f64 {
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -62,6 +83,16 @@ impl Service {
         accounts: Arc<dyn AccountStore>,
         runner: Arc<dyn AgentRunner>,
         clock: Arc<dyn Clock>,
+    ) -> Result<Arc<Self>, AppError> {
+        Self::open_with_quota(store, settings, accounts, runner, clock, None)
+    }
+    pub fn open_with_quota(
+        store: Arc<dyn SessionStore>,
+        settings: Settings,
+        accounts: Arc<dyn AccountStore>,
+        runner: Arc<dyn AgentRunner>,
+        clock: Arc<dyn Clock>,
+        quota: Option<Arc<dyn antiquota_core::QuotaProbe>>,
     ) -> Result<Arc<Self>, AppError> {
         let mut cells = BTreeMap::new();
         for (mut meta, records) in store.load()? {
@@ -82,10 +113,19 @@ impl Service {
             );
         }
         let (events, _) = broadcast::channel(1024);
+        let account_service = AccountService::with_events(
+            store.clone(),
+            settings.clone(),
+            accounts.clone(),
+            clock.clone(),
+            quota,
+            events.clone(),
+        );
         Ok(Arc::new(Self {
             store,
             accounts,
             settings,
+            account_service,
             runner,
             clock,
             reserved: Mutex::new(BTreeSet::new()),
@@ -136,7 +176,12 @@ impl Service {
             .filter(|c| c.state.lock().map(|s| s.busy).unwrap_or(false))
             .count()
     }
+    pub fn begin_shutdown(&self) {
+        self.account_service.begin_shutdown();
+    }
     pub async fn shutdown(&self) {
+        self.begin_shutdown();
+        let _ = self.accounts.cancel_logins().await;
         let ids = self.sessions().unwrap_or_default();
         for s in &ids {
             let busy = self
@@ -169,3 +214,10 @@ impl Service {
 
 #[cfg(test)]
 mod tests;
+
+impl std::ops::Deref for Service {
+    type Target = AccountService;
+    fn deref(&self) -> &Self::Target {
+        &self.account_service
+    }
+}

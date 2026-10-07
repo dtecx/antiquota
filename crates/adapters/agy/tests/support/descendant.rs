@@ -13,13 +13,23 @@ fn main() {
         thread::sleep(Duration::from_secs(60));
         return;
     }
-    fs::write("runner-pid", std::process::id().to_string()).unwrap();
-    fs::write("runner-args", args.join("\n")).unwrap();
-    let prompt = args
+    let Some(prompt) = args
         .windows(2)
         .find(|pair| pair[0] == "-p")
         .map(|pair| pair[1].as_str())
-        .unwrap();
+    else {
+        return; // metadata listings such as `agy models`
+    };
+    if prompt == "/quota" {
+        // Account routing probes quota before a turn; answer like a healthy account.
+        let bucket = r#"[{"window":"5h","remaining_fraction":0.9,"reset_time":"2099-01-01T05:00:00Z"},{"window":"weekly","remaining_fraction":0.9,"reset_time":"2099-01-07T00:00:00Z"}]"#;
+        frame(&format!(
+            r#"{{"status":"SUCCESS","command":{{"name":"quota","data":{{"groups":[{{"name":"Gemini","buckets":{bucket}}},{{"name":"Claude/GPT","buckets":{bucket}}}]}}}}}}"#
+        ));
+        return;
+    }
+    fs::write("runner-pid", std::process::id().to_string()).unwrap();
+    fs::write("runner-args", args.join("\n")).unwrap();
     frame(r#"{"event":"init","conversation_id":"early-resume-id"}"#);
     frame(
         r#"{"event":"step_update","step_update":{"step_index":1,"step_type":"tool","state":"DONE","tool_info":{"name":"read_file","parameters":{},"output":"durable before result"}}}"#,

@@ -16,13 +16,20 @@ pub fn frames(script: &Script, ctx: &TurnContext) -> (Vec<Action>, i32) {
         "init":{"model":"stub","cwd":ctx.cwd}}),
         0,
     )];
+    if scenario == Scenario::QuotaNoInit {
+        result.clear();
+    }
     if scenario == Scenario::Crash {
         return (result, 23);
     }
     let error = match scenario {
-        Scenario::Quota => Some("RESOURCE_EXHAUSTED: Individual quota reached"),
+        Scenario::Quota | Scenario::QuotaNoInit => {
+            Some("RESOURCE_EXHAUSTED: Individual quota reached")
+        }
         Scenario::Rate => Some("RESOURCE_EXHAUSTED: rate limited; retry later"),
         Scenario::Auth => Some("UNAUTHENTICATED: token expired"),
+        Scenario::Transient => Some("UNAVAILABLE: the model is overloaded"),
+        Scenario::ConversationLost => Some("conversation could not be found or resumed"),
         _ => None,
     };
     let tool_name = if matches!(scenario, Scenario::Approval | Scenario::Hook) {
@@ -56,11 +63,15 @@ pub fn frames(script: &Script, ctx: &TurnContext) -> (Vec<Action>, i32) {
                 0,
             ));
         }
-        result.push(action(
-            json!({"event":"result","result":{"conversation_id":ctx.conversation,
-            "status":"ERROR","error":error}}),
-            0,
-        ));
+        let mut final_result = json!({"event":"result","result":{"conversation_id":ctx.conversation,
+            "status":"ERROR","error":error}});
+        if scenario == Scenario::QuotaNoInit {
+            final_result["result"]
+                .as_object_mut()
+                .unwrap()
+                .remove("conversation_id");
+        }
+        result.push(action(final_result, 0));
         return (result, script.exit_code.unwrap_or(1));
     }
     let delay = if scenario == Scenario::Delay && script.delay_ms == 0 {
@@ -142,6 +153,8 @@ mod tests {
             Scenario::Crash,
             Scenario::StaleResult,
             Scenario::DuplicateDone,
+            Scenario::Transient,
+            Scenario::ConversationLost,
         ] {
             let (frames, code) = frames(
                 &Script {
@@ -160,7 +173,14 @@ mod tests {
                 code,
                 if scenario == Scenario::Crash {
                     23
-                } else if matches!(scenario, Scenario::Quota | Scenario::Rate | Scenario::Auth) {
+                } else if matches!(
+                    scenario,
+                    Scenario::Quota
+                        | Scenario::Rate
+                        | Scenario::Auth
+                        | Scenario::Transient
+                        | Scenario::ConversationLost
+                ) {
                     1
                 } else {
                     0

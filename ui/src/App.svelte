@@ -10,6 +10,11 @@
   import Transcript from './components/Transcript.svelte';
   import Composer from './components/Composer.svelte';
   import Icon from './components/Icon.svelte';
+  import AccountsPanel from './components/AccountsPanel.svelte';
+  import LoginDialog from './components/LoginDialog.svelte';
+  import ConfirmRemoval from './components/ConfirmRemoval.svelte';
+  import { createAccounts } from './lib/accounts';
+  import { createLogin } from './lib/login';
   const token =
     document.querySelector<HTMLMetaElement>('meta[name="antiquota-token"]')?.content ?? '';
   const api = createApi(token);
@@ -17,14 +22,45 @@
     history.replaceState(null, '', `#${encodeURIComponent(id)}`),
   );
   const view = workbench.state;
-  const stream = createStream(api.streamUrl(), workbench.onEvent, () => workbench.refresh());
+  const accounts = createAccounts(api);
+  const login = createLogin(api, () => accounts.refresh());
+  const stream = createStream(
+    api.streamUrl(),
+    (event) => {
+      workbench.onEvent(event);
+      accounts.onEvent(event);
+    },
+    () => workbench.refresh(),
+  );
   const connection = stream.connection;
   onMount(() => {
+    let previousAccounts: unknown;
+    let previousDefaults: unknown;
+    const unsubscribe = view.subscribe((value) => {
+      if (
+        value.snapshot &&
+        (previousAccounts !== value.snapshot.accounts ||
+          previousDefaults !== value.snapshot.defaults)
+      ) {
+        previousAccounts = value.snapshot.accounts;
+        previousDefaults = value.snapshot.defaults;
+        accounts.acceptSnapshot(value.snapshot);
+      }
+    });
     void workbench.refresh(decodeURIComponent(location.hash.slice(1)));
     if (token && token !== '__ANTIQUOTA_TOKEN__') stream.open();
-    return () => stream.close();
+    return () => {
+      unsubscribe();
+      stream.close();
+      login.dispose();
+    };
   });
   function shortcut(event: KeyboardEvent) {
+    if ((event.metaKey || event.ctrlKey) && event.key === ',') {
+      event.preventDefault();
+      accounts.open();
+      return;
+    }
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'n') {
       event.preventDefault();
       workbench.openDialog('create');
@@ -34,7 +70,7 @@
 
 <svelte:window onkeydown={shortcut} />
 <div class="workbench">
-  <Sidebar {workbench} connection={$connection} />
+  <Sidebar {workbench} {accounts} {login} connection={$connection} />
   <main>
     <SessionHeader {workbench} />
     {#if $connection === 'reconnecting'}<div class="connection-banner" role="status">
@@ -49,7 +85,7 @@
           onclick={() => workbench.change({ error: '' })}><Icon name="close" /></button
         >
       </div>{/if}
-    {#if $view.selected}<Transcript {workbench} /><Composer
+    {#if $view.selected}<Transcript {workbench} {login} /><Composer
         {workbench}
         connected={$connection === 'live'}
       />
@@ -63,10 +99,17 @@
           class="primary"
           onclick={() => workbench.openDialog('create')}
           disabled={$view.loading}><Icon name="plus" />New session</button
-        >{#if $view.loading}<small>Connecting to the engine…</small>{/if}
+        >{#if !$view.snapshot?.accounts.length && !$view.loading}<button
+            class="quiet"
+            onclick={() => login.open()}>Add a Google account</button
+          >{/if}
+        {#if $view.loading}<small>Connecting to the engine…</small>{/if}
       </div>{/if}
   </main>
   <SessionDialog {workbench} />
+  <AccountsPanel {accounts} {login} sessions={$view.snapshot?.sessions ?? []} />
+  <LoginDialog {login} {accounts} />
+  <ConfirmRemoval {accounts} />
 </div>
 
 <style>

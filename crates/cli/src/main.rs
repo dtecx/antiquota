@@ -1,5 +1,6 @@
 //! Owns command-line dispatch; the hook runs before logging and Tokio startup.
-mod run;
+mod accounts;
+mod raw;
 use clap::{Parser, Subcommand};
 #[derive(Parser)]
 #[command(
@@ -25,15 +26,20 @@ enum Commands {
         #[arg(long)]
         no_open: bool,
     },
+    Accounts,
+    Login,
+    Probe,
+    Doctor,
+    Stack {
+        #[arg(value_parser=["reseed"])]
+        action: Option<String>,
+    },
+    Unwall {
+        name: String,
+    },
     Run {
-        #[arg(long)]
-        cwd: Option<String>,
-        #[arg(long)]
-        model: Option<String>,
-        #[arg(long)]
-        slot: Option<String>,
-        #[arg(required=true,num_args=1..)]
-        text: Vec<String>,
+        #[arg(trailing_var_arg=true,allow_hyphen_values=true,num_args=0..)]
+        args: Vec<String>,
     },
     Hook {
         #[arg(default_value = "pre-tool")]
@@ -56,24 +62,26 @@ fn main() -> anyhow::Result<()> {
         .worker_threads(2)
         .enable_all()
         .build()?;
-    match cli.command.unwrap_or(Commands::Gui {
-        port: 8765,
-        no_open: false,
-    }) {
+    let mut code = 0;
+    match cli.command.unwrap_or(Commands::Accounts) {
         Commands::Serve { port, .. } => runtime.block_on(antiquota_server::serve(port, false))?,
         Commands::Gui { port, no_open } => {
             runtime.block_on(antiquota_server::serve(port, !no_open))?
         }
-        Commands::Run {
-            cwd,
-            model,
-            slot,
-            text,
-        } => {
-            let info = runtime.block_on(antiquota_server::discover())?;
-            run::run(info, cwd, model, slot, text.join(" "))?;
-        }
+        Commands::Accounts => accounts::print(accounts::context()?.as_ref())?,
+        Commands::Login => code = runtime.block_on(accounts::login(accounts::context()?))?,
+        Commands::Probe => runtime.block_on(accounts::probe(accounts::context()?))?,
+        Commands::Doctor => code = runtime.block_on(accounts::doctor(accounts::context()?))?,
+        Commands::Stack { action } => accounts::stack(
+            accounts::context()?.as_ref(),
+            action.as_deref() == Some("reseed"),
+        )?,
+        Commands::Unwall { name } => accounts::unwall(accounts::context()?.as_ref(), &name)?,
+        Commands::Run { args } => code = runtime.block_on(raw::run(accounts::context()?, args))?,
         Commands::Hook { .. } => hook()?,
+    }
+    if code != 0 {
+        std::process::exit(code);
     }
     Ok(())
 }

@@ -1,6 +1,8 @@
 //! Play agy protocol fixtures in an explicitly isolated test HOME/data directory.
 mod commands;
+mod descendant;
 mod hook;
+mod login;
 mod sandbox;
 use fake_agy::{FakeError, Scenario, Script, TurnContext, protocol};
 use serde_json::json;
@@ -17,6 +19,9 @@ fn run() -> Result<i32, FakeError> {
     sandbox::check()?;
     let args: Vec<String> = env::args().skip(1).collect();
     sandbox::record(&args)?;
+    if descendant::handle(&args)? {
+        return Ok(0);
+    }
     let mut script = if let Some(path) = env::var_os("FAKE_AGY_SCRIPT") {
         let path = PathBuf::from(path);
         sandbox::isolated(&path)?;
@@ -52,10 +57,16 @@ fn run() -> Result<i32, FakeError> {
         cwd: cwd.to_string_lossy().into_owned(),
         conversation: commands::flag(&args, "--conversation")
             .map(str::to_owned)
-            .unwrap_or_else(|| format!("conv-{session}-1")),
+            .unwrap_or_else(|| format!("conv-{session}-{turn}")),
         turn,
     };
     let scenario = script.selected(&ctx);
+    if let Some(delay) = script.output_inherited_pipe_ms {
+        let mut metadata = script.metadata_for(&ctx.slot).clone();
+        metadata.inherited_pipe_ms = Some(delay);
+        metadata.descendant_marker = script.output_descendant_marker.clone();
+        descendant::spawn(&metadata)?;
+    }
     let decision = if matches!(scenario, Scenario::Hook | Scenario::Approval) {
         hook::invoke(&script)?
     } else {

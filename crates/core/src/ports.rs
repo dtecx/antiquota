@@ -1,6 +1,7 @@
 //! Owns small adapter contracts using only domain and standard-library types.
 use crate::{
-    Account, Attachment, Event, EventRecord, Quota, Session, Slot, StepUsage, TurnRequest,
+    Account, Attachment, Event, EventRecord, LoginLink, LoginState, Model, ProbeResult, Quota,
+    RoutingEntry, Session, Settings, Slot, StepUsage, TurnRequest,
 };
 use std::{
     future::Future,
@@ -48,15 +49,84 @@ pub trait AgentRunner: Send + Sync {
         sink: Box<dyn TurnSink + 'a>,
     ) -> PortFuture<'a, TurnResult>;
 }
-pub trait AccountLease: Send {
+pub trait AccountLease: Send + Sync {
     fn slot(&self) -> &Slot;
 }
 pub trait AccountStore: Send + Sync {
     fn accounts(&self) -> Result<Vec<Account>, PortError>;
     fn acquire(&self, preferred: Option<&str>) -> Result<Option<Box<dyn AccountLease>>, PortError>;
+    fn accounts_at(&self, _now: f64) -> Result<Vec<Account>, PortError> {
+        self.accounts()
+    }
+    fn lease_named(&self, name: &str) -> Result<Option<Box<dyn AccountLease>>, PortError> {
+        self.acquire(Some(name))
+    }
+    fn prepare(&self, _slot: &Slot) -> Result<(), PortError> {
+        Ok(())
+    }
+    fn slot(&self, _name: &str) -> Result<Slot, PortError> {
+        Err(PortError::Invalid("account is unavailable".into()))
+    }
+    fn pause(&self, _name: &str, _on: bool) -> Result<(), PortError> {
+        unavailable()
+    }
+    fn remove(&self, _name: &str) -> Result<(), PortError> {
+        unavailable()
+    }
+    fn save_quota(&self, _name: &str, _quota: &Quota, _now: f64) -> Result<(), PortError> {
+        unavailable()
+    }
+    fn set_wall(
+        &self,
+        _name: &str,
+        _bucket: &str,
+        _until: f64,
+        _why: &str,
+    ) -> Result<(), PortError> {
+        unavailable()
+    }
+    fn clear_wall(&self, _name: &str, _bucket: &str) -> Result<(), PortError> {
+        unavailable()
+    }
+    fn set_verify(&self, _name: &str, _url: Option<&str>, _now: f64) -> Result<(), PortError> {
+        unavailable()
+    }
+    fn routes(&self, _n: usize) -> Result<Vec<RoutingEntry>, PortError> {
+        Ok(vec![])
+    }
+    fn record_route(&self, _entry: &RoutingEntry) -> Result<(), PortError> {
+        unavailable()
+    }
+    fn cached_models(&self) -> Result<Vec<Model>, PortError> {
+        Ok(vec![])
+    }
+    fn save_models(&self, _models: &[Model]) -> Result<(), PortError> {
+        unavailable()
+    }
+    fn login_start(&self) -> PortFuture<'_, LoginLink> {
+        Box::pin(async { unavailable() })
+    }
+    fn login_state(&self, _id: &str) -> Result<LoginState, PortError> {
+        unavailable()
+    }
+    fn login_submit<'a>(&'a self, _id: &'a str, _code: &'a str) -> PortFuture<'a, LoginState> {
+        Box::pin(async { unavailable() })
+    }
+    fn login_cancel<'a>(&'a self, _id: &'a str) -> PortFuture<'a, ()> {
+        Box::pin(async { unavailable() })
+    }
+    fn cancel_logins(&self) -> PortFuture<'_, ()> {
+        Box::pin(async { Ok(()) })
+    }
+    fn stack_overview(&self) -> Result<serde_json::Value, PortError> {
+        unavailable()
+    }
 }
 pub trait QuotaProbe: Send + Sync {
-    fn probe<'a>(&'a self, slot: &'a Slot) -> PortFuture<'a, Quota>;
+    fn probe<'a>(&'a self, slot: &'a Slot) -> PortFuture<'a, ProbeResult>;
+    fn models<'a>(&'a self, _slot: &'a Slot) -> PortFuture<'a, Vec<Model>> {
+        Box::pin(async { unavailable() })
+    }
 }
 pub trait SessionStore: Send + Sync {
     fn load(&self) -> Result<Vec<(Session, Vec<EventRecord>)>, PortError>;
@@ -74,6 +144,12 @@ pub trait SessionStore: Send + Sync {
     ) -> Result<f64, PortError>;
     fn project_usage(&self, sid: &str, records: &[EventRecord]) -> Result<(), PortError>;
     fn state_dir(&self) -> String;
+    fn settings(&self) -> Result<Option<Settings>, PortError> {
+        Ok(None)
+    }
+    fn save_settings(&self, _settings: &Settings) -> Result<(), PortError> {
+        unavailable()
+    }
 }
 pub trait Vcs: Send + Sync {
     fn status(&self, cwd: &str) -> Result<String, PortError>;
@@ -88,7 +164,16 @@ pub trait Transcriber: Send + Sync {
 }
 pub trait Clock: Send + Sync {
     fn now(&self) -> f64;
+    fn wait(&self, _seconds: f64, _cancel: Cancellation) -> PortFuture<'_, ()> {
+        Box::pin(async { unavailable() })
+    }
 }
 pub trait Notifier: Send + Sync {
     fn notify(&self, title: &str, body: &str) -> Result<(), PortError>;
+}
+
+fn unavailable<T>() -> Result<T, PortError> {
+    Err(PortError::Unavailable(
+        "adapter operation is unavailable".into(),
+    ))
 }

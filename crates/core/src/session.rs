@@ -109,4 +109,10 @@ pub struct Turn {
     pub number: u64,
     pub slot: String,
     pub model: String,
+    #[serde(default)]
+    pub status: String,
+    #[serde(default)]
+    pub retries: u32,
+    #[serde(default)]
+    pub failovers: u32,
 }

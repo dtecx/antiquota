@@ -10,7 +10,7 @@ use std::{
     process::{Child, Command, Stdio},
     sync::atomic::{AtomicU64, Ordering},
     thread,
-    time::{Duration, Instant},
+    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 static NEXT: AtomicU64 = AtomicU64::new(0);
 pub fn repo() -> PathBuf {
@@ -39,12 +39,12 @@ pub struct Server {
 }
 impl Server {
     pub fn new(label: &str) -> Self {
-        Self::prepare(label, false)
+        Self::prepare(label, false, true)
     }
-    pub fn new_contract(label: &str) -> Self {
-        Self::prepare(label, true)
+    pub fn new_stopped(label: &str, contract_accounts: bool) -> Self {
+        Self::prepare(label, contract_accounts, false)
     }
-    fn prepare(label: &str, contract_accounts: bool) -> Self {
+    fn prepare(label: &str, contract_accounts: bool, start: bool) -> Self {
         let owner = std::env::var_os("USERPROFILE")
             .or_else(|| std::env::var_os("HOME"))
             .unwrap();
@@ -78,11 +78,18 @@ impl Server {
             if contract_accounts {
                 let quota = data.join("state/quota").join(format!("{name}.json"));
                 fs::create_dir_all(quota.parent().unwrap()).unwrap();
-                fs::copy(
-                    repo().join("tests/fixtures/data/state-quota-one@example.com.json"),
-                    quota,
+                let mut captured: Value = serde_json::from_slice(
+                    &fs::read(repo().join("tests/fixtures/data/state-quota-one@example.com.json"))
+                        .unwrap(),
                 )
                 .unwrap();
+                captured["at"] = json!(
+                    SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .unwrap()
+                        .as_secs_f64()
+                );
+                fs::write(quota, captured.to_string()).unwrap();
             }
         }
         let agy = root.join(if cfg!(windows) {
@@ -97,6 +104,21 @@ impl Server {
         fs::write(ui.join("index.html"),"<html><meta name=\"antiquota-token\" content=\"__ANTIQUOTA_TOKEN__\"><body>Fixture UI</body></html>").unwrap();
         fs::write(ui.join("app.js"), "console.log('fixture');\n").unwrap();
         fs::write(&script, "{}").unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let bin = root.join("browser-bin");
+            fs::create_dir_all(&bin).unwrap();
+            for name in ["open", "xdg-open"] {
+                let path = bin.join(name);
+                fs::write(
+                    &path,
+                    "#!/bin/sh\nprintf '%s\\n' \"$@\" >> \"$ANTIQUOTA_BROWSER_RECORD\"\n",
+                )
+                .unwrap();
+                fs::set_permissions(path, fs::Permissions::from_mode(0o700)).unwrap();
+            }
+        }
         let mut server = Self {
             root,
             home,
@@ -108,7 +130,9 @@ impl Server {
             token: String::new(),
             child: None,
         };
-        server.start();
+        if start {
+            server.start();
+        }
         server
     }
     pub fn start(&mut self) {
@@ -151,11 +175,23 @@ impl Server {
             .env("ANTIQUOTA_DIR", &self.data)
             .env("ANTIQUOTA_AGY", &self.agy)
             .env("ANTIQUOTA_NO_USAGE_LINK", "1")
+            .env("TOKIO_WORKER_THREADS", "2")
+            .env(
+                "ANTIQUOTA_BROWSER_RECORD",
+                self.root.join("browser-record.txt"),
+            )
             .env("ANTIQUOTA_UI_DIR", self.root.join("ui"))
             .env("FAKE_AGY_SCRIPT", &self.script)
             .env("FAKE_AGY_RECORD", self.root.join("fake-calls.jsonl"))
             .env_remove("FAKE_AGY_SCENARIO")
             .env_remove("STUB_SLEEP");
+        #[cfg(unix)]
+        {
+            let inherited = std::env::var_os("PATH").unwrap_or_default();
+            let paths = std::iter::once(self.root.join("browser-bin"))
+                .chain(std::env::split_paths(&inherited));
+            command.env("PATH", std::env::join_paths(paths).unwrap());
+        }
         command
     }
     pub fn call(&self, method: &str, path: &str, body: Option<Value>) -> http::Response {

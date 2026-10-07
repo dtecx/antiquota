@@ -1,11 +1,7 @@
-//! Zero-cost metadata, sign-in, verifier, and dictation responses for fake agy.
+//! Owns fake metadata command dispatch without model calls or project edits.
 use fake_agy::{FakeError, Script};
-use serde_json::{Value, json};
-use std::{
-    env, fs,
-    io::{self, Write},
-    path::PathBuf,
-};
+use serde_json::json;
+use std::{env, fs, path::PathBuf, thread, time::Duration};
 
 pub fn flag<'a>(args: &'a [String], name: &str) -> Option<&'a str> {
     args.iter()
@@ -17,14 +13,24 @@ pub fn flag<'a>(args: &'a [String], name: &str) -> Option<&'a str> {
 pub fn handle(args: &[String], script: &Script) -> Result<bool, FakeError> {
     let prompt = flag(args, "-p").unwrap_or_default();
     let command = args.first().map(String::as_str).unwrap_or_default();
+    let slot = env::var("ANTIQUOTA_SLOT").unwrap_or_else(|_| {
+        PathBuf::from(env::var_os("HOME").unwrap())
+            .file_name()
+            .unwrap()
+            .to_string_lossy()
+            .into_owned()
+    });
+    let metadata = script.metadata_for(&slot);
     if matches!(command, "models" | "--models") || prompt == "/models" {
         if prompt == "/models" {
             println!(
                 "{}",
-                json!({"command":{"name":"models","data":{"models":[{"id":"gemini-3.8-flash-high","label":"Gemini 3.8 Flash High"}]}}})
+                json!({"command":{"name":"models","data":{"models":metadata.models}}})
             );
         } else {
-            println!("gemini-3.8-flash-high\tGemini 3.8 Flash High");
+            for model in &metadata.models {
+                println!("{}\t{}", model.id, model.label);
+            }
         }
         return Ok(true);
     }
@@ -32,51 +38,70 @@ pub fn handle(args: &[String], script: &Script) -> Result<bool, FakeError> {
         let home = PathBuf::from(env::var_os("HOME").unwrap());
         let auth = home.join(".gemini/antigravity-cli/antigravity-oauth-token");
         super::sandbox::isolated(&auth)?;
-        if !auth.exists() {
-            eprintln!("Authentication required. Please visit the URL to log in:");
-            eprintln!("https://accounts.google.com/o/oauth2/auth?client_id=fixture&state=fixture");
-            eprintln!("Or, paste the authorization code here and press Enter:");
-            io::stderr().flush()?;
-            let mut code = String::new();
-            io::stdin().read_line(&mut code)?;
-            if code.trim() != "good-code" {
-                return Err(FakeError::Scenario("synthetic sign-in rejected".into()));
-            }
-            fs::create_dir_all(auth.parent().unwrap())?;
-            fs::write(&auth, "synthetic-account-token")?;
-            #[cfg(unix)]
-            {
-                use std::os::unix::fs::PermissionsExt;
-                fs::set_permissions(&auth, fs::Permissions::from_mode(0o600))?;
-            }
-            fs::write(auth.parent().unwrap().join("jetski_state.pbtxt"), "")?;
-            if let Some(path) = flag(args, "--log-file") {
-                let path = PathBuf::from(path);
-                super::sandbox::isolated(&path)?;
-                let email = env::var("FAKE_AGY_EMAIL").unwrap_or_else(|_| "new@example.com".into());
-                fs::write(
-                    path,
-                    format!("I1006 OAuth: authenticated successfully as {email}\n"),
-                )?;
-            }
+        let signed_in = auth.exists();
+        let identity = if signed_in {
+            metadata.identity.as_deref().unwrap_or(&slot).to_string()
+        } else {
+            super::login::sign_in(&script.login, &auth)?
+        };
+        super::login::identity_log(args, &identity)?;
+        super::descendant::spawn(metadata)?;
+        if metadata.quota_delay_ms > 0 {
+            thread::sleep(Duration::from_millis(metadata.quota_delay_ms));
         }
-        let spent = env::var("FAKE_AGY_SPENT_SLOT").ok() == env::var("ANTIQUOTA_SLOT").ok()
-            && env::var_os("FAKE_AGY_SPENT_SLOT").is_some();
-        let groups:Vec<_>=["Gemini","Claude/GPT"].iter().map(|name|json!({"name":name,"buckets":[
-            {"window":"5h","remaining_fraction":if spent && *name=="Gemini" {0.01} else {0.9},"reset_time":"2099-01-01T05:00:00Z"},
-            {"window":"weekly","remaining_fraction":0.9,"reset_time":"2099-01-07T00:00:00Z"}]})).collect();
+        let verification = if signed_in {
+            metadata.verify_url.as_ref()
+        } else {
+            script.login.verify_url.as_ref()
+        };
+        if let Some(url) = verification {
+            println!(
+                "{}",
+                json!({"status":"ERROR","error":format!("Account eligibility must be verified: {url}")})
+            );
+            return Err(FakeError::Scenario(
+                "account eligibility verification required".into(),
+            ));
+        }
+        if let Some(error) = &metadata.quota_error {
+            println!("{}", json!({"status":"ERROR","error":error}));
+            return Err(FakeError::Scenario(error.clone()));
+        }
+        let has_turn = fs::read_to_string(home.join(".fake-agy-turn-count"))
+            .ok()
+            .and_then(|text| text.parse::<u64>().ok())
+            .is_some_and(|turns| turns > 0);
+        let spent = env::var("FAKE_AGY_SPENT_SLOT").as_deref() == Ok(slot.as_str());
+        let quota = if has_turn {
+            metadata
+                .quota_after_turn
+                .as_ref()
+                .or(metadata.quota.as_ref())
+        } else {
+            metadata.quota.as_ref()
+        };
         println!(
             "{}",
-            json!({"status":"SUCCESS","command":{"name":"quota","data":{"groups":groups}}})
+            quota
+                .cloned()
+                .unwrap_or_else(|| fake_agy::metadata::healthy_quota(if spent {
+                    0.01
+                } else {
+                    0.9
+                }))
         );
         return Ok(true);
     }
     if matches!(prompt, "/config" | "/hooks" | "/skills") {
         let name = prompt.trim_start_matches('/');
-        let data: Value = if name == "skills" {
-            json!({"skills":[]})
-        } else {
-            json!({name:{}})
+        let data = match name {
+            "skills" => {
+                json!({"skills": metadata.skills.iter().map(|name| json!({"name":name})).collect::<Vec<_>>()})
+            }
+            "hooks" => {
+                json!({"hooks": metadata.hooks.iter().map(|name| json!({"name":name})).collect::<Vec<_>>()})
+            }
+            _ => json!({"config":metadata.config}),
         };
         println!(
             "{}",

@@ -126,14 +126,18 @@ impl Decoder {
             .as_ref()
             .is_some_and(|(kind, state)| kind == "agent_response" && state == "DONE");
         let genuine = self.result["error"].as_str().unwrap_or("");
+        let genuine_text = format!("{}{}", genuine, if code != 0 { stderr } else { "" });
         let status = if stopped {
             "stopped".into()
         } else if replied || code == 0 && self.result["status"] == "SUCCESS" {
             "SUCCESS".into()
-        } else if genuine.to_ascii_lowercase().contains("quota")
-            || genuine.contains("RESOURCE_EXHAUSTED")
-        {
-            "quota".into()
+        } else if let Some(failure) = antiquota_core::classify_error(&genuine_text) {
+            match failure {
+                antiquota_core::Failure::Quota => "quota",
+                antiquota_core::Failure::Auth => "auth",
+                antiquota_core::Failure::Transient => "transient",
+            }
+            .into()
         } else {
             self.result["status"].as_str().unwrap_or("ERROR").into()
         };

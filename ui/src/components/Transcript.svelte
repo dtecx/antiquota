@@ -1,9 +1,10 @@
 <!-- Owns scroll behavior and empty/loading presentation for the event projection. -->
 <script lang="ts">
+  import type { Login } from '../lib/login';
   import type { Workbench } from '../lib/workbench';
   import { groupTranscript } from '../lib/transcript';
   import TurnGroup from './TurnGroup.svelte';
-  let { workbench }: { workbench: Workbench } = $props();
+  let { workbench, login }: { workbench: Workbench; login: Login } = $props();
   const view = $derived(workbench.state);
   const groups = $derived(groupTranscript($view.events));
   let scroller: HTMLDivElement;
@@ -41,6 +42,9 @@
           session.
         </p>
         <div class="folder">{$view.selected?.cwd}</div>
+        {#if !$view.snapshot?.accounts.length}<button onclick={() => login.open()}
+            >Add a Google account</button
+          >{/if}
       </div>
     {:else}{#each groups as group, index (group.key)}<TurnGroup
           {group}

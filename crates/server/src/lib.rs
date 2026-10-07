@@ -1,10 +1,11 @@
 //! Owns the local HTTP/SSE boundary and Rust-owned public API bindings.
+mod account_http;
 pub mod api;
 mod http;
 pub mod routes;
 mod runtime;
 mod stream;
-pub use runtime::{ServerError, discover, serve};
+pub use runtime::{ServerError, discover, open_url, serve};
 fn expand_cwd(text: &str) -> Result<String, antiquota_app::AppError> {
     let home = antiquota_store::user_home()?;
     Ok(if text == "~" {

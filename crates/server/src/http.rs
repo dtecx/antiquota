@@ -14,6 +14,7 @@ use std::{path::Path, sync::Arc};
 pub async fn dispatch(State(state): State<Arc<HttpState>>, request: Request) -> Response {
     let method = request.method().as_str().to_owned();
     let path = request.uri().path().to_owned();
+    let query = request.uri().query().unwrap_or("").to_owned();
     let host = request
         .headers()
         .get(header::HOST)
@@ -81,7 +82,7 @@ pub async fn dispatch(State(state): State<Arc<HttpState>>, request: Request) -> 
         json!({})
     };
     let parts: Vec<_> = path.trim_start_matches("/api/").split('/').collect();
-    let result = route(&state, &method, &parts, &body).await;
+    let result = route(&state, &method, &parts, &body, &query).await;
     match result {
         Ok(value) => response(200, &value),
         Err(AppError::Missing(x)) => error(404, &format!("not found: '{x}'")),
@@ -99,24 +100,26 @@ async fn route(
     method: &str,
     parts: &[&str],
     body: &Value,
+    query: &str,
 ) -> Result<Value, AppError> {
     let service = &state.service;
+    if let Some(result) = crate::account_http::route(service, method, parts, body, query).await {
+        return result;
+    }
     match (method, parts) {
         ("GET", ["state"]) => {
-            let cwd = if service.settings.default_cwd.is_empty() {
+            let settings = service.public_defaults()?;
+            let cwd = if settings.default_cwd.is_empty() {
                 antiquota_store::user_home()?.to_string_lossy().into_owned()
             } else {
-                crate::expand_cwd(&service.settings.default_cwd)?
+                crate::expand_cwd(&settings.default_cwd)?
             };
             value(StateResponse {
                 sessions: service.sessions()?,
-                accounts: service.accounts.accounts()?,
-                models: vec![],
+                accounts: service.account_overview()?,
+                models: service.accounts.cached_models()?,
                 modes: vec![Mode::Default, Mode::AcceptEdits, Mode::Plan, Mode::Bypass],
-                defaults: RuntimeDefaults {
-                    settings: service.settings.clone(),
-                    cwd,
-                },
+                defaults: RuntimeDefaults { settings, cwd },
                 engine: EngineSummary {
                     version: env!("CARGO_PKG_VERSION").into(),
                     agy: state.agy.to_string_lossy().into_owned(),
@@ -128,7 +131,7 @@ async fn route(
             if body["worktree"].as_bool() == Some(true) {
                 return Err(AppError::Missing("worktree feature pending".into()));
             }
-            let defaults = &service.settings;
+            let defaults = service.public_defaults()?;
             let cwd = body
                 .get("cwd")
                 .and_then(Value::as_str)
@@ -226,13 +229,14 @@ async fn route(
         _ => Err(AppError::Missing(parts.join("/"))),
     }
 }
-async fn command(
+pub(crate) async fn command(
     service: &Arc<antiquota_app::Service>,
     command: Command,
 ) -> Result<Value, AppError> {
     match service.execute(command).await? {
         antiquota_app::CommandResult::Session(session) => value(*session),
         antiquota_app::CommandResult::Sent(result) => value(SendResponse { result }),
+        antiquota_app::CommandResult::Value(data) => Ok(data),
         antiquota_app::CommandResult::Done => value(OkResponse { ok: true }),
     }
 }
@@ -259,7 +263,7 @@ fn patch_fields(body: &Value) -> Result<SessionPatch, AppError> {
         archived: body.get("archived").map(truthy),
     })
 }
-fn truthy(v: &Value) -> bool {
+pub(crate) fn truthy(v: &Value) -> bool {
     match v {
         Value::Null => false,
         Value::Bool(x) => *x,
@@ -269,7 +273,7 @@ fn truthy(v: &Value) -> bool {
         Value::Object(x) => !x.is_empty(),
     }
 }
-fn value<T: Serialize>(item: T) -> Result<Value, AppError> {
+pub(crate) fn value<T: Serialize>(item: T) -> Result<Value, AppError> {
     serde_json::to_value(item).map_err(|e| AppError::Invalid(e.to_string()))
 }
 pub fn response<T: Serialize>(code: u16, value: &T) -> Response {

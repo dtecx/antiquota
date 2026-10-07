@@ -1,12 +1,13 @@
 /** Proves drafts, selection races, queue feedback, and reconnect reconciliation. */
 import { get } from 'svelte/store';
 import { describe, expect, it, vi } from 'vitest';
-import type { Api } from './api';
+import { createApi, type Api } from './api';
 import type { SessionResponse } from '../gen/SessionResponse';
-import { fixtureSession, fixtureState } from './fixtures.test-support';
+import { fixtureAccount, fixtureSession, fixtureState } from './fixtures.test-support';
 import { createWorkbench } from './workbench';
 function fixtureApi(): Api {
   return {
+    ...createApi('synthetic', vi.fn<typeof fetch>()),
     state: vi.fn(async () => fixtureState()),
     session: vi.fn(async (id) => ({ meta: fixtureSession(id), events: [] })),
     create: vi.fn(async () => fixtureSession('new')),
@@ -169,5 +170,14 @@ describe('session workbench store', () => {
       meta: { ...fixtureSession(), updated: 90, status: 'running' },
     });
     expect(get(workbench.state).selected?.status).toBe('running');
+  });
+  it('applies global account frames without replacing session drafts or selection', async () => {
+    const workbench = createWorkbench(fixtureApi());
+    await workbench.refresh();
+    workbench.draft('Keep the draft');
+    workbench.onEvent({ t: 'accounts', ts: 101, sid: null, accounts: [fixtureAccount()] });
+    expect(get(workbench.state).snapshot?.accounts[0]?.slot).toBe('one@example.com');
+    expect(get(workbench.state).selected?.id).toBe('fixture');
+    expect(get(workbench.state).drafts.fixture).toBe('Keep the draft');
   });
 });

@@ -9,6 +9,8 @@ use std::{
     time::Instant,
 };
 static NEXT: AtomicU64 = AtomicU64::new(0);
+#[path = "support/accounts.rs"]
+mod accounts;
 struct Fixture {
     root: PathBuf,
     home: PathBuf,
@@ -113,6 +115,8 @@ fn process_plays_every_scenario_and_preserves_current_turn_usage() {
         "crash",
         "stale_result",
         "duplicate_done",
+        "transient",
+        "conversation_lost",
     ] {
         let fixture = Fixture::new();
         let output = fixture.turn(scenario);
@@ -123,7 +127,9 @@ fn process_plays_every_scenario_and_preserves_current_turn_usage() {
             output.status.code().unwrap(),
             if scenario == "crash" {
                 23
-            } else if ["quota", "rate", "auth"].contains(&scenario) {
+            } else if ["quota", "rate", "auth", "transient", "conversation_lost"]
+                .contains(&scenario)
+            {
                 1
             } else {
                 0

@@ -1,4 +1,5 @@
 /** Owns runtime guards for Rust-generated wire types at the untrusted stream boundary. */
+import type { Account } from '../gen/Account';
 import type { Session } from '../gen/Session';
 import type { StreamEvent } from '../gen/StreamEvent';
 
@@ -10,6 +11,44 @@ const strings = (value: Record<string, unknown>, keys: string[]) =>
   keys.every((key) => typeof value[key] === 'string');
 const numbers = (value: Record<string, unknown>, keys: string[]) =>
   keys.every((key) => number(value[key]));
+export function isAccount(value: unknown): value is Account {
+  if (
+    !object(value) ||
+    typeof value.slot !== 'string' ||
+    typeof value.busy !== 'boolean' ||
+    typeof value.paused !== 'boolean'
+  )
+    return false;
+  if (value.probed !== null && !number(value.probed)) return false;
+  if (value.verify !== null && typeof value.verify !== 'string') return false;
+  if (!object(value.quota) || !object(value.walls) || !object(value.why) || !object(value.today))
+    return false;
+  if (
+    !Object.values(value.walls).every(number) ||
+    !Object.values(value.why).every((reason) => typeof reason === 'string')
+  )
+    return false;
+  if (
+    !['input', 'output', 'thinking', 'turns'].every(
+      (key) =>
+        value.today &&
+        object(value.today) &&
+        (value.today[key] === undefined || number(value.today[key])),
+    )
+  )
+    return false;
+  return Object.values(value.quota).every(
+    (pool) =>
+      object(pool) &&
+      Object.values(pool).every(
+        (window) =>
+          Array.isArray(window) &&
+          window.length === 2 &&
+          number(window[0]) &&
+          (window[1] === null || number(window[1])),
+      ),
+  );
+}
 export function isSession(value: unknown): value is Session {
   if (
     !object(value) ||
@@ -75,7 +114,7 @@ export function isStreamEvent(value: unknown): value is StreamEvent {
     case 'notice':
       return strings(value, ['kind', 'text']) && 'data' in value;
     case 'accounts':
-      return Array.isArray(value.accounts);
+      return Array.isArray(value.accounts) && value.accounts.every(isAccount);
     case 'approval':
       return (
         strings(value, ['id', 'session', 'tool', 'rule', 'state', 'why']) &&

@@ -34,7 +34,7 @@ export const routes = [
   {
     "method": "POST",
     "path": "/api/accounts/{name}/pause",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "POST",
@@ -234,57 +234,57 @@ export const routes = [
   {
     "method": "GET",
     "path": "/api/routing",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "GET",
     "path": "/api/accounts",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "POST",
     "path": "/api/accounts/probe",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "POST",
     "path": "/api/accounts/login",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "GET",
     "path": "/api/accounts/login/{lid}",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "POST",
     "path": "/api/accounts/login/{lid}",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "DELETE",
     "path": "/api/accounts/login/{lid}",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "POST",
     "path": "/api/accounts/{name}/check",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "DELETE",
     "path": "/api/accounts/{name}",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "GET",
     "path": "/api/settings",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "PUT",
     "path": "/api/settings/defaults",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "GET",

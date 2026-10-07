@@ -1,11 +1,19 @@
 <!-- Owns project groups and session navigation in the compact warm workbench. -->
 <script lang="ts">
   import type { Workbench } from '../lib/workbench';
+  import type { Accounts } from '../lib/accounts';
+  import type { Login } from '../lib/login';
+  import AccountPill from './AccountPill.svelte';
   import type { Connection } from '../lib/stream';
   import { projectName, relativeTime } from '../lib/format';
   import Icon from './Icon.svelte';
   import { groupSessions } from '../lib/navigation';
-  let { workbench, connection }: { workbench: Workbench; connection: Connection } = $props();
+  let {
+    workbench,
+    connection,
+    accounts,
+    login,
+  }: { workbench: Workbench; connection: Connection; accounts: Accounts; login: Login } = $props();
   const view = $derived(workbench.state);
   const groups = $derived(groupSessions($view.snapshot?.sessions ?? [], $view.filter));
 </script>
@@ -63,6 +71,10 @@
       </p>
     {/if}
   </nav>
+  <button class="quiet settings-link" onclick={() => accounts.open()}
+    >Settings <kbd>⌘ ,</kbd></button
+  >
+  <AccountPill {accounts} {login} session={$view.selected} />
   <footer>
     <span class="connection-dot" class:live={connection === 'live'}></span><span
       >{connection === 'live'
@@ -75,6 +87,14 @@
 </aside>
 
 <style>
+  .settings-link {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-2) var(--space-4);
+    font-size: 11px;
+    color: var(--ink-3);
+  }
   aside {
     width: var(--sidebar-width);
     flex-shrink: 0;

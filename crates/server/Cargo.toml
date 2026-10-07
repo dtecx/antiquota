@@ -21,5 +21,8 @@ tokio.workspace = true
 axum.workspace = true
 futures-util.workspace = true
 
+[dev-dependencies]
+antiquota-pty.workspace = true
+
 [lints]
 workspace = true

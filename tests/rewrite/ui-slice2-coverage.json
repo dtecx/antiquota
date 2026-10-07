@@ -1,0 +1,704 @@
+{
+  "schema_version": 1,
+  "slice": 2,
+  "at": "2026-10-07T16:57:08.147750+00:00",
+  "scope": "Conservative UI evidence proposal for independent review. This file does not mark canonical FEATURES.md or TEST_REPORT.md items Passed. All omitted IDs remain Pending. Real accounts, provider consent, paid live tests, native shell and unrelated settings are not claimed.",
+  "results": {
+    "vitest_tests": 52,
+    "vitest_files": 10,
+    "chromium_tests": 28,
+    "chromium_slice2_tests": 22,
+    "chromium_slice1_tests": 6,
+    "chromium_flaky": 0,
+    "paid_calls": 0
+  },
+  "candidates": [
+    {
+      "feature_id": "F-401",
+      "acceptance": "Initial load selects the URL-fragment session when it exists.",
+      "tests": [
+        "ui/e2e/accounts.spec.ts::honors an older URL-fragment selection when several sessions exist"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": "Two distinct sessions exist. Initial reload selects the older fragment over the newer session. Runtime hash changes and invalid-fragment fallback are not claimed."
+    },
+    {
+      "feature_id": "F-459",
+      "acceptance": "Start and empty-session screens offer sign-in when no accounts exist.",
+      "tests": [
+        "ui/e2e/login.spec.ts::opens sign-in from an empty account pill welcome and empty session"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-672",
+      "acceptance": "Accounts settings exposes accounts, sign-in, rotation controls and routing history.",
+      "tests": [
+        "ui/e2e/accounts.spec.ts::shows pool windows pauses resumes checks removes and refreshes accounts",
+        "ui/e2e/accounts.spec.ts::persists rotation choices and range endpoints without losing focused drafts",
+        "ui/e2e/account-display.spec.ts::renders every routing kind newest first with the prior account and session",
+        "ui/e2e/accounts.spec.ts::signs in synthetically with Enter and removes the adopted account"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-711",
+      "acceptance": "Accounts Probe now probes every account.",
+      "tests": [
+        "ui/e2e/accounts.spec.ts::shows pool windows pauses resumes checks removes and refreshes accounts"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": "Newly recorded /quota calls for both account identities are asserted after Probe now."
+    },
+    {
+      "feature_id": "F-712",
+      "acceptance": "Accounts Add account opens sign-in.",
+      "tests": [
+        "ui/e2e/accounts.spec.ts::signs in synthetically with Enter and removes the adopted account"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-713",
+      "acceptance": "Account cards show identity and paused, busy and last-probed states.",
+      "tests": [
+        "ui/e2e/accounts.spec.ts::shows pool windows pauses resumes checks removes and refreshes accounts",
+        "ui/e2e/accounts.spec.ts::shows a leased account as running and disables check and removal until stop"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-714",
+      "acceptance": "Account cards show today's input, output, thinking and turn counts.",
+      "tests": [
+        "ui/e2e/account-display.spec.ts::shows all four today counters and excludes earlier local-day usage",
+        "ui/e2e/accounts.spec.ts::quota handoff preserves one user message and shows the next serving account",
+        "ui/e2e/accounts.spec.ts::rate handoff preserves one user message and shows the next serving account",
+        "ui/e2e/accounts.spec.ts::auth handoff preserves one user message and shows the next serving account"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-715",
+      "acceptance": "Gemini and Claude/GPT quota windows appear separately.",
+      "tests": [
+        "ui/e2e/accounts.spec.ts::shows pool windows pauses resumes checks removes and refreshes accounts"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-716",
+      "acceptance": "Quota windows show their reset time or disabled-window explanation in a tooltip.",
+      "tests": [
+        "ui/e2e/accounts.spec.ts::shows pool windows pauses resumes checks removes and refreshes accounts",
+        "ui/src/lib/account-format.test.ts::uses the minimum window and preserves missing versus disabled readings"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-717",
+      "acceptance": "Account cards show walls, signed-out, cooldown and verification reasons.",
+      "tests": [
+        "ui/e2e/account-display.spec.ts::displays wall cooldown signed-out verification and paused attention states",
+        "ui/e2e/accounts.spec.ts::opens exact verification link and checks continued verification then readiness",
+        "ui/e2e/accounts.spec.ts::quota handoff preserves one user message and shows the next serving account",
+        "ui/e2e/accounts.spec.ts::rate handoff preserves one user message and shows the next serving account",
+        "ui/e2e/accounts.spec.ts::auth handoff preserves one user message and shows the next serving account"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-718",
+      "acceptance": "Pause keeps an account out of rotation.",
+      "tests": [
+        "ui/e2e/accounts.spec.ts::shows pool windows pauses resumes checks removes and refreshes accounts",
+        "ui/e2e/account-display.spec.ts::displays wall cooldown signed-out verification and paused attention states"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": "UI proves the pause request, paused display and reduced available count. Independent backend policy tests must prove exclusion from routing."
+    },
+    {
+      "feature_id": "F-719",
+      "acceptance": "Resume puts a paused account back into rotation.",
+      "tests": [
+        "ui/e2e/accounts.spec.ts::shows pool windows pauses resumes checks removes and refreshes accounts"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": "UI proves the resume request and available state. Independent backend policy tests must prove restoration to routing."
+    },
+    {
+      "feature_id": "F-720",
+      "acceptance": "Check refreshes quota and sign-in state.",
+      "tests": [
+        "ui/e2e/accounts.spec.ts::shows pool windows pauses resumes checks removes and refreshes accounts",
+        "ui/e2e/accounts.spec.ts::opens exact verification link and checks continued verification then readiness"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-721",
+      "acceptance": "Sign in again opens the account sign-in dialog.",
+      "tests": [
+        "ui/e2e/accounts.spec.ts::signs in synthetically with Enter and removes the adopted account"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-723",
+      "acceptance": "A verification-required account opens its exact Google verification URL.",
+      "tests": [
+        "ui/e2e/accounts.spec.ts::opens exact verification link and checks continued verification then readiness"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": "The exact synthetic href and a locally intercepted provider popup are asserted. No provider request occurs."
+    },
+    {
+      "feature_id": "F-724",
+      "acceptance": "Check again reports readiness or continued verification after probing.",
+      "tests": [
+        "ui/e2e/accounts.spec.ts::opens exact verification link and checks continued verification then readiness"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-725",
+      "acceptance": "Next account selects soonest-reset-first, one-by-one or round-robin rotation.",
+      "tests": [
+        "ui/e2e/accounts.spec.ts::persists rotation choices and range endpoints without losing focused drafts"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-726",
+      "acceptance": "Reserve accepts and persists 0\u201350 percent.",
+      "tests": [
+        "ui/e2e/accounts.spec.ts::persists rotation choices and range endpoints without losing focused drafts"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-727",
+      "acceptance": "Quota check accepts and persists 2\u2013240 minutes.",
+      "tests": [
+        "ui/e2e/accounts.spec.ts::persists rotation choices and range endpoints without losing focused drafts"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-728",
+      "acceptance": "Routing history displays newest-first pick decisions with session and prior account.",
+      "tests": [
+        "ui/e2e/account-display.spec.ts::renders every routing kind newest first with the prior account and session",
+        "ui/e2e/accounts.spec.ts::quota handoff preserves one user message and shows the next serving account",
+        "ui/e2e/accounts.spec.ts::rate handoff preserves one user message and shows the next serving account",
+        "ui/e2e/accounts.spec.ts::auth handoff preserves one user message and shows the next serving account"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": "Compatible history proves all row kinds and order; actual quota/rate/auth runs prove the prior account and known session title."
+    },
+    {
+      "feature_id": "F-729",
+      "acceptance": "Routing history displays walls, cooldowns, retries, signed-out, paused and resumed decisions.",
+      "tests": [
+        "ui/e2e/account-display.spec.ts::renders every routing kind newest first with the prior account and session",
+        "ui/src/lib/account-format.test.ts::formats every captured routing kind and the prior account of a pick"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-730",
+      "acceptance": "No routing decisions has an explicit empty state.",
+      "tests": [
+        "ui/e2e/accounts.spec.ts::shows pool windows pauses resumes checks removes and refreshes accounts"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-741",
+      "acceptance": "The sidebar account pill displays available count and serving account/quota.",
+      "tests": [
+        "ui/e2e/accounts.spec.ts::shows pool windows pauses resumes checks removes and refreshes accounts",
+        "ui/src/lib/account-format.test.ts::shows paused, wall, low, attention and serving-account states per pool",
+        "ui/e2e/accounts.spec.ts::quota handoff preserves one user message and shows the next serving account",
+        "ui/e2e/accounts.spec.ts::rate handoff preserves one user message and shows the next serving account",
+        "ui/e2e/accounts.spec.ts::auth handoff preserves one user message and shows the next serving account"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-742",
+      "acceptance": "The sidebar account strip shows account quota and paused/wall/attention status.",
+      "tests": [
+        "ui/e2e/accounts.spec.ts::shows pool windows pauses resumes checks removes and refreshes accounts",
+        "ui/e2e/account-display.spec.ts::displays wall cooldown signed-out verification and paused attention states",
+        "ui/src/lib/account-format.test.ts::shows paused, wall, low, attention and serving-account states per pool"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-744",
+      "acceptance": "The account pill opens Add Google account when no accounts exist.",
+      "tests": [
+        "ui/e2e/login.spec.ts::opens sign-in from an empty account pill welcome and empty session"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-777",
+      "acceptance": "Opening Add Google account resets prior code, sign-in state and timers.",
+      "tests": [
+        "ui/src/lib/login.test.ts::reserves a tab before consent and cancels old login before requesting a new link",
+        "ui/e2e/login.spec.ts::highlights fifteen seconds and displays countdown expiry without retaining it after cancel"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-778",
+      "acceptance": "Browser sign-in reserves a tab before requesting the URL to avoid popup blocking.",
+      "tests": [
+        "ui/src/lib/login.test.ts::reserves a tab before consent and cancels old login before requesting a new link",
+        "ui/e2e/accounts.spec.ts::signs in synthetically with Enter and removes the adopted account"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": "An injected browser-port unit test proves reserve-before-request ordering. Chromium exercises a reserved popup with provider interception."
+    },
+    {
+      "feature_id": "F-780",
+      "acceptance": "Sign-in exposes a manual link when opening the browser fails.",
+      "tests": [
+        "ui/e2e/accounts.spec.ts::offers a manual consent link when popups are blocked and accepts polled completion",
+        "ui/src/lib/login.test.ts::closes a reserved popup and releases controls when starting sign-in fails"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-781",
+      "acceptance": "New sign-in link cancels the previous login before creating another.",
+      "tests": [
+        "ui/e2e/accounts.spec.ts::cancels old links and handles rejected sign-in followed by automatic pasted-code success",
+        "ui/src/lib/login.test.ts::reserves a tab before consent and cancels old login before requesting a new link"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-782",
+      "acceptance": "Sign-in countdown highlights its last fifteen seconds and expiry.",
+      "tests": [
+        "ui/e2e/login.spec.ts::highlights fifteen seconds and displays countdown expiry without retaining it after cancel",
+        "ui/src/lib/login.test.ts::offers a manual link when blocked and counts down through the last fifteen seconds"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": "The browser fixture changes only the returned countdown to fifteen seconds. UI highlighting and expiry are proven; backend expiry enforcement is separate."
+    },
+    {
+      "feature_id": "F-783",
+      "acceptance": "State polling runs every two seconds and accepts completion without pasting a code.",
+      "tests": [
+        "ui/e2e/accounts.spec.ts::offers a manual consent link when popups are blocked and accepts polled completion",
+        "ui/src/lib/login.test.ts::polls every two seconds and closes completed sign-in after 1.2 seconds without a code"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-784",
+      "acceptance": "Returning focus reads a valid code from the clipboard when the field is empty.",
+      "tests": [
+        "ui/e2e/login.spec.ts::reads a valid clipboard code on returning focus only while the code field is empty",
+        "ui/src/lib/login.test.ts::validates clipboard codes, tolerates denied access and preserves manual input"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": "Chromium replaces only navigator.clipboard.readText with a synthetic value and dispatches focus. A nonempty manual field remains unchanged."
+    },
+    {
+      "feature_id": "F-785",
+      "acceptance": "Paste rejects values outside the 4/ code format with at least twenty permitted characters.",
+      "tests": [
+        "ui/e2e/login.spec.ts::explains denied clipboard access and rejects an invalid pasted code",
+        "ui/e2e/accounts.spec.ts::cancels old links and handles rejected sign-in followed by automatic pasted-code success",
+        "ui/src/lib/login.test.ts::validates clipboard codes, tolerates denied access and preserves manual input"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": "Synthetic native ClipboardEvents prove rejection and automatic valid submission without reading the user clipboard."
+    },
+    {
+      "feature_id": "F-786",
+      "acceptance": "Clipboard access failure explains manual paste.",
+      "tests": [
+        "ui/e2e/login.spec.ts::explains denied clipboard access and rejects an invalid pasted code"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-787",
+      "acceptance": "Submitting a code disables Add account while its check runs.",
+      "tests": [
+        "ui/e2e/login.spec.ts::disables duplicate code submission and restores controls after an API error",
+        "ui/src/lib/login.test.ts::restores code submission after errors and ignores double submit while checking"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": "A held local HTTP response proves disabled controls before a synthetic 400; a second real fixture-engine request succeeds."
+    },
+    {
+      "feature_id": "F-788",
+      "acceptance": "Successful sign-in reports identity, refreshes accounts and closes after 1.2 seconds.",
+      "tests": [
+        "ui/e2e/accounts.spec.ts::signs in synthetically with Enter and removes the adopted account",
+        "ui/e2e/accounts.spec.ts::offers a manual consent link when popups are blocked and accepts polled completion",
+        "ui/src/lib/login.test.ts::polls every two seconds and closes completed sign-in after 1.2 seconds without a code"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": "Fake timers prove the exact 1.2-second delay. Chromium proves identity, refresh and automatic close."
+    },
+    {
+      "feature_id": "F-789",
+      "acceptance": "Verification state disables code controls and shows verification actions.",
+      "tests": [
+        "ui/e2e/accounts.spec.ts::shows sign-in verification and preserves the parked account"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-790",
+      "acceptance": "Failed sign-in disables expired controls and offers a new sign-in link.",
+      "tests": [
+        "ui/e2e/accounts.spec.ts::cancels old links and handles rejected sign-in followed by automatic pasted-code success"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-791",
+      "acceptance": "A code-submission API error restores Add account and displays the error.",
+      "tests": [
+        "ui/e2e/login.spec.ts::disables duplicate code submission and restores controls after an API error"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": ""
+    },
+    {
+      "feature_id": "F-792",
+      "acceptance": "Closing or restarting sign-in cancels its pending login and clears timers.",
+      "tests": [
+        "ui/e2e/accounts.spec.ts::cancels old links and handles rejected sign-in followed by automatic pasted-code success",
+        "ui/e2e/login.spec.ts::opens sign-in from an empty account pill welcome and empty session",
+        "ui/src/lib/login.test.ts::cancels late consent after close without restoring stale state",
+        "ui/src/lib/login.test.ts::offers a manual link when blocked and counts down through the last fifteen seconds"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": "Unit tests prove pending-login cancellation and timer cleanup; Chromium proves replacement and Escape/cancel."
+    },
+    {
+      "feature_id": "F-993",
+      "acceptance": "The sign-in code submits on Enter and automatically after paste.",
+      "tests": [
+        "ui/e2e/accounts.spec.ts::signs in synthetically with Enter and removes the adopted account",
+        "ui/e2e/accounts.spec.ts::cancels old links and handles rejected sign-in followed by automatic pasted-code success"
+      ],
+      "status": "Candidate for independent review",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2-final.log",
+        ".handoff/evidence/ui-slice2-e2e.json",
+        ".handoff/evidence/ui-slice2-gates.json"
+      ],
+      "scope_note": ""
+    }
+  ],
+  "partial_evidence": [
+    {
+      "feature_id": "F-722",
+      "tests": [
+        "ui/e2e/accounts.spec.ts::shows pool windows pauses resumes checks removes and refreshes accounts",
+        "ui/e2e/accounts.spec.ts::signs in synthetically with Enter and removes the adopted account",
+        "ui/src/lib/accounts.test.ts::confirms removal and keeps the confirmation on error for retry"
+      ],
+      "status": "Pending independent backend preservation proof",
+      "scope_note": "UI confirmation, cancel, removal and retry are proven. Separate CLI sign-in preservation requires backend data-preservation proof."
+    },
+    {
+      "feature_id": "F-682",
+      "tests": [
+        "ui/src/lib/accounts.test.ts::retains cached content after refresh errors and releases failed mutation controls"
+      ],
+      "status": "Pending full settings parity",
+      "scope_note": "Only the Accounts settings surface exists in this slice."
+    },
+    {
+      "feature_id": "F-683",
+      "tests": [
+        "ui/e2e/accounts.spec.ts::persists rotation choices and range endpoints without losing focused drafts",
+        "ui/src/lib/accounts.test.ts::keeps live accounts and focused drafts during a stale refresh",
+        "ui/src/lib/accounts.test.ts::coalesces rapid field changes and persists the newest draft after the in-flight save"
+      ],
+      "status": "Pending full editor parity",
+      "scope_note": "Accounts inputs preserve drafts across refresh, snapshots and autosave. Other settings editors remain Pending."
+    },
+    {
+      "feature_id": "F-685",
+      "tests": [
+        "ui/e2e/accounts.spec.ts::shows pool windows pauses resumes checks removes and refreshes accounts",
+        "ui/e2e/accounts.spec.ts::keeps account settings legible in light theme and narrow windows with keyboard close"
+      ],
+      "status": "Pending active editor parity",
+      "scope_note": "Accounts close and Escape are proven; unrelated settings editors do not exist yet."
+    },
+    {
+      "feature_id": "F-1098",
+      "tests": [
+        "ui/e2e/accounts.spec.ts::quota handoff preserves one user message and shows the next serving account",
+        "ui/e2e/accounts.spec.ts::rate handoff preserves one user message and shows the next serving account",
+        "ui/e2e/accounts.spec.ts::auth handoff preserves one user message and shows the next serving account"
+      ],
+      "status": "Pending independent cooldown policy correlation",
+      "scope_note": "Actual handoff to a second account is proven for quota, rate-limit and authentication failures. Deterministic cooldown enforcement is owned by Rust tests."
+    }
+  ],
+  "pending_boundaries": [
+    {
+      "feature_id": "F-743",
+      "reason": "The temporary account pill opens Accounts. The final Usage destination remains Pending until Slice 9, as approved by the parent agent."
+    },
+    {
+      "feature_id": "F-779",
+      "reason": "Native external opening is owned by the later Tauri shell slice."
+    }
+  ],
+  "supplementary_evidence": [
+    {
+      "feature_id": "F-1057",
+      "status": "Already Passed; extended visual evidence",
+      "evidence_paths": [
+        ".handoff/evidence/ui-slice2/accounts-dark.png",
+        ".handoff/evidence/ui-slice2/accounts-light.png",
+        ".handoff/evidence/ui-slice2/accounts-narrow-light.png",
+        ".handoff/evidence/ui-slice2/handoff-quota.png",
+        ".handoff/evidence/ui-slice2/routing-all-kinds.png",
+        ".handoff/evidence/ui-slice2/login-verification.png"
+      ]
+    }
+  ]
+}

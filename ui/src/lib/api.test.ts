@@ -1,7 +1,12 @@
 /** Proves authenticated route requests and recoverable error messages. */
 import { describe, expect, it, vi } from 'vitest';
 import { createApi, RequestError } from './api';
-import { fixtureSession, fixtureState } from './fixtures.test-support';
+import {
+  fixtureAccount,
+  fixtureSettings,
+  fixtureSession,
+  fixtureState,
+} from './fixtures.test-support';
 describe('typed API boundary', () => {
   it('sends the token and exact JSON request through the captured route', async () => {
     const request = vi.fn<typeof fetch>().mockResolvedValue(Response.json(fixtureSession('a')));
@@ -43,5 +48,53 @@ describe('typed API boundary', () => {
       RequestError,
     );
     expect(request).not.toHaveBeenCalled();
+  });
+  it('uses exact account, login, routing and defaults routes with encoded identities', async () => {
+    const request = vi
+      .fn<typeof fetch>()
+      .mockImplementation(async () => Response.json({ ok: true }));
+    const api = createApi('synthetic-token', request),
+      name = 'one+slot@example.com';
+    await api.accounts();
+    await api.probeAccounts();
+    await api.pauseAccount(name, { on: false });
+    await api.checkAccount(name);
+    await api.removeAccount(name);
+    await api.startLogin();
+    await api.loginState('id/+');
+    await api.submitLogin('id/+', { code: 'synthetic-code' });
+    await api.cancelLogin('id/+');
+    await api.settings();
+    await api.saveDefaults({ reserve: '0', quota_poll: '240' });
+    await api.routing();
+    expect(
+      request.mock.calls.map(([path, options]) => [path, options?.method, options?.body]),
+    ).toEqual([
+      ['/api/accounts', 'GET', undefined],
+      ['/api/accounts/probe', 'POST', '{}'],
+      ['/api/accounts/one%2Bslot%40example.com/pause', 'POST', '{"on":false}'],
+      ['/api/accounts/one%2Bslot%40example.com/check', 'POST', '{}'],
+      ['/api/accounts/one%2Bslot%40example.com', 'DELETE', undefined],
+      ['/api/accounts/login', 'POST', '{}'],
+      ['/api/accounts/login/id%2F%2B', 'GET', undefined],
+      ['/api/accounts/login/id%2F%2B', 'POST', '{"code":"synthetic-code"}'],
+      ['/api/accounts/login/id%2F%2B', 'DELETE', undefined],
+      ['/api/settings', 'GET', undefined],
+      ['/api/settings/defaults', 'PUT', '{"reserve":"0","quota_poll":"240"}'],
+      ['/api/routing?n=60', 'GET', undefined],
+    ]);
+    for (const [, options] of request.mock.calls)
+      expect(options?.headers).toMatchObject({ 'X-Antiquota-Token': 'synthetic-token' });
+  });
+  it('returns typed account and settings data without transforming quota windows or strings', async () => {
+    const account = fixtureAccount(),
+      settings = fixtureSettings();
+    const request = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(Response.json([account]))
+      .mockResolvedValueOnce(Response.json(settings));
+    const api = createApi('synthetic', request);
+    expect(await api.accounts()).toEqual([account]);
+    expect(await api.settings()).toEqual(settings);
   });
 });

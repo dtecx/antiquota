@@ -43,6 +43,14 @@ pub enum Command {
     Delete {
         session: String,
     },
+    Account {
+        action: AccountCommand,
+    },
+    ContinueTurn {
+        session: String,
+        delay: f64,
+        fresh: bool,
+    },
     SetAwake {
         on: bool,
     },
@@ -58,4 +66,19 @@ pub struct TurnRequest {
     pub conversation_id: Option<String>,
     pub slot: Slot,
     pub state_dir: String,
+}
+
+/// Owns global account and defaults commands, shared by HTTP and CLI clients.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[serde(tag = "action", rename_all = "snake_case")]
+pub enum AccountCommand {
+    Probe,
+    Check { name: String },
+    Pause { name: String, on: bool },
+    Remove { name: String },
+    Unwall { name: String },
+    LoginStart,
+    LoginSubmit { id: String, code: String },
+    LoginCancel { id: String },
+    Defaults { values: serde_json::Value },
 }

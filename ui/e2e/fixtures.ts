@@ -15,7 +15,12 @@ export const test = base.extend<{ engine: FixtureEngine }>({
       await use(engine);
     } finally {
       await engine.stop();
-      const evidence = join(sandbox.repository, '.handoff', 'evidence', 'ui-slice1');
+      const evidence = join(
+        sandbox.repository,
+        '.handoff',
+        'evidence',
+        info.file.endsWith('sessions.spec.ts') ? 'ui-slice1' : 'ui-slice2',
+      );
       await mkdir(evidence, { recursive: true });
       const label = info.title.replace(/[^a-zA-Z0-9]+/g, '-').slice(0, 100);
       await copyFile(join(sandbox.root, 'server.log'), join(evidence, `${label}.log`)).catch(

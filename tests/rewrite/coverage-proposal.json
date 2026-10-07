@@ -4,10 +4,10 @@
   "platform": "macOS arm64; Linux and Windows execution remain pending CI.",
   "validation": {
     "httpCommand": "cargo test -p antiquota-server --test rewrite_contract -- --nocapture",
-    "httpPassed": 13,
+    "httpPassed": 12,
     "httpFailed": 0,
-    "httpElapsedSeconds": 2.35,
-    "httpWholeServerTests": 8,
+    "httpElapsedSeconds": 3.39,
+    "httpWholeServerTests": 7,
     "httpHelperUnitTests": 5,
     "fakeCommand": "cargo test -p fake-agy -- --nocapture",
     "fakeUnitPassed": 2,
@@ -20,7 +20,8 @@
     "pendingRoutes": 65,
     "laterSchemaOnlySseSampleChecks": "The backend's separate 160-sample type proof is not runtime full-SSE replay evidence.",
     "selectedScope": "tests/rewrite/slice1-scope.json",
-    "comparatorNotes": "tests/rewrite/README.md"
+    "comparatorNotes": "tests/rewrite/README.md",
+    "notes": "This latest Slice 1 regression gate excludes the removed unapproved chat command. The separately authored HTTP no-account test awaits the final whole gate."
   },
   "tests": {
     "contract": {
@@ -58,15 +59,6 @@
         ".handoff/evidence/slice1-http-integration-final.log"
       ]
     },
-    "cli": {
-      "path": "crates/server/tests/rewrite_contract.rs",
-      "filter": "cli_run_shares_the_discovered_engine_and_durable_session",
-      "command": "cargo test -p antiquota-server --test rewrite_contract cli_run_shares_the_discovered_engine_and_durable_session -- --nocapture",
-      "evidence": [
-        ".handoff/evidence/slice1-http-integration-final.log",
-        ".handoff/evidence/slice1-cli-run.json"
-      ]
-    },
     "resume": {
       "path": "crates/server/tests/rewrite_contract.rs",
       "filter": "resumed_stale_and_duplicate_results_preserve_usage_and_success",
@@ -78,12 +70,12 @@
     },
     "no_accounts": {
       "path": "tests/rewrite/runtime.rs",
-      "filter": "runtime::cli_without_accounts_exits_with_error_and_preserves_the_accepted_prompt",
-      "command": "cargo test -p antiquota-server --test rewrite_contract runtime::cli_without_accounts_exits_with_error_and_preserves_the_accepted_prompt -- --nocapture",
+      "filter": "runtime::http_without_accounts_preserves_accepted_prompt_and_returns_idle_without_runner",
+      "command": "cargo test -p antiquota-server --test rewrite_contract runtime::http_without_accounts_preserves_accepted_prompt_and_returns_idle_without_runner -- --nocapture",
       "evidence": [
-        ".handoff/evidence/slice1-http-integration-final.log",
-        ".handoff/evidence/slice1-no-accounts.json"
-      ]
+        ".handoff/evidence/slice1-no-accounts-http.json"
+      ],
+      "status": "Awaiting final whole gate"
     },
     "browser": {
       "path": "tests/rewrite/runtime.rs",
@@ -205,6 +197,15 @@
       "evidence": [
         ".handoff/evidence/slice1-fake-agy-tests.log"
       ]
+    },
+    "raw_no_accounts": {
+      "path": "tests/rewrite/runtime.rs",
+      "filter": "runtime::raw_cli_without_accounts_exits_without_creating_a_session_or_launching_agy",
+      "command": "cargo test -p antiquota-server --test rewrite_contract runtime::raw_cli_without_accounts_exits_without_creating_a_session_or_launching_agy -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-slice1-regression.log",
+        ".handoff/evidence/slice1-no-accounts.json"
+      ]
     }
   },
   "features": [
@@ -257,11 +258,10 @@
     {
       "featureId": "F-162",
       "tests": [
-        "stream_restart",
-        "no_accounts"
+        "stream_restart"
       ],
       "status": "Passing subset; remaining acceptance pending",
-      "proves": "A user event precedes the captured first turn, and an accepted CLI prompt remains durable when no account is available.",
+      "proves": "A durable user event precedes the captured first HTTP turn. Public chat is not approved or tested.",
       "pending": "Goal, nudge, job, loop, attachment and pending note injection remain pending."
     },
     {
@@ -358,9 +358,9 @@
       "tests": [
         "no_accounts"
       ],
-      "status": "Passing subset; remaining acceptance pending",
-      "proves": "No-account CLI execution fails promptly, retains the accepted prompt, reports an error notice, returns idle and does not start a runner.",
-      "pending": "The legacy noaccount notice kind and all-paused wall explanation need exact parity proof."
+      "status": "Authored; awaiting final whole gate",
+      "proves": "The separate HTTP case asserts the accepted user prompt remains durable, a noaccount notice is emitted, the session returns idle and no agy runner launches.",
+      "pending": "The all-paused wall explanation remains separate acceptance."
     },
     {
       "featureId": "F-189",
@@ -492,11 +492,10 @@
     {
       "featureId": "F-317",
       "tests": [
-        "discovery",
-        "cli"
+        "discovery"
       ],
       "status": "Passing subset; remaining acceptance pending",
-      "proves": "CLI execution leaves the discovered engine record unchanged, and shutdown removes discovery before restart.",
+      "proves": "Engine discovery reuses the running local engine, and shutdown removes discovery before restart. Raw account CLI preservation is covered by the account slice.",
       "pending": "Exact discovery fields and stale-file handling need store/CLI tests."
     },
     {

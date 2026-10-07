@@ -1,5 +1,7 @@
 //! Owns deterministic generation and stale checking of Rust API bindings.
-use antiquota_core::{Approval, Command, Event, Rule, Slot, StreamEvent, Turn};
+use antiquota_core::{
+    Approval, Command, Event, LoginLink, LoginState, RoutingEntry, Rule, Slot, StreamEvent, Turn,
+};
 use antiquota_server::{
     api::*,
     routes::{RouteDefinition, catalog},
@@ -16,6 +18,13 @@ fn generate(dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
         .with_out_dir(dir)
         .with_large_int("number");
     StateResponse::export_all(&config)?;
+    LoginLink::export_all(&config)?;
+    LoginState::export_all(&config)?;
+    LoginCodeRequest::export_all(&config)?;
+    PauseAccountRequest::export_all(&config)?;
+    SettingsOverview::export_all(&config)?;
+    DefaultsRequest::export_all(&config)?;
+    RoutingEntry::export_all(&config)?;
     SessionResponse::export_all(&config)?;
     CreateSessionRequest::export_all(&config)?;
     PatchSessionRequest::export_all(&config)?;

@@ -13,11 +13,7 @@ pub struct HealthResponse {
     pub version: String,
     pub pid: u32,
 }
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-pub struct Model {
-    pub id: String,
-    pub label: String,
-}
+pub use antiquota_core::Model;
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct EngineSummary {
     pub version: String,
@@ -91,4 +87,78 @@ pub struct RuntimeDefaults {
     #[serde(flatten)]
     pub settings: Settings,
     pub cwd: String,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, TS)]
+#[serde(default)]
+pub struct PauseAccountRequest {
+    #[ts(optional)]
+    pub on: Option<bool>,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct LoginCodeRequest {
+    pub code: String,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct StackItem {
+    pub name: String,
+    pub here: bool,
+    pub about: String,
+    pub cli: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub ide: Option<Option<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub enabled: Option<bool>,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct StackComparison {
+    pub cli: Option<String>,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct PermissionOverview {
+    pub allow: Vec<String>,
+    pub deny: Vec<String>,
+    pub cli: String,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct SettingsOverview {
+    pub path: String,
+    pub skills: Vec<StackItem>,
+    pub plugins: Vec<StackItem>,
+    pub rules: Vec<StackItem>,
+    pub hooks: Vec<StackItem>,
+    pub mcps: Vec<StackItem>,
+    pub gemini_md: StackComparison,
+    pub permissions: PermissionOverview,
+    pub defaults: Settings,
+}
+#[derive(Debug, Clone, Default, Serialize, Deserialize, TS)]
+#[serde(default)]
+pub struct DefaultsRequest {
+    #[ts(optional)]
+    pub model: Option<serde_json::Value>,
+    #[ts(optional)]
+    pub mode: Option<serde_json::Value>,
+    #[ts(optional)]
+    pub verifier_model: Option<serde_json::Value>,
+    #[ts(optional)]
+    pub rotation: Option<serde_json::Value>,
+    #[ts(optional)]
+    pub reserve: Option<serde_json::Value>,
+    #[ts(optional)]
+    pub quota_poll: Option<serde_json::Value>,
+    #[ts(optional)]
+    pub keep_awake: Option<serde_json::Value>,
+    #[ts(optional)]
+    pub approval_timeout: Option<serde_json::Value>,
+    #[ts(optional)]
+    pub max_rounds: Option<serde_json::Value>,
+    #[ts(optional)]
+    pub auto_continue: Option<serde_json::Value>,
+    #[ts(optional)]
+    pub default_cwd: Option<serde_json::Value>,
+    #[ts(optional)]
+    pub worktree_default: Option<serde_json::Value>,
 }

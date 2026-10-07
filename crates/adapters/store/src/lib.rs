@@ -170,6 +170,12 @@ impl SessionStore for FileStore {
     fn project_usage(&self, sid: &str, records: &[EventRecord]) -> Result<(), PortError> {
         self.reconcile_usage(sid, records)
     }
+    fn settings(&self) -> Result<Option<antiquota_core::Settings>, PortError> {
+        read_settings(&self.root).map(Some)
+    }
+    fn save_settings(&self, settings: &antiquota_core::Settings) -> Result<(), PortError> {
+        write_json_atomic(&self.root.join("settings.json"), settings)
+    }
     fn state_dir(&self) -> String {
         self.root.join("state").to_string_lossy().into_owned()
     }
@@ -209,7 +215,10 @@ mod tests;
 
 pub fn read_settings(root: &Path) -> Result<antiquota_core::Settings, PortError> {
     match fs::read_to_string(root.join("settings.json")) {
-        Ok(text) => serde_json::from_str(&text).map_err(|e| PortError::Invalid(e.to_string())),
+        Ok(text) => Ok(serde_json::from_str(&text).unwrap_or_else(|_| {
+            tracing::warn!("settings are unreadable; using defaults without changing the file");
+            Default::default()
+        })),
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Default::default()),
         Err(e) => Err(io_error(e)),
     }

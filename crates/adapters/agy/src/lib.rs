@@ -2,6 +2,8 @@
 mod file_diff;
 mod output;
 mod parser;
+mod raw;
+pub use raw::RawResult;
 mod preflight;
 mod process_tree;
 use antiquota_core::{
@@ -25,6 +27,7 @@ impl AgentRunner for AgyRunner {
         mut sink: Box<dyn TurnSink + 'a>,
     ) -> PortFuture<'a, TurnResult> {
         Box::pin(async move {
+            self.ensure_executable()?;
             self.preflight(&request).await?;
             let mut command = Command::new(&self.executable);
             command.args([
@@ -46,7 +49,7 @@ impl AgentRunner for AgyRunner {
                 .current_dir(&request.cwd)
                 .env("HOME", &request.slot.home)
                 .env("USERPROFILE", &request.slot.home)
-                .env("SSH_CONNECTION", "127.0.0.1 1 127.0.0.1 1")
+                .env("SSH_CONNECTION", "127.0.0.1 0 127.0.0.1 0")
                 .env("ANTIQUOTA_SLOT", &request.slot.name)
                 .env("ANTIQUOTA_SESSION", &request.session)
                 .env("ANTIQUOTA_STATE", &request.state_dir)
@@ -130,5 +133,17 @@ impl AgentRunner for AgyRunner {
                 &String::from_utf8_lossy(&stderr),
             ))
         })
+    }
+}
+
+impl AgyRunner {
+    pub(crate) fn ensure_executable(&self) -> Result<(), PortError> {
+        if self.executable.is_file() {
+            Ok(())
+        } else {
+            Err(PortError::Unavailable(
+                "antiquota: real agy binary not found; set ANTIQUOTA_AGY".into(),
+            ))
+        }
     }
 }

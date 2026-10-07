@@ -1,14 +1,31 @@
-//! Owns file-token account context and minimal account leases for turns.
-use antiquota_core::{Account, AccountLease, AccountStore, PortError, Quota, Slot};
+//! Owns private account contexts, exact slot leases and account metadata adapters.
+mod farm;
+mod files;
+mod login;
+mod metadata;
+mod overview;
+mod stack;
+use antiquota_core::{
+    AccountLease, AccountStore, LoginLink, LoginState, Model, PortError, PortFuture, Quota,
+    RoutingEntry, Slot,
+};
 use antiquota_store::{FileLease, io_error, lock_file};
-use serde_json::{Value, json};
+pub use metadata::{find_agy, parse_quota};
 use std::{
     fs,
-    path::{Path, PathBuf},
+    path::PathBuf,
+    sync::{Arc, Mutex},
 };
-#[derive(Debug, Clone)]
+pub const AUTH: &str = ".gemini/antigravity-cli/antigravity-oauth-token";
+pub const FILE_TOKENS: &str = "127.0.0.1 0 127.0.0.1 0";
+#[derive(Clone)]
 pub struct FileAccounts {
     pub root: PathBuf,
+    pub home: PathBuf,
+    pub executable: PathBuf,
+    logins: Arc<Mutex<Option<Arc<login::Login>>>>,
+    changes: Arc<Mutex<()>>,
+    login_gate: Arc<tokio::sync::Mutex<()>>,
 }
 struct Lease {
     slot: Slot,
@@ -19,34 +36,49 @@ impl AccountLease for Lease {
         &self.slot
     }
 }
-fn slot_name(name: &str) -> bool {
-    !name.is_empty()
-        && name.len() <= 100
-        && !name.starts_with('.')
-        && name
-            .bytes()
-            .all(|x| x.is_ascii_alphanumeric() || b"@._+-".contains(&x))
+pub fn check_name(name: &str) -> Result<(), PortError> {
+    antiquota_core::validate_account_name(name)
 }
 impl FileAccounts {
     pub fn new(root: PathBuf) -> Self {
-        Self { root }
+        Self::with_runtime(
+            root,
+            antiquota_store::user_home().unwrap_or_default(),
+            PathBuf::from("agy"),
+        )
     }
-    fn slots(&self) -> Result<Vec<Slot>, PortError> {
+    pub fn with_runtime(root: PathBuf, home: PathBuf, executable: PathBuf) -> Self {
+        Self {
+            root,
+            home,
+            executable,
+            logins: Arc::new(Mutex::new(None)),
+            changes: Arc::new(Mutex::new(())),
+            login_gate: Arc::new(tokio::sync::Mutex::new(())),
+        }
+    }
+    pub fn slots(&self) -> Result<Vec<Slot>, PortError> {
         let path = self.root.join("slots");
         if !path.exists() {
             return Ok(vec![]);
+        }
+        if farm::linked(&path) {
+            return Err(PortError::Invalid(
+                "account directory cannot be linked".into(),
+            ));
         }
         let mut slots = vec![];
         for entry in fs::read_dir(path).map_err(io_error)? {
             let entry = entry.map_err(io_error)?;
             let name = entry.file_name().to_string_lossy().into_owned();
-            let auth = entry
-                .path()
-                .join(".gemini/antigravity-cli/antigravity-oauth-token");
-            if slot_name(&name)
-                && entry.file_type().map_err(io_error)?.is_dir()
-                && auth.is_file()
-                && !auth.is_symlink()
+            if check_name(&name).is_err() || !entry.file_type().map_err(io_error)?.is_dir() {
+                continue;
+            }
+            let auth = entry.path().join(AUTH);
+            if auth.is_file()
+                && !farm::linked(&auth)
+                && !farm::linked(&entry.path().join(".gemini"))
+                && !farm::linked(&entry.path().join(".gemini/antigravity-cli"))
             {
                 slots.push(Slot {
                     name,
@@ -64,48 +96,24 @@ impl FileAccounts {
                 .join("state/leases")
                 .join(format!("{}.lock", slot.name)),
         )
-        .map(|x| x.map(|file| Box::new(Lease { slot, _file: file }) as Box<dyn AccountLease>))
+        .map(|file| file.map(|file| Box::new(Lease { slot, _file: file }) as Box<dyn AccountLease>))
+    }
+    pub fn sync(&self, slot: &Slot) -> Result<(), PortError> {
+        farm::sync(self, slot)
+    }
+    pub fn seed_stack(&self, force: bool) -> Result<(), PortError> {
+        farm::seed(self, force)
+    }
+    pub fn expose_usage(&self) -> Result<bool, PortError> {
+        farm::expose_usage(self)
     }
 }
 impl AccountStore for FileAccounts {
-    fn accounts(&self) -> Result<Vec<Account>, PortError> {
-        let mut rows = vec![];
-        for slot in self.slots()? {
-            let busy = self.lease(slot.clone())?.is_none();
-            let snapshot = read_json(
-                &self
-                    .root
-                    .join("state/quota")
-                    .join(format!("{}.json", slot.name)),
-            )
-            .unwrap_or(Value::Null);
-            let quota = serde_json::from_str::<Quota>(
-                &snapshot.get("quota").unwrap_or(&json!({})).to_string(),
-            )
-            .unwrap_or_default();
-            let verify = read_json(
-                &self
-                    .root
-                    .join("state/verify")
-                    .join(format!("{}.json", slot.name)),
-            );
-            rows.push(Account {
-                slot: slot.name.clone(),
-                busy,
-                probed: snapshot["at"].as_f64().unwrap_or(0.0),
-                quota,
-                walls: [("gemini".into(), 0.0), ("cg".into(), 0.0)].into(),
-                why: [
-                    ("gemini".into(), String::new()),
-                    ("cg".into(), String::new()),
-                ]
-                .into(),
-                paused: self.root.join("state/paused").join(&slot.name).exists(),
-                verify,
-                today: json!({}),
-            });
-        }
-        Ok(rows)
+    fn accounts(&self) -> Result<Vec<antiquota_core::Account>, PortError> {
+        self.accounts_at(files::now())
+    }
+    fn accounts_at(&self, now: f64) -> Result<Vec<antiquota_core::Account>, PortError> {
+        overview::accounts(self, now)
     }
     fn acquire(&self, preferred: Option<&str>) -> Result<Option<Box<dyn AccountLease>>, PortError> {
         let mut slots = self.slots()?;
@@ -122,11 +130,69 @@ impl AccountStore for FileAccounts {
         }
         Ok(None)
     }
-}
-fn read_json(path: &Path) -> Option<Value> {
-    fs::read(path)
-        .ok()
-        .and_then(|x| serde_json::from_slice(&x).ok())
+    fn lease_named(&self, name: &str) -> Result<Option<Box<dyn AccountLease>>, PortError> {
+        self.lease(self.slot(name)?)
+    }
+    fn prepare(&self, slot: &Slot) -> Result<(), PortError> {
+        self.sync(slot)
+    }
+    fn slot(&self, name: &str) -> Result<Slot, PortError> {
+        check_name(name)?;
+        self.slots()?
+            .into_iter()
+            .find(|s| s.name == name)
+            .ok_or_else(|| PortError::Invalid(format!("no signed-in slot '{name}'")))
+    }
+    fn pause(&self, name: &str, on: bool) -> Result<(), PortError> {
+        files::pause(self, name, on)
+    }
+    fn remove(&self, name: &str) -> Result<(), PortError> {
+        files::remove(self, name)
+    }
+    fn save_quota(&self, name: &str, quota: &Quota, now: f64) -> Result<(), PortError> {
+        files::save_quota(self, name, quota, now)
+    }
+    fn set_wall(&self, name: &str, bucket: &str, until: f64, why: &str) -> Result<(), PortError> {
+        files::set_wall(self, name, bucket, until, why)
+    }
+    fn clear_wall(&self, name: &str, bucket: &str) -> Result<(), PortError> {
+        files::clear_wall(self, name, bucket)
+    }
+    fn set_verify(&self, name: &str, url: Option<&str>, now: f64) -> Result<(), PortError> {
+        files::set_verify(self, name, url, now)
+    }
+    fn routes(&self, n: usize) -> Result<Vec<RoutingEntry>, PortError> {
+        files::routes(self, n)
+    }
+    fn record_route(&self, entry: &RoutingEntry) -> Result<(), PortError> {
+        files::route(self, entry)
+    }
+    fn cached_models(&self) -> Result<Vec<Model>, PortError> {
+        Ok(files::read_json(&self.root.join("state/models.json"))
+            .and_then(|v| serde_json::from_value(v).ok())
+            .unwrap_or_default())
+    }
+    fn save_models(&self, models: &[Model]) -> Result<(), PortError> {
+        antiquota_store::write_json_atomic(&self.root.join("state/models.json"), &models)
+    }
+    fn login_start(&self) -> PortFuture<'_, LoginLink> {
+        login::start(self)
+    }
+    fn login_state(&self, id: &str) -> Result<LoginState, PortError> {
+        login::state(self, id)
+    }
+    fn login_submit<'a>(&'a self, id: &'a str, code: &'a str) -> PortFuture<'a, LoginState> {
+        login::submit(self, id, code)
+    }
+    fn login_cancel<'a>(&'a self, id: &'a str) -> PortFuture<'a, ()> {
+        login::cancel(self, id)
+    }
+    fn cancel_logins(&self) -> PortFuture<'_, ()> {
+        login::cancel_all(self)
+    }
+    fn stack_overview(&self) -> Result<serde_json::Value, PortError> {
+        stack::overview(self)
+    }
 }
 #[cfg(test)]
 mod tests;

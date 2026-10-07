@@ -70,6 +70,13 @@ export function createWorkbench(api: Api, remember: (id: string) => void = () =>
     }));
   }
   function apply(event: StreamEvent) {
+    if (event.t === 'accounts') {
+      state.update((value) => ({
+        ...value,
+        snapshot: value.snapshot ? { ...value.snapshot, accounts: event.accounts } : null,
+      }));
+      return;
+    }
     if (event.t === 'meta') {
       replaceSession(event.meta);
       return;

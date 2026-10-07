@@ -8,6 +8,15 @@ import type { SessionResponse } from '../gen/SessionResponse';
 import type { StateResponse } from '../gen/StateResponse';
 import type { OkResponse } from '../gen/OkResponse';
 import type { ApiError } from '../gen/ApiError';
+import type { Account } from '../gen/Account';
+import type { LoginLink } from '../gen/LoginLink';
+import type { LoginState } from '../gen/LoginState';
+import type { LoginCodeRequest } from '../gen/LoginCodeRequest';
+import type { PauseAccountRequest } from '../gen/PauseAccountRequest';
+import type { DefaultsRequest } from '../gen/DefaultsRequest';
+import type { Settings } from '../gen/Settings';
+import type { SettingsOverview } from '../gen/SettingsOverview';
+import type { RoutingEntry } from '../gen/RoutingEntry';
 import { routes } from '../gen/routes';
 
 export class RequestError extends Error {
@@ -22,7 +31,10 @@ export class RequestError extends Error {
 
 export function createApi(token: string, request: typeof fetch = fetch) {
   async function call<T>(method: string, path: string, body?: unknown): Promise<T> {
-    const catalogPath = path.replace(/\/sessions\/[^/]+/, '/sessions/{sid}');
+    const catalogPath = (path.split('?')[0] ?? path)
+      .replace(/\/accounts\/login\/[^/]+/, '/accounts/login/{lid}')
+      .replace(/\/accounts\/(?!login(?:\/|$)|probe$)[^/]+/, '/accounts/{name}')
+      .replace(/\/sessions\/[^/]+/, '/sessions/{sid}');
     if (
       !routes.some(
         (route) =>
@@ -63,6 +75,8 @@ export function createApi(token: string, request: typeof fetch = fetch) {
     return value as T;
   }
   const sessionPath = (id: string) => `/api/sessions/${encodeURIComponent(id)}`;
+  const accountPath = (name: string) => `/api/accounts/${encodeURIComponent(name)}`;
+  const loginPath = (id: string) => `/api/accounts/login/${encodeURIComponent(id)}`;
   return {
     state: () => call<StateResponse>('GET', '/api/state'),
     session: (id: string) => call<SessionResponse>('GET', sessionPath(id)),
@@ -72,6 +86,20 @@ export function createApi(token: string, request: typeof fetch = fetch) {
     send: (id: string, body: SendRequest) =>
       call<SendResponse>('POST', `${sessionPath(id)}/send`, body),
     stop: (id: string) => call<OkResponse>('POST', `${sessionPath(id)}/stop`, {}),
+    accounts: () => call<Account[]>('GET', '/api/accounts'),
+    probeAccounts: () => call<OkResponse>('POST', '/api/accounts/probe', {}),
+    pauseAccount: (name: string, body: PauseAccountRequest) =>
+      call<Account[]>('POST', `${accountPath(name)}/pause`, body),
+    checkAccount: (name: string) => call<Account[]>('POST', `${accountPath(name)}/check`, {}),
+    removeAccount: (name: string) => call<OkResponse>('DELETE', accountPath(name)),
+    startLogin: () => call<LoginLink>('POST', '/api/accounts/login', {}),
+    loginState: (id: string) => call<LoginState>('GET', loginPath(id)),
+    submitLogin: (id: string, body: LoginCodeRequest) =>
+      call<LoginState>('POST', loginPath(id), body),
+    cancelLogin: (id: string) => call<OkResponse>('DELETE', loginPath(id)),
+    settings: () => call<SettingsOverview>('GET', '/api/settings'),
+    saveDefaults: (body: DefaultsRequest) => call<Settings>('PUT', '/api/settings/defaults', body),
+    routing: () => call<RoutingEntry[]>('GET', '/api/routing?n=60'),
     streamUrl: () => `/api/events?token=${encodeURIComponent(token)}`,
   };
 }

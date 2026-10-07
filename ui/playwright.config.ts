@@ -7,7 +7,7 @@ export default defineConfig({
   timeout: 35_000,
   expect: { timeout: 8_000 },
   outputDir: '../.handoff/evidence/ui-playwright',
-  reporter: [['list'], ['json', { outputFile: '../.handoff/evidence/ui-slice1-e2e.json' }]],
+  reporter: [['list'], ['json', { outputFile: '../.handoff/evidence/ui-e2e.json' }]],
   use: {
     browserName: 'chromium',
     headless: true,

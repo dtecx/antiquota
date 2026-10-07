@@ -1,0 +1,945 @@
+{
+  "format": 1,
+  "purpose": "Candidate Slice2 integration evidence only; the canonical report owner combines domain, adapter and UI proof before marking whole acceptance items complete.",
+  "platform": "macOS arm64. Windows/Linux runtime and all real-account/live/desktop proof remain pending.",
+  "validation": {
+    "command": "cargo test -p antiquota-server --test accounts_contract -- --nocapture",
+    "testsPassed": 43,
+    "scenarioTestsPassed": 38,
+    "helperUnitTestsPassed": 5,
+    "testsFailed": 0,
+    "testsIgnored": 0,
+    "testsFiltered": 0,
+    "elapsedSeconds": 7.81,
+    "evidence": ".handoff/evidence/slice2-http-integration.log",
+    "finalGateNote": "Browser opener interceptors and final lint-only cleanup follow this local run; root owns the fresh whole-workspace gate."
+  },
+  "capturedCases": [
+    "accounts-initial",
+    "accounts-probe",
+    "account-check",
+    "account-check-idle",
+    "account-pause",
+    "account-resume",
+    "account-missing-check",
+    "routing",
+    "account-delete-invalid",
+    "account-delete",
+    "login-start",
+    "login-poll",
+    "login-code-invalid",
+    "login-submit",
+    "login-delete",
+    "login-poll-replaced",
+    "login-submit-replaced",
+    "settings",
+    "defaults",
+    "defaults-error"
+  ],
+  "capturedCasesUnique": 20,
+  "capturedRoutesUnique": 12,
+  "combinedSelectedCasesWithSlice1": 42,
+  "totalCapturedCases": 172,
+  "comparison": "Captured files are immutable. Only existing fixture JSON-pointer rules apply; stable numbers compare by exact decimal value. No newly ignored fields or intentional contract differences.",
+  "tests": {
+    "cli::default_accounts_probe_stack_and_unwall_use_only_owned_state": {
+      "path": "tests/rewrite/accounts_cli.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract cli::default_accounts_probe_stack_and_unwall_use_only_owned_state -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "cli::raw_run_preserves_argv_pin_output_and_quota_exit_75": {
+      "path": "tests/rewrite/accounts_cli.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract cli::raw_run_preserves_argv_pin_output_and_quota_exit_75 -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "cli::interactive_raw_run_preserves_native_tty_without_foreground_control": {
+      "path": "tests/rewrite/accounts_cli.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract cli::interactive_raw_run_preserves_native_tty_without_foreground_control -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "cli_lifecycle::raw_current_success_ignores_historical_quota_error_without_walling_account": {
+      "path": "tests/rewrite/accounts_cli_lifecycle.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract cli_lifecycle::raw_current_success_ignores_historical_quota_error_without_walling_account -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "cli_lifecycle::account_cli_probe_and_raw_quota_do_not_reconcile_active_engine_sessions": {
+      "path": "tests/rewrite/accounts_cli_lifecycle.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract cli_lifecycle::account_cli_probe_and_raw_quota_do_not_reconcile_active_engine_sessions -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "cli_lifecycle::raw_completed_parent_kills_descendants_and_closes_inherited_output_pipes": {
+      "path": "tests/rewrite/accounts_cli_lifecycle.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract cli_lifecycle::raw_completed_parent_kills_descendants_and_closes_inherited_output_pipes -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "cli_lifecycle::closed_raw_stdout_fails_promptly_and_kills_process_tree": {
+      "path": "tests/rewrite/accounts_cli_lifecycle.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract cli_lifecycle::closed_raw_stdout_fails_promptly_and_kills_process_tree -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "cli_metadata::cli_login_adopts_email_and_rejects_bad_codes_without_partial_slots": {
+      "path": "tests/rewrite/accounts_cli_metadata.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract cli_metadata::cli_login_adopts_email_and_rejects_bad_codes_without_partial_slots -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "cli_metadata::doctor_reports_loaded_metadata_and_identity_mismatch_without_changing_tokens": {
+      "path": "tests/rewrite/accounts_cli_metadata.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract cli_metadata::doctor_reports_loaded_metadata_and_identity_mismatch_without_changing_tokens -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "cli_metadata::cli_stack_reseed_replaces_configuration_and_preserves_shared_conversations": {
+      "path": "tests/rewrite/accounts_cli_metadata.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract cli_metadata::cli_stack_reseed_replaces_configuration_and_preserves_shared_conversations -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "concurrency::concurrent_sessions_use_different_account_homes_and_skip_busy_probe": {
+      "path": "tests/rewrite/accounts_concurrency.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract concurrency::concurrent_sessions_use_different_account_homes_and_skip_busy_probe -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "concurrency::python_account_lock_excludes_rust_probe_and_rust_lock_excludes_python": {
+      "path": "tests/rewrite/accounts_concurrency.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract concurrency::python_account_lock_excludes_rust_probe_and_rust_lock_excludes_python -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "deterministic::transient_retries_use_fake_time_then_park_and_resume_on_next_account": {
+      "path": "tests/rewrite/accounts_deterministic.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract deterministic::transient_retries_use_fake_time_then_park_and_resume_on_next_account -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "deterministic::repeated_transient_failures_stop_after_bounded_account_attempts": {
+      "path": "tests/rewrite/accounts_deterministic.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract deterministic::repeated_transient_failures_stop_after_bounded_account_attempts -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "deterministic::stop_cancels_fake_clock_retry_without_false_wall_or_extra_runner": {
+      "path": "tests/rewrite/accounts_deterministic.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract deterministic::stop_cancels_fake_clock_retry_without_false_wall_or_extra_runner -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "deterministic::warm_account_affinity_waits_ten_fake_seconds_before_another_lease": {
+      "path": "tests/rewrite/accounts_deterministic.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract deterministic::warm_account_affinity_waits_ten_fake_seconds_before_another_lease -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "handoff::unreadable_quota_after_wall_uses_fallback_and_preserves_other_basket": {
+      "path": "tests/rewrite/accounts_handoff.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract handoff::unreadable_quota_after_wall_uses_fallback_and_preserves_other_basket -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "handoff::quota_wall_hands_off_same_conversation_and_counts_current_steps_once": {
+      "path": "tests/rewrite/accounts_handoff.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract handoff::quota_wall_hands_off_same_conversation_and_counts_current_steps_once -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "handoff::quota_without_initialization_retries_original_prompt_without_resume_flag": {
+      "path": "tests/rewrite/accounts_handoff.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract handoff::quota_without_initialization_retries_original_prompt_without_resume_flag -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "handoff::lost_conversation_recovers_with_summary_and_a_fresh_id": {
+      "path": "tests/rewrite/accounts_handoff.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract handoff::lost_conversation_recovers_with_summary_and_a_fresh_id -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "lifecycle::verification_probe_parks_and_then_restores_the_signed_in_account": {
+      "path": "tests/rewrite/accounts_lifecycle.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract lifecycle::verification_probe_parks_and_then_restores_the_signed_in_account -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "lifecycle::quota_cache_preserves_unknown_fields_and_disabled_window_uses_weekly_reset": {
+      "path": "tests/rewrite/accounts_lifecycle.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract lifecycle::quota_cache_preserves_unknown_fields_and_disabled_window_uses_weekly_reset -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "lifecycle::stop_cancels_an_account_lease_wait_and_releases_admission": {
+      "path": "tests/rewrite/accounts_lifecycle.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract lifecycle::stop_cancels_an_account_lease_wait_and_releases_admission -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "lifecycle::auth_failure_parks_both_baskets_then_hands_off_without_token_changes": {
+      "path": "tests/rewrite/accounts_lifecycle.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract lifecycle::auth_failure_parks_both_baskets_then_hands_off_without_token_changes -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "lifecycle::stop_cancels_a_slow_quota_probe_and_frees_the_account_lease": {
+      "path": "tests/rewrite/accounts_lifecycle.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract lifecycle::stop_cancels_a_slow_quota_probe_and_frees_the_account_lease -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "metadata_limits::huge_metadata_fails_promptly_preserves_cache_and_releases_lease": {
+      "path": "tests/rewrite/accounts_metadata_limits.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract metadata_limits::huge_metadata_fails_promptly_preserves_cache_and_releases_lease -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "metadata_limits::quota_probe_kills_descendants_after_parent_exits_with_inherited_pipes": {
+      "path": "tests/rewrite/accounts_metadata_limits.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract metadata_limits::quota_probe_kills_descendants_after_parent_exits_with_inherited_pipes -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "metadata_limits::stop_during_probe_kills_inherited_pipe_descendant_before_delayed_write": {
+      "path": "tests/rewrite/accounts_metadata_limits.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract metadata_limits::stop_during_probe_kills_inherited_pipe_descendant_before_delayed_write -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "models::model_cache_is_used_while_first_account_busy_then_refreshes_from_that_account": {
+      "path": "tests/rewrite/accounts_models.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract models::model_cache_is_used_while_first_account_busy_then_refreshes_from_that_account -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "models::empty_model_probe_keeps_cached_models_and_exact_file_bytes": {
+      "path": "tests/rewrite/accounts_models.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract models::empty_model_probe_keeps_cached_models_and_exact_file_bytes -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "replay::captured_account_routes_preserve_exact_overviews_and_routing_records": {
+      "path": "tests/rewrite/accounts_replay.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract replay::captured_account_routes_preserve_exact_overviews_and_routing_records -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser": {
+      "path": "tests/rewrite/accounts_replay.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "replay::captured_settings_and_defaults_preserve_unknown_fields_and_validation": {
+      "path": "tests/rewrite/accounts_replay.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract replay::captured_settings_and_defaults_preserve_unknown_fields_and_validation -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "replay::login_preserves_long_urls_and_rejects_codes_without_partial_accounts": {
+      "path": "tests/rewrite/accounts_replay.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract replay::login_preserves_long_urls_and_rejects_codes_without_partial_accounts -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "replay::verified_login_keeps_the_account_parked_until_successful_probe": {
+      "path": "tests/rewrite/accounts_replay.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract replay::verified_login_keeps_the_account_parked_until_successful_probe -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "rotation::every_rotation_puts_an_account_below_reserve_after_healthy_accounts": {
+      "path": "tests/rewrite/accounts_rotation.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract rotation::every_rotation_puts_an_account_below_reserve_after_healthy_accounts -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "rotation::perishable_uses_earliest_weekly_reset_and_round_robin_uses_last_pick": {
+      "path": "tests/rewrite/accounts_rotation.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract rotation::perishable_uses_earliest_weekly_reset_and_round_robin_uses_last_pick -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    },
+    "rotation::rate_limit_with_quota_left_uses_escalating_short_cooldowns": {
+      "path": "tests/rewrite/accounts_rotation.rs",
+      "command": "cargo test -p antiquota-server --test accounts_contract rotation::rate_limit_with_quota_left_uses_escalating_short_cooldowns -- --nocapture",
+      "evidence": [
+        ".handoff/evidence/slice2-http-integration.log"
+      ]
+    }
+  },
+  "features": [
+    {
+      "featureId": "F-006",
+      "tests": [
+        "lifecycle::auth_failure_parks_both_baskets_then_hands_off_without_token_changes",
+        "replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Synthetic existing token bytes are unchanged; a new credential file is private and adopted by its email.",
+      "pending": "All five real signed-in slots and their account-state files remain private live-test acceptance."
+    },
+    {
+      "featureId": "F-018",
+      "tests": [
+        "concurrency::concurrent_sessions_use_different_account_homes_and_skip_busy_probe",
+        "lifecycle::auth_failure_parks_both_baskets_then_hands_off_without_token_changes"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Actual model subprocesses have distinct slot HOME values and SSH file-token context.",
+      "pending": "USERPROFILE and every metadata/login/raw context require the adapter-owner assertions before marking the whole row complete."
+    },
+    {
+      "featureId": "F-021",
+      "tests": [
+        "cli_metadata::cli_stack_reseed_replaces_configuration_and_preserves_shared_conversations"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "CLI reseed copies source configuration while retaining shared conversation content.",
+      "pending": "Other excluded history and clone-skip cases remain adapter-owner acceptance."
+    },
+    {
+      "featureId": "F-025",
+      "tests": [
+        "cli_metadata::doctor_reports_loaded_metadata_and_identity_mismatch_without_changing_tokens"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Doctor queries signed-in slot skills/hooks and identity logs, reports mismatch, and retains token bytes.",
+      "pending": "All unshared-entry diagnostics remain separate adapter acceptance."
+    },
+    {
+      "featureId": "F-028",
+      "tests": [
+        "replay::login_preserves_long_urls_and_rejects_codes_without_partial_accounts"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "A rejected provider code leaves no final account or temporary login HOME.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-029",
+      "tests": [
+        "replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Actual sign-in code is delivered through a native PTY on macOS.",
+      "pending": "Windows ConPTY and its documented platform fallback require Windows CI."
+    },
+    {
+      "featureId": "F-030",
+      "tests": [
+        "replay::login_preserves_long_urls_and_rejects_codes_without_partial_accounts"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "The own Google OAuth URL including a 600-character state is preserved exactly.",
+      "pending": "Non-Google URL rejection and process-before-URL cases remain adapter-owner acceptance."
+    },
+    {
+      "featureId": "F-031",
+      "tests": [
+        "replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Captured empty/invalid code and replaced-link rejection match exactly.",
+      "pending": "All 2000-character, newline, NUL and post-completion boundaries require the adapter-owner code validation test."
+    },
+    {
+      "featureId": "F-032",
+      "tests": [
+        "replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser",
+        "replay::verified_login_keeps_the_account_parked_until_successful_probe",
+        "replay::login_preserves_long_urls_and_rejects_codes_without_partial_accounts"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "Waiting/done/failed/verify states carry exact nullable errors, names and verification URL.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-033",
+      "tests": [
+        "replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Successful sign-in is adopted by email into a private regular token file.",
+      "pending": "Other sign-in artifacts, existing-account replacement and old verification clearing remain adapter-owner acceptance."
+    },
+    {
+      "featureId": "F-034",
+      "tests": [
+        "replay::verified_login_keeps_the_account_parked_until_successful_probe"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Verification retains the valid token, parks both baskets, and healthy probing clears URL and walls.",
+      "pending": "Exact 30-day duration is separately proven for auth parking; combine adapter-owner verification duration proof."
+    },
+    {
+      "featureId": "F-035",
+      "tests": [
+        "replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Pending sign-in replacement/cancellation removes temporary HOME and prevents partial adoption.",
+      "pending": "Redacted failure evidence content and process descendants require additional adapter-owner proof."
+    },
+    {
+      "featureId": "F-036",
+      "tests": [
+        "replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "One web login remains active; replaced GET/POST and cancel match immutable captures.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-037",
+      "tests": [
+        "replay::captured_account_routes_preserve_exact_overviews_and_routing_records"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Delete rejects invalid or busy accounts, retains busy credentials and removes the captured existing third account.",
+      "pending": "Both bucket-wall deletion requires adapter-owner remove lifecycle proof."
+    },
+    {
+      "featureId": "F-038",
+      "tests": [
+        "replay::captured_account_routes_preserve_exact_overviews_and_routing_records",
+        "cli::raw_run_preserves_argv_pin_output_and_quota_exit_75"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Pause and resume fields/routing match captures; raw explicit slot selection works.",
+      "pending": "Pinned access to a paused account remains specific acceptance."
+    },
+    {
+      "featureId": "F-039",
+      "tests": [
+        "replay::captured_account_routes_preserve_exact_overviews_and_routing_records",
+        "handoff::quota_wall_hands_off_same_conversation_and_counts_current_steps_once"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "Every captured account field matches, including initial today{} and completed today input/output/thinking/turns.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-041",
+      "tests": [
+        "replay::captured_account_routes_preserve_exact_overviews_and_routing_records",
+        "lifecycle::quota_cache_preserves_unknown_fields_and_disabled_window_uses_weekly_reset"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "Real quota envelope groups parse to gemini/cg fractions and reset epochs.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-042",
+      "tests": [
+        "lifecycle::quota_cache_preserves_unknown_fields_and_disabled_window_uses_weekly_reset"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "A disabled window with missing fraction/reset becomes [0,null] and uses the weekly reset wall.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-043",
+      "tests": [
+        "replay::captured_account_routes_preserve_exact_overviews_and_routing_records",
+        "metadata_limits::huge_metadata_fails_promptly_preserves_cache_and_releases_lease"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Metadata probing uses actual fake agy without model turns; captured timestamp/windows match; output is bounded.",
+      "pending": "The 90-second timeout boundary itself requires adapter timing proof."
+    },
+    {
+      "featureId": "F-044",
+      "tests": [
+        "handoff::quota_wall_hands_off_same_conversation_and_counts_current_steps_once",
+        "lifecycle::quota_cache_preserves_unknown_fields_and_disabled_window_uses_weekly_reset"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Exhausted quota walls only the spent basket until weekly reset plus 120 seconds.",
+      "pending": "Exact 2% threshold, latest applicable reset and absent-reset fallback require pure policy tests."
+    },
+    {
+      "featureId": "F-045",
+      "tests": [
+        "handoff::unreadable_quota_after_wall_uses_fallback_and_preserves_other_basket"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "Unreadable quota after a genuine quota failure sets the 18600-second fallback and hands off.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-046",
+      "tests": [
+        "lifecycle::verification_probe_parks_and_then_restores_the_signed_in_account"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "A healthy panel clears both quota walls and stored verification URL.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-047",
+      "tests": [
+        "lifecycle::auth_failure_parks_both_baskets_then_hands_off_without_token_changes"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "A genuine auth failure parks both baskets beyond 29 days and hands off without changing tokens.",
+      "pending": "Exact 30-day boundary and subsequent sign-in/probe repair require adapter/policy owner evidence."
+    },
+    {
+      "featureId": "F-048",
+      "tests": [
+        "handoff::quota_wall_hands_off_same_conversation_and_counts_current_steps_once",
+        "cli::raw_run_preserves_argv_pin_output_and_quota_exit_75",
+        "cli::default_accounts_probe_stack_and_unwall_use_only_owned_state"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Spent basket walls are independent and unwall clears both.",
+      "pending": "Expired-wall behavior remains pure routing/adapter acceptance."
+    },
+    {
+      "featureId": "F-049",
+      "tests": [
+        "concurrency::concurrent_sessions_use_different_account_homes_and_skip_busy_probe",
+        "concurrency::python_account_lock_excludes_rust_probe_and_rust_lock_excludes_python"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "Actual Rust/Python processes exclude each other; concurrent sessions select distinct leases and release them.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-050",
+      "tests": [
+        "deterministic::warm_account_affinity_waits_ten_fake_seconds_before_another_lease",
+        "lifecycle::stop_cancels_an_account_lease_wait_and_releases_admission"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "A warm busy account gets ten 1-second fake waits before another lease; Stop ends a blocked lease wait.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-051",
+      "tests": [
+        "lifecycle::stop_cancels_an_account_lease_wait_and_releases_admission",
+        "deterministic::repeated_transient_failures_stop_after_bounded_account_attempts"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "Stop cancels acquisition without runner launch; all failing accounts finish idle when walled.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-052",
+      "tests": [
+        "cli_lifecycle::account_cli_probe_and_raw_quota_do_not_reconcile_active_engine_sessions",
+        "replay::captured_account_routes_preserve_exact_overviews_and_routing_records"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Probes skip an actively leased account and preserve active session files.",
+      "pending": "Freshness max_age and valid-update return semantics remain application-owner acceptance."
+    },
+    {
+      "featureId": "F-055",
+      "tests": [
+        "rotation::perishable_uses_earliest_weekly_reset_and_round_robin_uses_last_pick"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Perishable routing spends the earlier reset first and retains warm affinity.",
+      "pending": "Equal-reset headroom and unknown expiry ordering require pure policy proof."
+    },
+    {
+      "featureId": "F-056",
+      "tests": [
+        "rotation::perishable_uses_earliest_weekly_reset_and_round_robin_uses_last_pick",
+        "rotation::every_rotation_puts_an_account_below_reserve_after_healthy_accounts"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Round-robin follows least-recent pick; sticky selection works with reserve ordering.",
+      "pending": "Sorted sticky behavior among equally eligible accounts requires pure policy proof."
+    },
+    {
+      "featureId": "F-057",
+      "tests": [
+        "rotation::every_rotation_puts_an_account_below_reserve_after_healthy_accounts",
+        "rotation::perishable_uses_earliest_weekly_reset_and_round_robin_uses_last_pick"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "All three strategies put 2.5%-remaining accounts below a 3% reserve after a healthy account, without hard walling; warm affinity remains first.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-060",
+      "tests": [
+        "cli_lifecycle::raw_current_success_ignores_historical_quota_error_without_walling_account"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Current completed response wins over historical raw result quota, preserving output and exit 0.",
+      "pending": "Successful response prose/stderr error-looking chatter cases remain parser/policy-owner proof."
+    },
+    {
+      "featureId": "F-062",
+      "tests": [
+        "handoff::quota_wall_hands_off_same_conversation_and_counts_current_steps_once",
+        "rotation::rate_limit_with_quota_left_uses_escalating_short_cooldowns"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "Quota failures probe panels; exhausted allowance gets a quota wall while healthy allowance gets a short cooldown.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-063",
+      "tests": [
+        "rotation::rate_limit_with_quota_left_uses_escalating_short_cooldowns"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "Previous-hour matching rate strikes produce 60,300,900-second cooldown routing entries.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-064",
+      "tests": [
+        "replay::captured_account_routes_preserve_exact_overviews_and_routing_records",
+        "deterministic::transient_retries_use_fake_time_then_park_and_resume_on_next_account",
+        "lifecycle::auth_failure_parks_both_baskets_then_hands_off_without_token_changes"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Routing captures and actual retry/auth/wall paths write exact decision fields.",
+      "pending": "Malformed-line reads and all timestamp entries require adapter-owner proof."
+    },
+    {
+      "featureId": "F-066",
+      "tests": [
+        "handoff::quota_wall_hands_off_same_conversation_and_counts_current_steps_once"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Completed account today includes exactly input 100/output 10/thinking 0/turns 1 and survives engine restart.",
+      "pending": "Local midnight boundaries and malformed ledger lines remain usage-owner acceptance."
+    },
+    {
+      "featureId": "F-176",
+      "tests": [
+        "handoff::quota_wall_hands_off_same_conversation_and_counts_current_steps_once",
+        "cli_lifecycle::raw_current_success_ignores_historical_quota_error_without_walling_account"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "Actual shared-engine and raw CLI current completion wins over historical quota/result errors.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-182",
+      "tests": [
+        "handoff::quota_wall_hands_off_same_conversation_and_counts_current_steps_once",
+        "handoff::quota_without_initialization_retries_original_prompt_without_resume_flag",
+        "rotation::rate_limit_with_quota_left_uses_escalating_short_cooldowns"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "Quota/rate handoff resumes the original conversation with a continuation nudge; original prompt is retried only when no ID exists.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-183",
+      "tests": [
+        "lifecycle::auth_failure_parks_both_baskets_then_hands_off_without_token_changes"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "Auth rejection parks the failed account and resumes on the next account.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-184",
+      "tests": [
+        "deterministic::transient_retries_use_fake_time_then_park_and_resume_on_next_account"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "Actual fake subprocesses retry after fake 10/30 seconds, park for 300 and resume on the next account without duplicate user events.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-185",
+      "tests": [
+        "deterministic::repeated_transient_failures_stop_after_bounded_account_attempts"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Two repeatedly failing accounts stop after six total calls and four policy waits.",
+      "pending": "The explicit handoff cap with repeatedly lost conversations needs its own boundary case."
+    },
+    {
+      "featureId": "F-186",
+      "tests": [
+        "handoff::lost_conversation_recovers_with_summary_and_a_fresh_id"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "Failed resume retains original ID; recovery clears it, includes prior/current requests and creates a new conversation.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-197",
+      "tests": [
+        "cli::raw_run_preserves_argv_pin_output_and_quota_exit_75",
+        "cli_lifecycle::raw_current_success_ignores_historical_quota_error_without_walling_account"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Raw calls record routing/account rc and quota outcome without creating session usage or false failure logs.",
+      "pending": "All failure-log redaction/rotation cases remain separate acceptance."
+    },
+    {
+      "featureId": "F-290",
+      "tests": [
+        "cli::default_accounts_probe_stack_and_unwall_use_only_owned_state"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "The default command produces the same account output as explicit accounts.",
+      "pending": "Unknown commands and every invalid positional form remain separate CLI acceptance."
+    },
+    {
+      "featureId": "F-291",
+      "tests": [
+        "cli::default_accounts_probe_stack_and_unwall_use_only_owned_state"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Accounts prints identities, quota headings and lease state.",
+      "pending": "Empty-account hint, walled display and every quota format require additional CLI cases."
+    },
+    {
+      "featureId": "F-292",
+      "tests": [
+        "cli_metadata::cli_login_adopts_email_and_rejects_bad_codes_without_partial_slots"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "CLI code input adopts the exact synthetic email or returns provider failure; final output matches the legacy phrase.",
+      "pending": "The isolated fake guard skips provider browser opening. Real own-agy OAuth and actual browser identity checks remain live-test acceptance."
+    },
+    {
+      "featureId": "F-293",
+      "tests": [
+        "cli::default_accounts_probe_stack_and_unwall_use_only_owned_state",
+        "cli_lifecycle::account_cli_probe_and_raw_quota_do_not_reconcile_active_engine_sessions"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Probe refreshes the idle account, prints ok and skips the active lease without touching session bytes.",
+      "pending": "Unreadable CLI probe output requires its own scripted metadata-error case."
+    },
+    {
+      "featureId": "F-294",
+      "tests": [
+        "cli_metadata::doctor_reports_loaded_metadata_and_identity_mismatch_without_changing_tokens"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Doctor prints own stack metadata, detects actual identity mismatch and returns exit 1, preserving synthetic token bytes.",
+      "pending": "All shared-entry diagnostics, MCP formatting and owned conversation link cases remain adapter/CLI acceptance."
+    },
+    {
+      "featureId": "F-295",
+      "tests": [
+        "cli::default_accounts_probe_stack_and_unwall_use_only_owned_state",
+        "cli_metadata::cli_stack_reseed_replaces_configuration_and_preserves_shared_conversations"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "Stack prints the exact own folder; reseed copies source configuration and keeps shared conversation bytes.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-296",
+      "tests": [
+        "cli::default_accounts_probe_stack_and_unwall_use_only_owned_state"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Unwall all removes the wall and prints walls cleared: all.",
+      "pending": "Explicit named target and both-basket seeded wall assertions remain separate cases."
+    },
+    {
+      "featureId": "F-297",
+      "tests": [
+        "cli::raw_run_preserves_argv_pin_output_and_quota_exit_75"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Raw run forwards every argv including literal shell characters after leading --slot and --.",
+      "pending": "Unknown-slot rejection and the separately authored no-account raw test require combined CLI proof."
+    },
+    {
+      "featureId": "F-298",
+      "tests": [
+        "cli::raw_run_preserves_argv_pin_output_and_quota_exit_75",
+        "cli_lifecycle::raw_current_success_ignores_historical_quota_error_without_walling_account"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "The selected slot receives isolated HOME/SSH and exact stdout; quota and all-walled paths return 75 with call records.",
+      "pending": "Nonquota raw exit codes and complete failure audit content remain separate acceptance."
+    },
+    {
+      "featureId": "F-299",
+      "tests": [
+        "cli::interactive_raw_run_preserves_native_tty_without_foreground_control",
+        "cli_lifecycle::closed_raw_stdout_fails_promptly_and_kills_process_tree",
+        "cli_lifecycle::raw_completed_parent_kills_descendants_and_closes_inherited_output_pipes"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "Native raw stdin/stdout/stderr are terminals; pipe errors and inherited descendants terminate promptly.",
+      "pending": "Actual Ctrl-C delivery and exact 64 KiB retained stderr/stdout tails remain adapter/CLI acceptance."
+    },
+    {
+      "featureId": "F-321",
+      "tests": [
+        "models::model_cache_is_used_while_first_account_busy_then_refreshes_from_that_account",
+        "models::empty_model_probe_keeps_cached_models_and_exact_file_bytes"
+      ],
+      "status": "Passing subset; remaining acceptance pending",
+      "proves": "State serves cached models immediately, skips a busy first account, refreshes through that first signed-in account and retains exact cache bytes on empty metadata.",
+      "pending": "A crashed/unreadable model process needs a specific failure scenario."
+    },
+    {
+      "featureId": "F-335",
+      "tests": [
+        "replay::captured_account_routes_preserve_exact_overviews_and_routing_records"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "The immutable route capture and its selected validation/error cases replay with exact keys, arrays, nulls, values and headers.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-375",
+      "tests": [
+        "replay::captured_account_routes_preserve_exact_overviews_and_routing_records"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "The immutable route capture and its selected validation/error cases replay with exact keys, arrays, nulls, values and headers.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-376",
+      "tests": [
+        "replay::captured_account_routes_preserve_exact_overviews_and_routing_records"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "The immutable route capture and its selected validation/error cases replay with exact keys, arrays, nulls, values and headers.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-377",
+      "tests": [
+        "replay::captured_account_routes_preserve_exact_overviews_and_routing_records"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "The immutable route capture and its selected validation/error cases replay with exact keys, arrays, nulls, values and headers.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-378",
+      "tests": [
+        "replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "The immutable route capture and its selected validation/error cases replay with exact keys, arrays, nulls, values and headers.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-379",
+      "tests": [
+        "replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "The immutable route capture and its selected validation/error cases replay with exact keys, arrays, nulls, values and headers.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-380",
+      "tests": [
+        "replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "The immutable route capture and its selected validation/error cases replay with exact keys, arrays, nulls, values and headers.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-381",
+      "tests": [
+        "replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "The immutable route capture and its selected validation/error cases replay with exact keys, arrays, nulls, values and headers.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-382",
+      "tests": [
+        "replay::captured_account_routes_preserve_exact_overviews_and_routing_records"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "The immutable route capture and its selected validation/error cases replay with exact keys, arrays, nulls, values and headers.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-383",
+      "tests": [
+        "replay::captured_account_routes_preserve_exact_overviews_and_routing_records"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "The immutable route capture and its selected validation/error cases replay with exact keys, arrays, nulls, values and headers.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-384",
+      "tests": [
+        "replay::captured_settings_and_defaults_preserve_unknown_fields_and_validation"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "The immutable route capture and its selected validation/error cases replay with exact keys, arrays, nulls, values and headers.",
+      "pending": ""
+    },
+    {
+      "featureId": "F-385",
+      "tests": [
+        "replay::captured_settings_and_defaults_preserve_unknown_fields_and_validation"
+      ],
+      "status": "Passing local acceptance",
+      "proves": "The immutable route capture and its selected validation/error cases replay with exact keys, arrays, nulls, values and headers.",
+      "pending": ""
+    }
+  ],
+  "limitations": [
+    "Native CLI PTY and sign-in PTY proof does not establish desktop shell or terminal UI parity.",
+    "Synthetic private tokens do not establish preservation of all five real signed-in accounts; no real token was read.",
+    "Protocol scenarios for goals, approvals, jobs and dictation do not establish those later application features.",
+    "The additive chat proposal is unapproved and has no compiled acceptance test.",
+    "Full chronological API replay, paid live calls, all account Google consent flows and cross-platform CI remain separate gates."
+  ]
+}

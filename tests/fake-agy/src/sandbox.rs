@@ -4,7 +4,7 @@ use serde_json::json;
 use std::{
     env,
     fs::{self, OpenOptions},
-    io::Write,
+    io::{IsTerminal, Write},
     path::{Component, Path, PathBuf},
 };
 
@@ -57,10 +57,11 @@ pub fn record(args: &[String]) -> Result<(), FakeError> {
         isolated(&parent.canonicalize()?)?;
     }
     let mut file = OpenOptions::new().create(true).append(true).open(path)?;
-    let row = json!({"argv":args,"cwd":env::current_dir()?.to_string_lossy(),
+    let row = json!({"pid":std::process::id(),"argv":args,"cwd":env::current_dir()?.to_string_lossy(),
         "home":env::var("HOME").unwrap_or_default(),"slot":env::var("ANTIQUOTA_SLOT").unwrap_or_default(),
-        "session":env::var("ANTIQUOTA_SESSION").unwrap_or_default(),"ssh_connection_present":env::var_os("SSH_CONNECTION").is_some()});
-    writeln!(file, "{row}")?;
+        "session":env::var("ANTIQUOTA_SESSION").unwrap_or_default(),"ssh_connection_present":env::var_os("SSH_CONNECTION").is_some(),
+        "stdin_is_terminal":std::io::stdin().is_terminal(),"stdout_is_terminal":std::io::stdout().is_terminal(),"stderr_is_terminal":std::io::stderr().is_terminal()});
+    file.write_all(format!("{row}\n").as_bytes())?;
     Ok(())
 }
 
@@ -81,5 +82,13 @@ pub fn next_turn() -> Result<u64, FakeError> {
         .unwrap_or(0)
         + 1;
     fs::write(path, turn.to_string())?;
+    let slot_count = PathBuf::from(env::var_os("HOME").unwrap()).join(".fake-agy-turn-count");
+    isolated(&slot_count)?;
+    let slot_turn = fs::read_to_string(&slot_count)
+        .ok()
+        .and_then(|s| s.parse::<u64>().ok())
+        .unwrap_or(0)
+        + 1;
+    fs::write(slot_count, slot_turn.to_string())?;
     Ok(turn)
 }
