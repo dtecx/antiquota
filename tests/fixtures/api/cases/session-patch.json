@@ -1,0 +1,79 @@
+{
+  "name": "session-patch",
+  "request": {
+    "method": "PATCH",
+    "path": "/api/sessions/{{SESSION_1}}",
+    "headers": {
+      "Host": "127.0.0.1:{{PORT}}",
+      "Accept-Encoding": "identity",
+      "Content-Length": "106",
+      "X-Antiquota-Token": "{{TOKEN}}",
+      "Content-Type": "application/json"
+    },
+    "json": {
+      "title": "Contract renamed",
+      "mode": "accept-edits",
+      "effort": "high",
+      "pinned": true,
+      "archived": false
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Server": "BaseHTTP/0.6 Python/3.14.4",
+      "Date": "Wed, 07 Oct 2026 13:45:21 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "543",
+      "Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff"
+    },
+    "json": {
+      "id": "{{SESSION_1}}",
+      "title": "Contract renamed",
+      "cwd": "{{TEST_ROOT}}/home/project",
+      "model": "gemini-3.8-flash-high",
+      "effort": "high",
+      "mode": "accept-edits",
+      "created": 1791380721.7054589,
+      "updated": 1791380721.706829,
+      "status": "idle",
+      "status_until": null,
+      "conversation_id": null,
+      "turns": 0,
+      "queue": [],
+      "goal": null,
+      "last_slot": null,
+      "usage": {
+        "input": 0,
+        "output": 0,
+        "thinking": 0
+      },
+      "context": 0,
+      "pending_note": "",
+      "jobs": [],
+      "loop": null,
+      "pinned": true,
+      "archived": false,
+      "worktree": null
+    }
+  },
+  "comparison": {
+    "dynamicValues": {
+      "/response/json/created": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/updated": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      }
+    },
+    "headers": {
+      "Date": "valid HTTP-date",
+      "Server": "implementation-specific server identity",
+      "Content-Length": "must equal actual encoded response body byte length"
+    },
+    "sse": null
+  }
+}

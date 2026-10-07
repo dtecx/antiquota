@@ -1,0 +1,47 @@
+{
+  "name": "schedule-create",
+  "request": {
+    "method": "POST",
+    "path": "/api/sessions/{{SESSION_1}}/loop",
+    "headers": {
+      "Host": "127.0.0.1:{{PORT}}",
+      "Accept-Encoding": "identity",
+      "Content-Length": "43",
+      "X-Antiquota-Token": "{{TOKEN}}",
+      "Content-Type": "application/json"
+    },
+    "json": {
+      "at": "23:59",
+      "prompt": "Daily fixture."
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Server": "BaseHTTP/0.6 Python/3.14.4",
+      "Date": "Wed, 07 Oct 2026 13:45:23 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "34",
+      "Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff"
+    },
+    "json": {
+      "ok": true,
+      "next": 1791410340.0
+    }
+  },
+  "comparison": {
+    "dynamicValues": {
+      "/response/json/next": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      }
+    },
+    "headers": {
+      "Date": "valid HTTP-date",
+      "Server": "implementation-specific server identity",
+      "Content-Length": "must equal actual encoded response body byte length"
+    },
+    "sse": null
+  }
+}

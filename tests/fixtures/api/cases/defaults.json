@@ -1,0 +1,53 @@
+{
+  "name": "defaults",
+  "request": {
+    "method": "PUT",
+    "path": "/api/settings/defaults",
+    "headers": {
+      "Host": "127.0.0.1:{{PORT}}",
+      "Accept-Encoding": "identity",
+      "Content-Length": "69",
+      "X-Antiquota-Token": "{{TOKEN}}",
+      "Content-Type": "application/json"
+    },
+    "json": {
+      "model": "gemini-3.8-flash-high",
+      "reserve": 4,
+      "keep_awake": "off"
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Server": "BaseHTTP/0.6 Python/3.14.4",
+      "Date": "Wed, 07 Oct 2026 13:45:21 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "293",
+      "Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff"
+    },
+    "json": {
+      "model": "gemini-3.8-flash-high",
+      "mode": "default",
+      "verifier_model": "gemini-3.8-flash-high",
+      "rotation": "perishable",
+      "keep_awake": "off",
+      "reserve": "4",
+      "quota_poll": "10",
+      "approval_timeout": "15",
+      "max_rounds": "20",
+      "auto_continue": "2",
+      "default_cwd": "",
+      "worktree_default": "off"
+    }
+  },
+  "comparison": {
+    "dynamicValues": {},
+    "headers": {
+      "Date": "valid HTTP-date",
+      "Server": "implementation-specific server identity",
+      "Content-Length": "must equal actual encoded response body byte length"
+    },
+    "sse": null
+  }
+}

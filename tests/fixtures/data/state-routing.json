@@ -1,0 +1,68 @@
+[
+  {
+    "slot": "one@example.com",
+    "event": "paused",
+    "why": "by the user",
+    "ts": 1791380721.4199748
+  },
+  {
+    "slot": "one@example.com",
+    "event": "resumed",
+    "why": "by the user",
+    "ts": 1791380721.420958
+  },
+  {
+    "slot": "one@example.com",
+    "bucket": "gemini",
+    "event": "pick",
+    "session": "{{SESSION_1}}",
+    "previous": null,
+    "ts": 1791380721.715146
+  },
+  {
+    "slot": "one@example.com",
+    "bucket": "gemini",
+    "event": "cooldown",
+    "secs": 60,
+    "why": "rate limited, quota left",
+    "ts": 1791380725.9619148
+  },
+  {
+    "slot": "two@example.com",
+    "bucket": "gemini",
+    "event": "pick",
+    "session": "{{SESSION_1}}",
+    "previous": "one@example.com",
+    "ts": 1791380725.962692
+  },
+  {
+    "slot": "one@example.com",
+    "event": "paused",
+    "why": "by the user",
+    "ts": 1791380726.2461922
+  },
+  {
+    "slot": "two@example.com",
+    "event": "paused",
+    "why": "by the user",
+    "ts": 1791380726.248728
+  },
+  {
+    "slot": "one@example.com",
+    "event": "resumed",
+    "why": "by the user",
+    "ts": 1791380726.284178
+  },
+  {
+    "slot": "two@example.com",
+    "event": "resumed",
+    "why": "by the user",
+    "ts": 1791380726.2868412
+  },
+  {
+    "slot": "three@example.com",
+    "event": "signed-out",
+    "why": "agy rejected the account's token",
+    "ts": 1791380727.3320682
+  }
+]

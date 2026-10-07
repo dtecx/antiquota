@@ -1,0 +1,44 @@
+{
+  "name": "approval-unknown-session",
+  "request": {
+    "method": "POST",
+    "path": "/api/approvals",
+    "headers": {
+      "Host": "127.0.0.1:{{PORT}}",
+      "Accept-Encoding": "identity",
+      "Content-Length": "76",
+      "X-Antiquota-Token": "{{TOKEN}}",
+      "Content-Type": "application/json"
+    },
+    "json": {
+      "session": "missing",
+      "tool": "run_command",
+      "args": {
+        "CommandLine": "ls"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Server": "BaseHTTP/0.6 Python/3.14.4",
+      "Date": "Wed, 07 Oct 2026 13:45:23 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "19",
+      "Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff"
+    },
+    "json": {
+      "decision": "ask"
+    }
+  },
+  "comparison": {
+    "dynamicValues": {},
+    "headers": {
+      "Date": "valid HTTP-date",
+      "Server": "implementation-specific server identity",
+      "Content-Length": "must equal actual encoded response body byte length"
+    },
+    "sse": null
+  }
+}

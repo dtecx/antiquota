@@ -1,0 +1,14 @@
+{
+  "model": "gemini-3.8-flash-high",
+  "mode": "default",
+  "verifier_model": "gemini-3.8-flash-high",
+  "rotation": "perishable",
+  "keep_awake": "off",
+  "reserve": "4",
+  "quota_poll": "10",
+  "approval_timeout": "15",
+  "max_rounds": "20",
+  "auto_continue": "2",
+  "default_cwd": "",
+  "worktree_default": "off"
+}

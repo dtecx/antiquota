@@ -1,0 +1,40 @@
+{
+  "name": "login-start",
+  "request": {
+    "method": "POST",
+    "path": "/api/accounts/login",
+    "headers": {
+      "Host": "127.0.0.1:{{PORT}}",
+      "Accept-Encoding": "identity",
+      "Content-Length": "2",
+      "X-Antiquota-Token": "{{TOKEN}}",
+      "Content-Type": "application/json"
+    },
+    "json": {}
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Server": "BaseHTTP/0.6 Python/3.14.4",
+      "Date": "Wed, 07 Oct 2026 13:45:26 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "119",
+      "Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff"
+    },
+    "json": {
+      "id": "{{LOGIN_1}}",
+      "url": "https://accounts.google.com/o/oauth2/auth?client_id=stub&state=stub",
+      "seconds": 60
+    }
+  },
+  "comparison": {
+    "dynamicValues": {},
+    "headers": {
+      "Date": "valid HTTP-date",
+      "Server": "implementation-specific server identity",
+      "Content-Length": "must equal actual encoded response body byte length"
+    },
+    "sse": null
+  }
+}

@@ -1,0 +1,42 @@
+[
+  {
+    "path": "slots/one@example.com/.gemini/GEMINI.md",
+    "target": "{{TEST_ROOT}}/data/stack/.gemini/GEMINI.md",
+    "exists": true
+  },
+  {
+    "path": "slots/one@example.com/.gemini/antigravity-cli/annotations",
+    "target": "{{TEST_ROOT}}/data/stack/.gemini/antigravity-cli/annotations",
+    "exists": true
+  },
+  {
+    "path": "slots/one@example.com/.gemini/antigravity-cli/brain",
+    "target": "{{TEST_ROOT}}/data/stack/.gemini/antigravity-cli/brain",
+    "exists": true
+  },
+  {
+    "path": "slots/one@example.com/.gemini/antigravity-cli/conversations",
+    "target": "{{TEST_ROOT}}/data/stack/.gemini/antigravity-cli/conversations",
+    "exists": true
+  },
+  {
+    "path": "slots/one@example.com/.gemini/antigravity-cli/implicit",
+    "target": "{{TEST_ROOT}}/data/stack/.gemini/antigravity-cli/implicit",
+    "exists": true
+  },
+  {
+    "path": "slots/one@example.com/.gemini/antigravity-cli/settings.json",
+    "target": "{{TEST_ROOT}}/data/stack/.gemini/antigravity-cli/settings.json",
+    "exists": true
+  },
+  {
+    "path": "slots/one@example.com/.gemini/config",
+    "target": "{{TEST_ROOT}}/data/stack/.gemini/config",
+    "exists": true
+  },
+  {
+    "path": "slots/one@example.com/project",
+    "target": "{{TEST_ROOT}}/home/project",
+    "exists": true
+  }
+]

@@ -1,0 +1,56 @@
+[
+  {
+    "t": 1791380721,
+    "slot": "one@example.com",
+    "model": "gemini-3.8-flash-high",
+    "session": "{{SESSION_1}}",
+    "input": 100,
+    "output": 10,
+    "thinking": 0
+  },
+  {
+    "t": 1791380723,
+    "slot": "one@example.com",
+    "model": "gemini-3.8-flash-high",
+    "session": "{{SESSION_1}}",
+    "input": 100,
+    "output": 10,
+    "thinking": 0
+  },
+  {
+    "t": 1791380724,
+    "slot": "one@example.com",
+    "model": "gemini-3.8-flash-high",
+    "session": "{{SESSION_1}}",
+    "input": 100,
+    "output": 10,
+    "thinking": 0
+  },
+  {
+    "t": 1791380724,
+    "slot": "one@example.com",
+    "model": "gemini-3.8-flash-high",
+    "session": "{{SESSION_1}}",
+    "input": 100,
+    "output": 10,
+    "thinking": 0
+  },
+  {
+    "t": 1791380725,
+    "slot": "one@example.com",
+    "model": "gemini-3.8-flash-high",
+    "session": "{{SESSION_1}}",
+    "input": 100,
+    "output": 10,
+    "thinking": 0
+  },
+  {
+    "t": 1791380726,
+    "slot": "two@example.com",
+    "model": "gemini-3.8-flash-high",
+    "session": "{{SESSION_1}}",
+    "input": 100,
+    "output": 10,
+    "thinking": 0
+  }
+]

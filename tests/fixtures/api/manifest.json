@@ -1,0 +1,1336 @@
+{
+  "format": 1,
+  "capturedAt": "2026-10-07T15:45:27.502798",
+  "sourceCommit": "17ec296799af2afd029d40bdfed000719a86bde7",
+  "sourceSha256": "ef4282bfaa050f940384fd4d902bc2e04198b604bf2c990caed44afe6ec84b03",
+  "environment": "Real Python ThreadingHTTPServer, isolated HOME/data, existing fake agy plus dictation JSON scenario",
+  "paidCalls": 0,
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/api/state",
+      "featureId": "F-329",
+      "fixtures": [
+        "missing-token",
+        "wrong-token",
+        "state-initial",
+        "state-final"
+      ],
+      "successFixtures": [
+        "state-initial",
+        "state-final"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/approvals",
+      "featureId": "F-330",
+      "fixtures": [
+        "approval-request",
+        "approval-request-allow",
+        "approval-unknown-session",
+        "approval-immediate-read"
+      ],
+      "successFixtures": [
+        "approval-request",
+        "approval-request-allow",
+        "approval-unknown-session",
+        "approval-immediate-read"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/approvals/{aid}",
+      "featureId": "F-331",
+      "fixtures": [
+        "approval-wait",
+        "approval-read-decided",
+        "approval-read-allowed",
+        "approval-unknown"
+      ],
+      "successFixtures": [
+        "approval-wait",
+        "approval-read-decided",
+        "approval-read-allowed",
+        "approval-unknown"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/approvals/{aid}/answer",
+      "featureId": "F-332",
+      "fixtures": [
+        "approval-answer-invalid",
+        "approval-answer",
+        "approval-answer-allow"
+      ],
+      "successFixtures": [
+        "approval-answer",
+        "approval-answer-allow"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/fork",
+      "featureId": "F-333",
+      "fixtures": [
+        "session-fork"
+      ],
+      "successFixtures": [
+        "session-fork"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/search",
+      "featureId": "F-334",
+      "fixtures": [
+        "search",
+        "search-short"
+      ],
+      "successFixtures": [
+        "search",
+        "search-short"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/accounts/{name}/pause",
+      "featureId": "F-335",
+      "fixtures": [
+        "account-pause",
+        "account-resume",
+        "account-pause-one-for-wall",
+        "account-pause-two-for-wall",
+        "account-resume-one-after-wall",
+        "account-resume-two-after-wall"
+      ],
+      "successFixtures": [
+        "account-pause",
+        "account-resume",
+        "account-pause-one-for-wall",
+        "account-pause-two-for-wall",
+        "account-resume-one-after-wall",
+        "account-resume-two-after-wall"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/steer",
+      "featureId": "F-336",
+      "fixtures": [
+        "session-steer"
+      ],
+      "successFixtures": [
+        "session-steer"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/engine",
+      "featureId": "F-337",
+      "fixtures": [
+        "engine"
+      ],
+      "successFixtures": [
+        "engine"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/engine/log",
+      "featureId": "F-338",
+      "fixtures": [
+        "engine-log"
+      ],
+      "successFixtures": [
+        "engine-log"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/shutdown",
+      "featureId": "F-339",
+      "fixtures": [
+        "shutdown"
+      ],
+      "successFixtures": [
+        "shutdown"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions",
+      "featureId": "F-340",
+      "fixtures": [
+        "body-limit",
+        "invalid-json",
+        "session-create",
+        "session-create-invalid",
+        "worktree-create"
+      ],
+      "successFixtures": [
+        "session-create",
+        "worktree-create"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/term",
+      "featureId": "F-341",
+      "fixtures": [
+        "terminal-create",
+        "terminal-restart"
+      ],
+      "successFixtures": [
+        "terminal-create",
+        "terminal-restart"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/term/input",
+      "featureId": "F-342",
+      "fixtures": [
+        "terminal-input",
+        "terminal-input-missing"
+      ],
+      "successFixtures": [
+        "terminal-input"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/term/resize",
+      "featureId": "F-343",
+      "fixtures": [
+        "terminal-resize"
+      ],
+      "successFixtures": [
+        "terminal-resize"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/term/kill",
+      "featureId": "F-344",
+      "fixtures": [
+        "terminal-kill",
+        "terminal-kill-again"
+      ],
+      "successFixtures": [
+        "terminal-kill",
+        "terminal-kill-again"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/sessions/{sid}/tree",
+      "featureId": "F-345",
+      "fixtures": [
+        "session-tree",
+        "session-tree-outside"
+      ],
+      "successFixtures": [
+        "session-tree"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/sessions/{sid}/git",
+      "featureId": "F-346",
+      "fixtures": [
+        "session-git",
+        "worktree-git"
+      ],
+      "successFixtures": [
+        "session-git",
+        "worktree-git"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/sessions/{sid}/git/diff",
+      "featureId": "F-347",
+      "fixtures": [
+        "session-git-diff",
+        "worktree-committed-diff"
+      ],
+      "successFixtures": [
+        "session-git-diff",
+        "worktree-committed-diff"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/git/commit",
+      "featureId": "F-348",
+      "fixtures": [
+        "session-git-commit",
+        "worktree-commit"
+      ],
+      "successFixtures": [
+        "session-git-commit",
+        "worktree-commit"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/git/discard",
+      "featureId": "F-349",
+      "fixtures": [
+        "session-git-discard"
+      ],
+      "successFixtures": [
+        "session-git-discard"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/git/merge",
+      "featureId": "F-350",
+      "fixtures": [
+        "session-git-merge-no-worktree",
+        "worktree-merge"
+      ],
+      "successFixtures": [
+        "worktree-merge"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/git/remove",
+      "featureId": "F-351",
+      "fixtures": [
+        "session-git-remove-no-worktree",
+        "worktree-remove"
+      ],
+      "successFixtures": [
+        "worktree-remove"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/sessions/{sid}",
+      "featureId": "F-352",
+      "fixtures": [
+        "session-get-empty",
+        "session-missing",
+        "session-get-turn",
+        "goal-get-met",
+        "thinking-session",
+        "quota-handoff-session",
+        "all-paused-session"
+      ],
+      "successFixtures": [
+        "session-get-empty",
+        "session-get-turn",
+        "goal-get-met",
+        "thinking-session",
+        "quota-handoff-session",
+        "all-paused-session"
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/sessions/{sid}",
+      "featureId": "F-353",
+      "fixtures": [
+        "session-patch",
+        "session-patch-invalid",
+        "session-patch-default"
+      ],
+      "successFixtures": [
+        "session-patch",
+        "session-patch-default"
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/sessions/{sid}",
+      "featureId": "F-354",
+      "fixtures": [
+        "session-delete"
+      ],
+      "successFixtures": [
+        "session-delete"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/send",
+      "featureId": "F-355",
+      "fixtures": [
+        "send-empty",
+        "send",
+        "send-long",
+        "send-queued",
+        "thinking-send",
+        "quota-handoff-send",
+        "all-paused-send"
+      ],
+      "successFixtures": [
+        "send",
+        "send-long",
+        "send-queued",
+        "thinking-send",
+        "quota-handoff-send",
+        "all-paused-send"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/rewind",
+      "featureId": "F-356",
+      "fixtures": [
+        "session-rewind",
+        "session-rewind-empty"
+      ],
+      "successFixtures": [
+        "session-rewind"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/clear",
+      "featureId": "F-357",
+      "fixtures": [
+        "session-clear"
+      ],
+      "successFixtures": [
+        "session-clear"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/jobs",
+      "featureId": "F-358",
+      "fixtures": [
+        "job-create",
+        "job-empty"
+      ],
+      "successFixtures": [
+        "job-create"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/jobs/{jid}/stop",
+      "featureId": "F-359",
+      "fixtures": [
+        "job-stop"
+      ],
+      "successFixtures": [
+        "job-stop"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/sessions/{sid}/jobs/{jid}/log",
+      "featureId": "F-360",
+      "fixtures": [
+        "job-log"
+      ],
+      "successFixtures": [
+        "job-log"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/loop",
+      "featureId": "F-361",
+      "fixtures": [
+        "loop-create",
+        "schedule-create",
+        "schedule-invalid",
+        "loop-invalid"
+      ],
+      "successFixtures": [
+        "loop-create",
+        "schedule-create"
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/sessions/{sid}/loop",
+      "featureId": "F-362",
+      "fixtures": [
+        "loop-delete",
+        "schedule-delete"
+      ],
+      "successFixtures": [
+        "loop-delete",
+        "schedule-delete"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/sessions/{sid}/state",
+      "featureId": "F-363",
+      "fixtures": [
+        "session-state"
+      ],
+      "successFixtures": [
+        "session-state"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/inherit",
+      "featureId": "F-364",
+      "fixtures": [
+        "session-inherit",
+        "session-inherit-error"
+      ],
+      "successFixtures": [
+        "session-inherit"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/shell",
+      "featureId": "F-365",
+      "fixtures": [
+        "session-shell",
+        "session-shell-empty"
+      ],
+      "successFixtures": [
+        "session-shell"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/note",
+      "featureId": "F-366",
+      "fixtures": [
+        "session-note",
+        "session-note-empty"
+      ],
+      "successFixtures": [
+        "session-note"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/sessions/{sid}/file",
+      "featureId": "F-367",
+      "fixtures": [
+        "session-file",
+        "session-file-outside"
+      ],
+      "successFixtures": [
+        "session-file"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/compact",
+      "featureId": "F-368",
+      "fixtures": [
+        "session-compact"
+      ],
+      "successFixtures": [
+        "session-compact"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/sessions/{sid}/files",
+      "featureId": "F-369",
+      "fixtures": [
+        "session-files"
+      ],
+      "successFixtures": [
+        "session-files"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/stop",
+      "featureId": "F-370",
+      "fixtures": [
+        "session-stop"
+      ],
+      "successFixtures": [
+        "session-stop"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/goal",
+      "featureId": "F-371",
+      "fixtures": [
+        "goal-create",
+        "goal-empty"
+      ],
+      "successFixtures": [
+        "goal-create"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/goal/resume",
+      "featureId": "F-372",
+      "fixtures": [
+        "goal-resume",
+        "goal-resume-empty"
+      ],
+      "successFixtures": [
+        "goal-resume"
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/sessions/{sid}/goal",
+      "featureId": "F-373",
+      "fixtures": [
+        "goal-delete"
+      ],
+      "successFixtures": [
+        "goal-delete"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/usage",
+      "featureId": "F-374",
+      "fixtures": [
+        "usage-empty",
+        "usage-after-turns"
+      ],
+      "successFixtures": [
+        "usage-empty",
+        "usage-after-turns"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/routing",
+      "featureId": "F-375",
+      "fixtures": [
+        "routing"
+      ],
+      "successFixtures": [
+        "routing"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/accounts",
+      "featureId": "F-376",
+      "fixtures": [
+        "accounts-initial"
+      ],
+      "successFixtures": [
+        "accounts-initial"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/accounts/probe",
+      "featureId": "F-377",
+      "fixtures": [
+        "accounts-probe"
+      ],
+      "successFixtures": [
+        "accounts-probe"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/accounts/login",
+      "featureId": "F-378",
+      "fixtures": [
+        "login-start"
+      ],
+      "successFixtures": [
+        "login-start"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/accounts/login/{lid}",
+      "featureId": "F-379",
+      "fixtures": [
+        "login-poll",
+        "login-poll-replaced"
+      ],
+      "successFixtures": [
+        "login-poll",
+        "login-poll-replaced"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/accounts/login/{lid}",
+      "featureId": "F-380",
+      "fixtures": [
+        "login-code-invalid",
+        "login-submit",
+        "login-submit-replaced"
+      ],
+      "successFixtures": [
+        "login-submit"
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/accounts/login/{lid}",
+      "featureId": "F-381",
+      "fixtures": [
+        "login-delete"
+      ],
+      "successFixtures": [
+        "login-delete"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/accounts/{name}/check",
+      "featureId": "F-382",
+      "fixtures": [
+        "account-check",
+        "account-check-idle",
+        "account-missing-check"
+      ],
+      "successFixtures": [
+        "account-check-idle"
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/accounts/{name}",
+      "featureId": "F-383",
+      "fixtures": [
+        "account-delete",
+        "account-delete-invalid"
+      ],
+      "successFixtures": [
+        "account-delete"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/settings",
+      "featureId": "F-384",
+      "fixtures": [
+        "settings"
+      ],
+      "successFixtures": [
+        "settings"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/api/settings/defaults",
+      "featureId": "F-385",
+      "fixtures": [
+        "defaults",
+        "defaults-error"
+      ],
+      "successFixtures": [
+        "defaults"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/settings/file",
+      "featureId": "F-386",
+      "fixtures": [
+        "settings-file-missing",
+        "settings-file-read",
+        "settings-file-private"
+      ],
+      "successFixtures": [
+        "settings-file-missing",
+        "settings-file-read"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/api/settings/file",
+      "featureId": "F-387",
+      "fixtures": [
+        "settings-file-put",
+        "settings-file-invalid"
+      ],
+      "successFixtures": [
+        "settings-file-put"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/settings/{kind}/{name}",
+      "featureId": "F-388",
+      "fixtures": [
+        "settings-hook-get",
+        "settings-mcp-get",
+        "settings-kind-error"
+      ],
+      "successFixtures": [
+        "settings-hook-get",
+        "settings-mcp-get"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/api/settings/{kind}/{name}",
+      "featureId": "F-389",
+      "fixtures": [
+        "settings-hook-put",
+        "settings-mcp-put"
+      ],
+      "successFixtures": [
+        "settings-hook-put",
+        "settings-mcp-put"
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/settings/{kind}/{name}",
+      "featureId": "F-390",
+      "fixtures": [
+        "settings-hook-delete",
+        "settings-mcp-delete",
+        "settings-delete-rule",
+        "settings-delete-skill"
+      ],
+      "successFixtures": [
+        "settings-hook-delete",
+        "settings-mcp-delete",
+        "settings-delete-rule",
+        "settings-delete-skill"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/settings/{kind}/{name}/enabled",
+      "featureId": "F-391",
+      "fixtures": [
+        "settings-hook-disable",
+        "settings-mcp-disable"
+      ],
+      "successFixtures": [
+        "settings-hook-disable",
+        "settings-mcp-disable"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/settings/copy",
+      "featureId": "F-392",
+      "fixtures": [
+        "settings-copy-rule",
+        "settings-copy-skill"
+      ],
+      "successFixtures": [
+        "settings-copy-rule",
+        "settings-copy-skill"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/stack",
+      "featureId": "F-393",
+      "fixtures": [
+        "stack"
+      ],
+      "successFixtures": [
+        "stack"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/stack/reseed",
+      "featureId": "F-394",
+      "fixtures": [
+        "stack-reseed"
+      ],
+      "successFixtures": [
+        "stack-reseed"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/permissions",
+      "featureId": "F-395",
+      "fixtures": [
+        "permissions"
+      ],
+      "successFixtures": [
+        "permissions"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/api/permissions",
+      "featureId": "F-396",
+      "fixtures": [
+        "permissions-put",
+        "permissions-error"
+      ],
+      "successFixtures": [
+        "permissions-put"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/fs",
+      "featureId": "F-397",
+      "fixtures": [
+        "filesystem",
+        "filesystem-outside"
+      ],
+      "successFixtures": [
+        "filesystem",
+        "filesystem-outside"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/health",
+      "featureId": "F-323",
+      "fixtures": [
+        "health",
+        "bad-host"
+      ],
+      "successFixtures": [
+        "health"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/events",
+      "featureId": "F-324",
+      "fixtures": [
+        "events-sse",
+        "events-wrong-token"
+      ],
+      "successFixtures": [
+        "events-sse"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/sessions/{sid}/term/stream",
+      "featureId": "F-325",
+      "fixtures": [
+        "terminal-sse",
+        "terminal-stream-missing"
+      ],
+      "successFixtures": [
+        "terminal-sse"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/transcribe",
+      "featureId": "F-326",
+      "fixtures": [
+        "transcribe",
+        "transcribe-no-speech",
+        "transcribe-empty",
+        "transcribe-limit"
+      ],
+      "successFixtures": [
+        "transcribe",
+        "transcribe-no-speech"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/sessions/{sid}/attach",
+      "featureId": "F-327",
+      "fixtures": [
+        "attachment-upload",
+        "attachment-upload-plain",
+        "attachment-limit"
+      ],
+      "successFixtures": [
+        "attachment-upload",
+        "attachment-upload-plain"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/sessions/{sid}/attachments/{name}",
+      "featureId": "F-328",
+      "fixtures": [
+        "attachment-download",
+        "attachment-download-header-only",
+        "attachment-download-missing",
+        "attachment-download-plain"
+      ],
+      "successFixtures": [
+        "attachment-download-plain"
+      ]
+    }
+  ],
+  "caseCount": 172,
+  "replaySequence": [
+    "events-sse",
+    "health",
+    "bad-host",
+    "missing-token",
+    "wrong-token",
+    "events-wrong-token",
+    "unknown-static",
+    "static-index",
+    "static-js",
+    "static-css",
+    "static-vendor-xterm-addon-fit-js",
+    "static-vendor-xterm-css",
+    "static-vendor-xterm-js",
+    "vendor-traversal",
+    "state-initial",
+    "engine",
+    "engine-log",
+    "accounts-initial",
+    "accounts-probe",
+    "account-check",
+    "account-check-idle",
+    "account-pause",
+    "account-resume",
+    "account-missing-check",
+    "usage-empty",
+    "routing",
+    "filesystem",
+    "filesystem-outside",
+    "settings",
+    "defaults",
+    "defaults-error",
+    "settings-file-missing",
+    "settings-file-put",
+    "settings-file-read",
+    "settings-file-invalid",
+    "settings-file-private",
+    "settings-hook-put",
+    "settings-hook-get",
+    "settings-hook-disable",
+    "settings-hook-delete",
+    "settings-mcp-put",
+    "settings-mcp-get",
+    "settings-mcp-disable",
+    "settings-mcp-delete",
+    "settings-copy-rule",
+    "settings-copy-skill",
+    "settings-delete-rule",
+    "settings-delete-skill",
+    "settings-kind-error",
+    "permissions",
+    "permissions-put",
+    "permissions-error",
+    "stack",
+    "stack-reseed",
+    "body-limit",
+    "invalid-json",
+    "session-create",
+    "session-get-empty",
+    "session-patch",
+    "session-patch-invalid",
+    "session-missing",
+    "session-create-invalid",
+    "send-empty",
+    "attachment-upload",
+    "attachment-download",
+    "attachment-download-header-only",
+    "attachment-download-missing",
+    "attachment-upload-plain",
+    "attachment-download-plain",
+    "attachment-limit",
+    "send",
+    "session-get-turn",
+    "search",
+    "search-short",
+    "session-state",
+    "session-file",
+    "session-file-outside",
+    "session-files",
+    "session-tree",
+    "session-tree-outside",
+    "session-note",
+    "session-note-empty",
+    "session-shell",
+    "session-shell-empty",
+    "session-compact",
+    "session-fork",
+    "session-inherit",
+    "session-inherit-error",
+    "session-rewind",
+    "session-rewind-empty",
+    "session-clear",
+    "send-long",
+    "send-queued",
+    "session-steer",
+    "session-patch-default",
+    "approval-request",
+    "approval-wait",
+    "approval-answer-invalid",
+    "approval-answer",
+    "approval-read-decided",
+    "approval-request-allow",
+    "approval-answer-allow",
+    "approval-read-allowed",
+    "approval-unknown",
+    "approval-unknown-session",
+    "approval-immediate-read",
+    "session-stop",
+    "job-create",
+    "job-log",
+    "job-stop",
+    "job-empty",
+    "loop-create",
+    "loop-delete",
+    "schedule-create",
+    "schedule-delete",
+    "schedule-invalid",
+    "loop-invalid",
+    "goal-create",
+    "goal-get-met",
+    "goal-resume",
+    "goal-delete",
+    "goal-resume-empty",
+    "goal-empty",
+    "terminal-create",
+    "terminal-sse",
+    "terminal-input",
+    "terminal-resize",
+    "terminal-kill",
+    "terminal-input-missing",
+    "terminal-stream-missing",
+    "terminal-restart",
+    "terminal-kill-again",
+    "transcribe",
+    "transcribe-no-speech",
+    "transcribe-empty",
+    "transcribe-limit",
+    "session-git",
+    "session-git-diff",
+    "session-git-discard",
+    "session-git-commit",
+    "session-git-merge-no-worktree",
+    "session-git-remove-no-worktree",
+    "worktree-create",
+    "worktree-git",
+    "worktree-commit",
+    "worktree-committed-diff",
+    "worktree-merge",
+    "worktree-remove",
+    "thinking-send",
+    "thinking-session",
+    "quota-handoff-send",
+    "quota-handoff-session",
+    "account-pause-one-for-wall",
+    "account-pause-two-for-wall",
+    "all-paused-send",
+    "all-paused-session",
+    "account-resume-one-after-wall",
+    "account-resume-two-after-wall",
+    "login-start",
+    "login-poll",
+    "login-code-invalid",
+    "login-submit",
+    "login-delete",
+    "login-poll-replaced",
+    "login-submit-replaced",
+    "account-delete",
+    "account-delete-invalid",
+    "usage-after-turns",
+    "state-final",
+    "session-delete",
+    "unknown-route",
+    "shutdown"
+  ],
+  "normalization": {
+    "stringPlaceholders": [
+      "{{APPROVAL_1}}",
+      "{{APPROVAL_2}}",
+      "{{BRANCH_1}}",
+      "{{COMMIT_1}}",
+      "{{COMMIT_2}}",
+      "{{COMMIT_3}}",
+      "{{COMMIT_4}}",
+      "{{CONVERSATION_1}}",
+      "{{CONVERSATION_2}}",
+      "{{JOB_1}}",
+      "{{LOGIN_1}}",
+      "{{PORT}}",
+      "{{REPO_ROOT}}",
+      "{{SESSION_1}}",
+      "{{SESSION_2}}",
+      "{{SESSION_3}}",
+      "{{TEST_ROOT}}",
+      "{{TOKEN}}"
+    ],
+    "dynamicValues": "Each case lists exact JSON-pointer paths and type constraints; no global key skipping.",
+    "responseHeaderValuePatterns": {
+      "Date": "HTTP-date",
+      "Server": "BaseHTTP/version Python/version"
+    }
+  },
+  "transportErrors": [],
+  "bindings": [
+    {
+      "placeholder": "{{SESSION_1}}",
+      "fixture": "session-create",
+      "pointer": "/response/json/id",
+      "bindOnly": false
+    },
+    {
+      "placeholder": "{{SESSION_2}}",
+      "fixture": "session-fork",
+      "pointer": "/response/json/id",
+      "bindOnly": false
+    },
+    {
+      "placeholder": "{{SESSION_3}}",
+      "fixture": "worktree-create",
+      "pointer": "/response/json/id",
+      "bindOnly": false
+    },
+    {
+      "placeholder": "{{LOGIN_1}}",
+      "fixture": "login-start",
+      "pointer": "/response/json/id",
+      "bindOnly": false
+    },
+    {
+      "placeholder": "{{APPROVAL_1}}",
+      "fixture": "approval-request",
+      "pointer": "/response/json/pending",
+      "bindOnly": false
+    },
+    {
+      "placeholder": "{{JOB_1}}",
+      "fixture": "job-create",
+      "pointer": "/response/json/id",
+      "bindOnly": false
+    },
+    {
+      "placeholder": "{{APPROVAL_2}}",
+      "fixture": "approval-request-allow",
+      "pointer": "/response/json/pending",
+      "bindOnly": false
+    },
+    {
+      "placeholder": "{{CONVERSATION_1}}",
+      "fixture": "session-get-turn",
+      "pointer": "/response/json/meta/conversation_id",
+      "bindOnly": false
+    },
+    {
+      "placeholder": "{{COMMIT_1}}",
+      "fixture": "session-git-commit",
+      "pointer": "/response/json/sha",
+      "bindOnly": false
+    },
+    {
+      "placeholder": "{{CONVERSATION_2}}",
+      "fixture": "session-patch-default",
+      "pointer": "/response/json/conversation_id",
+      "bindOnly": false
+    },
+    {
+      "placeholder": "{{COMMIT_2}}",
+      "fixture": "worktree-create",
+      "pointer": "/response/json/worktree/base_sha",
+      "bindOnly": false
+    },
+    {
+      "placeholder": "{{COMMIT_3}}",
+      "fixture": "worktree-commit",
+      "pointer": "/response/json/sha",
+      "bindOnly": false
+    },
+    {
+      "placeholder": "{{BRANCH_1}}",
+      "fixture": "worktree-create",
+      "pointer": "/response/json/worktree/branch",
+      "bindOnly": false
+    },
+    {
+      "placeholder": "{{WORKTREE_PATH}}",
+      "fixture": "worktree-create",
+      "pointer": "/response/json/cwd",
+      "bindOnly": true
+    },
+    {
+      "placeholder": "{{COMMIT_4}}",
+      "fixture": "worktree-merge",
+      "pointer": "/response/json/sha",
+      "bindOnly": false
+    }
+  ],
+  "calendar": {
+    "capturedLocalDate": "2026-10-07",
+    "zone": "Europe/Warsaw",
+    "observedOffsetSeconds": 7200,
+    "replay": "Use a fake clock at captured local date with this timezone, or remap usage day strings relative to replay local date while keeping row order/totals exact."
+  },
+  "setup": {
+    "script": "capture.py",
+    "scenario": "scenario.py",
+    "directory": "{{TEST_ROOT}}",
+    "home": "{{TEST_ROOT}}/home",
+    "data": "{{TEST_ROOT}}/data",
+    "project": "{{TEST_ROOT}}/home/project",
+    "initialAccounts": [
+      "one@example.com",
+      "two@example.com"
+    ],
+    "quotaScenario": "tests/stub_agy.py: 90% both pools and windows, fixed 2099 resets",
+    "externalProcesses": "Only the fake agy, local git, and a local PTY shell; no network accounts or VPS calls.",
+    "nonHttpSteps": [
+      {
+        "before": "worktree-git",
+        "action": "write {{WORKTREE_PATH}}/worktree.txt",
+        "text": "Worktree change.\n"
+      },
+      {
+        "before": "thinking-send",
+        "action": "Create fake agy conversation SQLite steps row idx4/type15 with field20.3 thinking; exact writer is in scenario.py."
+      }
+    ],
+    "environmentTransitions": [
+      {
+        "before": "send-long",
+        "set": {
+          "STUB_SLEEP": "1.5"
+        }
+      },
+      {
+        "after": "session-steer",
+        "wait": "session idle",
+        "unset": [
+          "STUB_SLEEP"
+        ]
+      },
+      {
+        "before": "transcribe-no-speech",
+        "set": {
+          "STUB_DICTATION": "NO_SPEECH"
+        }
+      },
+      {
+        "before": "login-start",
+        "set": {
+          "STUB_EMAIL": "three@example.com"
+        }
+      },
+      {
+        "before": "quota-handoff-send",
+        "set": {
+          "STUB_429": "current session last_slot"
+        }
+      },
+      {
+        "after": "quota-handoff-send",
+        "wait": "session idle",
+        "unset": [
+          "STUB_429"
+        ]
+      }
+    ],
+    "waits": "Wait for session idle after send, session-steer, goal-create and goal-resume; wait for quota probe lease release before account-check-idle."
+  }
+}

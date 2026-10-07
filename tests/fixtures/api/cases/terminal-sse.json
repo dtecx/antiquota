@@ -1,0 +1,82 @@
+{
+  "name": "terminal-sse",
+  "request": {
+    "method": "GET",
+    "path": "/api/sessions/{{SESSION_1}}/term/stream?token={{TOKEN}}",
+    "headers": {
+      "Host": "127.0.0.1:{{PORT}}",
+      "Accept-Encoding": "identity"
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Server": "BaseHTTP/0.6 Python/3.14.4",
+      "Date": "Wed, 07 Oct 2026 13:45:24 GMT",
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-store"
+    },
+    "events": [
+      "data: {\"d\": \"\", \"shell\": \"zsh\", \"cwd\": \"{{TEST_ROOT}}/home/project\", \"alive\": true}",
+      "data: {\"d\": \"G1sxbRtbN20lG1syN20bWzFtG1swbSAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICANIA0=\"}",
+      "data: {\"d\": \"DRtbMG0bWzI3bRtbMjRtG1tKZHRlY3hAbWFjIHByb2plY3QgJSAbW0sbWz8yMDA0aA==\"}",
+      "data: {\"d\": \"cAhwcmludGYgJ2Nvbg==\"}",
+      "data: {\"d\": \"dHJhY3QtdGVybWluYWxcbicbWz8yMDA0bA0NCg==\"}",
+      "data: {\"d\": \"Y29udHJhY3QtdGVybWluYWwNCg==\"}",
+      "data: {\"d\": \"G1sxbRtbN20lG1syN20bWzFtG1swbSAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICANIA0=\"}",
+      "data: {\"d\": \"DRtbMG0bWzI3bRtbMjRtG1tKZHRlY3hAbWFjIHByb2plY3QgJSAbW0sbWz8yMDA0aA==\"}",
+      "data: {\"d\": \"DQobWzJtW3Byb2Nlc3MgZXhpdGVkXRtbMG0NCg==\"}",
+      "data: {\"exit\": true}"
+    ],
+    "eventSamples": [
+      {
+        "d": "",
+        "shell": "zsh",
+        "cwd": "{{TEST_ROOT}}/home/project",
+        "alive": true
+      },
+      {
+        "d": "G1sxbRtbN20lG1syN20bWzFtG1swbSAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICANIA0="
+      },
+      {
+        "d": "DRtbMG0bWzI3bRtbMjRtG1tKZHRlY3hAbWFjIHByb2plY3QgJSAbW0sbWz8yMDA0aA=="
+      },
+      {
+        "d": "cAhwcmludGYgJ2Nvbg=="
+      },
+      {
+        "d": "dHJhY3QtdGVybWluYWxcbicbWz8yMDA0bA0NCg=="
+      },
+      {
+        "d": "Y29udHJhY3QtdGVybWluYWwNCg=="
+      },
+      {
+        "d": "G1sxbRtbN20lG1syN20bWzFtG1swbSAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICANIA0="
+      },
+      {
+        "d": "DRtbMG0bWzI3bRtbMjRtG1tKZHRlY3hAbWFjIHByb2plY3QgJSAbW0sbWz8yMDA0aA=="
+      },
+      {
+        "d": "DQobWzJtW3Byb2Nlc3MgZXhpdGVkXRtbMG0NCg=="
+      },
+      {
+        "exit": true
+      }
+    ]
+  },
+  "comparison": {
+    "dynamicValues": {},
+    "headers": {
+      "Date": "valid HTTP-date",
+      "Server": "implementation-specific server identity",
+      "Content-Length": "must equal actual encoded response body byte length"
+    },
+    "sse": "Compare parsed eventSamples; raw events retain captured framing evidence.",
+    "terminal": {
+      "chunks": "Decode and concatenate all d fields in order; chunk boundaries are unconstrained.",
+      "metadata": "First frame shell/cwd/alive fields are required.",
+      "completion": "An exit=true event terminates the stream.",
+      "output": "Assert the typed command and contract-terminal result are present; shell prompt bytes are platform-specific."
+    }
+  }
+}

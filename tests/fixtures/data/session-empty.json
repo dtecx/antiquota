@@ -1,0 +1,29 @@
+{
+  "id": "{{SESSION_1}}",
+  "title": "Contract fixture",
+  "cwd": "{{TEST_ROOT}}/home/project",
+  "model": "gemini-3.8-flash-high",
+  "effort": "",
+  "mode": "default",
+  "created": 1791380721.7054589,
+  "updated": 1791380721.705468,
+  "status": "idle",
+  "status_until": null,
+  "conversation_id": null,
+  "turns": 0,
+  "queue": [],
+  "goal": null,
+  "last_slot": null,
+  "usage": {
+    "input": 0,
+    "output": 0,
+    "thinking": 0
+  },
+  "context": 0,
+  "pending_note": "",
+  "jobs": [],
+  "loop": null,
+  "pinned": false,
+  "archived": false,
+  "worktree": null
+}

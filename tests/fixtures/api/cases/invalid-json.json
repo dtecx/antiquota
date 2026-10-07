@@ -1,0 +1,38 @@
+{
+  "name": "invalid-json",
+  "request": {
+    "method": "POST",
+    "path": "/api/sessions",
+    "headers": {
+      "Host": "127.0.0.1:{{PORT}}",
+      "Accept-Encoding": "identity",
+      "Content-Length": "1",
+      "X-Antiquota-Token": "{{TOKEN}}",
+      "Content-Type": "application/json"
+    },
+    "base64": "ew=="
+  },
+  "response": {
+    "status": 400,
+    "headers": {
+      "Server": "BaseHTTP/0.6 Python/3.14.4",
+      "Date": "Wed, 07 Oct 2026 13:45:21 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "88",
+      "Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff"
+    },
+    "json": {
+      "error": "Expecting property name enclosed in double quotes: line 1 column 2 (char 1)"
+    }
+  },
+  "comparison": {
+    "dynamicValues": {},
+    "headers": {
+      "Date": "valid HTTP-date",
+      "Server": "implementation-specific server identity",
+      "Content-Length": "must equal actual encoded response body byte length"
+    },
+    "sse": null
+  }
+}

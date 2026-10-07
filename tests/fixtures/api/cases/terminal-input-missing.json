@@ -1,0 +1,40 @@
+{
+  "name": "terminal-input-missing",
+  "request": {
+    "method": "POST",
+    "path": "/api/sessions/{{SESSION_1}}/term/input",
+    "headers": {
+      "Host": "127.0.0.1:{{PORT}}",
+      "Accept-Encoding": "identity",
+      "Content-Length": "13",
+      "X-Antiquota-Token": "{{TOKEN}}",
+      "Content-Type": "application/json"
+    },
+    "json": {
+      "data": "a"
+    }
+  },
+  "response": {
+    "status": 404,
+    "headers": {
+      "Server": "BaseHTTP/0.6 Python/3.14.4",
+      "Date": "Wed, 07 Oct 2026 13:45:25 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "37",
+      "Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff"
+    },
+    "json": {
+      "error": "not found: 'no terminal'"
+    }
+  },
+  "comparison": {
+    "dynamicValues": {},
+    "headers": {
+      "Date": "valid HTTP-date",
+      "Server": "implementation-specific server identity",
+      "Content-Length": "must equal actual encoded response body byte length"
+    },
+    "sse": null
+  }
+}

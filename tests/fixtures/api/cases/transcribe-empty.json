@@ -1,0 +1,37 @@
+{
+  "name": "transcribe-empty",
+  "request": {
+    "method": "POST",
+    "path": "/api/transcribe",
+    "headers": {
+      "Host": "127.0.0.1:{{PORT}}",
+      "Accept-Encoding": "identity",
+      "Content-Length": "0",
+      "X-Antiquota-Token": "{{TOKEN}}"
+    },
+    "base64": ""
+  },
+  "response": {
+    "status": 400,
+    "headers": {
+      "Server": "BaseHTTP/0.6 Python/3.14.4",
+      "Date": "Wed, 07 Oct 2026 13:45:25 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "54",
+      "Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff"
+    },
+    "json": {
+      "error": "record between a second and a few minutes"
+    }
+  },
+  "comparison": {
+    "dynamicValues": {},
+    "headers": {
+      "Date": "valid HTTP-date",
+      "Server": "implementation-specific server identity",
+      "Content-Length": "must equal actual encoded response body byte length"
+    },
+    "sse": null
+  }
+}

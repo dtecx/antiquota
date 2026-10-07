@@ -1,0 +1,77 @@
+{
+  "name": "usage-after-turns",
+  "request": {
+    "method": "GET",
+    "path": "/api/usage?days=3",
+    "headers": {
+      "Host": "127.0.0.1:{{PORT}}",
+      "Accept-Encoding": "identity",
+      "X-Antiquota-Token": "{{TOKEN}}"
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Server": "BaseHTTP/0.6 Python/3.14.4",
+      "Date": "Wed, 07 Oct 2026 13:45:27 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "468",
+      "Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff"
+    },
+    "json": {
+      "days": [
+        {
+          "date": "2026-10-05",
+          "total": 0,
+          "turns": 0,
+          "by": {}
+        },
+        {
+          "date": "2026-10-06",
+          "total": 0,
+          "turns": 0,
+          "by": {}
+        },
+        {
+          "date": "2026-10-07",
+          "total": 660,
+          "turns": 6,
+          "by": {
+            "one@example.com": 550,
+            "two@example.com": 110
+          }
+        }
+      ],
+      "accounts": {
+        "one@example.com": {
+          "tokens": 550,
+          "turns": 5,
+          "today": 550,
+          "input": 500,
+          "output": 50
+        },
+        "two@example.com": {
+          "tokens": 110,
+          "turns": 1,
+          "today": 110,
+          "input": 100,
+          "output": 10
+        }
+      },
+      "models": {
+        "gemini-3.8-flash-high": 660
+      }
+    }
+  },
+  "comparison": {
+    "dynamicValues": {},
+    "headers": {
+      "Date": "valid HTTP-date",
+      "Server": "implementation-specific server identity",
+      "Content-Length": "must equal actual encoded response body byte length"
+    },
+    "sse": null,
+    "calendar": "days[*].date is the replay local date minus the requested number of days plus row index; calendar dates shift with the replay clock."
+  }
+}

@@ -1,0 +1,52 @@
+[
+  {
+    "t": "user",
+    "text": "Hello contract fixture.",
+    "kind": "user",
+    "attachments": [],
+    "ts": 1791380721.7138188
+  },
+  {
+    "t": "turn_start",
+    "turn": 1,
+    "slot": "one@example.com",
+    "model": "gemini-3.8-flash-high",
+    "ts": 1791380721.715949
+  },
+  {
+    "t": "tool",
+    "turn": 1,
+    "step": 3,
+    "name": "write_to_file",
+    "params": {
+      "TargetFile": "{{TEST_ROOT}}/home/project/notes.txt"
+    },
+    "state": "done",
+    "secs": 0.01,
+    "output": "",
+    "diff": "--- a/notes.txt\n+++ b/notes.txt\n@@ -0,0 +1 @@\n+turn 1\n",
+    "ts": 1791380721.965586
+  },
+  {
+    "t": "assistant",
+    "turn": 1,
+    "step": 4,
+    "text": "turn 1 on one@example.com\nGOAL_COMPLETE",
+    "ts": 1791380721.965853
+  },
+  {
+    "t": "turn_end",
+    "turn": 1,
+    "slot": "one@example.com",
+    "status": "SUCCESS",
+    "usage": {
+      "input_tokens": 100,
+      "output_tokens": 10,
+      "thinking_tokens": 0,
+      "total_tokens": 110,
+      "context": 100
+    },
+    "secs": 0.3,
+    "ts": 1791380721.968072
+  }
+]

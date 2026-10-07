@@ -1,0 +1,103 @@
+[
+  {
+    "id": "{{SESSION_1}}",
+    "title": "Contract renamed",
+    "cwd": "{{TEST_ROOT}}/home/project",
+    "model": "gemini-3.8-flash-high",
+    "effort": "high",
+    "mode": "default",
+    "created": 1791380721.7054589,
+    "updated": 1791380726.253071,
+    "status": "idle",
+    "status_until": null,
+    "conversation_id": "{{CONVERSATION_2}}",
+    "turns": 7,
+    "queue": [],
+    "goal": null,
+    "last_slot": "two@example.com",
+    "usage": {
+      "input": 600,
+      "output": 60,
+      "thinking": 0
+    },
+    "context": 100,
+    "pending_note": "",
+    "jobs": [
+      {
+        "id": "{{JOB_1}}",
+        "cmd": "printf 'fixture job\\n'; sleep 5",
+        "pid": 60543,
+        "log": "{{TEST_ROOT}}/data/sessions/{{SESSION_1}}/jobs/{{JOB_1}}.log",
+        "started": 1791380723.8216598,
+        "ended": 1791380723.945122,
+        "code": -15,
+        "every": 90,
+        "notify": false,
+        "by": "user",
+        "stopped": true
+      }
+    ],
+    "loop": null,
+    "pinned": true,
+    "archived": false,
+    "worktree": null
+  },
+  {
+    "id": "{{SESSION_3}}",
+    "title": "Worktree fixture",
+    "cwd": "{{TEST_ROOT}}/home/project",
+    "model": "gemini-3.8-flash-high",
+    "effort": "",
+    "mode": "default",
+    "created": 1791380725.328442,
+    "updated": 1791380725.595582,
+    "status": "idle",
+    "status_until": null,
+    "conversation_id": null,
+    "turns": 0,
+    "queue": [],
+    "goal": null,
+    "last_slot": null,
+    "usage": {
+      "input": 0,
+      "output": 0,
+      "thinking": 0
+    },
+    "context": 0,
+    "pending_note": "This session's worktree was removed; you now work in the main checkout.",
+    "jobs": [],
+    "loop": null,
+    "pinned": false,
+    "archived": true,
+    "worktree": null
+  },
+  {
+    "id": "{{SESSION_2}}",
+    "title": "Contract renamed (fork)",
+    "cwd": "{{TEST_ROOT}}/home/project",
+    "model": "gemini-3.8-flash-high",
+    "effort": "high",
+    "mode": "accept-edits",
+    "created": 1791380722.011609,
+    "updated": 1791380722.0129228,
+    "status": "idle",
+    "status_until": null,
+    "conversation_id": null,
+    "turns": 0,
+    "queue": [],
+    "goal": null,
+    "last_slot": null,
+    "usage": {
+      "input": 0,
+      "output": 0,
+      "thinking": 0
+    },
+    "context": 0,
+    "pending_note": "You are continuing work from an earlier antiquota session. Its handoff state follows; check the current files yourself before relying on it.\n\n# Handoff: Contract renamed\nFolder: {{TEST_ROOT}}/home/project  \u00b7  model gemini-3.8-flash-high  \u00b7  1 turns  \u00b7  accounts used: one@example.com\n\n## Requests (oldest first)\n- [user] Hello contract fixture.\n\n## Work log (latest turns)\n- #1 one SUCCESS \u00b7 edited notes.txt\n\n## Files changed in this session\n- notes.txt\n\n## Last reply\nturn 1 on one@example.com\nGOAL_COMPLETE\n\nYou are continuing work from an earlier antiquota session. Its handoff state follows; check the current files yourself before relying on it.\n\n# Handoff: Contract renamed\nFolder: {{TEST_ROOT}}/home/project  \u00b7  model gemini-3.8-flash-high  \u00b7  1 turns  \u00b7  accounts used: one@example.com\n\n## Requests (oldest first)\n- [user] Hello contract fixture.\n\n## Work log (latest turns)\n- #1 one SUCCESS \u00b7 edited notes.txt\n\n## Files changed in this session\n- notes.txt\n\n## Last reply\nturn 1 on one@example.com\nGOAL_COMPLETE",
+    "jobs": [],
+    "loop": null,
+    "pinned": false,
+    "archived": false,
+    "worktree": null
+  }
+]

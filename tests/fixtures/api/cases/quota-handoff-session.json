@@ -1,0 +1,990 @@
+{
+  "name": "quota-handoff-session",
+  "request": {
+    "method": "GET",
+    "path": "/api/sessions/{{SESSION_1}}",
+    "headers": {
+      "Host": "127.0.0.1:{{PORT}}",
+      "Accept-Encoding": "identity",
+      "X-Antiquota-Token": "{{TOKEN}}"
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Server": "BaseHTTP/0.6 Python/3.14.4",
+      "Date": "Wed, 07 Oct 2026 13:45:26 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "11116",
+      "Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff"
+    },
+    "json": {
+      "meta": {
+        "id": "{{SESSION_1}}",
+        "title": "Contract renamed",
+        "cwd": "{{TEST_ROOT}}/home/project",
+        "model": "gemini-3.8-flash-high",
+        "effort": "high",
+        "mode": "default",
+        "created": 1791380721.7054589,
+        "updated": 1791380726.217985,
+        "status": "idle",
+        "status_until": null,
+        "conversation_id": "{{CONVERSATION_2}}",
+        "turns": 7,
+        "queue": [],
+        "goal": null,
+        "last_slot": "two@example.com",
+        "usage": {
+          "input": 600,
+          "output": 60,
+          "thinking": 0
+        },
+        "context": 100,
+        "pending_note": "",
+        "jobs": [
+          {
+            "id": "{{JOB_1}}",
+            "cmd": "printf 'fixture job\\n'; sleep 5",
+            "pid": 60543,
+            "log": "{{TEST_ROOT}}/data/sessions/{{SESSION_1}}/jobs/{{JOB_1}}.log",
+            "started": 1791380723.8216598,
+            "ended": 1791380723.945122,
+            "code": -15,
+            "every": 90,
+            "notify": false,
+            "by": "user",
+            "stopped": true
+          }
+        ],
+        "loop": null,
+        "pinned": true,
+        "archived": false,
+        "worktree": null
+      },
+      "events": [
+        {
+          "t": "user",
+          "text": "Hello contract fixture.",
+          "kind": "user",
+          "attachments": [],
+          "ts": 1791380721.7138188
+        },
+        {
+          "t": "turn_start",
+          "turn": 1,
+          "slot": "one@example.com",
+          "model": "gemini-3.8-flash-high",
+          "ts": 1791380721.715949
+        },
+        {
+          "t": "tool",
+          "turn": 1,
+          "step": 3,
+          "name": "write_to_file",
+          "params": {
+            "TargetFile": "{{TEST_ROOT}}/home/project/notes.txt"
+          },
+          "state": "done",
+          "secs": 0.01,
+          "output": "",
+          "diff": "--- a/notes.txt\n+++ b/notes.txt\n@@ -0,0 +1 @@\n+turn 1\n",
+          "ts": 1791380721.965586
+        },
+        {
+          "t": "assistant",
+          "turn": 1,
+          "step": 4,
+          "text": "turn 1 on one@example.com\nGOAL_COMPLETE",
+          "ts": 1791380721.965853
+        },
+        {
+          "t": "turn_end",
+          "turn": 1,
+          "slot": "one@example.com",
+          "status": "SUCCESS",
+          "usage": {
+            "input_tokens": 100,
+            "output_tokens": 10,
+            "thinking_tokens": 0,
+            "total_tokens": 110,
+            "context": 100
+          },
+          "secs": 0.3,
+          "ts": 1791380721.968072
+        },
+        {
+          "t": "shell",
+          "cmd": "printf 'fixture shell\\n'",
+          "output": "fixture shell\n",
+          "code": 0,
+          "secs": 0.0,
+          "ts": 1791380722.0082262
+        },
+        {
+          "t": "notice",
+          "kind": "info",
+          "text": "Compacted: the next message starts a fresh conversation from a summary of this one.",
+          "data": {},
+          "ts": 1791380722.010806
+        },
+        {
+          "t": "notice",
+          "kind": "rewind",
+          "text": "Rewound 1 file to before turn 1.",
+          "data": {
+            "files": [
+              "notes.txt"
+            ],
+            "outside": [],
+            "turn": 1
+          },
+          "ts": 1791380722.014424
+        },
+        {
+          "t": "notice",
+          "kind": "info",
+          "text": "New conversation: agy starts fresh from the next message.",
+          "data": {},
+          "ts": 1791380722.01607
+        },
+        {
+          "t": "user",
+          "text": "Work briefly.",
+          "kind": "user",
+          "attachments": [],
+          "ts": 1791380722.016573
+        },
+        {
+          "t": "user",
+          "text": "Steer this turn.",
+          "kind": "user",
+          "steered": true,
+          "ts": 1791380722.017874
+        },
+        {
+          "t": "turn_start",
+          "turn": 2,
+          "slot": "one@example.com",
+          "model": "gemini-3.8-flash-high",
+          "ts": 1791380722.018794
+        },
+        {
+          "t": "tool",
+          "turn": 2,
+          "step": 3,
+          "name": "write_to_file",
+          "params": {
+            "TargetFile": "{{TEST_ROOT}}/home/project/notes.txt"
+          },
+          "state": "done",
+          "secs": 0.01,
+          "output": "",
+          "diff": "--- a/notes.txt\n+++ b/notes.txt\n@@ -0,0 +1 @@\n+turn 2\n",
+          "ts": 1791380723.767141
+        },
+        {
+          "t": "assistant",
+          "turn": 2,
+          "step": 4,
+          "text": "turn 2 on one@example.com\nGOAL_COMPLETE",
+          "ts": 1791380723.767966
+        },
+        {
+          "t": "turn_end",
+          "turn": 2,
+          "slot": "one@example.com",
+          "status": "SUCCESS",
+          "usage": {
+            "input_tokens": 100,
+            "output_tokens": 10,
+            "thinking_tokens": 0,
+            "total_tokens": 110,
+            "context": 100
+          },
+          "secs": 1.8,
+          "ts": 1791380723.7766771
+        },
+        {
+          "t": "approval",
+          "id": "{{APPROVAL_1}}",
+          "session": "{{SESSION_1}}",
+          "tool": "run_command",
+          "args": {
+            "CommandLine": "touch approval-file"
+          },
+          "rule": "command(touch)",
+          "state": "pending",
+          "why": "",
+          "ts": 1791380723.806585,
+          "deadline": 1791381623.806585
+        },
+        {
+          "t": "approval",
+          "id": "{{APPROVAL_1}}",
+          "session": "{{SESSION_1}}",
+          "tool": "run_command",
+          "args": {
+            "CommandLine": "touch approval-file"
+          },
+          "rule": "command(touch)",
+          "state": "denied",
+          "why": "fixture denied",
+          "ts": 1791380723.806585,
+          "deadline": 1791381623.806585,
+          "answered": 1791380723.8100889,
+          "always": false
+        },
+        {
+          "t": "approval",
+          "id": "{{APPROVAL_2}}",
+          "session": "{{SESSION_1}}",
+          "tool": "run_command",
+          "args": {
+            "CommandLine": "touch allowed-file"
+          },
+          "rule": "command(touch)",
+          "state": "pending",
+          "why": "",
+          "ts": 1791380723.8128362,
+          "deadline": 1791381623.8128362
+        },
+        {
+          "t": "approval",
+          "id": "{{APPROVAL_2}}",
+          "session": "{{SESSION_1}}",
+          "tool": "run_command",
+          "args": {
+            "CommandLine": "touch allowed-file"
+          },
+          "rule": "command(touch)",
+          "state": "allowed",
+          "why": "",
+          "ts": 1791380723.8128362,
+          "deadline": 1791381623.8128362,
+          "answered": 1791380723.815288,
+          "always": false
+        },
+        {
+          "t": "job",
+          "phase": "started",
+          "job": {
+            "id": "{{JOB_1}}",
+            "cmd": "printf 'fixture job\\n'; sleep 5",
+            "pid": 60543,
+            "log": "{{TEST_ROOT}}/data/sessions/{{SESSION_1}}/jobs/{{JOB_1}}.log",
+            "started": 1791380723.8216598,
+            "ended": null,
+            "code": null,
+            "every": 90,
+            "notify": false,
+            "by": "user",
+            "stopped": false
+          },
+          "ts": 1791380723.822081
+        },
+        {
+          "t": "notice",
+          "kind": "goal",
+          "text": "Goal set: Complete fixture.",
+          "data": {},
+          "ts": 1791380723.943912
+        },
+        {
+          "t": "user",
+          "text": "Objective: Complete fixture.\n\nWork autonomously until the objective is fully achieved. Do not stop to ask for confirmation; make reasonable decisions yourself and keep going.\nWhen, and only when, the objective is fully achieved and verified, end your final message with the line GOAL_COMPLETE.",
+          "kind": "goal",
+          "attachments": [],
+          "ts": 1791380723.944582
+        },
+        {
+          "t": "job",
+          "phase": "ended",
+          "job": {
+            "id": "{{JOB_1}}",
+            "cmd": "printf 'fixture job\\n'; sleep 5",
+            "pid": 60543,
+            "log": "{{TEST_ROOT}}/data/sessions/{{SESSION_1}}/jobs/{{JOB_1}}.log",
+            "started": 1791380723.8216598,
+            "ended": 1791380723.945122,
+            "code": -15,
+            "every": 90,
+            "notify": false,
+            "by": "user",
+            "stopped": true
+          },
+          "ts": 1791380723.945933
+        },
+        {
+          "t": "turn_start",
+          "turn": 3,
+          "slot": "one@example.com",
+          "model": "gemini-3.8-flash-high",
+          "ts": 1791380723.94863
+        },
+        {
+          "t": "tool",
+          "turn": 3,
+          "step": 3,
+          "name": "write_to_file",
+          "params": {
+            "TargetFile": "{{TEST_ROOT}}/home/project/notes.txt"
+          },
+          "state": "done",
+          "secs": 0.01,
+          "output": "",
+          "diff": "--- a/notes.txt\n+++ b/notes.txt\n@@ -1 +1,2 @@\n turn 2\n+turn 3\n",
+          "ts": 1791380724.2116082
+        },
+        {
+          "t": "assistant",
+          "turn": 3,
+          "step": 4,
+          "text": "turn 3 on one@example.com\nGOAL_COMPLETE",
+          "ts": 1791380724.212169
+        },
+        {
+          "t": "turn_end",
+          "turn": 3,
+          "slot": "one@example.com",
+          "status": "SUCCESS",
+          "usage": {
+            "input_tokens": 100,
+            "output_tokens": 10,
+            "thinking_tokens": 0,
+            "total_tokens": 110,
+            "context": 100
+          },
+          "secs": 0.3,
+          "ts": 1791380724.2162619
+        },
+        {
+          "t": "notice",
+          "kind": "check",
+          "text": "Check `test -f notes.txt` exited 0.",
+          "data": {
+            "rc": 0,
+            "output": "",
+            "passed": true
+          },
+          "ts": 1791380724.224375
+        },
+        {
+          "t": "notice",
+          "kind": "verdict",
+          "text": "All good.",
+          "data": {
+            "done": true,
+            "missing": [],
+            "slot": "one@example.com",
+            "model": "gemini-3.8-flash-high"
+          },
+          "ts": 1791380724.281952
+        },
+        {
+          "t": "notice",
+          "kind": "goal",
+          "text": "Goal met.",
+          "data": {
+            "met": true
+          },
+          "ts": 1791380724.2821498
+        },
+        {
+          "t": "user",
+          "text": "Continue working toward the objective: Complete fixture.\nEnd with GOAL_COMPLETE only when it is fully achieved.",
+          "kind": "nudge",
+          "attachments": [],
+          "ts": 1791380724.309226
+        },
+        {
+          "t": "turn_start",
+          "turn": 4,
+          "slot": "one@example.com",
+          "model": "gemini-3.8-flash-high",
+          "ts": 1791380724.311042
+        },
+        {
+          "t": "tool",
+          "turn": 4,
+          "step": 3,
+          "name": "write_to_file",
+          "params": {
+            "TargetFile": "{{TEST_ROOT}}/home/project/notes.txt"
+          },
+          "state": "done",
+          "secs": 0.01,
+          "output": "",
+          "diff": "--- a/notes.txt\n+++ b/notes.txt\n@@ -1,2 +1,3 @@\n turn 2\n turn 3\n+turn 4\n",
+          "ts": 1791380724.558768
+        },
+        {
+          "t": "assistant",
+          "turn": 4,
+          "step": 4,
+          "text": "turn 4 on one@example.com\nGOAL_COMPLETE",
+          "ts": 1791380724.5591118
+        },
+        {
+          "t": "turn_end",
+          "turn": 4,
+          "slot": "one@example.com",
+          "status": "SUCCESS",
+          "usage": {
+            "input_tokens": 100,
+            "output_tokens": 10,
+            "thinking_tokens": 0,
+            "total_tokens": 110,
+            "context": 100
+          },
+          "secs": 0.3,
+          "ts": 1791380724.56362
+        },
+        {
+          "t": "notice",
+          "kind": "check",
+          "text": "Check `test -f notes.txt` exited 0.",
+          "data": {
+            "rc": 0,
+            "output": "",
+            "passed": true
+          },
+          "ts": 1791380724.576213
+        },
+        {
+          "t": "notice",
+          "kind": "verdict",
+          "text": "All good.",
+          "data": {
+            "done": true,
+            "missing": [],
+            "slot": "one@example.com",
+            "model": "gemini-3.8-flash-high"
+          },
+          "ts": 1791380724.6360278
+        },
+        {
+          "t": "notice",
+          "kind": "goal",
+          "text": "Goal met.",
+          "data": {
+            "met": true
+          },
+          "ts": 1791380724.63641
+        },
+        {
+          "t": "notice",
+          "kind": "info",
+          "text": "Discarded the changes to notes.txt.",
+          "data": {},
+          "ts": 1791380725.272841
+        },
+        {
+          "t": "notice",
+          "kind": "info",
+          "text": "Committed {{COMMIT_1}}: Commit fixture files",
+          "data": {},
+          "ts": 1791380725.32635
+        },
+        {
+          "t": "user",
+          "text": "Show the captured thinking.",
+          "kind": "user",
+          "attachments": [],
+          "ts": 1791380725.597562
+        },
+        {
+          "t": "turn_start",
+          "turn": 5,
+          "slot": "one@example.com",
+          "model": "gemini-3.8-flash-high",
+          "ts": 1791380725.598956
+        },
+        {
+          "t": "tool",
+          "turn": 5,
+          "step": 3,
+          "name": "write_to_file",
+          "params": {
+            "TargetFile": "{{TEST_ROOT}}/home/project/notes.txt"
+          },
+          "state": "done",
+          "secs": 0.01,
+          "output": "",
+          "diff": "--- a/notes.txt\n+++ b/notes.txt\n@@ -0,0 +1 @@\n+turn 5\n",
+          "ts": 1791380725.843437
+        },
+        {
+          "t": "thinking",
+          "turn": 5,
+          "step": 4,
+          "text": "Check the isolated fixture.",
+          "tokens": 0,
+          "ts": 1791380725.84478
+        },
+        {
+          "t": "assistant",
+          "turn": 5,
+          "step": 4,
+          "text": "turn 5 on one@example.com\nGOAL_COMPLETE",
+          "ts": 1791380725.845153
+        },
+        {
+          "t": "turn_end",
+          "turn": 5,
+          "slot": "one@example.com",
+          "status": "SUCCESS",
+          "usage": {
+            "input_tokens": 100,
+            "output_tokens": 10,
+            "thinking_tokens": 0,
+            "total_tokens": 110,
+            "context": 100
+          },
+          "secs": 0.3,
+          "ts": 1791380725.851767
+        },
+        {
+          "t": "user",
+          "text": "Continue after a quota wall.",
+          "kind": "user",
+          "attachments": [],
+          "ts": 1791380725.8594
+        },
+        {
+          "t": "turn_start",
+          "turn": 6,
+          "slot": "one@example.com",
+          "model": "gemini-3.8-flash-high",
+          "ts": 1791380725.861973
+        },
+        {
+          "t": "turn_end",
+          "turn": 6,
+          "slot": "one@example.com",
+          "status": "quota",
+          "usage": {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "thinking_tokens": 0,
+            "total_tokens": 0,
+            "context": 0
+          },
+          "secs": 0.1,
+          "ts": 1791380725.919552
+        },
+        {
+          "t": "notice",
+          "kind": "handoff",
+          "text": "one@example.com is rate limited but has quota left; it rests 59s. Passing the turn to the next account.",
+          "data": {
+            "slot": "one@example.com"
+          },
+          "ts": 1791380725.962014
+        },
+        {
+          "t": "turn_start",
+          "turn": 7,
+          "slot": "two@example.com",
+          "model": "gemini-3.8-flash-high",
+          "ts": 1791380725.96342
+        },
+        {
+          "t": "tool",
+          "turn": 7,
+          "step": 3,
+          "name": "write_to_file",
+          "params": {
+            "TargetFile": "{{TEST_ROOT}}/home/project/notes.txt"
+          },
+          "state": "done",
+          "secs": 0.01,
+          "output": "",
+          "diff": "--- a/notes.txt\n+++ b/notes.txt\n@@ -1 +1,2 @@\n turn 5\n+turn 6\n",
+          "ts": 1791380726.2083251
+        },
+        {
+          "t": "thinking",
+          "turn": 7,
+          "step": 4,
+          "text": "Check the isolated fixture.",
+          "tokens": 0,
+          "ts": 1791380726.209565
+        },
+        {
+          "t": "assistant",
+          "turn": 7,
+          "step": 4,
+          "text": "turn 6 on two@example.com\nGOAL_COMPLETE",
+          "ts": 1791380726.2101882
+        },
+        {
+          "t": "turn_end",
+          "turn": 7,
+          "slot": "two@example.com",
+          "status": "SUCCESS",
+          "usage": {
+            "input_tokens": 100,
+            "output_tokens": 10,
+            "thinking_tokens": 0,
+            "total_tokens": 110,
+            "context": 100
+          },
+          "secs": 0.3,
+          "ts": 1791380726.215762
+        }
+      ]
+    }
+  },
+  "comparison": {
+    "dynamicValues": {
+      "/response/json/meta/created": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/meta/updated": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/meta/jobs/0/pid": {
+        "type": "positive-integer",
+        "meaning": "process identifier"
+      },
+      "/response/json/meta/jobs/0/started": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/meta/jobs/0/ended": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/0/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/1/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/2/secs": {
+        "type": "nonnegative-number",
+        "meaning": "duration seconds"
+      },
+      "/response/json/events/2/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/3/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/4/secs": {
+        "type": "nonnegative-number",
+        "meaning": "duration seconds"
+      },
+      "/response/json/events/4/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/5/secs": {
+        "type": "nonnegative-number",
+        "meaning": "duration seconds"
+      },
+      "/response/json/events/5/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/6/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/7/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/8/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/9/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/10/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/11/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/12/secs": {
+        "type": "nonnegative-number",
+        "meaning": "duration seconds"
+      },
+      "/response/json/events/12/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/13/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/14/secs": {
+        "type": "nonnegative-number",
+        "meaning": "duration seconds"
+      },
+      "/response/json/events/14/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/15/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/15/deadline": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/16/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/16/deadline": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/16/answered": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/17/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/17/deadline": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/18/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/18/deadline": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/18/answered": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/19/job/pid": {
+        "type": "positive-integer",
+        "meaning": "process identifier"
+      },
+      "/response/json/events/19/job/started": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/19/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/20/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/21/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/22/job/pid": {
+        "type": "positive-integer",
+        "meaning": "process identifier"
+      },
+      "/response/json/events/22/job/started": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/22/job/ended": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/22/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/23/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/24/secs": {
+        "type": "nonnegative-number",
+        "meaning": "duration seconds"
+      },
+      "/response/json/events/24/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/25/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/26/secs": {
+        "type": "nonnegative-number",
+        "meaning": "duration seconds"
+      },
+      "/response/json/events/26/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/27/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/28/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/29/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/30/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/31/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/32/secs": {
+        "type": "nonnegative-number",
+        "meaning": "duration seconds"
+      },
+      "/response/json/events/32/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/33/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/34/secs": {
+        "type": "nonnegative-number",
+        "meaning": "duration seconds"
+      },
+      "/response/json/events/34/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/35/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/36/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/37/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/38/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/39/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/40/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/41/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/42/secs": {
+        "type": "nonnegative-number",
+        "meaning": "duration seconds"
+      },
+      "/response/json/events/42/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/43/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/44/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/45/secs": {
+        "type": "nonnegative-number",
+        "meaning": "duration seconds"
+      },
+      "/response/json/events/45/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/46/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/47/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/48/secs": {
+        "type": "nonnegative-number",
+        "meaning": "duration seconds"
+      },
+      "/response/json/events/48/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/49/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/50/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/51/secs": {
+        "type": "nonnegative-number",
+        "meaning": "duration seconds"
+      },
+      "/response/json/events/51/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/52/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/53/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/events/54/secs": {
+        "type": "nonnegative-number",
+        "meaning": "duration seconds"
+      },
+      "/response/json/events/54/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      }
+    },
+    "headers": {
+      "Date": "valid HTTP-date",
+      "Server": "implementation-specific server identity",
+      "Content-Length": "must equal actual encoded response body byte length"
+    },
+    "sse": null
+  }
+}

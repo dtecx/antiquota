@@ -1,0 +1,83 @@
+{
+  "name": "worktree-create",
+  "request": {
+    "method": "POST",
+    "path": "/api/sessions",
+    "headers": {
+      "Host": "127.0.0.1:{{PORT}}",
+      "Accept-Encoding": "identity",
+      "Content-Length": "115",
+      "X-Antiquota-Token": "{{TOKEN}}",
+      "Content-Type": "application/json"
+    },
+    "json": {
+      "cwd": "{{TEST_ROOT}}/home/project",
+      "title": "Worktree fixture",
+      "worktree": true
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Server": "BaseHTTP/0.6 Python/3.14.4",
+      "Date": "Wed, 07 Oct 2026 13:45:25 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "831",
+      "Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff"
+    },
+    "json": {
+      "id": "{{SESSION_3}}",
+      "title": "Worktree fixture",
+      "cwd": "{{TEST_ROOT}}/data/worktrees/project-{{SESSION_3}}",
+      "model": "gemini-3.8-flash-high",
+      "effort": "",
+      "mode": "default",
+      "created": 1791380725.328442,
+      "updated": 1791380725.383063,
+      "status": "idle",
+      "status_until": null,
+      "conversation_id": null,
+      "turns": 0,
+      "queue": [],
+      "goal": null,
+      "last_slot": null,
+      "usage": {
+        "input": 0,
+        "output": 0,
+        "thinking": 0
+      },
+      "context": 0,
+      "pending_note": "",
+      "jobs": [],
+      "loop": null,
+      "pinned": false,
+      "archived": false,
+      "worktree": {
+        "repo": "{{TEST_ROOT}}/home/project",
+        "path": "{{TEST_ROOT}}/data/worktrees/project-{{SESSION_3}}",
+        "branch": "{{BRANCH_1}}",
+        "base": "main",
+        "base_sha": "{{COMMIT_2}}"
+      }
+    }
+  },
+  "comparison": {
+    "dynamicValues": {
+      "/response/json/created": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/updated": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      }
+    },
+    "headers": {
+      "Date": "valid HTTP-date",
+      "Server": "implementation-specific server identity",
+      "Content-Length": "must equal actual encoded response body byte length"
+    },
+    "sse": null
+  }
+}

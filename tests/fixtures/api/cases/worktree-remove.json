@@ -1,0 +1,75 @@
+{
+  "name": "worktree-remove",
+  "request": {
+    "method": "POST",
+    "path": "/api/sessions/{{SESSION_3}}/git/remove",
+    "headers": {
+      "Host": "127.0.0.1:{{PORT}}",
+      "Accept-Encoding": "identity",
+      "Content-Length": "23",
+      "X-Antiquota-Token": "{{TOKEN}}",
+      "Content-Type": "application/json"
+    },
+    "json": {
+      "delete_branch": true
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Server": "BaseHTTP/0.6 Python/3.14.4",
+      "Date": "Wed, 07 Oct 2026 13:45:25 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "604",
+      "Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff"
+    },
+    "json": {
+      "id": "{{SESSION_3}}",
+      "title": "Worktree fixture",
+      "cwd": "{{TEST_ROOT}}/home/project",
+      "model": "gemini-3.8-flash-high",
+      "effort": "",
+      "mode": "default",
+      "created": 1791380725.328442,
+      "updated": 1791380725.595582,
+      "status": "idle",
+      "status_until": null,
+      "conversation_id": null,
+      "turns": 0,
+      "queue": [],
+      "goal": null,
+      "last_slot": null,
+      "usage": {
+        "input": 0,
+        "output": 0,
+        "thinking": 0
+      },
+      "context": 0,
+      "pending_note": "This session's worktree was removed; you now work in the main checkout.",
+      "jobs": [],
+      "loop": null,
+      "pinned": false,
+      "archived": true,
+      "worktree": null
+    }
+  },
+  "comparison": {
+    "dynamicValues": {
+      "/response/json/created": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/updated": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      }
+    },
+    "headers": {
+      "Date": "valid HTTP-date",
+      "Server": "implementation-specific server identity",
+      "Content-Length": "must equal actual encoded response body byte length"
+    },
+    "sse": null
+  }
+}

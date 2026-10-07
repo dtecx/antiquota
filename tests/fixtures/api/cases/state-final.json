@@ -1,0 +1,297 @@
+{
+  "name": "state-final",
+  "request": {
+    "method": "GET",
+    "path": "/api/state",
+    "headers": {
+      "Host": "127.0.0.1:{{PORT}}",
+      "Accept-Encoding": "identity",
+      "X-Antiquota-Token": "{{TOKEN}}"
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Server": "BaseHTTP/0.6 Python/3.14.4",
+      "Date": "Wed, 07 Oct 2026 13:45:27 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "4573",
+      "Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff"
+    },
+    "json": {
+      "sessions": [
+        {
+          "id": "{{SESSION_1}}",
+          "title": "Contract renamed",
+          "cwd": "{{TEST_ROOT}}/home/project",
+          "model": "gemini-3.8-flash-high",
+          "effort": "high",
+          "mode": "default",
+          "created": 1791380721.7054589,
+          "updated": 1791380726.253071,
+          "status": "idle",
+          "status_until": null,
+          "conversation_id": "{{CONVERSATION_2}}",
+          "turns": 7,
+          "queue": [],
+          "goal": null,
+          "last_slot": "two@example.com",
+          "usage": {
+            "input": 600,
+            "output": 60,
+            "thinking": 0
+          },
+          "context": 100,
+          "pending_note": "",
+          "jobs": [
+            {
+              "id": "{{JOB_1}}",
+              "cmd": "printf 'fixture job\\n'; sleep 5",
+              "pid": 60543,
+              "log": "{{TEST_ROOT}}/data/sessions/{{SESSION_1}}/jobs/{{JOB_1}}.log",
+              "started": 1791380723.8216598,
+              "ended": 1791380723.945122,
+              "code": -15,
+              "every": 90,
+              "notify": false,
+              "by": "user",
+              "stopped": true
+            }
+          ],
+          "loop": null,
+          "pinned": true,
+          "archived": false,
+          "worktree": null
+        },
+        {
+          "id": "{{SESSION_3}}",
+          "title": "Worktree fixture",
+          "cwd": "{{TEST_ROOT}}/home/project",
+          "model": "gemini-3.8-flash-high",
+          "effort": "",
+          "mode": "default",
+          "created": 1791380725.328442,
+          "updated": 1791380725.595582,
+          "status": "idle",
+          "status_until": null,
+          "conversation_id": null,
+          "turns": 0,
+          "queue": [],
+          "goal": null,
+          "last_slot": null,
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "thinking": 0
+          },
+          "context": 0,
+          "pending_note": "This session's worktree was removed; you now work in the main checkout.",
+          "jobs": [],
+          "loop": null,
+          "pinned": false,
+          "archived": true,
+          "worktree": null
+        },
+        {
+          "id": "{{SESSION_2}}",
+          "title": "Contract renamed (fork)",
+          "cwd": "{{TEST_ROOT}}/home/project",
+          "model": "gemini-3.8-flash-high",
+          "effort": "high",
+          "mode": "accept-edits",
+          "created": 1791380722.011609,
+          "updated": 1791380722.0129228,
+          "status": "idle",
+          "status_until": null,
+          "conversation_id": null,
+          "turns": 0,
+          "queue": [],
+          "goal": null,
+          "last_slot": null,
+          "usage": {
+            "input": 0,
+            "output": 0,
+            "thinking": 0
+          },
+          "context": 0,
+          "pending_note": "You are continuing work from an earlier antiquota session. Its handoff state follows; check the current files yourself before relying on it.\n\n# Handoff: Contract renamed\nFolder: {{TEST_ROOT}}/home/project  \u00b7  model gemini-3.8-flash-high  \u00b7  1 turns  \u00b7  accounts used: one@example.com\n\n## Requests (oldest first)\n- [user] Hello contract fixture.\n\n## Work log (latest turns)\n- #1 one SUCCESS \u00b7 edited notes.txt\n\n## Files changed in this session\n- notes.txt\n\n## Last reply\nturn 1 on one@example.com\nGOAL_COMPLETE\n\nYou are continuing work from an earlier antiquota session. Its handoff state follows; check the current files yourself before relying on it.\n\n# Handoff: Contract renamed\nFolder: {{TEST_ROOT}}/home/project  \u00b7  model gemini-3.8-flash-high  \u00b7  1 turns  \u00b7  accounts used: one@example.com\n\n## Requests (oldest first)\n- [user] Hello contract fixture.\n\n## Work log (latest turns)\n- #1 one SUCCESS \u00b7 edited notes.txt\n\n## Files changed in this session\n- notes.txt\n\n## Last reply\nturn 1 on one@example.com\nGOAL_COMPLETE",
+          "jobs": [],
+          "loop": null,
+          "pinned": false,
+          "archived": false,
+          "worktree": null
+        }
+      ],
+      "accounts": [
+        {
+          "slot": "one@example.com",
+          "busy": true,
+          "probed": 1791380725.961498,
+          "quota": {
+            "gemini": {
+              "weekly": [
+                0.9,
+                4071427200.0
+              ],
+              "5h": [
+                0.9,
+                4070926800.0
+              ]
+            },
+            "cg": {
+              "weekly": [
+                0.9,
+                4071427200.0
+              ],
+              "5h": [
+                0.9,
+                4070926800.0
+              ]
+            }
+          },
+          "walls": {
+            "gemini": 1791380785.0,
+            "cg": 0
+          },
+          "why": {
+            "gemini": "rate limited (1x)",
+            "cg": ""
+          },
+          "paused": false,
+          "verify": null,
+          "today": {
+            "input": 500,
+            "output": 50,
+            "thinking": 0,
+            "turns": 5
+          }
+        },
+        {
+          "slot": "two@example.com",
+          "busy": true,
+          "probed": 1791380720.720348,
+          "quota": {
+            "gemini": {
+              "weekly": [
+                0.9,
+                4071427200.0
+              ],
+              "5h": [
+                0.9,
+                4070926800.0
+              ]
+            },
+            "cg": {
+              "weekly": [
+                0.9,
+                4071427200.0
+              ],
+              "5h": [
+                0.9,
+                4070926800.0
+              ]
+            }
+          },
+          "walls": {
+            "gemini": 0,
+            "cg": 0
+          },
+          "why": {
+            "gemini": "",
+            "cg": ""
+          },
+          "paused": false,
+          "verify": null,
+          "today": {
+            "input": 100,
+            "output": 10,
+            "thinking": 0,
+            "turns": 1
+          }
+        }
+      ],
+      "models": [],
+      "modes": [
+        "default",
+        "accept-edits",
+        "plan",
+        "bypass"
+      ],
+      "defaults": {
+        "model": "gemini-3.8-flash-high",
+        "mode": "default",
+        "verifier_model": "gemini-3.8-flash-high",
+        "rotation": "perishable",
+        "keep_awake": "off",
+        "reserve": "4",
+        "quota_poll": "10",
+        "approval_timeout": "15",
+        "max_rounds": "20",
+        "auto_continue": "2",
+        "default_cwd": "",
+        "worktree_default": "off",
+        "cwd": "{{TEST_ROOT}}/home"
+      },
+      "engine": {
+        "version": "0.5.0",
+        "agy": "{{TEST_ROOT}}/fake-agy",
+        "busy": 0
+      }
+    }
+  },
+  "comparison": {
+    "dynamicValues": {
+      "/response/json/sessions/0/created": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/sessions/0/updated": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/sessions/0/jobs/0/pid": {
+        "type": "positive-integer",
+        "meaning": "process identifier"
+      },
+      "/response/json/sessions/0/jobs/0/started": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/sessions/0/jobs/0/ended": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/sessions/1/created": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/sessions/1/updated": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/sessions/2/created": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/sessions/2/updated": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/accounts/0/probed": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/accounts/1/probed": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      }
+    },
+    "headers": {
+      "Date": "valid HTTP-date",
+      "Server": "implementation-specific server identity",
+      "Content-Length": "must equal actual encoded response body byte length"
+    },
+    "sse": null
+  }
+}

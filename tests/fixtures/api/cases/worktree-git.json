@@ -1,0 +1,54 @@
+{
+  "name": "worktree-git",
+  "request": {
+    "method": "GET",
+    "path": "/api/sessions/{{SESSION_3}}/git",
+    "headers": {
+      "Host": "127.0.0.1:{{PORT}}",
+      "Accept-Encoding": "identity",
+      "X-Antiquota-Token": "{{TOKEN}}"
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Server": "BaseHTTP/0.6 Python/3.14.4",
+      "Date": "Wed, 07 Oct 2026 13:45:25 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "546",
+      "Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff"
+    },
+    "json": {
+      "root": "{{TEST_ROOT}}/data/worktrees/project-{{SESSION_3}}",
+      "branch": "{{BRANCH_1}}",
+      "files": [
+        {
+          "path": "worktree.txt",
+          "code": "??",
+          "add": 1,
+          "del": 0
+        }
+      ],
+      "worktree": {
+        "repo": "{{TEST_ROOT}}/home/project",
+        "path": "{{TEST_ROOT}}/data/worktrees/project-{{SESSION_3}}",
+        "branch": "{{BRANCH_1}}",
+        "base": "main",
+        "base_sha": "{{COMMIT_2}}"
+      },
+      "ahead": 0,
+      "committed": [],
+      "merged": false
+    }
+  },
+  "comparison": {
+    "dynamicValues": {},
+    "headers": {
+      "Date": "valid HTTP-date",
+      "Server": "implementation-specific server identity",
+      "Content-Length": "must equal actual encoded response body byte length"
+    },
+    "sse": null
+  }
+}

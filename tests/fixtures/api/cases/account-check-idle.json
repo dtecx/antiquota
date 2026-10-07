@@ -1,0 +1,122 @@
+{
+  "name": "account-check-idle",
+  "request": {
+    "method": "POST",
+    "path": "/api/accounts/one@example.com/check",
+    "headers": {
+      "Host": "127.0.0.1:{{PORT}}",
+      "Accept-Encoding": "identity",
+      "Content-Length": "2",
+      "X-Antiquota-Token": "{{TOKEN}}",
+      "Content-Type": "application/json"
+    },
+    "json": {}
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Server": "BaseHTTP/0.6 Python/3.14.4",
+      "Date": "Wed, 07 Oct 2026 13:45:21 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "664",
+      "Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff"
+    },
+    "json": [
+      {
+        "slot": "one@example.com",
+        "busy": false,
+        "probed": 1791380721.418079,
+        "quota": {
+          "gemini": {
+            "weekly": [
+              0.9,
+              4071427200.0
+            ],
+            "5h": [
+              0.9,
+              4070926800.0
+            ]
+          },
+          "cg": {
+            "weekly": [
+              0.9,
+              4071427200.0
+            ],
+            "5h": [
+              0.9,
+              4070926800.0
+            ]
+          }
+        },
+        "walls": {
+          "gemini": 0,
+          "cg": 0
+        },
+        "why": {
+          "gemini": "",
+          "cg": ""
+        },
+        "paused": false,
+        "verify": null,
+        "today": {}
+      },
+      {
+        "slot": "two@example.com",
+        "busy": false,
+        "probed": 1791380720.720348,
+        "quota": {
+          "gemini": {
+            "weekly": [
+              0.9,
+              4071427200.0
+            ],
+            "5h": [
+              0.9,
+              4070926800.0
+            ]
+          },
+          "cg": {
+            "weekly": [
+              0.9,
+              4071427200.0
+            ],
+            "5h": [
+              0.9,
+              4070926800.0
+            ]
+          }
+        },
+        "walls": {
+          "gemini": 0,
+          "cg": 0
+        },
+        "why": {
+          "gemini": "",
+          "cg": ""
+        },
+        "paused": false,
+        "verify": null,
+        "today": {}
+      }
+    ]
+  },
+  "comparison": {
+    "dynamicValues": {
+      "/response/json/0/probed": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/1/probed": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      }
+    },
+    "headers": {
+      "Date": "valid HTTP-date",
+      "Server": "implementation-specific server identity",
+      "Content-Length": "must equal actual encoded response body byte length"
+    },
+    "sse": null
+  }
+}

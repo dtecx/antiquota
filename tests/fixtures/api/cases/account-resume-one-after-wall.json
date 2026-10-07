@@ -1,0 +1,134 @@
+{
+  "name": "account-resume-one-after-wall",
+  "request": {
+    "method": "POST",
+    "path": "/api/accounts/one@example.com/pause",
+    "headers": {
+      "Host": "127.0.0.1:{{PORT}}",
+      "Accept-Encoding": "identity",
+      "Content-Length": "13",
+      "X-Antiquota-Token": "{{TOKEN}}",
+      "Content-Type": "application/json"
+    },
+    "json": {
+      "on": false
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Server": "BaseHTTP/0.6 Python/3.14.4",
+      "Date": "Wed, 07 Oct 2026 13:45:26 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "797",
+      "Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff"
+    },
+    "json": [
+      {
+        "slot": "one@example.com",
+        "busy": false,
+        "probed": 1791380725.961498,
+        "quota": {
+          "gemini": {
+            "weekly": [
+              0.9,
+              4071427200.0
+            ],
+            "5h": [
+              0.9,
+              4070926800.0
+            ]
+          },
+          "cg": {
+            "weekly": [
+              0.9,
+              4071427200.0
+            ],
+            "5h": [
+              0.9,
+              4070926800.0
+            ]
+          }
+        },
+        "walls": {
+          "gemini": 1791380785.0,
+          "cg": 0
+        },
+        "why": {
+          "gemini": "rate limited (1x)",
+          "cg": ""
+        },
+        "paused": false,
+        "verify": null,
+        "today": {
+          "input": 500,
+          "output": 50,
+          "thinking": 0,
+          "turns": 5
+        }
+      },
+      {
+        "slot": "two@example.com",
+        "busy": false,
+        "probed": 1791380720.720348,
+        "quota": {
+          "gemini": {
+            "weekly": [
+              0.9,
+              4071427200.0
+            ],
+            "5h": [
+              0.9,
+              4070926800.0
+            ]
+          },
+          "cg": {
+            "weekly": [
+              0.9,
+              4071427200.0
+            ],
+            "5h": [
+              0.9,
+              4070926800.0
+            ]
+          }
+        },
+        "walls": {
+          "gemini": 0,
+          "cg": 0
+        },
+        "why": {
+          "gemini": "",
+          "cg": ""
+        },
+        "paused": true,
+        "verify": null,
+        "today": {
+          "input": 100,
+          "output": 10,
+          "thinking": 0,
+          "turns": 1
+        }
+      }
+    ]
+  },
+  "comparison": {
+    "dynamicValues": {
+      "/response/json/0/probed": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/1/probed": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      }
+    },
+    "headers": {
+      "Date": "valid HTTP-date",
+      "Server": "implementation-specific server identity",
+      "Content-Length": "must equal actual encoded response body byte length"
+    },
+    "sse": null
+  }
+}

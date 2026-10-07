@@ -1,0 +1,65 @@
+{
+  "format": 1,
+  "stackSnapshots": {
+    "stack-plugin-config.json": {
+      "source": "stack/.gemini/config/config.json",
+      "phase": "after settings",
+      "encoding": "UTF-8",
+      "rawSha256": "d61fbfd88573bd2d9a361c635e37dee4ed1a1ce8e24cba0a79e8c00688fd3d96",
+      "normalization": "String path/identity placeholders only; preserve source whitespace and bytes otherwise."
+    },
+    "stack-plugin-readme.md": {
+      "source": "stack/.gemini/config/plugins/example/README.md",
+      "phase": "after settings",
+      "encoding": "UTF-8",
+      "rawSha256": "a1cdc46fbe3843b6d0ab6d532e025d60d746e927ac7a344dfa33e8ea0d60d966",
+      "normalization": "String path/identity placeholders only; preserve source whitespace and bytes otherwise."
+    },
+    "stack-gemini.md": {
+      "source": "stack/.gemini/GEMINI.md",
+      "phase": "after settings",
+      "encoding": "UTF-8",
+      "rawSha256": "7aa994e72d31a89b36dba89d92029dd03b479bbc77c26750389af4af9bd99cee",
+      "normalization": "String path/identity placeholders only; preserve source whitespace and bytes otherwise."
+    },
+    "stack-hooks.json": {
+      "source": "stack/.gemini/config/hooks.json",
+      "phase": "after settings-hook-disable, before deletion",
+      "encoding": "UTF-8",
+      "rawSha256": "531684a426fb12473e990e346f42fbe089c86e489b46c8fec2db49d550db6f15",
+      "normalization": "String path/identity placeholders only; preserve source whitespace and bytes otherwise."
+    },
+    "stack-mcp.json": {
+      "source": "stack/.gemini/config/mcp_config.json",
+      "phase": "after settings-mcp-get, before deletion",
+      "encoding": "UTF-8",
+      "rawSha256": "66a1e62d9ff203a5d7d918170179bc2ff1ae4d17ad8c29a838f77343b754e91f",
+      "normalization": "String path/identity placeholders only; preserve source whitespace and bytes otherwise."
+    },
+    "stack-rule.md": {
+      "source": "stack/.gemini/config/rules/example.md",
+      "phase": "after settings-copy-rule, before deletion",
+      "encoding": "UTF-8",
+      "rawSha256": "73c50da420a921b6fef4d59e320024ff5938aefbb2b116cdb2c4e7749c3613ed",
+      "normalization": "String path/identity placeholders only; preserve source whitespace and bytes otherwise."
+    },
+    "stack-skill.md": {
+      "source": "stack/.gemini/config/skills/example/SKILL.md",
+      "phase": "after settings-copy-skill, before deletion",
+      "encoding": "UTF-8",
+      "rawSha256": "abe484cf9159ad5366475556c429e12084078d84c85ecd9fc5a5401a27766be5",
+      "normalization": "String path/identity placeholders only; preserve source whitespace and bytes otherwise."
+    },
+    "stack-permissions.json": {
+      "source": "stack/.gemini/antigravity-cli/settings.json",
+      "phase": "after permissions-put, before reseed",
+      "encoding": "UTF-8",
+      "rawSha256": "101275343a45ad4d7cfe81c7b2177c078760be800b50cd5afc4f93ec7560dc19",
+      "normalization": "String path/identity placeholders only; preserve source whitespace and bytes otherwise."
+    }
+  },
+  "checkpointSource": "sessions/<session-create id>/checkpoints/1.json immediately after send completes",
+  "sessionExamples": "Exact JSON fields captured from legacy HTTP responses, identical to the meta/event disk writers",
+  "stateExamples": "Read from isolated data files after HTTP shutdown; verification/wall markers written by the legacy account helpers",
+  "credentials": "Only the read-only structural schema is committed; no token values."
+}

@@ -27,6 +27,8 @@ This ledger records the defects reported during the antiquota test run, verified
 | B-019 | Naive shell splitting treated quoted pipes/semicolons as commands and missed newlines, background separators, substitutions and file-output redirects. | `ab37069`; `test_command_parts_respect_quotes_and_catch_hidden_commands`. | Parse shell boundaries conservatively; quoted patterns remain readable; hidden/unbalanced commands and file-writing redirects require a decision; every compound segment is checked. |
 | B-020 | Flash-low dictation hallucinated words from non-speech audio. | Verified agy fact; current transcriber uses Flash High and the NO_SPEECH prompt; the client rejects near-silent recordings. No complete legacy dictation regression suite exists. | Recorded speech WAV produces text; silence, tones/noise and NO_SPEECH produce no invented text; recording state and cancellation recover correctly. |
 
+| B-021 | Attachment names containing a space upload successfully but their URL-encoded download returns 404. | Confirmed by isolated real HTTP captures: `attachment-upload.json` returns `contract note.txt`; `attachment-download.json` requests `contract%20note.txt` and returns 404. The plain-name download succeeds. The route joins the encoded path segment without decoding it. | Decode the attachment path segment once, then apply canonical containment and file checks. Preserve the 404 capture as regression evidence; the repaired encoded-name response is an intentional bug correction in the contract. |
+
 ## Separate source findings and unconfirmed risks
 
 These are not claimed as failures observed in the Gemini run. The rewrite must resolve confirmed policy gaps and explicitly test the other failure modes.

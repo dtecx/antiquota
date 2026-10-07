@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "command(ls)",
+      "command(git status)"
+    ],
+    "deny": [
+      "command(rm)"
+    ]
+  }
+}

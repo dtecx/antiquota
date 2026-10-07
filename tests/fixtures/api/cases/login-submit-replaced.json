@@ -1,0 +1,40 @@
+{
+  "name": "login-submit-replaced",
+  "request": {
+    "method": "POST",
+    "path": "/api/accounts/login/{{LOGIN_1}}",
+    "headers": {
+      "Host": "127.0.0.1:{{PORT}}",
+      "Accept-Encoding": "identity",
+      "Content-Length": "21",
+      "X-Antiquota-Token": "{{TOKEN}}",
+      "Content-Type": "application/json"
+    },
+    "json": {
+      "code": "good-code"
+    }
+  },
+  "response": {
+    "status": 400,
+    "headers": {
+      "Server": "BaseHTTP/0.6 Python/3.14.4",
+      "Date": "Wed, 07 Oct 2026 13:45:27 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "74",
+      "Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff"
+    },
+    "json": {
+      "error": "this sign-in was replaced by a newer link; use the newest one"
+    }
+  },
+  "comparison": {
+    "dynamicValues": {},
+    "headers": {
+      "Date": "valid HTTP-date",
+      "Server": "implementation-specific server identity",
+      "Content-Length": "must equal actual encoded response body byte length"
+    },
+    "sse": null
+  }
+}

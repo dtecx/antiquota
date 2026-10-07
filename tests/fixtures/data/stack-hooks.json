@@ -1,0 +1,28 @@
+{
+  "antiquota": {
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Library/Frameworks/Python.framework/Versions/3.14/bin/python3 {{REPO_ROOT}}/antiquota/hook.py pre-tool",
+            "timeout": 3600
+          }
+        ]
+      }
+    ],
+    "PreInvocation": [
+      {
+        "type": "command",
+        "command": "/Library/Frameworks/Python.framework/Versions/3.14/bin/python3 {{REPO_ROOT}}/antiquota/hook.py pre-invocation",
+        "timeout": 15
+      }
+    ],
+    "enabled": true
+  },
+  "example": {
+    "enabled": false,
+    "Stop": []
+  }
+}

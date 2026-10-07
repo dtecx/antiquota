@@ -1,0 +1,54 @@
+{
+  "name": "session-shell",
+  "request": {
+    "method": "POST",
+    "path": "/api/sessions/{{SESSION_1}}/shell",
+    "headers": {
+      "Host": "127.0.0.1:{{PORT}}",
+      "Accept-Encoding": "identity",
+      "Content-Length": "36",
+      "X-Antiquota-Token": "{{TOKEN}}",
+      "Content-Type": "application/json"
+    },
+    "json": {
+      "cmd": "printf 'fixture shell\\n'"
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Server": "BaseHTTP/0.6 Python/3.14.4",
+      "Date": "Wed, 07 Oct 2026 13:45:22 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "129",
+      "Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff"
+    },
+    "json": {
+      "t": "shell",
+      "cmd": "printf 'fixture shell\\n'",
+      "output": "fixture shell\n",
+      "code": 0,
+      "secs": 0.0,
+      "ts": 1791380722.0082262
+    }
+  },
+  "comparison": {
+    "dynamicValues": {
+      "/response/json/secs": {
+        "type": "nonnegative-number",
+        "meaning": "duration seconds"
+      },
+      "/response/json/ts": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      }
+    },
+    "headers": {
+      "Date": "valid HTTP-date",
+      "Server": "implementation-specific server identity",
+      "Content-Length": "must equal actual encoded response body byte length"
+    },
+    "sse": null
+  }
+}

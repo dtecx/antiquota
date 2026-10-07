@@ -1,0 +1,73 @@
+{
+  "name": "session-fork",
+  "request": {
+    "method": "POST",
+    "path": "/api/sessions/{{SESSION_1}}/fork",
+    "headers": {
+      "Host": "127.0.0.1:{{PORT}}",
+      "Accept-Encoding": "identity",
+      "Content-Length": "2",
+      "X-Antiquota-Token": "{{TOKEN}}",
+      "Content-Type": "application/json"
+    },
+    "json": {}
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Server": "BaseHTTP/0.6 Python/3.14.4",
+      "Date": "Wed, 07 Oct 2026 13:45:22 GMT",
+      "Content-Type": "application/json",
+      "Content-Length": "1126",
+      "Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff"
+    },
+    "json": {
+      "id": "{{SESSION_2}}",
+      "title": "Contract renamed (fork)",
+      "cwd": "{{TEST_ROOT}}/home/project",
+      "model": "gemini-3.8-flash-high",
+      "effort": "high",
+      "mode": "accept-edits",
+      "created": 1791380722.011609,
+      "updated": 1791380722.011916,
+      "status": "idle",
+      "status_until": null,
+      "conversation_id": null,
+      "turns": 0,
+      "queue": [],
+      "goal": null,
+      "last_slot": null,
+      "usage": {
+        "input": 0,
+        "output": 0,
+        "thinking": 0
+      },
+      "context": 0,
+      "pending_note": "You are continuing work from an earlier antiquota session. Its handoff state follows; check the current files yourself before relying on it.\n\n# Handoff: Contract renamed\nFolder: {{TEST_ROOT}}/home/project  \u00b7  model gemini-3.8-flash-high  \u00b7  1 turns  \u00b7  accounts used: one@example.com\n\n## Requests (oldest first)\n- [user] Hello contract fixture.\n\n## Work log (latest turns)\n- #1 one SUCCESS \u00b7 edited notes.txt\n\n## Files changed in this session\n- notes.txt\n\n## Last reply\nturn 1 on one@example.com\nGOAL_COMPLETE",
+      "jobs": [],
+      "loop": null,
+      "pinned": false,
+      "archived": false,
+      "worktree": null
+    }
+  },
+  "comparison": {
+    "dynamicValues": {
+      "/response/json/created": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      },
+      "/response/json/updated": {
+        "type": "nonnegative-number",
+        "meaning": "timestamp"
+      }
+    },
+    "headers": {
+      "Date": "valid HTTP-date",
+      "Server": "implementation-specific server identity",
+      "Content-Length": "must equal actual encoded response body byte length"
+    },
+    "sse": null
+  }
+}
