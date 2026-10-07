@@ -23,9 +23,13 @@ function h(tag, attrs = {}, ...kids) {
 
 const S = {
   sessions: new Map(), cur: null, accounts: [], models: [], defaults: {},
-  nodes: new Map(), live: new Map(), drawer: false, tab: 'accounts', stack: null,
+  nodes: new Map(), live: new Map(), drawer: false, tab: 'accounts', stack: null, detail: 'detailed',
 };
-try { S.drawer = localStorage.getItem('agyloop.drawer') === '1'; S.tab = localStorage.getItem('agyloop.tab') || 'accounts'; } catch {}
+try {
+  S.drawer = localStorage.getItem('agyloop.drawer') === '1';
+  S.tab = localStorage.getItem('agyloop.tab') || 'accounts';
+  S.detail = localStorage.getItem('agyloop.detail') || 'detailed';
+} catch {}
 function remember(k, v) { try { localStorage.setItem('agyloop.' + k, v); } catch {} }
 
 async function api(method, path, body) {
@@ -205,12 +209,17 @@ function renderRelay() {
   rows.replaceChildren();
   if (!S.accounts.length) rows.append(h('button', { class: 'primary relay-cta', onclick: () => openAcct() }, 'Add Google account'));
   for (const acct of S.accounts) {
-    rows.append(h('div', { class: 'acct', title: acct.busy ? acct.slot + ' is running a call' : acct.slot },
-      h('span', { class: 'name' + (acct.busy ? ' busy' : '') }, who(acct.slot)),
-      gauge('gemini', acct, 'gemini'), gauge('claude', acct, 'cg')));
+    rows.append(acct.verify
+      ? h('div', { class: 'acct verify', title: `${acct.slot}: Google wants this account verified before Antigravity serves it` },
+        h('span', { class: 'name' }, who(acct.slot)),
+        h('button', { class: 'verify-chip', onclick: () => showDrawer('accounts') }, 'needs verification'))
+      : h('div', { class: 'acct', title: acct.busy ? acct.slot + ' is running a call' : acct.slot },
+        h('span', { class: 'name' + (acct.busy ? ' busy' : '') }, who(acct.slot)),
+        gauge('gemini', acct, 'gemini'), gauge('claude', acct, 'cg')));
   }
   const blank = $('#transcript > .blank');
   if (blank && !!$('.note.wall', blank) === !!S.accounts.length) (cur() ? blank.replaceWith(blankFor(cur())) : renderBlank());
+  renderMeter();
   const probed = Math.max(0, ...S.accounts.map(x => x.probed || 0));
   $('#relay-hint').textContent = probed ? 'probed ' + ago(probed) : '';
   if (S.drawer && S.tab === 'accounts') renderPane();
@@ -248,6 +257,7 @@ function renderHeader() {
   $('#goal-btn').classList.toggle('on', !!(m && m.goal && m.goal.state === 'active'));
   document.title = (busy ? '● ' : '') + (m ? (m.title || 'Untitled') + ' · ' : '') + 'agyloop';
   renderGoalbar();
+  renderMeter();
   syncSend();
 }
 function syncSend() {
@@ -361,28 +371,68 @@ function diffNode(d) {
     class: l.startsWith('@@') || l.startsWith('+++') || l.startsWith('---') ? 'h' : l.startsWith('+') ? 'a' : l.startsWith('-') ? 'd' : '',
   }, l || ' ')));
 }
+const PEEK_LINES = 4;
+function peekOf(ev) {
+  // A Claude-Code-style glimpse under the row: last lines of output, first changed lines of a diff.
+  if (ev.state === 'running') return null;
+  if (ev.diff) {
+    const lines = ev.diff.split('\n').filter(l => /^[+-]/.test(l) && !/^(\+\+\+|---)/.test(l));
+    if (!lines.length) return null;
+    return { node: diffNode(lines.slice(0, 6).join('\n')), more: Math.max(0, lines.length - 6) };
+  }
+  if (ev.output && ev.name === 'run_command') {
+    const lines = ev.output.replace(/\s+$/, '').split('\n');
+    return { node: h('pre', { class: 'out' }, lines.slice(-PEEK_LINES).join('\n')), more: Math.max(0, lines.length - PEEK_LINES) };
+  }
+  return null;
+}
+function fullBody(ev) {
+  const body = h('div', { class: 'body' });
+  if (ev.diff) body.append(diffNode(ev.diff));
+  else if (ev.output) body.append(h('pre', { class: 'out' }, ev.output));
+  if (ev.error && ev.error.split('\n').length > 2) body.append(h('pre', { class: 'out' }, ev.error));
+  if (!ev.diff && !ev.output) body.append(h('pre', { class: 'out' }, JSON.stringify(ev.params, null, 2)));
+  return body;
+}
 function toolNode(ev) {
   const [verb, arg, ico] = toolInfo(ev);
   const stats = ev.diff ? diffStats(ev.diff) : null;
-  const d = h('details', { class: 'tool ' + ev.state },
-    h('summary', {},
-      h('span', { class: 'ico', html: ICON[ico] }),
-      h('span', { class: 'verb' }, verb),
-      h('span', { class: 'arg', title: arg || '' }, arg || ''),
-      h('span', { class: 'meta' },
-        stats && stats[0] > 0 && h('span', { class: 'stat add' }, '+' + stats[0]),
-        stats && stats[1] > 0 && h('span', { class: 'stat del' }, '−' + stats[1]),
-        ev.state === 'running' ? 'running' : secs(ev.secs))));
-  if (ev.error) d.append(h('div', { class: 'err' }, ev.error.split('\n').slice(0, 2).join('\n')));
-  d.addEventListener('toggle', () => {
-    if (!d.open || $('.body', d)) return;
-    const body = h('div', { class: 'body' });
-    if (ev.diff) body.append(diffNode(ev.diff));
-    else if (ev.output) body.append(h('pre', { class: 'out' }, ev.output));
-    if (ev.error && ev.error.split('\n').length > 2) body.append(h('pre', { class: 'out' }, ev.error));
-    if (!ev.diff && !ev.output) body.append(h('pre', { class: 'out' }, JSON.stringify(ev.params, null, 2)));
-    d.append(body);
-  });
+  const peek = peekOf(ev);
+  const wrap = h('div', { class: 'tool ' + ev.state });
+  const head = h('button', { class: 'tool-head', type: 'button', 'aria-expanded': 'false' },
+    h('span', { class: 'ico', html: ICON[ico] }),
+    h('span', { class: 'verb' }, verb),
+    h('span', { class: 'arg', title: arg || '' }, arg || ''),
+    h('span', { class: 'meta' },
+      stats && stats[0] > 0 && h('span', { class: 'stat add' }, '+' + stats[0]),
+      stats && stats[1] > 0 && h('span', { class: 'stat del' }, '−' + stats[1]),
+      ev.state === 'running' ? 'running' : secs(ev.secs),
+      h('span', { class: 'chev', 'aria-hidden': 'true' }, '›')));
+  wrap.append(head);
+  if (ev.error) wrap.append(h('div', { class: 'err' }, ev.error.split('\n').slice(0, 2).join('\n')));
+  let peekNode = null;
+  if (peek) {
+    peekNode = h('div', { class: 'peek', onclick: () => toggle(true) }, peek.node,
+      peek.more ? h('div', { class: 'more' }, `… ${peek.more} more line${peek.more > 1 ? 's' : ''}, click to expand`) : null);
+    wrap.append(peekNode);
+  }
+  let body = null;
+  function toggle(open = !wrap.classList.contains('open')) {
+    wrap.classList.toggle('open', open);
+    head.setAttribute('aria-expanded', String(open));
+    if (open && !body) { body = fullBody(ev); wrap.append(body); }
+    if (body) body.hidden = !open;
+  }
+  head.addEventListener('click', () => toggle());
+  wrap.toggle = toggle;
+  return wrap;
+}
+function thinkingNode(ev) {
+  const d = h('details', { class: 'thinking' },
+    h('summary', {}, h('span', { class: 'spark' }, '✻'), 'Thought',
+      ev.tokens ? h('span', { class: 'tk' }, `${fmtK(ev.tokens)} tokens`) : null),
+    h('div', { class: 'say think-body', html: md(ev.text) }));
+  if (S.detail === 'detailed' && ev.text.length < 1200) d.open = true;
   return d;
 }
 function ruleFor(cmd) {
@@ -501,7 +551,16 @@ function renderEvent(ev, live) {
     case 'tool': {
       const key = 't' + ev.turn + ':' + ev.step;
       const node = toolNode(ev), old = S.nodes.get(key);
-      if (old) { old.replaceWith(node); if (old.open) node.open = true; } else tr.append(node);
+      if (old) { old.replaceWith(node); if (old.classList.contains('open')) node.toggle(true); } else tr.append(node);
+      S.nodes.set(key, node);
+      break;
+    }
+    case 'thinking': {
+      const key = 'th' + ev.turn + ':' + ev.step;
+      const node = thinkingNode(ev), reply = S.nodes.get(ev.turn + ':' + ev.step), old = S.nodes.get(key);
+      if (old) old.replaceWith(node);
+      else if (reply && reply.parentNode === tr) tr.insertBefore(node, reply);
+      else tr.append(node);
       S.nodes.set(key, node);
       break;
     }
@@ -756,6 +815,25 @@ function hideDrawer() {
   $('#drawer').hidden = true;
   $('#drawer-btn').classList.remove('on');
 }
+function verifyBlock(email, url) {
+  return h('div', { class: 'verify-box' },
+    h('p', {}, 'Google wants this account verified before Antigravity serves it. Open the link signed in as ',
+      h('b', {}, email), ', finish the steps, then check again. agy-loop also re-checks it by itself every 10 minutes.'),
+    h('div', { class: 'card-acts' },
+      h('a', { class: 'primary btn small', href: url, target: '_blank', rel: 'noopener noreferrer' }, 'Verify with Google'),
+      h('button', {
+        class: 'btn small', onclick: async e => {
+          e.target.disabled = true;
+          e.target.textContent = 'Checking…';
+          try {
+            S.accounts = await api('POST', `accounts/${encodeURIComponent(email)}/check`);
+            renderRelay();
+            toast(S.accounts.find(x => x.slot === email)?.verify ? 'Still not verified' : `${email} is ready`);
+          } catch (err) { fail(err); }
+          renderPane();
+        },
+      }, 'Check again')));
+}
 function winLabel(w) { return w === '5h' ? '5 hour' : w; }
 async function renderPane() {
   const pane = $('#pane');
@@ -763,10 +841,11 @@ async function renderPane() {
     pane.replaceChildren(...[
       h('p', { class: 'cap' }, 'Accounts are used in order: one drains before the next takes over. Gemini and Claude/GPT quotas run out separately; a spent pool is walled until its reset.'),
       !S.accounts.length && h('p', { class: 'cap' }, 'No account yet. Add one: agy-loop signs it in separately from your agy CLI.'),
-      ...S.accounts.map(acct => h('div', { class: 'card' },
+      ...S.accounts.map(acct => h('div', { class: 'card' + (acct.verify ? ' verify' : '') },
         h('div', { class: 'card-head' }, h('b', {}, acct.slot),
           h('span', {}, (acct.busy ? 'running · ' : '') + (acct.probed ? 'probed ' + ago(acct.probed) : 'not probed'))),
-        Object.entries({ gemini: 'Gemini', cg: 'Claude / GPT' }).map(([b, label]) => h('div', { class: 'pool' },
+        acct.verify && verifyBlock(acct.slot, acct.verify),
+        !acct.verify && Object.entries({ gemini: 'Gemini', cg: 'Claude / GPT' }).map(([b, label]) => h('div', { class: 'pool' },
           h('div', { class: 'pool-name' }, h('span', {}, label), acct.walls[b] ? h('em', {}, 'walled until ' + clock(acct.walls[b])) : null),
           Object.entries(acct.quota[b] || {}).map(([w, [frac, reset]]) => h('div', { class: 'win', title: reset ? 'resets ' + new Date(reset * 1000).toLocaleString() : 'disabled until the other window resets' },
             h('span', {}, winLabel(w)),
@@ -920,12 +999,34 @@ function loginState(r) {
     acctMsg(`Signed in: ${r.name}. It joins the rotation now.`, 'ok');
     refreshAccounts();
     setTimeout(() => $('#acct-dlg').open && $('#acct-dlg').close('done'), 1200);
+  } else if (r.state === 'verify') {
+    stopLogin(false);
+    $('#acct-code').disabled = true;
+    $('#acct-finish').disabled = true;
+    $('#acct-timer').textContent = '';
+    refreshAccounts();
+    $('#acct-msg').className = 'acct-msg';
+    $('#acct-msg').replaceChildren(verifyBlock(r.name, r.verify_url));
   } else if (r.state === 'failed') {
     stopLogin(false);
     $('#acct-code').disabled = true;
     $('#acct-finish').disabled = true;
     $('#acct-timer').textContent = '';
     acctMsg((r.error || 'Sign-in failed') + '. Get a new sign-in link and try again.', 'bad');
+  }
+}
+const CODE_RE = /^4\/[0-9A-Za-z_-]{20,}$/;
+async function pasteFromClipboard(quiet) {
+  if (!L.id || $('#acct-code').disabled || $('#acct-code').value.trim()) return;
+  try {
+    const text = (await navigator.clipboard.readText()).trim();
+    if (CODE_RE.test(text)) {
+      $('#acct-code').value = text;
+      acctMsg('Code taken from the clipboard…');
+      finishLogin();
+    } else if (!quiet) acctMsg('The clipboard holds no sign-in code yet. Click "Copy to Clipboard" on Google\'s page.', 'bad');
+  } catch {
+    if (!quiet) acctMsg('The browser did not allow reading the clipboard; paste the code with ⌘V.', 'bad');
   }
 }
 async function finishLogin() {
@@ -1152,6 +1253,42 @@ const RENDER = {
   ],
 };
 
+/* ---------- detail level: compact rows, or previews + thinking like Claude Code ---------- */
+function setDetail(mode) {
+  S.detail = mode;
+  remember('detail', mode);
+  document.body.classList.toggle('compact', mode === 'compact');
+  $('#detail-btn').classList.toggle('on', mode === 'detailed');
+  $('#detail-btn').title = mode === 'detailed' ? 'Showing previews and thinking (click for compact)' : 'Compact (click for previews and thinking)';
+  $$('details.thinking').forEach(d => { d.open = mode === 'detailed' && d.textContent.length < 1300; });
+}
+function expandAll(open) {
+  $$('.tool', $('#transcript')).forEach(t => t.toggle && t.toggle(open));
+  $$('details.thinking', $('#transcript')).forEach(d => { d.open = open; });
+}
+
+/* ---------- token counter: context, session totals, the serving account's quota ---------- */
+const CONTEXT_WINDOW = id => /^claude/.test(id) ? 200000 : /^gpt-oss/.test(id) ? 131072 : 1048576;
+function renderMeter() {
+  const m = cur(), el = $('#meter');
+  if (!m) { el.replaceChildren(); return; }
+  const win = CONTEXT_WINDOW(m.model), ctx = m.context || 0, pct = Math.min(100, Math.round(ctx / win * 100));
+  const acct = S.accounts.find(x => x.slot === m.last_slot) || S.accounts[0];
+  const pool = POOL(m.model);
+  const q = acct && acct.quota[pool];
+  const left = q ? Math.round(minFrac(q) * 100) : null;
+  el.replaceChildren(
+    h('span', { class: 'ctx' + (pct >= 80 ? ' hot' : pct >= 50 ? ' warm' : ''), title: `Context sent with the last request: ${ctx.toLocaleString()} of ${win.toLocaleString()} tokens` },
+      h('span', { class: 'ctx-bar' }, h('i', { style: `width:${Math.max(pct, ctx ? 2 : 0)}%` })),
+      ctx ? `${fmtK(ctx)} / ${fmtK(win)} context` : 'no context yet'),
+    h('span', { title: 'Tokens this session: sent, received, thinking' },
+      `↑ ${fmtK(m.usage.input)}  ↓ ${fmtK(m.usage.output)}` + (m.usage.thinking ? `  ✻ ${fmtK(m.usage.thinking)}` : '')),
+    acct && h('span', { class: 'acct-q' + (left != null && left < 20 ? ' low' : ''), title: `${acct.slot}: ${POOL_LABEL[pool]} left (lowest window)` },
+      `${who(acct.slot)} · ${pool === 'cg' ? 'claude/gpt' : 'gemini'} ${left == null ? '–' : left + '%'}`),
+    h('span', { class: 'grow' }),
+    h('span', { class: 'hint' }, S.accounts.filter(x => !x.walls[pool] && !x.verify).length + ' of ' + S.accounts.length + ' accounts free'));
+}
+
 /* ---------- wiring ---------- */
 async function load() {
   const st = await api('GET', 'state');
@@ -1218,12 +1355,20 @@ function wire() {
   $('#new-dlg').addEventListener('close', () => { if ($('#new-dlg').returnValue === 'ok') createFromDialog(); });
   $('#goal-dlg').addEventListener('close', () => { if ($('#goal-dlg').returnValue === 'ok') startGoal(); });
   $('#set-open').addEventListener('click', () => openSettings());
+  $('#detail-btn').addEventListener('click', () => setDetail(S.detail === 'detailed' ? 'compact' : 'detailed'));
+  $('#expand-btn').addEventListener('click', () => {
+    const open = !$('#expand-btn').classList.contains('on');
+    $('#expand-btn').classList.toggle('on', open);
+    expandAll(open);
+  });
   $('#set-close').addEventListener('click', closeSettings);
   $('#acct-open').addEventListener('click', startLogin);
   $('#acct-finish').addEventListener('click', finishLogin);
   $('#acct-code').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); finishLogin(); } });
   $('#acct-code').addEventListener('paste', () => setTimeout(finishLogin, 50));  // seconds count: send on paste
   $('#acct-dlg').addEventListener('close', () => stopLogin());
+  window.addEventListener('focus', () => pasteFromClipboard(true));  // back from Google's code page
+  $('#acct-clip').addEventListener('click', () => pasteFromClipboard(false));
   let browseTimer;
   $('#new-cwd').addEventListener('input', e => { clearTimeout(browseTimer); browseTimer = setTimeout(() => browse(e.target.value), 200); });
 
@@ -1258,5 +1403,6 @@ function wire() {
 }
 
 wire();
+setDetail(S.detail);
 if (S.drawer) showDrawer();
 load().then(connect).catch(fail);

@@ -48,6 +48,12 @@
       <div class="top-right">
         <span class="status" id="status" hidden></span>
         <span class="tokens" id="tokens" title="Tokens used in this session"></span>
+        <button class="icon-btn" id="expand-btn" title="Expand or collapse every step" aria-label="Expand all steps">
+          <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 6l4-3 4 3M4 10l4 3 4-3"/></svg>
+        </button>
+        <button class="icon-btn" id="detail-btn" title="Previews and thinking" aria-label="Toggle previews and thinking">
+          <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 4h12M2 8h8M2 12h10"/></svg>
+        </button>
         <button class="icon-btn" id="drawer-btn" title="Accounts, stack, permissions" aria-label="Toggle side panel">
           <svg viewBox="0 0 16 16" width="16" height="16"><rect x="1.5" y="2.5" width="13" height="11" rx="2" fill="none" stroke="currentColor"/><path d="M10 2.5v11" stroke="currentColor"/></svg>
         </button>
@@ -82,6 +88,7 @@
           <button type="submit" class="send" id="send" title="Send (Enter)">Send</button>
         </div>
       </form>
+      <div class="meter" id="meter" aria-live="polite"></div>
     </footer>
   </main>
 
@@ -144,13 +151,14 @@
   <form method="dialog" id="acct-form">
     <h2>Add Google account</h2>
     <p class="lede">The account brings its own quota and uses agy-loop's stack, separate from your agy CLI
-      and the IDE. agy allows 60 seconds from opening the sign-in page to pasting the code.</p>
+      and the IDE. agy allows 60 seconds from opening the sign-in page to the code arriving here.</p>
     <ol class="steps">
       <li><button type="button" class="primary" id="acct-open">Open Google sign-in</button>
         <span class="timer" id="acct-timer"></span></li>
       <li>Sign in with the account you want to add and allow access.</li>
-      <li><label class="field"><span>Paste the code Google shows</span>
-        <input id="acct-code" spellcheck="false" autocomplete="off" disabled placeholder="4/0A…"></label></li>
+      <li><label class="field"><span>Click "Copy to Clipboard" on Google's page and come back: the code goes in by itself</span>
+        <span class="code-row"><input id="acct-code" spellcheck="false" autocomplete="off" disabled placeholder="4/0A…">
+        <button type="button" class="btn" id="acct-clip" title="Read the code from the clipboard">Paste</button></span></label></li>
     </ol>
     <p class="acct-msg" id="acct-msg" role="status"></p>
     <div class="actions">
