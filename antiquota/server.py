@@ -58,22 +58,31 @@ class App:
         self.engine = Engine()
         a.seed_stack()
         stack.install_hooks(GATED_TOOLS)  # approvals and mid-turn messages reach this engine
-        self.models = []
+        try:
+            with open(a.state("models.json")) as f:
+                self.models = json.load(f)
+        except (OSError, ValueError):
+            self.models = []
+        self.models_fresh = False
         self.stack = None
         self.logins = {}
         threading.Thread(target=self._background, daemon=True).start()
 
     def _models(self):
-        """Model list as an antiquota account sees it (your own agy CLI is never asked)."""
-        if self.models or not a.slots():
+        """Model list as an antiquota account sees it (your own agy CLI is never asked). The last
+        list is kept on disk, so the model picker is right from the first second after a start."""
+        if self.models_fresh or not a.slots():
             return
         try:
             cmd, env = a.agy_cmd(a.slot_home(a.slots()[0]), ["models"])
             out = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=60,
                                  stdin=subprocess.DEVNULL).stdout
-            self.models = [dict(zip(("id", "label"), line.split("\t", 1))) for line in out.splitlines() if "\t" in line]
+            models = [dict(zip(("id", "label"), line.split("\t", 1))) for line in out.splitlines() if "\t" in line]
         except (OSError, subprocess.TimeoutExpired, SystemExit):
-            pass
+            return
+        if models:
+            self.models, self.models_fresh = models, True
+            a.write_atomic(a.state("models.json"), json.dumps(models))
 
     def _background(self):
         while True:  # keep walls honest while the GUI runs; cron covers the rest of the time
@@ -398,6 +407,8 @@ class Handler(BaseHTTPRequestHandler):
             case ("DELETE", ["sessions", sid, "goal"]):
                 e.clear_goal(sid)
                 return {"ok": True}
+            case ("GET", ["usage"]):
+                return a.usage_history(max(1, min(90, int((qs.get("days") or ["14"])[0]))))
             case ("GET", ["routing"]):
                 return a.routes(int((qs.get("n") or ["60"])[0]))
             case ("GET", ["accounts"]):

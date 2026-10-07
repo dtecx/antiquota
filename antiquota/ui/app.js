@@ -347,6 +347,7 @@ function renderHeader() {
   document.title = (busy ? '● ' : '') + (m ? (m.title || 'Untitled') + ' · ' : '') + 'antiquota';
   renderGoalbar();
   renderJobbar();
+  renderPlanbar();
   renderMeter();
   syncSend();
 }
@@ -386,6 +387,29 @@ function renderGoalbar() {
         : g.state !== 'met' && h('button', { class: 'btn small', onclick: () => api('POST', `sessions/${m.id}/goal/resume`).catch(fail) }, 'Resume'),
       h('button', { class: 'btn small', onclick: openGoal }, 'Edit'),
       h('button', { class: 'btn small', title: 'Remove goal', onclick: () => api('DELETE', `sessions/${m.id}/goal`).catch(fail) }, '✕')));
+}
+
+/* Plan mode: once agy has proposed a plan, carry it out (on its own or with approvals) or revise it. */
+const EXECUTE_PLAN = 'Go ahead: carry out the plan you just proposed, step by step. Check each step works, '
+  + 'and finish with a short summary of what changed.';
+function renderPlanbar() {
+  const m = cur(), bar = $('#planbar');
+  const evs = S.events || [];
+  let lastEnd = -1, lastUser = -1;
+  evs.forEach((e, i) => { if (e.t === 'turn_end') lastEnd = i; if (e.t === 'user') lastUser = i; });
+  const ready = m && m.mode === 'plan' && m.status === 'idle' && lastEnd > lastUser && evs[lastEnd].status === 'SUCCESS';
+  bar.hidden = !ready;
+  if (!ready) return;
+  const run = mode => api('PATCH', 'sessions/' + m.id, { mode })
+    .then(() => api('POST', `sessions/${m.id}/send`, { text: EXECUTE_PLAN }))
+    .then(() => toast(mode === 'accept-edits' ? 'Executing the plan' : 'Executing: edits and commands ask you first')).catch(fail);
+  bar.replaceChildren(
+    h('span', { class: 'g' }, '▤ plan ready'),
+    h('span', { class: 'pm' }, 'agy only planned (plan mode: nothing was changed).'),
+    h('div', { class: 'acts' },
+      h('button', { class: 'primary btn small', onclick: () => run('accept-edits') }, 'Execute plan'),
+      h('button', { class: 'btn small', title: 'Edits and unknown commands wait for your approval', onclick: () => run('default') }, 'Execute with approvals'),
+      h('button', { class: 'btn small', onclick: () => { const t = $('#input'); t.placeholder = 'What should change in the plan?'; t.focus(); } }, 'Revise')));
 }
 
 /* Background jobs (training runs and the like) and the /loop schedule, above the composer. */
@@ -826,6 +850,7 @@ async function openSession(sid) {
 }
 
 /* ---------- live events ---------- */
+const KEPT = new Set(['user', 'turn_start', 'turn_end', 'assistant', 'notice', 'approval', 'job', 'shell']);
 function handle(m) {
   if (m.t === 'accounts') {
     S.accounts = m.accounts;
@@ -854,8 +879,9 @@ function handle(m) {
     if (m.t === 'tool' && m.state !== 'running') {
       S.events.push(m);
       if (S.drawer && S.tab === 'changes') renderPane();
-    }
+    } else if (KEPT.has(m.t)) S.events.push(m);
     renderEvent(m, true);
+    if (m.t === 'turn_end' || m.t === 'user') renderPlanbar();
   }
 }
 function connect() {
@@ -1270,6 +1296,54 @@ function verifyBlock(email, url) {
         },
       }, 'Check again')));
 }
+/* Tokens per day through antiquota (one series: magnitude over time), today in the accent.
+   Hover a day for the split by account; the table below holds the same numbers per account. */
+function renderUsage(u) {
+  const box = $('#usage');
+  if (!box) return;
+  const days = u.days, max = Math.max(1, ...days.map(d => d.total));
+  const total = days.reduce((s, d) => s + d.total, 0), turns = days.reduce((s, d) => s + d.turns, 0);
+  const W = 336, H = 72, gap = 2, bw = (W - gap * (days.length - 1)) / days.length;
+  const NS = 'http://www.w3.org/2000/svg', svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H + 1}`);
+  svg.setAttribute('class', 'ubars');
+  svg.setAttribute('role', 'img');
+  svg.setAttribute('aria-label', `Tokens per day, last ${days.length} days; total ${fmtK(total)}`);
+  const tip = h('div', { class: 'utip', hidden: '' });
+  const el = (tag, attrs) => { const n = document.createElementNS(NS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); return n; };
+  svg.append(el('line', { x1: 0, x2: W, y1: H + .5, y2: H + .5, class: 'ubase' }));
+  days.forEach((d, i) => {
+    const x = i * (bw + gap), hgt = d.total ? Math.max(3, d.total / max * (H - 4)) : 0, today = i === days.length - 1;
+    if (hgt) {  // 4px rounded top, square base on the baseline
+      const r = Math.min(4, bw / 2, hgt), y = H - hgt;
+      svg.append(el('path', { class: 'ubar' + (today ? ' today' : ''),
+        d: `M${x},${H} V${y + r} Q${x},${y} ${x + r},${y} H${x + bw - r} Q${x + bw},${y} ${x + bw},${y + r} V${H} Z` }));
+    }
+    const hit = el('rect', { x, y: 0, width: bw + gap, height: H, class: 'uhit' });
+    hit.addEventListener('mouseenter', () => {
+      const by = Object.entries(d.by).sort((a, b) => b[1] - a[1]);
+      tip.replaceChildren(h('b', {}, new Date(d.date + 'T12:00').toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })),
+        h('div', {}, `${fmtK(d.total)} tokens · ${d.turns} turn${d.turns === 1 ? '' : 's'}`),
+        ...by.map(([slot, n]) => h('div', { class: 'ur' }, h('span', {}, short(slot)), h('span', {}, fmtK(n)))));
+      tip.hidden = false;
+      tip.style.left = Math.min(Math.max(0, (x + bw / 2) / W * 100), 100) + '%';
+    });
+    hit.addEventListener('mouseleave', () => { tip.hidden = true; });
+    svg.append(hit);
+  });
+  const fmtDay = s => new Date(s + 'T12:00').toLocaleDateString([], { month: 'short', day: 'numeric' });
+  const accts = Object.entries(u.accounts).sort((a, b) => b[1].tokens - a[1].tokens);
+  box.replaceChildren(
+    h('div', { class: 'uhero' }, h('b', {}, fmtK(total)), h('span', {}, ` tokens · ${turns} turn${turns === 1 ? '' : 's'}`),
+      h('span', { class: 'umax' }, 'peak ' + fmtK(max === 1 ? 0 : max) + '/day')),
+    h('div', { class: 'uplot' }, svg, tip),
+    h('div', { class: 'uaxis' }, h('span', {}, fmtDay(days[0].date)), h('span', {}, 'today')),
+    accts.length ? h('table', { class: 'utable' },
+      h('thead', {}, h('tr', {}, h('th', {}, 'Account'), h('th', {}, '14 days'), h('th', {}, 'Today'), h('th', {}, 'Turns'))),
+      h('tbody', {}, accts.map(([slot, t]) => h('tr', {}, h('td', { title: slot }, short(slot)), h('td', {}, fmtK(t.tokens)),
+        h('td', {}, t.today ? fmtK(t.today) : '–'), h('td', {}, String(t.turns))))))
+      : h('p', { class: 'cap' }, 'No turns in this period yet.'));
+}
 const ROTATION_CAP = {
   perishable: 'Rotation spends the allowance that resets soonest first, so no quota expires unused.',
   sticky: 'Rotation drains accounts one by one, in order.',
@@ -1311,9 +1385,12 @@ async function renderPane() {
       h('div', { class: 'add-row' },
         h('button', { class: 'primary', onclick: () => openAcct() }, 'Add account'),
         h('button', { class: 'btn', onclick: () => api('POST', 'accounts/probe').then(() => toast('Probing accounts…')).catch(fail) }, 'Probe now')),
+      h('h3', {}, 'Usage · last 14 days'),
+      h('div', { class: 'usage', id: 'usage' }, h('p', { class: 'cap' }, 'Loading…')),
       h('h3', {}, 'Routing'),
       h('div', { class: 'routing', id: 'routing' }, h('p', { class: 'cap' }, 'Loading…')),
     ].filter(Boolean));
+    api('GET', 'usage?days=14').then(renderUsage).catch(() => {});
     api('GET', 'routing?n=40').then(rows => {
       const box = $('#routing');
       if (!box) return;
@@ -1798,15 +1875,15 @@ function renderMeter() {
   el.replaceChildren(
     h('span', { class: 'seg ctxm' + (pct >= 80 ? ' hot' : pct >= 50 ? ' warm' : ''), title: `Context sent with the last request: ${ctx.toLocaleString()} of ${win.toLocaleString()} tokens` },
       h('span', { class: 'ctx-bar', 'aria-hidden': 'true' }, h('i', { style: `width:${Math.max(pct, ctx ? 2 : 0)}%` })),
-      ctx ? [h('b', {}, fmtK(ctx)), ` of ${fmtK(win)} context`] : 'no context yet'),
+      ctx ? [h('b', {}, fmtK(ctx)), h('span', { class: 'lbl' }, ` of ${fmtK(win)} context`)] : 'no context yet'),
     h('span', { class: 'seg tok', title: 'Tokens this session: sent ↑, received ↓, thinking ✻' },
       '↑', h('b', {}, fmtK(m.usage.input)), ' ↓', h('b', {}, fmtK(m.usage.output)),
       m.usage.thinking ? [' ✻', h('b', {}, fmtK(m.usage.thinking))] : null),
     acct && h('span', { class: 'seg acct-q', title: `${acct.slot} serves this session · ${POOL_LABEL[pool]} left (lowest window)` },
-      h('i', { class: 'qdot ' + level, 'aria-hidden': 'true' }), who(acct.slot),
+      h('i', { class: 'qdot ' + level, 'aria-hidden': 'true' }), h('span', { class: 'nm' }, who(acct.slot)),
       h('b', {}, (pool === 'cg' ? 'Claude/GPT ' : 'Gemini ') + (left == null ? '–' : left + '%'))),
     h('span', { class: 'grow' }),
-    h('span', { class: 'seg', title: `Accounts that can take a ${POOL_LABEL[pool]} turn now` }, h('b', {}, `${free}/${S.accounts.length}`), ' accounts free'));
+    h('span', { class: 'seg free', title: `Accounts that can take a ${POOL_LABEL[pool]} turn now` }, h('b', {}, `${free}/${S.accounts.length}`), ' accounts free'));
 }
 
 /* ---------- wiring ---------- */

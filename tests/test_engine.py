@@ -378,3 +378,19 @@ def test_paused_accounts_sit_out_and_sessions_pin_fork_search(home, work):
     assert hits and hits[0]["id"] == sid and "needle" in hits[0]["snippet"]
     fork = eng.fork(sid)
     assert fork["cwd"] == str(work) and fork["title"].endswith("(fork)") and "find the needle" in fork["pending_note"]
+
+
+def test_plan_mode_plans_by_instruction_and_usage_history(home, work):
+    from antiquota import stack
+    from antiquota.engine import GATED_TOOLS, PLAN_NOTE
+    stack.install_hooks(GATED_TOOLS)
+    eng = Engine()
+    sid = eng.create(str(work), "gemini-3.8-flash-low", mode="plan")["id"]
+    eng.send(sid, "plan the thing")
+    finish(eng, sid)
+    args = calls(work)[-1]["args"]
+    assert PLAN_NOTE in args[1] and "--mode" not in args  # agy's own plan mode hangs headless
+    assert "--dangerously-skip-permissions" in args
+    h = a.usage_history(3)
+    assert len(h["days"]) == 3 and h["days"][-1]["total"] == 110 and h["days"][-1]["turns"] == 1
+    assert h["accounts"][calls(work)[-1]["slot"]]["today"] == 110

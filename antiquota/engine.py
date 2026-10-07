@@ -29,6 +29,9 @@ from . import convdb
 
 EDIT_TOOLS = {"write_to_file", "replace_file_content", "multi_replace_file_content", "sed_file"}
 GATED_TOOLS = "*"      # the PreToolUse hook sees every tool; antiquota.policy decides
+PLAN_NOTE = ("(antiquota plan mode) Investigate as needed, then reply with a concise, numbered plan for the "
+             "request below. Do not edit files or run commands that change anything: edits are refused in this "
+             "mode. The user approves the plan, and the next message asks you to carry it out.")
 APPROVAL_WAIT = 900    # seconds an approval waits for the user before agy hears "no"
 DECLINED = "The user declined this. Do not retry it; continue another way, or explain what you need."
 MODES = {"default": [], "accept-edits": ["--mode", "accept-edits"], "plan": ["--mode", "plan"],
@@ -449,6 +452,8 @@ class Engine:
                     prompt, m["pending_note"] = m["pending_note"] + "\n\n" + prompt, ""
                 if not m.get("conversation_id"):  # the request itself stays last
                     prompt = JOBS_HINT + "\n\n" + prompt
+                if m["mode"] == "plan" and stack.hook_enabled():
+                    prompt = PLAN_NOTE + "\n\n" + prompt
                 ok, reply, denied = self._turn(s, prompt)
                 if ok:
                     self._jobs_from_reply(s, reply)
@@ -937,7 +942,9 @@ class Engine:
         agy may run anything and the hook (antiquota.policy, plus the user) decides. Without the hook,
         agy's own modes apply and anything that needs a yes ends the turn."""
         if stack.hook_enabled():
-            return ["--dangerously-skip-permissions", *(["--mode", "plan"] if mode == "plan" else [])]
+            # Not agy's own --mode plan: headless, it waits for a plan review nobody can give.
+            # antiquota plans by instruction (PLAN_NOTE) and its policy refuses edits.
+            return ["--dangerously-skip-permissions"]
         return MODES[mode]
 
     def approval_request(self, sid, tool, args):

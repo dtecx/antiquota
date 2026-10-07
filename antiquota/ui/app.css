@@ -630,10 +630,12 @@ input:not([type=checkbox]), select, textarea { color: var(--ink); }
   padding: 8px 6px 0; font: 11px/16px var(--mono); color: var(--ink-4); font-variant-numeric: tabular-nums;
   white-space: nowrap; overflow: hidden;
 }
+.meter { container-type: inline-size; }
 .meter .grow { flex: 1; min-width: 0; }
-.meter .seg { display: inline-flex; align-items: center; gap: 5px; min-width: 0; }
+.meter .seg { display: inline-flex; align-items: center; gap: 5px; flex: none; }
 .meter .seg b { font-weight: 500; color: var(--ink-3); }
-.meter .acct-q { overflow: hidden; text-overflow: ellipsis; }
+.meter .acct-q { flex: 0 1 auto; min-width: 0; overflow: hidden; }
+.meter .acct-q .nm { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .ctx-bar { width: 48px; height: 3px; border-radius: 2px; background: var(--rule-2); overflow: hidden; margin-right: 3px; flex: none; }
 .ctx-bar > i { display: block; height: 100%; background: var(--ink-3); transition: width .3s var(--ease); }
 .meter .ctxm.warm .ctx-bar > i { background: var(--baton); }
@@ -643,7 +645,8 @@ input:not([type=checkbox]), select, textarea { color: var(--ink); }
 .qdot.ok { background: var(--ok); }
 .qdot.warn { background: var(--baton); }
 .qdot.bad { background: var(--bad); }
-@media (max-width: 760px) { .meter .tok { display: none; } }
+@container (max-width: 620px) { .meter .tok, .meter .lbl { display: none; } }
+@container (max-width: 440px) { .meter .free { display: none; } }
 #detail-btn.on, #expand-btn.on { color: var(--baton); }
 
 /* ---------- accounts Google wants verified ---------- */
@@ -843,3 +846,37 @@ a.path:hover { color: var(--baton); text-decoration-color: var(--baton); }
 .set-toggle { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: start; margin: 8px 0 12px; }
 .set-toggle b { font-size: 13px; font-weight: 500; }
 .set-toggle .cap { margin: 2px 0 0; }
+
+/* ---------- plan ready ---------- */
+.planbar {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center;
+  margin-bottom: 8px; padding: 8px 10px 8px 12px; border: 1px solid var(--rule-2); border-radius: var(--r-lg); background: var(--night-1);
+}
+.planbar .g { font: 600 12px var(--mono); color: var(--ink-2); }
+.planbar .pm { font-size: 12.5px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.planbar .acts { display: flex; gap: 6px; }
+
+/* ---------- usage chart ---------- */
+.usage { margin-bottom: 6px; }
+.uhero { display: flex; align-items: baseline; gap: 4px; margin: 2px 0 10px; font: 12px var(--mono); color: var(--ink-3); }
+.uhero b { font: 600 20px/1 var(--sans); letter-spacing: -.02em; color: var(--ink); font-variant-numeric: tabular-nums; }
+.uhero .umax { margin-left: auto; color: var(--ink-4); font-size: 11px; }
+.uplot { position: relative; }
+.ubars { display: block; width: 100%; height: auto; overflow: visible; }
+.ubar { fill: var(--ink-3); opacity: .7; }
+.ubar.today { fill: var(--baton); opacity: 1; }
+.ubase { stroke: var(--rule-2); stroke-width: 1; }
+.uhit { fill: transparent; cursor: default; }
+.uhit:hover { fill: rgba(255, 255, 255, .04); }
+.utip {
+  position: absolute; bottom: calc(100% + 6px); transform: translateX(-50%); z-index: 5; min-width: 150px; pointer-events: none;
+  padding: 8px 10px; border: 1px solid var(--rule-2); border-radius: var(--r-md); background: var(--night-2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .4); font: 11.5px/1.5 var(--mono); color: var(--ink-3);
+}
+.utip b { display: block; color: var(--ink); font-weight: 500; margin-bottom: 2px; }
+.utip .ur { display: flex; justify-content: space-between; gap: 14px; color: var(--ink-2); }
+.uaxis { display: flex; justify-content: space-between; margin-top: 4px; font: 10.5px var(--mono); color: var(--ink-4); }
+.utable { width: 100%; margin-top: 12px; border-collapse: collapse; font: 11.5px var(--mono); font-variant-numeric: tabular-nums; }
+.utable th { text-align: right; font-weight: 500; color: var(--ink-4); padding: 0 0 4px; }
+.utable th:first-child, .utable td:first-child { text-align: left; }
+.utable td { text-align: right; padding: 4px 0; color: var(--ink-2); border-top: 1px solid var(--rule); }

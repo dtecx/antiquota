@@ -1030,6 +1030,41 @@ def usage_today():
     return out
 
 
+def usage_history(days=14):
+    """Tokens per local day for the last `days` days, split by account, from the engine's ledger:
+    {"days": [{"date", "total", "turns", "by": {slot: tokens}}], "accounts": {slot: {...totals}}}."""
+    from datetime import timedelta
+    today = datetime.now().date()
+    first = today - timedelta(days=days - 1)
+    rows = {(first + timedelta(days=i)).isoformat(): {"total": 0, "turns": 0, "by": {}} for i in range(days)}
+    accts = {}
+    try:
+        with open(state("usage.jsonl")) as f:
+            for line in f:
+                try:
+                    u = json.loads(line)
+                    day = datetime.fromtimestamp(u["t"]).date()
+                except (ValueError, KeyError, TypeError, OSError):
+                    continue
+                if day < first:
+                    continue
+                n = u.get("input", 0) + u.get("output", 0) + u.get("thinking", 0)
+                r = rows[day.isoformat()]
+                r["total"] += n
+                r["turns"] += 1
+                r["by"][u["slot"]] = r["by"].get(u["slot"], 0) + n
+                t = accts.setdefault(u["slot"], {"tokens": 0, "turns": 0, "today": 0, "input": 0, "output": 0})
+                t["tokens"] += n
+                t["turns"] += 1
+                t["input"] += u.get("input", 0)
+                t["output"] += u.get("output", 0)
+                if day == today:
+                    t["today"] += n
+    except OSError:
+        pass
+    return {"days": [{"date": d, **r} for d, r in rows.items()], "accounts": accts}
+
+
 def probe():
     for s in slots():
         fd = try_lease(s)
