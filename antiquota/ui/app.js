@@ -251,10 +251,25 @@ function renderSessions() {
   const nav = $('#sessions');
   nav.replaceChildren();
   if (!list.length) nav.append(h('div', { class: 'relay-empty' }, q ? 'No title matches.' : 'No sessions yet.'));
+  PREF.collapsed = PREF.collapsed || [];
   for (const [cwd, ms] of groups) {
-    const name = cwd === '\u0000pinned' ? 'Pinned' : cwd.split(/[\\/]/).pop() || cwd;
-    nav.append(h('div', { class: 'group' }, h('div', { class: 'group-name', title: cwd === '\u0000pinned' ? '' : cwd }, name),
-      ms.map(sessItem)));
+    const pinnedGroup = cwd === '\u0000pinned', name = pinnedGroup ? 'Pinned' : cwd.split(/[\\/]/).pop() || cwd;
+    const closed = !q && PREF.collapsed.includes(cwd) && !ms.some(m => m.id === S.cur);
+    const busy = ms.some(m => m.status !== 'idle');
+    const toggle = () => {
+      PREF.collapsed = closed ? PREF.collapsed.filter(x => x !== cwd) : [...PREF.collapsed, cwd];
+      savePrefs(); renderSessions();
+    };
+    nav.append(h('div', { class: 'group' + (closed ? ' closed' : '') },
+      h('div', { class: 'group-head', oncontextmenu: e => { if (pinnedGroup) return; e.preventDefault(); projectMenu(cwd, ms, e.clientX, e.clientY); } },
+        h('button', { class: 'group-name', title: pinnedGroup ? '' : cwd, 'aria-expanded': String(!closed), onclick: toggle },
+          h('span', { class: 'gchev', 'aria-hidden': 'true' }, '›'), name,
+          closed ? h('span', { class: 'gcount' }, String(ms.length)) : null, closed && busy ? h('span', { class: 'gbusy', title: 'A session here is working' }) : null),
+        !pinnedGroup && h('button', { class: 'gact', title: 'New session in ' + name, 'aria-label': 'New session in ' + name,
+          onclick: () => openNew('', { cwd }) }, '+'),
+        !pinnedGroup && h('button', { class: 'gact', title: 'Project actions', 'aria-label': 'Project actions',
+          onclick: e => { const r = e.currentTarget.getBoundingClientRect(); projectMenu(cwd, ms, r.left, r.bottom + 4); } }, '⋯')),
+      closed ? null : ms.map(sessItem)));
   }
   if (q.length >= 2) nav.append(h('div', { class: 'group', id: 'found' }, h('div', { class: 'group-name' }, 'In messages'),
     h('div', { class: 'relay-empty' }, 'Searching…')));
@@ -291,6 +306,45 @@ function sessMenu(m, x, y) {
     act('Delete…', async () => {
       if (await ask('The transcript and its handoff state are deleted. Files in the project stay.',
         { title: `Delete "${m.title || 'Untitled'}"?`, ok: 'Delete', danger: true })) api('DELETE', 'sessions/' + m.id).catch(fail);
+    }, 'danger'));
+  document.body.append(menu);
+  const r = menu.getBoundingClientRect();
+  menu.style.left = Math.min(x, innerWidth - r.width - 8) + 'px';
+  menu.style.top = Math.min(y, innerHeight - r.height - 8) + 'px';
+  menu.querySelector('button').focus();
+  setTimeout(() => document.addEventListener('mousedown', outsideMenu), 0);
+}
+/* Right-click or ⋯ on a project (a folder or repository). */
+function projectMenu(cwd, ms, x, y) {
+  closeMenu();
+  const act = (label, fn, cls = '') => h('button', { class: cls, role: 'menuitem', onclick: () => { closeMenu(); fn(); } }, label);
+  const name = cwd.split(/[\\/]/).pop() || cwd;
+  const archived = ms.filter(m => m.archived);
+  const menu = h('div', { class: 'ctxmenu', id: 'ctx', role: 'menu' },
+    act('New session here', () => openNew('', { cwd, worktree: false })),
+    act('New session in a git worktree', () => openNew('', { cwd, worktree: true })),
+    act('Collapse every other project', () => {
+      PREF.collapsed = [...new Set([...S.sessions.values()].map(m => m.worktree ? m.worktree.repo : m.cwd))].filter(c => c !== cwd);
+      savePrefs(); renderSessions();
+    }),
+    act('Expand every project', () => { PREF.collapsed = []; savePrefs(); renderSessions(); }),
+    h('hr'),
+    NATIVE && act('Show in Finder / Explorer', () => NATIVE.opener.revealItemInDir(cwd).catch(fail)),
+    act('Copy path', () => copyText(cwd).then(() => toast('Copied ' + cwd))),
+    h('hr'),
+    act(`Archive its ${ms.length} session${ms.length === 1 ? '' : 's'}`, async () => {
+      for (const m of ms) if (!m.archived) await api('PATCH', 'sessions/' + m.id, { archived: true }).catch(fail);
+      toast(`Archived ${name}`);
+    }),
+    archived.length > 0 && act(`Delete ${archived.length} archived session${archived.length === 1 ? '' : 's'}…`, async () => {
+      if (!await ask('Their transcripts and handoff state are deleted. Files in the project stay.',
+        { title: `Delete the archived sessions in ${name}?`, ok: 'Delete', danger: true })) return;
+      for (const m of archived) await api('DELETE', 'sessions/' + m.id).catch(fail);
+    }, 'danger'),
+    act(`Delete all ${ms.length} session${ms.length === 1 ? '' : 's'}…`, async () => {
+      if (!await ask('Their transcripts and handoff state are deleted. Files in the project stay.',
+        { title: `Delete every session in ${name}?`, ok: 'Delete all', danger: true })) return;
+      for (const m of ms) await api('DELETE', 'sessions/' + m.id).catch(fail);
     }, 'danger'));
   document.body.append(menu);
   const r = menu.getBoundingClientRect();
@@ -1657,11 +1711,11 @@ async function browse(path) {
   box.hidden = !box.children.length;
 }
 let pendingText = '';
-function openNew(text) {
+function openNew(text, opts = {}) {
   pendingText = typeof text === 'string' ? text : '';
   const m = cur();
-  $('#new-cwd').value = m ? (m.worktree ? m.worktree.repo : m.cwd) : S.defaults.cwd;
-  $('#new-worktree').checked = false;
+  $('#new-cwd').value = opts.cwd || (m ? (m.worktree ? m.worktree.repo : m.cwd) : S.defaults.cwd);
+  $('#new-worktree').checked = opts.worktree ?? (S.defaults.worktree_default === 'on');
   setPicker($('#new-model'), $('#new-effort'), m ? m.model : S.defaults.model);
   $('#new-mode').value = m ? m.mode : (S.defaults.mode || 'default');
   browse('');

@@ -125,11 +125,22 @@ kbd {
 
 .sessions { flex: 1; overflow-y: auto; min-height: 0; margin: 4px -4px 0; padding: 0 4px; }
 .group { margin: 10px 0 2px; }
+.group-head { display: flex; align-items: center; gap: 2px; padding-right: 4px; }
 .group-name {
+  display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; border: 0; background: none; text-align: left;
   font: 500 10.5px var(--mono); text-transform: uppercase; letter-spacing: .06em;
-  color: var(--ink-4); padding: 0 8px 4px;
+  color: var(--ink-4); padding: 3px 8px 4px 4px; border-radius: var(--r-sm);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+.group-name:hover { color: var(--ink-2); }
+.gchev { display: inline-block; width: 8px; transition: transform .15s var(--ease); transform: rotate(90deg); flex: none; }
+.group.closed .gchev { transform: none; }
+.gcount { margin-left: 2px; padding: 0 5px; border-radius: 999px; background: var(--rule); color: var(--ink-3); font-size: 10px; }
+.gbusy { width: 6px; height: 6px; border-radius: 50%; background: var(--baton); animation: pulse 1.6s var(--ease) infinite; }
+.gact { width: 20px; height: 20px; border: 0; border-radius: 4px; background: none; color: var(--ink-4); font: 600 13px/1 var(--sans);
+  opacity: 0; transition: opacity .12s var(--ease); flex: none; }
+.group-head:hover .gact, .gact:focus-visible { opacity: 1; }
+.gact:hover { background: var(--rule-2); color: var(--ink); }
 .sess {
   display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; align-items: center; column-gap: 8px;
   width: 100%; text-align: left;
