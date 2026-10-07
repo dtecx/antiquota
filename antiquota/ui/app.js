@@ -1270,6 +1270,34 @@ async function slash(text) {
   } catch (e) { fail(e); }
 }
 
+/* ---------- files: browse the session folder ---------- */
+async function renderTree(pane, m, path) {
+  let t;
+  try { t = await api('GET', `sessions/${m.id}/tree?path=${encodeURIComponent(path)}`); } catch (e) { return fail(e); }
+  S.treePath = t.path; S.treeFor = m.id;
+  const parts = t.path ? t.path.split('/') : [];
+  const go = p => renderTree(pane, m, p);
+  const mention = rel => { const i = $('#input'); i.value = (i.value.trimEnd() + ' @' + rel + ' ').trimStart(); i.focus(); autosize(); syncSend(); };
+  const crumbs = h('div', { class: 'crumbs' },
+    h('button', { class: 'crumb', onclick: () => go('') }, t.root.split(/[\\/]/).pop()),
+    ...parts.flatMap((p, i) => ['/', h('button', { class: 'crumb', onclick: () => go(parts.slice(0, i + 1).join('/')) }, p)]));
+  const rows = t.entries.map(e => {
+    const rel = (t.path ? t.path + '/' : '') + e.name;
+    const full = t.root + '/' + rel;
+    return h('div', { class: 'frow' + (e.dim ? ' dim' : '') },
+      h('button', { class: 'fname', title: rel, onclick: () => e.dir ? go(rel) : openFile(full, [0, 0]) },
+        h('span', { class: 'fic', 'aria-hidden': 'true' }, e.dir ? '▸' : '·'), e.name + (e.dir ? '/' : '')),
+      h('span', { class: 'fsz' }, e.dir ? '' : fmtSize(e.size)),
+      h('span', { class: 'facts' },
+        h('button', { class: 'btn small', title: 'Mention it in your message (@' + rel + ')', onclick: () => mention(rel) }, '@'),
+        NATIVE && !e.dir && h('button', { class: 'btn small', title: 'Open in its default app', onclick: () => NATIVE.opener.openPath(full).catch(fail) }, 'Open'),
+        NATIVE && h('button', { class: 'btn small', title: 'Show in Finder / Explorer', onclick: () => NATIVE.opener.revealItemInDir(full).catch(fail) }, '⌕')));
+  });
+  pane.replaceChildren(crumbs,
+    t.path ? h('div', { class: 'frow' }, h('button', { class: 'fname', onclick: () => go(parts.slice(0, -1).join('/')) }, h('span', { class: 'fic' }, '↰'), '..')) : null,
+    ...(rows.length ? rows : [h('p', { class: 'cap' }, 'Empty folder.')]));
+}
+
 /* ---------- git: review uncommitted work, commit, merge a worktree back ---------- */
 async function renderGit(box, m) {
   let st;
@@ -1472,6 +1500,10 @@ async function renderPane() {
         return h('div', { class: 'rt ' + e.event, title: e.why || '' }, h('span', { class: 't' }, clock(e.ts)), h('span', { class: 'k' }, k), h('span', {}, text));
       }) : [h('p', { class: 'cap' }, 'No routing decisions yet.')]));
     }).catch(() => {});
+  } else if (S.tab === 'files') {
+    const m = cur();
+    if (!m) return pane.replaceChildren(h('p', { class: 'cap' }, 'Open a session to browse its folder.'));
+    renderTree(pane, m, S.treePath && S.treeFor === m.id ? S.treePath : '');
   } else if (S.tab === 'changes') {
     const files = new Map();
     for (const e of S.events) {

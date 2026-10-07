@@ -16,6 +16,8 @@
     "clipboard-manager:allow-read-text",
     "clipboard-manager:allow-write-text",
     "opener:allow-open-url",
+    "opener:allow-reveal-item-in-dir",
+    { "identifier": "opener:allow-open-path", "allow": [{ "path": "$HOME/**" }] },
     "autostart:allow-enable",
     "autostart:allow-disable",
     "autostart:allow-is-enabled",

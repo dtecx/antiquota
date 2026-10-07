@@ -412,3 +412,19 @@ def test_daily_schedule_fires_at_its_time(home, work):
         assert False
     except ValueError:
         pass
+
+
+def test_files_tree_stays_inside_the_session_folder(home, work):
+    (work / "src").mkdir()
+    (work / "src" / "a.py").write_text("x")
+    (work / ".git").mkdir()
+    eng = Engine()
+    sid = eng.create(str(work), "gemini-3.8-flash-low")["id"]
+    t = eng.tree(sid)
+    assert [(e["name"], e["dir"], e["dim"]) for e in t["entries"]] == [("src", True, False), (".git", True, True)]
+    assert eng.tree(sid, "src")["entries"][0]["name"] == "a.py"
+    try:
+        eng.tree(sid, "..")
+        assert False
+    except ValueError:
+        pass

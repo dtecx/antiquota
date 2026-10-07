@@ -902,3 +902,18 @@ label.check { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10
   font-size: 12.5px; color: var(--ink-3); line-height: 1.5; cursor: pointer; }
 label.check b { color: var(--ink-2); font-weight: 500; }
 label.check input { margin-top: 3px; accent-color: var(--baton); }
+
+/* ---------- files tab ---------- */
+.crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; margin-bottom: 8px; font: 12px var(--mono); color: var(--ink-4); }
+.crumb { border: 0; background: none; padding: 2px 4px; border-radius: 4px; color: var(--ink-2); font: inherit; }
+.crumb:hover { background: var(--rule); color: var(--ink); }
+.frow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; border-radius: var(--r-sm); }
+.frow:hover { background: var(--rule); }
+.frow.dim .fname { color: var(--ink-4); }
+.fname { display: flex; gap: 8px; align-items: center; min-width: 0; border: 0; background: none; padding: 5px 6px; text-align: left;
+  font: 12.5px var(--mono); color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fic { width: 10px; color: var(--ink-4); flex: none; }
+.fsz { font: 11px var(--mono); color: var(--ink-4); }
+.facts { display: flex; gap: 4px; padding-right: 4px; opacity: 0; }
+.frow:hover .facts, .facts:focus-within { opacity: 1; }
+.facts .btn.small { height: 20px; padding: 0 6px; font-size: 11px; }

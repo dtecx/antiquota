@@ -340,6 +340,8 @@ class Handler(BaseHTTPRequestHandler):
                 d = stack.defaults()
                 return e.create(b.get("cwd") or a.home(), b.get("model") or d["model"], "",
                                 b.get("mode") or d["mode"], b.get("title", ""), bool(b.get("worktree")))
+            case ("GET", ["sessions", sid, "tree"]):
+                return e.tree(sid, (qs.get("path") or [""])[0])
             case ("GET", ["sessions", sid, "git"]):
                 return e.git_status(sid) or {}
             case ("GET", ["sessions", sid, "git", "diff"]):

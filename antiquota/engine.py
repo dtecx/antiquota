@@ -1135,6 +1135,26 @@ class Engine:
             f.write(("" if not body or body.endswith("\n") else "\n") + f"- {text.strip()}\n")
         return {"path": path, "file": os.path.basename(path)}
 
+    def tree(self, sid, path=""):
+        """One folder of the session's project for the Files tab: folders first, hidden and
+        heavy folders last and marked, at most 400 entries."""
+        cwd = os.path.realpath(self.sessions[sid].meta["cwd"])
+        p = os.path.realpath(os.path.join(cwd, path or ""))
+        if not (p == cwd or p.startswith(cwd + os.sep)) or not os.path.isdir(p):
+            raise ValueError("only folders inside the session folder")
+        heavy = {".git", "node_modules", "__pycache__", ".venv", "venv", ".mypy_cache", ".pytest_cache", "dist", "build"}
+        out = []
+        for n in sorted(os.listdir(p), key=lambda n: (not os.path.isdir(os.path.join(p, n)), n.startswith("."), n.lower()))[:400]:
+            full = os.path.join(p, n)
+            isdir = os.path.isdir(full)
+            try:
+                size = 0 if isdir else os.path.getsize(full)
+            except OSError:
+                size = 0
+            out.append({"name": n, "dir": isdir, "size": size, "dim": n.startswith(".") or n in heavy})
+        rel = os.path.relpath(p, cwd)
+        return {"root": cwd, "path": "" if rel == "." else rel, "entries": out}
+
     def read_file(self, sid, path):
         """A text file inside the session's folder or its attachments, for the GUI's file viewer."""
         s = self.sessions[sid]
