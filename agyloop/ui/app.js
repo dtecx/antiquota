@@ -10,6 +10,7 @@ const $ = (s, el = document) => el.querySelector(s);
 const NATIVE = window.__TAURI__ || null;
 const openExternal = url => NATIVE ? NATIVE.opener.openUrl(url) : window.open(url, '_blank', 'noopener');
 const readClipboard = () => NATIVE ? NATIVE.clipboardManager.readText() : navigator.clipboard.readText();
+const copyText = text => NATIVE ? NATIVE.clipboardManager.writeText(text) : navigator.clipboard.writeText(text);
 /* In-app confirmation: the same everywhere (the app's web view may not show window.confirm). */
 function ask(message, { ok = 'Continue', danger = false, title = '' } = {}) {
   return new Promise(resolve => {
@@ -170,7 +171,7 @@ function addCopy(node) {
     if ($('.copy', pre)) continue;
     pre.append(h('button', {
       class: 'copy', type: 'button',
-      onclick: () => navigator.clipboard.writeText($('code', pre).textContent).then(() => toast('Copied')),
+      onclick: () => copyText($('code', pre).textContent).then(() => toast('Copied')),
     }, 'copy'));
   }
 }
@@ -707,7 +708,7 @@ async function rewindTo(turn) {
 function copyButton(getText) {
   return h('button', {
     class: 'copy-msg', type: 'button', title: 'Copy', 'aria-label': 'Copy message',
-    onclick: e => { e.stopPropagation(); navigator.clipboard.writeText(getText()).then(() => toast('Copied')); },
+    onclick: e => { e.stopPropagation(); copyText(getText()).then(() => toast('Copied')); },
   }, '⧉');
 }
 function renderEvent(ev, live) {
@@ -1054,7 +1055,7 @@ function showFile(f, [from, to] = [0, 0]) {
   const dlg = $('#viewer');
   $('#viewer-path').textContent = f.rel;
   $('#viewer-path').title = f.path;
-  $('#viewer-copy').onclick = () => navigator.clipboard.writeText(f.text).then(() => toast('Copied'));
+  $('#viewer-copy').onclick = () => copyText(f.text).then(() => toast('Copied'));
   const lines = f.text.replace(/\n$/, '').split('\n');
   const body = $('#viewer-body');
   body.replaceChildren(h('pre', {}, ...lines.map((l, i) => h('div', { class: 'ln' + (i + 1 >= from && i + 1 <= to ? ' hit' : '') },
