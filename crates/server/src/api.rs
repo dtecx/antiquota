@@ -230,3 +230,81 @@ pub struct LoopResponse {
     #[ts(optional)]
     pub next: Option<f64>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct TextResponse {
+    pub text: String,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct StackFileResponse {
+    pub path: String,
+    pub text: String,
+    pub exists: bool,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct NoteResponse {
+    pub path: String,
+    pub file: String,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct FilesResponse {
+    pub files: Vec<String>,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct FolderResponse {
+    pub path: String,
+    pub parent: Option<String>,
+    pub dirs: Vec<String>,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct SearchHit {
+    pub id: String,
+    pub title: String,
+    pub cwd: String,
+    pub ts: f64,
+    pub who: String,
+    pub snippet: String,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct UsageDay {
+    pub date: String,
+    pub total: u64,
+    pub turns: u64,
+    pub by: std::collections::BTreeMap<String, u64>,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct UsageAccount {
+    pub tokens: u64,
+    pub turns: u64,
+    pub today: u64,
+    pub input: u64,
+    pub output: u64,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct UsageResponse {
+    pub days: Vec<UsageDay>,
+    pub accounts: std::collections::BTreeMap<String, UsageAccount>,
+    pub models: std::collections::BTreeMap<String, u64>,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct StackResponse {
+    pub skills: Option<Vec<String>>,
+    pub hooks: Option<Vec<String>>,
+    pub mcp: Vec<String>,
+    pub path: String,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct EngineResponse {
+    pub version: String,
+    pub pid: u32,
+    pub url: Option<String>,
+    pub by: Option<String>,
+    pub started: Option<f64>,
+    pub base: String,
+    pub stack: String,
+    pub log: String,
+    pub hook: bool,
+    pub agy: String,
+    pub sessions: usize,
+    pub accounts: usize,
+}

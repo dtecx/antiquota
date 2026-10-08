@@ -109,6 +109,59 @@ pub fn handle(args: &[String], script: &Script) -> Result<bool, FakeError> {
         );
         return Ok(true);
     }
+    if ["mcp", "plugin"].contains(&command) {
+        let home = PathBuf::from(env::var_os("HOME").unwrap());
+        super::sandbox::isolated(&home)?;
+        let action = args.get(1).map(String::as_str).unwrap_or("");
+        if action == "list" {
+            let servers: serde_json::Value = fs::read(home.join(".gemini/config/mcp_config.json"))
+                .ok()
+                .and_then(|b| serde_json::from_slice(&b).ok())
+                .unwrap_or(json!({}));
+            let state: serde_json::Value =
+                fs::read(home.join(".gemini/antigravity-cli/mcp_state.json"))
+                    .ok()
+                    .and_then(|b| serde_json::from_slice(&b).ok())
+                    .unwrap_or(json!({}));
+            println!("Name Type Status");
+            for (name, _) in servers["mcpServers"].as_object().into_iter().flatten() {
+                println!("{name} stdio {}", state[name].as_str().unwrap_or("enabled"));
+            }
+        } else if ["enable", "disable"].contains(&action) {
+            if script.exit_code.is_some_and(|code| code != 0) {
+                return Err(FakeError::Scenario("fake metadata toggle failed".into()));
+            }
+            let name = args
+                .get(2)
+                .ok_or_else(|| FakeError::Scenario("missing item name".into()))?;
+            let path = home.join(if command == "mcp" {
+                ".gemini/antigravity-cli/mcp_state.json"
+            } else {
+                ".gemini/config/config.json"
+            });
+            let mut data: serde_json::Value = fs::read(&path)
+                .ok()
+                .and_then(|b| serde_json::from_slice(&b).ok())
+                .unwrap_or(json!({}));
+            if command == "mcp" {
+                data[name] = json!(if action == "enable" {
+                    "enabled"
+                } else {
+                    "disabled"
+                });
+            } else {
+                if !data["plugins"].is_object() {
+                    data["plugins"] = json!({});
+                }
+                data["plugins"][name] = json!({"enabled":action=="enable"});
+            }
+            fs::create_dir_all(path.parent().unwrap())?;
+            fs::write(path, data.to_string())?;
+        } else {
+            return Err(FakeError::Scenario("unsupported metadata action".into()));
+        }
+        return Ok(true);
+    }
     if prompt.contains("VERDICT:") {
         println!(
             "{}",

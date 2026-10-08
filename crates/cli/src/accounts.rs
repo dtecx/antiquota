@@ -180,7 +180,7 @@ pub async fn doctor(accounts: Arc<FileAccounts>) -> anyhow::Result<i32> {
             "not set: the path belongs to something else".into()
         }
     );
-    let overview = accounts.stack_overview()?;
+    let overview = accounts.stack_overview().await?;
     let names = |key: &str| {
         overview[key]
             .as_array()

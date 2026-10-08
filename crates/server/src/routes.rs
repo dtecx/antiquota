@@ -38,12 +38,12 @@ pub fn catalog() -> Vec<RouteDefinition> {
         RouteDefinition {
             method: "POST".into(),
             path: "/api/sessions/{sid}/fork".into(),
-            status: RouteStatus::Pending,
+            status: RouteStatus::Implemented,
         },
         RouteDefinition {
             method: "GET".into(),
             path: "/api/search".into(),
-            status: RouteStatus::Pending,
+            status: RouteStatus::Implemented,
         },
         RouteDefinition {
             method: "POST".into(),
@@ -58,12 +58,12 @@ pub fn catalog() -> Vec<RouteDefinition> {
         RouteDefinition {
             method: "GET".into(),
             path: "/api/engine".into(),
-            status: RouteStatus::Pending,
+            status: RouteStatus::Implemented,
         },
         RouteDefinition {
             method: "GET".into(),
             path: "/api/engine/log".into(),
-            status: RouteStatus::Pending,
+            status: RouteStatus::Implemented,
         },
         RouteDefinition {
             method: "POST".into(),
@@ -153,12 +153,12 @@ pub fn catalog() -> Vec<RouteDefinition> {
         RouteDefinition {
             method: "POST".into(),
             path: "/api/sessions/{sid}/rewind".into(),
-            status: RouteStatus::Pending,
+            status: RouteStatus::Implemented,
         },
         RouteDefinition {
             method: "POST".into(),
             path: "/api/sessions/{sid}/clear".into(),
-            status: RouteStatus::Pending,
+            status: RouteStatus::Implemented,
         },
         RouteDefinition {
             method: "POST".into(),
@@ -188,22 +188,22 @@ pub fn catalog() -> Vec<RouteDefinition> {
         RouteDefinition {
             method: "GET".into(),
             path: "/api/sessions/{sid}/state".into(),
-            status: RouteStatus::Pending,
+            status: RouteStatus::Implemented,
         },
         RouteDefinition {
             method: "POST".into(),
             path: "/api/sessions/{sid}/inherit".into(),
-            status: RouteStatus::Pending,
+            status: RouteStatus::Implemented,
         },
         RouteDefinition {
             method: "POST".into(),
             path: "/api/sessions/{sid}/shell".into(),
-            status: RouteStatus::Pending,
+            status: RouteStatus::Implemented,
         },
         RouteDefinition {
             method: "POST".into(),
             path: "/api/sessions/{sid}/note".into(),
-            status: RouteStatus::Pending,
+            status: RouteStatus::Implemented,
         },
         RouteDefinition {
             method: "GET".into(),
@@ -213,12 +213,12 @@ pub fn catalog() -> Vec<RouteDefinition> {
         RouteDefinition {
             method: "POST".into(),
             path: "/api/sessions/{sid}/compact".into(),
-            status: RouteStatus::Pending,
+            status: RouteStatus::Implemented,
         },
         RouteDefinition {
             method: "GET".into(),
             path: "/api/sessions/{sid}/files".into(),
-            status: RouteStatus::Pending,
+            status: RouteStatus::Implemented,
         },
         RouteDefinition {
             method: "POST".into(),
@@ -243,7 +243,7 @@ pub fn catalog() -> Vec<RouteDefinition> {
         RouteDefinition {
             method: "GET".into(),
             path: "/api/usage".into(),
-            status: RouteStatus::Pending,
+            status: RouteStatus::Implemented,
         },
         RouteDefinition {
             method: "GET".into(),
@@ -303,47 +303,47 @@ pub fn catalog() -> Vec<RouteDefinition> {
         RouteDefinition {
             method: "GET".into(),
             path: "/api/settings/file".into(),
-            status: RouteStatus::Pending,
+            status: RouteStatus::Implemented,
         },
         RouteDefinition {
             method: "PUT".into(),
             path: "/api/settings/file".into(),
-            status: RouteStatus::Pending,
+            status: RouteStatus::Implemented,
         },
         RouteDefinition {
             method: "GET".into(),
             path: "/api/settings/{kind}/{name}".into(),
-            status: RouteStatus::Pending,
+            status: RouteStatus::Implemented,
         },
         RouteDefinition {
             method: "PUT".into(),
             path: "/api/settings/{kind}/{name}".into(),
-            status: RouteStatus::Pending,
+            status: RouteStatus::Implemented,
         },
         RouteDefinition {
             method: "DELETE".into(),
             path: "/api/settings/{kind}/{name}".into(),
-            status: RouteStatus::Pending,
+            status: RouteStatus::Implemented,
         },
         RouteDefinition {
             method: "POST".into(),
             path: "/api/settings/{kind}/{name}/enabled".into(),
-            status: RouteStatus::Pending,
+            status: RouteStatus::Implemented,
         },
         RouteDefinition {
             method: "POST".into(),
             path: "/api/settings/copy".into(),
-            status: RouteStatus::Pending,
+            status: RouteStatus::Implemented,
         },
         RouteDefinition {
             method: "GET".into(),
             path: "/api/stack".into(),
-            status: RouteStatus::Pending,
+            status: RouteStatus::Implemented,
         },
         RouteDefinition {
             method: "POST".into(),
             path: "/api/stack/reseed".into(),
-            status: RouteStatus::Pending,
+            status: RouteStatus::Implemented,
         },
         RouteDefinition {
             method: "GET".into(),
@@ -358,7 +358,7 @@ pub fn catalog() -> Vec<RouteDefinition> {
         RouteDefinition {
             method: "GET".into(),
             path: "/api/fs".into(),
-            status: RouteStatus::Pending,
+            status: RouteStatus::Implemented,
         },
         RouteDefinition {
             method: "GET".into(),

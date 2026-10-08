@@ -131,4 +131,62 @@ describe('typed API boundary', () => {
       '/api/sessions/s%2F1/attachments/a%20b.png?token=t%2Bk',
     );
   });
+  it('encodes all recovery, discovery and stack route parameters without changing bodies', async () => {
+    const request = vi
+      .fn<typeof fetch>()
+      .mockImplementation(async () => Response.json({ ok: true }));
+    const api = createApi('synthetic', request);
+    await api.search('a+b &');
+    await api.fork('a/b');
+    await api.clear('a/b');
+    await api.compact('a/b');
+    await api.rewind('a/b', 3);
+    await api.inherit('a/b', 'source/+');
+    await api.stateDocument('a/b');
+    await api.shell('a/b', 'printf hi');
+    await api.note('a/b', 'Keep this.');
+    await api.mentionFiles('a/b', 'a &');
+    await api.engine();
+    await api.engineLog();
+    await api.usage(30);
+    await api.browse('/a b');
+    await api.stackFile('config/a b.json');
+    await api.writeStackFile('config/x', '{}');
+    await api.stackItem('mcp', 'a/b');
+    await api.putStackItem('hook', 'a/b', { enabled: false });
+    await api.deleteStackItem('skill', 'a/b');
+    await api.enableStackItem('plugin', 'a/b', false);
+    await api.copyStackItem('ide', 'skill', 'a/b');
+    await api.stack();
+    await api.reseedStack();
+    expect(
+      request.mock.calls.map(([path, options]) => [path, options?.method, options?.body]),
+    ).toEqual([
+      ['/api/search?q=a%2Bb+%26', 'GET', undefined],
+      ['/api/sessions/a%2Fb/fork', 'POST', '{}'],
+      ['/api/sessions/a%2Fb/clear', 'POST', '{}'],
+      ['/api/sessions/a%2Fb/compact', 'POST', '{}'],
+      ['/api/sessions/a%2Fb/rewind', 'POST', '{"turn":3}'],
+      ['/api/sessions/a%2Fb/inherit', 'POST', '{"from":"source/+"}'],
+      ['/api/sessions/a%2Fb/state', 'GET', undefined],
+      ['/api/sessions/a%2Fb/shell', 'POST', '{"cmd":"printf hi"}'],
+      ['/api/sessions/a%2Fb/note', 'POST', '{"text":"Keep this."}'],
+      ['/api/sessions/a%2Fb/files?q=a+%26', 'GET', undefined],
+      ['/api/engine', 'GET', undefined],
+      ['/api/engine/log', 'GET', undefined],
+      ['/api/usage?days=30', 'GET', undefined],
+      ['/api/fs?path=%2Fa+b', 'GET', undefined],
+      ['/api/settings/file?path=config%2Fa+b.json', 'GET', undefined],
+      ['/api/settings/file', 'PUT', '{"path":"config/x","text":"{}"}'],
+      ['/api/settings/mcp/a%2Fb', 'GET', undefined],
+      ['/api/settings/hook/a%2Fb', 'PUT', '{"value":{"enabled":false}}'],
+      ['/api/settings/skill/a%2Fb', 'DELETE', undefined],
+      ['/api/settings/plugin/a%2Fb/enabled', 'POST', '{"on":false}'],
+      ['/api/settings/copy', 'POST', '{"source":"ide","kind":"skill","name":"a/b"}'],
+      ['/api/stack?refresh=1', 'GET', undefined],
+      ['/api/stack/reseed', 'POST', '{}'],
+    ]);
+    await expect(api.stackItem('unsupported', 'name')).rejects.toThrow('not available');
+    expect(request).toHaveBeenCalledTimes(23);
+  });
 });

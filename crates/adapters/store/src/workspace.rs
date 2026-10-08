@@ -29,6 +29,15 @@ fn inside(path: &Path, root: &Path) -> bool {
 }
 
 impl Workspace for FileWorkspace {
+    fn mention_files(&self, cwd: &str, query: &str) -> Result<Vec<String>, PortError> {
+        crate::project_actions::mention_files(cwd, query)
+    }
+    fn browse(&self, path: &str) -> Result<Value, PortError> {
+        crate::project_actions::browse(path)
+    }
+    fn note(&self, cwd: &str, text: &str) -> Result<Value, PortError> {
+        crate::project_actions::note(cwd, text)
+    }
     fn tree(&self, cwd: &str, path: &str) -> Result<Value, PortError> {
         let root = real(Path::new(cwd))
             .ok_or_else(|| PortError::Invalid("only folders inside the session folder".into()))?;

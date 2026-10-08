@@ -193,6 +193,9 @@ async fn route(
     if let Some(result) = crate::account_http::route(service, method, parts, body, query).await {
         return result;
     }
+    if let Some(result) = crate::parity_http::route(state, method, parts, body, query).await {
+        return result;
+    }
     match (method, parts) {
         ("GET", ["state"]) => {
             let settings = service.public_defaults()?;
@@ -534,7 +537,7 @@ fn dimension(value: Option<&Value>) -> Result<Option<u16>, AppError> {
         .ok_or_else(|| AppError::Invalid("terminal size must be a number".into()))
 }
 /// Python's `str(value or "")` for loosely typed request fields.
-fn loose_text(value: Option<&Value>) -> String {
+pub(crate) fn loose_text(value: Option<&Value>) -> String {
     match value {
         None | Some(Value::Null) => String::new(),
         Some(Value::String(s)) => s.clone(),
@@ -557,13 +560,13 @@ fn approval(reply: antiquota_app::ApprovalReply) -> Result<Value, AppError> {
     })
 }
 /// One decoded query parameter, like Python's `parse_qs`.
-fn query_value(query: &str, key: &str) -> Option<String> {
+pub(crate) fn query_value(query: &str, key: &str) -> Option<String> {
     query.split('&').find_map(|part| {
         let (k, v) = part.split_once('=').unwrap_or((part, ""));
         (decode(k) == key).then(|| decode(v))
     })
 }
-fn decode(text: &str) -> String {
+pub(crate) fn decode(text: &str) -> String {
     let bytes = text.as_bytes();
     let mut out = Vec::with_capacity(bytes.len());
     let mut i = 0;

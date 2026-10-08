@@ -18,6 +18,16 @@ fn generate(dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
         .with_out_dir(dir)
         .with_large_int("number");
     StateResponse::export_all(&config)?;
+    TextResponse::export_all(&config)?;
+    StackFileResponse::export_all(&config)?;
+    NoteResponse::export_all(&config)?;
+    FilesResponse::export_all(&config)?;
+    FolderResponse::export_all(&config)?;
+    SearchHit::export_all(&config)?;
+    UsageResponse::export_all(&config)?;
+    StackResponse::export_all(&config)?;
+    EngineResponse::export_all(&config)?;
+
     LoginLink::export_all(&config)?;
     LoginState::export_all(&config)?;
     LoginCodeRequest::export_all(&config)?;

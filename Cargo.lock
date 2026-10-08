@@ -190,6 +190,7 @@ dependencies = [
  "antiquota-shell",
  "antiquota-store",
  "axum",
+ "chrono",
  "futures-util",
  "serde",
  "serde_json",
@@ -214,6 +215,7 @@ name = "antiquota-store"
 version = "0.5.0"
 dependencies = [
  "antiquota-core",
+ "chrono",
  "serde",
  "serde_json",
  "thiserror 2.0.21",

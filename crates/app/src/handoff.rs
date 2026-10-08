@@ -301,40 +301,7 @@ impl Service {
         let mut next = state.meta.clone();
         next.conversation_id = None;
         self.replace_meta(&mut state, next)?;
-        let mut summary = format!(
-            "You are taking over work from an earlier agent session whose conversation could not be resumed. Its handoff state follows; check the current files yourself before relying on it.\n\n# Handoff: {}\nFolder: {}\n",
-            state.meta.title, state.meta.cwd
-        );
-        for record in state
-            .records
-            .iter()
-            .rev()
-            .filter(|r| {
-                matches!(
-                    r.event,
-                    Event::User { .. } | Event::Assistant { .. } | Event::Tool { .. }
-                )
-            })
-            .take(24)
-            .collect::<Vec<_>>()
-            .into_iter()
-            .rev()
-        {
-            match &record.event {
-                Event::User { text, .. } => {
-                    summary.push_str(&format!("Request: {}\n", tail(text, 2000)))
-                }
-                Event::Assistant { text, .. } => {
-                    summary.push_str(&format!("Reply: {}\n", tail(text, 4000)))
-                }
-                Event::Tool { name, output, .. } => summary.push_str(&format!(
-                    "Tool {name}: {}\n",
-                    tail(output.as_deref().unwrap_or(""), 1000)
-                )),
-                _ => {}
-            }
-        }
-        summary.push_str(&format!("\nContinue. Current request:\n{prompt}"));
+        let summary = antiquota_core::state_document::handoff(&state.meta, &state.records, prompt);
         Ok(summary)
     }
     pub(crate) fn notice(

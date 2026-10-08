@@ -34,12 +34,12 @@ The legacy implementation is in this branch for reference: `antiquota/*.py` (eng
 
 ## Status
 
-Slices 1 and 3 to 8 are done and committed: sessions, permissions and approvals, goals, jobs, worktrees, terminal, attachments and dictation. Slice 2 (accounts and handoff) has code and tests; its evidence is in `tests/rewrite/slice2-coverage-proposal.json` and is not yet folded into the report rows. 282 of 1144 rows are Passed.
+Slices 1, 3 to 8 and 9a are done and committed: sessions, permissions and approvals, goals, jobs, worktrees, terminal, attachments and dictation. Slice 2 (accounts and handoff) has code and tests; its evidence is in `tests/rewrite/slice2-coverage-proposal.json` and is not yet folded into the report rows. 331 of 1144 rows are Passed.
 
 Next work, in order:
 
 1. Slice 9, the remaining UI and engine parity. It is large, so deliver it as separately committed parts:
-   - 9a: the pending routes in the route catalog. These are fork, rewind, clear, compact, inherit, `state`, `shell` (`!cmd`), `note` (`# note`), `files`, search, `engine` and `engine/log`, `usage`, `fs`, the settings file, settings `{kind}/{name}` read, write, delete and enable, settings copy, and stack read and reseed.
+   - 9a (done): the remaining routes in the route catalog. These are fork, rewind, clear, compact, inherit, `state`, `shell` (`!cmd`), `note` (`# note`), `files`, search, `engine` and `engine/log`, `usage`, `fs`, the settings file, settings `{kind}/{name}` read, write, delete and enable, settings copy, and stack read and reseed.
    - 9b: Settings sections (general, appearance, agent, permissions, stack), account cards, rotation and the usage chart (use Chart.js directly), and the sign-in states.
    - 9c: the sessions and projects sidebar, context menus with keyboard support, search (⌘K) and split view. Split view uses two session components on one event connection, with no iframe and no second root zoom.
    - 9d: the composer. This covers every slash command entry point, autocomplete (`@` mentions and `/` commands), prompt history with ↑/↓, shortcuts, models and the header.

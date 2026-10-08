@@ -6,6 +6,8 @@ mod metadata;
 mod overview;
 mod permissions;
 mod stack;
+mod stack_edit;
+mod stack_import;
 use antiquota_core::{
     AccountLease, AccountStore, LoginLink, LoginState, Model, PortError, PortFuture, Quota,
     RoutingEntry, Slot,
@@ -103,6 +105,10 @@ impl FileAccounts {
         farm::sync(self, slot)
     }
     pub fn seed_stack(&self, force: bool) -> Result<(), PortError> {
+        let _guard = self
+            .changes
+            .lock()
+            .map_err(|_| PortError::Unavailable("account changes unavailable".into()))?;
         farm::seed(self, force)
     }
     pub fn expose_usage(&self) -> Result<bool, PortError> {
@@ -195,8 +201,47 @@ impl AccountStore for FileAccounts {
     fn cancel_logins(&self) -> PortFuture<'_, ()> {
         login::cancel_all(self)
     }
-    fn stack_overview(&self) -> Result<serde_json::Value, PortError> {
-        stack::overview(self)
+    fn stack_overview(&self) -> PortFuture<'_, serde_json::Value> {
+        Box::pin(stack::overview(self))
+    }
+    fn stack_info(&self, reseed: bool) -> PortFuture<'_, serde_json::Value> {
+        Box::pin(self.stack_info_value(reseed))
+    }
+    fn stack_file(&self, path: &str) -> Result<serde_json::Value, PortError> {
+        self.read_stack_file(path)
+    }
+    fn write_stack_file(&self, path: &str, text: &str) -> Result<(), PortError> {
+        self.write_stack_text(path, text)
+    }
+    fn stack_item(&self, kind: &str, name: &str) -> Result<serde_json::Value, PortError> {
+        self.get_stack_item(kind, name)
+    }
+    fn put_stack_item(
+        &self,
+        kind: &str,
+        name: &str,
+        value: &serde_json::Value,
+    ) -> Result<(), PortError> {
+        self.put_stack_item(kind, name, value)
+    }
+    fn delete_stack_item(&self, kind: &str, name: &str) -> Result<(), PortError> {
+        self.delete_stack_item(kind, name)
+    }
+    fn enable_stack_item<'a>(
+        &'a self,
+        kind: &'a str,
+        name: &'a str,
+        on: bool,
+    ) -> PortFuture<'a, ()> {
+        Box::pin(self.enable_stack(kind, name, on))
+    }
+    fn copy_stack_item(
+        &self,
+        source: &str,
+        kind: &str,
+        name: Option<&str>,
+    ) -> Result<(), PortError> {
+        self.copy_stack(source, kind, name)
     }
     fn permissions(&self) -> Result<antiquota_core::Permissions, PortError> {
         Ok(permissions::read(self))

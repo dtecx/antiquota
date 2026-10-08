@@ -174,7 +174,46 @@ pub trait AccountStore: Send + Sync {
     fn cancel_logins(&self) -> PortFuture<'_, ()> {
         Box::pin(async { Ok(()) })
     }
-    fn stack_overview(&self) -> Result<serde_json::Value, PortError> {
+    fn stack_overview(&self) -> PortFuture<'_, serde_json::Value> {
+        Box::pin(async { unavailable() })
+    }
+    fn stack_info(&self, _reseed: bool) -> PortFuture<'_, serde_json::Value> {
+        Box::pin(async { unavailable() })
+    }
+    fn stack_file(&self, _path: &str) -> Result<serde_json::Value, PortError> {
+        unavailable()
+    }
+    fn write_stack_file(&self, _path: &str, _text: &str) -> Result<(), PortError> {
+        unavailable()
+    }
+    fn stack_item(&self, _kind: &str, _name: &str) -> Result<serde_json::Value, PortError> {
+        unavailable()
+    }
+    fn put_stack_item(
+        &self,
+        _kind: &str,
+        _name: &str,
+        _value: &serde_json::Value,
+    ) -> Result<(), PortError> {
+        unavailable()
+    }
+    fn delete_stack_item(&self, _kind: &str, _name: &str) -> Result<(), PortError> {
+        unavailable()
+    }
+    fn enable_stack_item<'a>(
+        &'a self,
+        _kind: &'a str,
+        _name: &'a str,
+        _on: bool,
+    ) -> PortFuture<'a, ()> {
+        Box::pin(async { unavailable() })
+    }
+    fn copy_stack_item(
+        &self,
+        _source: &str,
+        _kind: &str,
+        _name: Option<&str>,
+    ) -> Result<(), PortError> {
         unavailable()
     }
     /// antiquota's own allow and deny lists, shared by every account and session.
@@ -216,6 +255,12 @@ pub trait SessionStore: Send + Sync {
     ) -> Result<f64, PortError>;
     fn project_usage(&self, sid: &str, records: &[EventRecord]) -> Result<(), PortError>;
     fn state_dir(&self) -> String;
+    fn engine_details(&self) -> Result<serde_json::Value, PortError> {
+        unavailable()
+    }
+    fn engine_log(&self) -> Result<String, PortError> {
+        unavailable()
+    }
     /// Keeps an uploaded file with the session under a safe, unused name.
     fn save_attachment(
         &self,
@@ -258,6 +303,30 @@ pub trait SessionStore: Send + Sync {
     fn resolve_mentions(&self, _cwd: &str, _candidates: &[String]) -> Vec<String> {
         vec![]
     }
+    fn usage_history(&self, _days: u32, _now: f64) -> Result<serde_json::Value, PortError> {
+        unavailable()
+    }
+    fn save_state_document(&self, _sid: &str, _text: &str) -> Result<(), PortError> {
+        Ok(())
+    }
+    fn checkpoint(
+        &self,
+        _sid: &str,
+        _turn: u64,
+        _cwd: &str,
+        _path: &str,
+        _before: bool,
+    ) -> Result<(), PortError> {
+        Ok(())
+    }
+    fn rewind(
+        &self,
+        _sid: &str,
+        _turn: u64,
+        _cwd: &str,
+    ) -> Result<(Vec<String>, Vec<String>), PortError> {
+        unavailable()
+    }
     fn settings(&self) -> Result<Option<Settings>, PortError> {
         Ok(None)
     }
@@ -267,6 +336,15 @@ pub trait SessionStore: Send + Sync {
 }
 /// A session's project folder as the Files tab and file viewer see it.
 pub trait Workspace: Send + Sync {
+    fn mention_files(&self, _cwd: &str, _query: &str) -> Result<Vec<String>, PortError> {
+        unavailable()
+    }
+    fn browse(&self, _path: &str) -> Result<serde_json::Value, PortError> {
+        unavailable()
+    }
+    fn note(&self, _cwd: &str, _text: &str) -> Result<serde_json::Value, PortError> {
+        unavailable()
+    }
     /// One folder of the project: folders first, hidden and heavy entries last and dimmed,
     /// at most 400 entries; `{root, path, entries}`.
     fn tree(&self, cwd: &str, path: &str) -> Result<serde_json::Value, PortError>;

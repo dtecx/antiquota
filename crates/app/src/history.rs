@@ -23,6 +23,32 @@ impl Service {
             }
             stamp
         };
+        if let Event::Tool {
+            turn,
+            name,
+            params,
+            state: phase,
+            ..
+        } = &event
+            && [
+                "write_to_file",
+                "replace_file_content",
+                "multi_replace_file_content",
+                "sed_file",
+            ]
+            .contains(&name.as_str())
+            && let Some(path) = params["TargetFile"]
+                .as_str()
+                .or_else(|| params["File"].as_str())
+        {
+            self.store.checkpoint(
+                &state.meta.id,
+                *turn,
+                &state.meta.cwd,
+                path,
+                phase == "running",
+            )?;
+        }
         let record = EventRecord::new(timestamp, event);
         if record.event.is_durable() {
             let mut next = state.meta.clone();
@@ -34,6 +60,12 @@ impl Service {
                 self.store.project_usage(&state.meta.id, &state.records)?;
             }
             self.store.save(&state.meta)?;
+            if matches!(record.event, Event::TurnEnd { .. }) {
+                self.store.save_state_document(
+                    &state.meta.id,
+                    &antiquota_core::state_document::document(&state.meta, &state.records),
+                )?;
+            }
         }
         let _ = self.events.send(StreamEvent {
             sid: Some(state.meta.id.clone()),

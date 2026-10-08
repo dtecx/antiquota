@@ -13,6 +13,7 @@ pub mod policy;
 pub mod ports;
 pub mod session;
 pub mod settings;
+pub mod state_document;
 pub mod transition;
 pub mod worktree;
 pub use accounts::*;

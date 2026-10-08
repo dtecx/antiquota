@@ -66,11 +66,14 @@ pub async fn route(
             Err(error) => return Some(Err(error)),
         },
         ("GET", ["settings"]) => {
-            return Some((|| {
-                let mut result = service.accounts.stack_overview()?;
-                result["defaults"] = json!(service.public_defaults()?);
-                Ok(result)
-            })());
+            return Some(
+                async {
+                    let mut result = service.accounts.stack_overview().await?;
+                    result["defaults"] = json!(service.public_defaults()?);
+                    Ok(result)
+                }
+                .await,
+            );
         }
         ("PUT", ["settings", "defaults"]) => AccountCommand::Defaults {
             values: body.clone(),

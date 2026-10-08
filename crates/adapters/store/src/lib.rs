@@ -1,6 +1,8 @@
 //! Owns compatible file persistence, account/engine locks, and usage projection.
 mod attachments;
+mod checkpoints;
 mod files;
+mod project_actions;
 mod usage;
 mod workspace;
 use antiquota_core::{EventRecord, PortError, Session, SessionStore};
@@ -177,6 +179,67 @@ impl SessionStore for FileStore {
     }
     fn save_settings(&self, settings: &antiquota_core::Settings) -> Result<(), PortError> {
         write_json_atomic(&self.root.join("settings.json"), settings)
+    }
+    fn save_state_document(&self, sid: &str, text: &str) -> Result<(), PortError> {
+        write_atomic(
+            &self.session_dir(sid)?.join("STATE.md"),
+            format!("{text}\n").as_bytes(),
+        )
+    }
+    fn checkpoint(
+        &self,
+        sid: &str,
+        turn: u64,
+        cwd: &str,
+        path: &str,
+        before: bool,
+    ) -> Result<(), PortError> {
+        self.capture_checkpoint(sid, turn, cwd, path, before)
+    }
+    fn rewind(
+        &self,
+        sid: &str,
+        turn: u64,
+        cwd: &str,
+    ) -> Result<(Vec<String>, Vec<String>), PortError> {
+        self.restore_checkpoints(sid, turn, cwd)
+    }
+    fn usage_history(&self, days: u32, now: f64) -> Result<serde_json::Value, PortError> {
+        self.history(days, now)
+    }
+    fn engine_details(&self) -> Result<serde_json::Value, PortError> {
+        let read = |p: &str| {
+            fs::read(self.root.join(p))
+                .ok()
+                .and_then(|bytes| serde_json::from_slice::<serde_json::Value>(&bytes).ok())
+                .unwrap_or(serde_json::json!({}))
+        };
+        let info = read("state/engine.json");
+        let hooks = read("stack/.gemini/config/hooks.json");
+        Ok(
+            serde_json::json!({"url":info["url"],"by":info["by"],"started":info["started"],"base":self.root.to_string_lossy(),"stack":self.root.join("stack").to_string_lossy(),"log":self.root.join("state/engine.log").to_string_lossy(),"hook":hooks["antiquota"].is_object()&&hooks["antiquota"]["enabled"]!=false}),
+        )
+    }
+    fn engine_log(&self) -> Result<String, PortError> {
+        use std::io::{BufRead, BufReader};
+        let file = match fs::File::open(self.root.join("state/engine.log")) {
+            Ok(file) => file,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+                return Ok("(no engine log: this engine was started from a terminal)".into());
+            }
+            Err(e) => return Err(io_error(e)),
+        };
+        let mut lines = std::collections::VecDeque::new();
+        let mut input = BufReader::new(file);
+        let mut bytes = vec![];
+        while input.read_until(b'\n', &mut bytes).map_err(io_error)? > 0 {
+            lines.push_back(String::from_utf8_lossy(&bytes).into_owned());
+            bytes.clear();
+            if lines.len() > 400 {
+                lines.pop_front();
+            }
+        }
+        Ok(lines.into_iter().collect())
     }
     fn state_dir(&self) -> String {
         self.root.join("state").to_string_lossy().into_owned()

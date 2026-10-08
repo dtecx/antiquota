@@ -132,7 +132,21 @@ impl Replay {
                 value.into(),
             );
         }
-        let expected = self.substitute(&fixture["response"]["json"]);
+        let mut expected = self.substitute(&fixture["response"]["json"]);
+        if let Some(calendar) = fixture["comparison"].get("calendar") {
+            assert_eq!(
+                calendar,
+                "days[*].date is the replay local date minus the requested number of days plus row index; calendar dates shift with the replay clock.",
+                "unknown calendar rule"
+            );
+            let rows = expected["days"].as_array_mut().expect("calendar days");
+            let today = chrono::Local::now().date_naive();
+            let first = today - chrono::Duration::days(rows.len() as i64 - 1);
+            for (index, row) in rows.iter_mut().enumerate() {
+                row["date"] =
+                    serde_json::json!((first + chrono::Duration::days(index as i64)).to_string());
+            }
+        }
         if fixture["response"].get("json").is_some() {
             compare(
                 &expected,

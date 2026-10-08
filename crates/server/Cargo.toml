@@ -25,6 +25,7 @@ axum.workspace = true
 futures-util.workspace = true
 
 [dev-dependencies]
+chrono.workspace = true
 antiquota-pty.workspace = true
 
 [lints]

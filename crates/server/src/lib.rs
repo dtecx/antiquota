@@ -2,6 +2,7 @@
 mod account_http;
 pub mod api;
 mod http;
+mod parity_http;
 pub mod routes;
 mod runtime;
 mod stream;

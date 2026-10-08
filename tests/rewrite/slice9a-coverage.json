@@ -1,0 +1,304 @@
+{
+  "slice": "9a",
+  "passed_before": 282,
+  "passed_after": 331,
+  "added": 49,
+  "feature_ids": [
+    "F-021",
+    "F-026",
+    "F-067",
+    "F-084",
+    "F-090",
+    "F-092",
+    "F-093",
+    "F-094",
+    "F-095",
+    "F-096",
+    "F-097",
+    "F-098",
+    "F-100",
+    "F-101",
+    "F-193",
+    "F-194",
+    "F-195",
+    "F-196",
+    "F-247",
+    "F-248",
+    "F-249",
+    "F-250",
+    "F-251",
+    "F-252",
+    "F-256",
+    "F-258",
+    "F-259",
+    "F-333",
+    "F-334",
+    "F-337",
+    "F-338",
+    "F-357",
+    "F-363",
+    "F-364",
+    "F-365",
+    "F-366",
+    "F-368",
+    "F-369",
+    "F-374",
+    "F-386",
+    "F-387",
+    "F-388",
+    "F-389",
+    "F-390",
+    "F-391",
+    "F-392",
+    "F-393",
+    "F-394",
+    "F-397"
+  ],
+  "tests": {
+    "F-021": {
+      "path": "tests/rewrite/parity.rs",
+      "test": "captured_settings_routes_keep_sources_read_only_and_reseed_keeps_the_hook",
+      "proof": "Replays settings and diagnostics captures. Reseed retains the owned protection hook and shared conversation history."
+    },
+    "F-394": {
+      "path": "tests/rewrite/parity.rs",
+      "test": "captured_settings_routes_keep_sources_read_only_and_reseed_keeps_the_hook",
+      "proof": "Replays settings and diagnostics captures. Reseed retains the owned protection hook and shared conversation history."
+    },
+    "F-026": {
+      "path": "tests/rewrite/parity_stack.rs",
+      "test": "stack_reads_use_signed_in_slots_and_offline_folders_without_sign_in",
+      "proof": "Uses signed-in app slots for loaded metadata. With no accounts, reads owned folders without starting agy or sign-in."
+    },
+    "F-393": {
+      "path": "tests/rewrite/parity_stack.rs",
+      "test": "stack_reads_use_signed_in_slots_and_offline_folders_without_sign_in",
+      "proof": "Uses signed-in app slots for loaded metadata. With no accounts, reads owned folders without starting agy or sign-in."
+    },
+    "F-067": {
+      "path": "tests/rewrite/parity.rs",
+      "test": "usage_replays_captured_calendar_and_clamps_the_window",
+      "proof": "Replays exact empty and populated usage totals with the explicit local-calendar rule, fills days, clamps 1\u201390 and skips malformed/future rows. Engine log returns the last 400 lines; the missing-log capture also passes."
+    },
+    "F-338": {
+      "path": "tests/rewrite/parity.rs",
+      "test": "usage_replays_captured_calendar_and_clamps_the_window",
+      "proof": "Replays exact empty and populated usage totals with the explicit local-calendar rule, fills days, clamps 1\u201390 and skips malformed/future rows. Engine log returns the last 400 lines; the missing-log capture also passes."
+    },
+    "F-374": {
+      "path": "tests/rewrite/parity.rs",
+      "test": "usage_replays_captured_calendar_and_clamps_the_window",
+      "proof": "Replays exact empty and populated usage totals with the explicit local-calendar rule, fills days, clamps 1\u201390 and skips malformed/future rows. Engine log returns the last 400 lines; the missing-log capture also passes."
+    },
+    "F-084": {
+      "path": "crates/adapters/accounts/src/stack_edit.rs",
+      "test": "names_kinds_and_import_sources_are_bounded",
+      "proof": "Checks supported kinds/sources, allowed name characters and both name-length limits."
+    },
+    "F-090": {
+      "path": "tests/rewrite/parity_stack.rs",
+      "test": "stack_imports_copy_all_supported_resources_preserve_sources_and_report_toggle_failure",
+      "proof": "Copies supported CLI/IDE resources and verifies path rewriting, hook scripts, plugin data, permission-only replacement and retained MCP state. Rejects invalid/missing entries and CLI toggle failure; deletion and object editing also replay captured cases."
+    },
+    "F-092": {
+      "path": "tests/rewrite/parity_stack.rs",
+      "test": "stack_imports_copy_all_supported_resources_preserve_sources_and_report_toggle_failure",
+      "proof": "Copies supported CLI/IDE resources and verifies path rewriting, hook scripts, plugin data, permission-only replacement and retained MCP state. Rejects invalid/missing entries and CLI toggle failure; deletion and object editing also replay captured cases."
+    },
+    "F-093": {
+      "path": "tests/rewrite/parity_stack.rs",
+      "test": "stack_imports_copy_all_supported_resources_preserve_sources_and_report_toggle_failure",
+      "proof": "Copies supported CLI/IDE resources and verifies path rewriting, hook scripts, plugin data, permission-only replacement and retained MCP state. Rejects invalid/missing entries and CLI toggle failure; deletion and object editing also replay captured cases."
+    },
+    "F-094": {
+      "path": "tests/rewrite/parity_stack.rs",
+      "test": "stack_imports_copy_all_supported_resources_preserve_sources_and_report_toggle_failure",
+      "proof": "Copies supported CLI/IDE resources and verifies path rewriting, hook scripts, plugin data, permission-only replacement and retained MCP state. Rejects invalid/missing entries and CLI toggle failure; deletion and object editing also replay captured cases."
+    },
+    "F-095": {
+      "path": "tests/rewrite/parity_stack.rs",
+      "test": "stack_imports_copy_all_supported_resources_preserve_sources_and_report_toggle_failure",
+      "proof": "Copies supported CLI/IDE resources and verifies path rewriting, hook scripts, plugin data, permission-only replacement and retained MCP state. Rejects invalid/missing entries and CLI toggle failure; deletion and object editing also replay captured cases."
+    },
+    "F-096": {
+      "path": "tests/rewrite/parity_stack.rs",
+      "test": "stack_imports_copy_all_supported_resources_preserve_sources_and_report_toggle_failure",
+      "proof": "Copies supported CLI/IDE resources and verifies path rewriting, hook scripts, plugin data, permission-only replacement and retained MCP state. Rejects invalid/missing entries and CLI toggle failure; deletion and object editing also replay captured cases."
+    },
+    "F-097": {
+      "path": "tests/rewrite/parity_stack.rs",
+      "test": "stack_imports_copy_all_supported_resources_preserve_sources_and_report_toggle_failure",
+      "proof": "Copies supported CLI/IDE resources and verifies path rewriting, hook scripts, plugin data, permission-only replacement and retained MCP state. Rejects invalid/missing entries and CLI toggle failure; deletion and object editing also replay captured cases."
+    },
+    "F-098": {
+      "path": "tests/rewrite/parity_stack.rs",
+      "test": "stack_imports_copy_all_supported_resources_preserve_sources_and_report_toggle_failure",
+      "proof": "Copies supported CLI/IDE resources and verifies path rewriting, hook scripts, plugin data, permission-only replacement and retained MCP state. Rejects invalid/missing entries and CLI toggle failure; deletion and object editing also replay captured cases."
+    },
+    "F-388": {
+      "path": "tests/rewrite/parity_stack.rs",
+      "test": "stack_imports_copy_all_supported_resources_preserve_sources_and_report_toggle_failure",
+      "proof": "Copies supported CLI/IDE resources and verifies path rewriting, hook scripts, plugin data, permission-only replacement and retained MCP state. Rejects invalid/missing entries and CLI toggle failure; deletion and object editing also replay captured cases."
+    },
+    "F-389": {
+      "path": "tests/rewrite/parity_stack.rs",
+      "test": "stack_imports_copy_all_supported_resources_preserve_sources_and_report_toggle_failure",
+      "proof": "Copies supported CLI/IDE resources and verifies path rewriting, hook scripts, plugin data, permission-only replacement and retained MCP state. Rejects invalid/missing entries and CLI toggle failure; deletion and object editing also replay captured cases."
+    },
+    "F-390": {
+      "path": "tests/rewrite/parity_stack.rs",
+      "test": "stack_imports_copy_all_supported_resources_preserve_sources_and_report_toggle_failure",
+      "proof": "Copies supported CLI/IDE resources and verifies path rewriting, hook scripts, plugin data, permission-only replacement and retained MCP state. Rejects invalid/missing entries and CLI toggle failure; deletion and object editing also replay captured cases."
+    },
+    "F-391": {
+      "path": "tests/rewrite/parity_stack.rs",
+      "test": "stack_imports_copy_all_supported_resources_preserve_sources_and_report_toggle_failure",
+      "proof": "Copies supported CLI/IDE resources and verifies path rewriting, hook scripts, plugin data, permission-only replacement and retained MCP state. Rejects invalid/missing entries and CLI toggle failure; deletion and object editing also replay captured cases."
+    },
+    "F-392": {
+      "path": "tests/rewrite/parity_stack.rs",
+      "test": "stack_imports_copy_all_supported_resources_preserve_sources_and_report_toggle_failure",
+      "proof": "Copies supported CLI/IDE resources and verifies path rewriting, hook scripts, plugin data, permission-only replacement and retained MCP state. Rejects invalid/missing entries and CLI toggle failure; deletion and object editing also replay captured cases."
+    },
+    "F-100": {
+      "path": "tests/rewrite/parity_stack.rs",
+      "test": "editor_limits_and_project_discovery_keep_private_and_heavy_paths_out",
+      "proof": "Checks missing/replacement-text reads, one-megabyte read limit, million-character writes with parent creation and oversized refusal. HTTP captures also check invalid JSON/private paths. Folder captures and synthetic checks prove HOME fallback, parent, hidden filtering and sorted names."
+    },
+    "F-101": {
+      "path": "tests/rewrite/parity_stack.rs",
+      "test": "editor_limits_and_project_discovery_keep_private_and_heavy_paths_out",
+      "proof": "Checks missing/replacement-text reads, one-megabyte read limit, million-character writes with parent creation and oversized refusal. HTTP captures also check invalid JSON/private paths. Folder captures and synthetic checks prove HOME fallback, parent, hidden filtering and sorted names."
+    },
+    "F-386": {
+      "path": "tests/rewrite/parity_stack.rs",
+      "test": "editor_limits_and_project_discovery_keep_private_and_heavy_paths_out",
+      "proof": "Checks missing/replacement-text reads, one-megabyte read limit, million-character writes with parent creation and oversized refusal. HTTP captures also check invalid JSON/private paths. Folder captures and synthetic checks prove HOME fallback, parent, hidden filtering and sorted names."
+    },
+    "F-387": {
+      "path": "tests/rewrite/parity_stack.rs",
+      "test": "editor_limits_and_project_discovery_keep_private_and_heavy_paths_out",
+      "proof": "Checks missing/replacement-text reads, one-megabyte read limit, million-character writes with parent creation and oversized refusal. HTTP captures also check invalid JSON/private paths. Folder captures and synthetic checks prove HOME fallback, parent, hidden filtering and sorted names."
+    },
+    "F-397": {
+      "path": "tests/rewrite/parity_stack.rs",
+      "test": "editor_limits_and_project_discovery_keep_private_and_heavy_paths_out",
+      "proof": "Checks missing/replacement-text reads, one-megabyte read limit, million-character writes with parent creation and oversized refusal. HTTP captures also check invalid JSON/private paths. Folder captures and synthetic checks prove HOME fallback, parent, hidden filtering and sorted names."
+    },
+    "F-259": {
+      "path": "tests/rewrite/parity_stack.rs",
+      "test": "editor_limits_and_project_discovery_keep_private_and_heavy_paths_out",
+      "proof": "Checks missing/replacement-text reads, one-megabyte read limit, million-character writes with parent creation and oversized refusal. HTTP captures also check invalid JSON/private paths. Folder captures and synthetic checks prove HOME fallback, parent, hidden filtering and sorted names."
+    },
+    "F-193": {
+      "path": "crates/app/src/tests/session_actions.rs",
+      "test": "search_returns_forty_newest_sessions_and_ignores_non_message_events",
+      "proof": "Proves short-query refusal, case folding, newest user/assistant match per session, Unicode snippets and newest-first 40-result bound. Search transport captures also replay exactly."
+    },
+    "F-334": {
+      "path": "crates/app/src/tests/session_actions.rs",
+      "test": "search_returns_forty_newest_sessions_and_ignores_non_message_events",
+      "proof": "Proves short-query refusal, case folding, newest user/assistant match per session, Unicode snippets and newest-first 40-result bound. Search transport captures also replay exactly."
+    },
+    "F-194": {
+      "path": "crates/app/src/tests/session_actions.rs",
+      "test": "fork_inherits_handoff_without_jobs_goal_or_worktree_and_clear_keeps_history",
+      "proof": "Proves fork configuration and ownership isolation, additive inheritance, fresh conversation and retained transcript/goal metadata. HTTP tests refuse busy mutations and inject/consume summaries; Chromium verifies visible history and restored fork."
+    },
+    "F-195": {
+      "path": "crates/app/src/tests/session_actions.rs",
+      "test": "fork_inherits_handoff_without_jobs_goal_or_worktree_and_clear_keeps_history",
+      "proof": "Proves fork configuration and ownership isolation, additive inheritance, fresh conversation and retained transcript/goal metadata. HTTP tests refuse busy mutations and inject/consume summaries; Chromium verifies visible history and restored fork."
+    },
+    "F-251": {
+      "path": "crates/app/src/tests/session_actions.rs",
+      "test": "fork_inherits_handoff_without_jobs_goal_or_worktree_and_clear_keeps_history",
+      "proof": "Proves fork configuration and ownership isolation, additive inheritance, fresh conversation and retained transcript/goal metadata. HTTP tests refuse busy mutations and inject/consume summaries; Chromium verifies visible history and restored fork."
+    },
+    "F-252": {
+      "path": "crates/app/src/tests/session_actions.rs",
+      "test": "fork_inherits_handoff_without_jobs_goal_or_worktree_and_clear_keeps_history",
+      "proof": "Proves fork configuration and ownership isolation, additive inheritance, fresh conversation and retained transcript/goal metadata. HTTP tests refuse busy mutations and inject/consume summaries; Chromium verifies visible history and restored fork."
+    },
+    "F-333": {
+      "path": "crates/app/src/tests/session_actions.rs",
+      "test": "fork_inherits_handoff_without_jobs_goal_or_worktree_and_clear_keeps_history",
+      "proof": "Proves fork configuration and ownership isolation, additive inheritance, fresh conversation and retained transcript/goal metadata. HTTP tests refuse busy mutations and inject/consume summaries; Chromium verifies visible history and restored fork."
+    },
+    "F-357": {
+      "path": "crates/app/src/tests/session_actions.rs",
+      "test": "fork_inherits_handoff_without_jobs_goal_or_worktree_and_clear_keeps_history",
+      "proof": "Proves fork configuration and ownership isolation, additive inheritance, fresh conversation and retained transcript/goal metadata. HTTP tests refuse busy mutations and inject/consume summaries; Chromium verifies visible history and restored fork."
+    },
+    "F-364": {
+      "path": "crates/app/src/tests/session_actions.rs",
+      "test": "fork_inherits_handoff_without_jobs_goal_or_worktree_and_clear_keeps_history",
+      "proof": "Proves fork configuration and ownership isolation, additive inheritance, fresh conversation and retained transcript/goal metadata. HTTP tests refuse busy mutations and inject/consume summaries; Chromium verifies visible history and restored fork."
+    },
+    "F-368": {
+      "path": "crates/app/src/tests/session_actions.rs",
+      "test": "fork_inherits_handoff_without_jobs_goal_or_worktree_and_clear_keeps_history",
+      "proof": "Proves fork configuration and ownership isolation, additive inheritance, fresh conversation and retained transcript/goal metadata. HTTP tests refuse busy mutations and inject/consume summaries; Chromium verifies visible history and restored fork."
+    },
+    "F-196": {
+      "path": "crates/core/src/state_document.rs",
+      "test": "document_bounds_unicode_requests_turns_jobs_problems_and_last_reply",
+      "proof": "Proves objective/check/verdict, latest 8 bounded requests, 12 turns, 60 files, 6 jobs, 3 problems and 1500 reply characters. Captured state matches and STATE.md is checked after a completed HTTP turn."
+    },
+    "F-363": {
+      "path": "crates/core/src/state_document.rs",
+      "test": "document_bounds_unicode_requests_turns_jobs_problems_and_last_reply",
+      "proof": "Proves objective/check/verdict, latest 8 bounded requests, 12 turns, 60 files, 6 jobs, 3 problems and 1500 reply characters. Captured state matches and STATE.md is checked after a completed HTTP turn."
+    },
+    "F-247": {
+      "path": "crates/adapters/store/src/checkpoints.rs",
+      "test": "checkpoints_keep_empty_files_refuse_user_edits_and_preserve_ambiguous_legacy_data",
+      "proof": "Proves first-before/latest-after, selected-and-later restore, newly created file deletion and checkpoint consumption. Preserves originally empty files and refuses user edits, ambiguous legacy empty snapshots and symlink escapes. HTTP rewind replays, refuses busy/empty cases and queues reread state."
+    },
+    "F-248": {
+      "path": "crates/adapters/store/src/checkpoints.rs",
+      "test": "checkpoints_keep_empty_files_refuse_user_edits_and_preserve_ambiguous_legacy_data",
+      "proof": "Proves first-before/latest-after, selected-and-later restore, newly created file deletion and checkpoint consumption. Preserves originally empty files and refuses user edits, ambiguous legacy empty snapshots and symlink escapes. HTTP rewind replays, refuses busy/empty cases and queues reread state."
+    },
+    "F-249": {
+      "path": "crates/adapters/store/src/checkpoints.rs",
+      "test": "checkpoints_keep_empty_files_refuse_user_edits_and_preserve_ambiguous_legacy_data",
+      "proof": "Proves first-before/latest-after, selected-and-later restore, newly created file deletion and checkpoint consumption. Preserves originally empty files and refuses user edits, ambiguous legacy empty snapshots and symlink escapes. HTTP rewind replays, refuses busy/empty cases and queues reread state."
+    },
+    "F-250": {
+      "path": "crates/adapters/store/src/checkpoints.rs",
+      "test": "checkpoints_keep_empty_files_refuse_user_edits_and_preserve_ambiguous_legacy_data",
+      "proof": "Proves first-before/latest-after, selected-and-later restore, newly created file deletion and checkpoint consumption. Preserves originally empty files and refuses user edits, ambiguous legacy empty snapshots and symlink escapes. HTTP rewind replays, refuses busy/empty cases and queues reread state."
+    },
+    "F-256": {
+      "path": "tests/rewrite/parity.rs",
+      "test": "concurrent_project_notes_preserve_every_line_and_shutdown_cancels_shells",
+      "proof": "Captured note and empty-note cases pass. Existing AGENTS.md keeps its separator newline and all concurrent notes; captured session flow creates GEMINI.md when instructions are absent."
+    },
+    "F-366": {
+      "path": "tests/rewrite/parity.rs",
+      "test": "concurrent_project_notes_preserve_every_line_and_shutdown_cancels_shells",
+      "proof": "Captured note and empty-note cases pass. Existing AGENTS.md keeps its separator newline and all concurrent notes; captured session flow creates GEMINI.md when instructions are absent."
+    },
+    "F-258": {
+      "path": "tests/rewrite/parity.rs",
+      "test": "shell_merges_output_and_preserves_pending_notes_without_an_agent_call",
+      "proof": "Proves project execution, merged ANSI-stripped output, NO_COLOR, 50000 transcript characters and 6000 pending-note characters without an agent turn. Existing shell-port tests prove closed-input process timeout/cancellation; session stop/delete/shutdown regressions prove cleanup."
+    },
+    "F-365": {
+      "path": "tests/rewrite/parity.rs",
+      "test": "shell_merges_output_and_preserves_pending_notes_without_an_agent_call",
+      "proof": "Proves project execution, merged ANSI-stripped output, NO_COLOR, 50000 transcript characters and 6000 pending-note characters without an agent turn. Existing shell-port tests prove closed-input process timeout/cancellation; session stop/delete/shutdown regressions prove cleanup."
+    },
+    "F-337": {
+      "path": "tests/rewrite/parity.rs",
+      "test": "captured_settings_routes_keep_sources_read_only_and_reseed_keeps_the_hook",
+      "proof": "Engine capture compares all diagnostic fields. Session-files capture replays in the session-actions scenario; bounded project discovery has separate HTTP assertions."
+    },
+    "F-369": {
+      "path": "tests/rewrite/parity.rs",
+      "test": "captured_settings_routes_keep_sources_read_only_and_reseed_keeps_the_hook",
+      "proof": "Engine capture compares all diagnostic fields. Session-files capture replays in the session-actions scenario; bounded project discovery has separate HTTP assertions."
+    }
+  }
+}

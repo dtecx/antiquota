@@ -85,6 +85,7 @@ impl Service {
             records: vec![record.clone()],
             busy: false,
             cancel: Cancellation::default(),
+            shells: std::collections::BTreeMap::new(),
             deleting: false,
         };
         self.cells
@@ -167,6 +168,9 @@ impl Service {
     }
     fn stop_state(&self, state: &mut SessionState) -> Result<(), AppError> {
         state.cancel.cancel();
+        for cancel in state.shells.values() {
+            cancel.cancel();
+        }
         self.deny_pending(state)?;
         let mut next = state.meta.clone();
         next.queue.clear();

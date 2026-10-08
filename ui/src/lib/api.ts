@@ -26,6 +26,17 @@ import type { JobLogResponse } from '../gen/JobLogResponse';
 import type { FileText, Tree } from './git';
 import type { TerminalInfo } from '../gen/TerminalInfo';
 import type { Attachment } from '../gen/Attachment';
+import type { TextResponse } from '../gen/TextResponse';
+import type { StackFileResponse } from '../gen/StackFileResponse';
+import type { NoteResponse } from '../gen/NoteResponse';
+import type { FilesResponse } from '../gen/FilesResponse';
+import type { FolderResponse } from '../gen/FolderResponse';
+import type { SearchHit } from '../gen/SearchHit';
+import type { UsageResponse } from '../gen/UsageResponse';
+import type { StackResponse } from '../gen/StackResponse';
+import type { EngineResponse } from '../gen/EngineResponse';
+import type { EventRecord } from '../gen/EventRecord';
+import type { JsonValue } from '../gen/serde_json/JsonValue';
 import { routes } from '../gen/routes';
 
 export class RequestError extends Error {
@@ -57,7 +68,8 @@ export function createApi(token: string, request: typeof fetch = fetch) {
       .replace(/\/sessions\/[^/]+/, '/sessions/{sid}')
       .replace(/\/approvals\/[^/]+/, '/approvals/{aid}')
       .replace(/\/jobs\/[^/]+/, '/jobs/{jid}')
-      .replace(/\/attachments\/[^/]+/, '/attachments/{name}');
+      .replace(/\/attachments\/[^/]+/, '/attachments/{name}')
+      .replace(/\/settings\/(skill|plugin|rule|hook|mcp)\/[^/]+/, '/settings/{kind}/{name}');
     if (
       !routes.some(
         (route) =>
@@ -103,6 +115,56 @@ export function createApi(token: string, request: typeof fetch = fetch) {
   const loginPath = (id: string) => `/api/accounts/login/${encodeURIComponent(id)}`;
   return {
     state: () => call<StateResponse>('GET', '/api/state'),
+    search: (q: string) => call<SearchHit[]>('GET', `/api/search?${new URLSearchParams({ q })}`),
+    fork: (id: string) => call<Session>('POST', `${sessionPath(id)}/fork`, {}),
+    clear: (id: string) => call<OkResponse>('POST', `${sessionPath(id)}/clear`, {}),
+    compact: (id: string) => call<OkResponse>('POST', `${sessionPath(id)}/compact`, {}),
+    rewind: (id: string, turn: number) =>
+      call<FilesResponse>('POST', `${sessionPath(id)}/rewind`, { turn }),
+    inherit: (id: string, from: string) =>
+      call<OkResponse>('POST', `${sessionPath(id)}/inherit`, { from }),
+    stateDocument: (id: string) => call<TextResponse>('GET', `${sessionPath(id)}/state`),
+    shell: (id: string, cmd: string) =>
+      call<EventRecord>('POST', `${sessionPath(id)}/shell`, { cmd }),
+    note: (id: string, text: string) =>
+      call<NoteResponse>('POST', `${sessionPath(id)}/note`, { text }),
+    mentionFiles: (id: string, q: string) =>
+      call<string[]>('GET', `${sessionPath(id)}/files?${new URLSearchParams({ q })}`),
+    engine: () => call<EngineResponse>('GET', '/api/engine'),
+    engineLog: () => call<TextResponse>('GET', '/api/engine/log'),
+    usage: (days = 14) => call<UsageResponse>('GET', `/api/usage?days=${days}`),
+    browse: (path: string) =>
+      call<FolderResponse>('GET', `/api/fs?${new URLSearchParams({ path })}`),
+    stackFile: (path: string) =>
+      call<StackFileResponse>('GET', `/api/settings/file?${new URLSearchParams({ path })}`),
+    writeStackFile: (path: string, text: string) =>
+      call<OkResponse>('PUT', '/api/settings/file', { path, text }),
+    stackItem: (kind: string, name: string) =>
+      call<JsonValue>(
+        'GET',
+        `/api/settings/${encodeURIComponent(kind)}/${encodeURIComponent(name)}`,
+      ),
+    putStackItem: (kind: string, name: string, value: JsonValue) =>
+      call<OkResponse>(
+        'PUT',
+        `/api/settings/${encodeURIComponent(kind)}/${encodeURIComponent(name)}`,
+        { value },
+      ),
+    deleteStackItem: (kind: string, name: string) =>
+      call<OkResponse>(
+        'DELETE',
+        `/api/settings/${encodeURIComponent(kind)}/${encodeURIComponent(name)}`,
+      ),
+    enableStackItem: (kind: string, name: string, on: boolean) =>
+      call<OkResponse>(
+        'POST',
+        `/api/settings/${encodeURIComponent(kind)}/${encodeURIComponent(name)}/enabled`,
+        { on },
+      ),
+    copyStackItem: (source: string, kind: string, name?: string) =>
+      call<OkResponse>('POST', '/api/settings/copy', { source, kind, ...(name ? { name } : {}) }),
+    stack: () => call<StackResponse>('GET', '/api/stack?refresh=1'),
+    reseedStack: () => call<StackResponse>('POST', '/api/stack/reseed', {}),
     session: (id: string) => call<SessionResponse>('GET', sessionPath(id)),
     create: (body: CreateSessionRequest) => call<Session>('POST', '/api/sessions', body),
     update: (id: string, body: PatchSessionRequest) =>

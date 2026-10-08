@@ -4,6 +4,7 @@ mod dictation;
 mod goals;
 mod jobs;
 mod lifecycle;
+mod session_actions;
 use super::*;
 use antiquota_core::{
     Attachment, Event, PortFuture, SessionStore, StepUsage, TurnRequest, TurnResult,

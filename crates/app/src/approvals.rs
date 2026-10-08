@@ -101,6 +101,21 @@ impl Service {
         if state.deleting {
             return Ok(ApprovalReply::ask());
         }
+        if state.busy
+            && [
+                "write_to_file",
+                "replace_file_content",
+                "multi_replace_file_content",
+                "sed_file",
+            ]
+            .contains(&tool)
+            && let Some(path) = args["TargetFile"]
+                .as_str()
+                .or_else(|| args["File"].as_str())
+        {
+            self.store
+                .checkpoint(session, state.meta.turns, &state.meta.cwd, path, true)?;
+        }
         let decision = policy::decide(state.meta.mode, tool, args, &permissions);
         if decision.verdict != Verdict::Ask {
             return Ok(ApprovalReply::Decided {

@@ -163,11 +163,32 @@ fn about(root: &Path, kind: &str, source: &str, name: &str) -> String {
     }
     String::new()
 }
-pub fn overview(accounts: &FileAccounts) -> Result<Value, PortError> {
+pub async fn overview(accounts: &FileAccounts) -> Result<Value, PortError> {
     accounts.seed_stack(false)?;
     let own = accounts.root.join("stack/.gemini");
     let cli = accounts.home.join(".gemini");
     let ide = cli.join("antigravity");
+    let slot = accounts.stack_probe()?;
+    let status = accounts
+        .capture(
+            &slot,
+            &["mcp".into(), "list".into()],
+            std::time::Duration::from_secs(60),
+        )
+        .await;
+    let states: BTreeMap<String, String> = status
+        .ok()
+        .map(|r| {
+            r.out
+                .lines()
+                .skip(1)
+                .filter_map(|line| {
+                    let p: Vec<_> = line.split_whitespace().collect();
+                    (p.len() >= 3).then(|| (p[0].into(), p[2].into()))
+                })
+                .collect()
+        })
+        .unwrap_or_default();
     let roots = [("loop", own.clone()), ("cli", cli.clone()), ("ide", ide)];
     let mut result = json!({"path":own.to_string_lossy()});
     for kind in ["skill", "plugin", "rule", "hook", "mcp"] {
@@ -224,9 +245,7 @@ pub fn overview(accounts: &FileAccounts) -> Result<Value, PortError> {
                     );
                 }
                 if kind == "mcp" {
-                    let state =
-                        read_json(&own.join("antigravity-cli/mcp_state.json")).unwrap_or_default();
-                    row["enabled"] = json!(state[&name].as_str() != Some("disabled"));
+                    row["enabled"] = json!(states.get(&name).is_none_or(|s| s == "enabled"));
                 }
             }
             rows.push(row);

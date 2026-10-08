@@ -24,12 +24,12 @@ export const routes = [
   {
     "method": "POST",
     "path": "/api/sessions/{sid}/fork",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "GET",
     "path": "/api/search",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "POST",
@@ -44,12 +44,12 @@ export const routes = [
   {
     "method": "GET",
     "path": "/api/engine",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "GET",
     "path": "/api/engine/log",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "POST",
@@ -139,12 +139,12 @@ export const routes = [
   {
     "method": "POST",
     "path": "/api/sessions/{sid}/rewind",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "POST",
     "path": "/api/sessions/{sid}/clear",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "POST",
@@ -174,22 +174,22 @@ export const routes = [
   {
     "method": "GET",
     "path": "/api/sessions/{sid}/state",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "POST",
     "path": "/api/sessions/{sid}/inherit",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "POST",
     "path": "/api/sessions/{sid}/shell",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "POST",
     "path": "/api/sessions/{sid}/note",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "GET",
@@ -199,12 +199,12 @@ export const routes = [
   {
     "method": "POST",
     "path": "/api/sessions/{sid}/compact",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "GET",
     "path": "/api/sessions/{sid}/files",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "POST",
@@ -229,7 +229,7 @@ export const routes = [
   {
     "method": "GET",
     "path": "/api/usage",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "GET",
@@ -289,47 +289,47 @@ export const routes = [
   {
     "method": "GET",
     "path": "/api/settings/file",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "PUT",
     "path": "/api/settings/file",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "GET",
     "path": "/api/settings/{kind}/{name}",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "PUT",
     "path": "/api/settings/{kind}/{name}",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "DELETE",
     "path": "/api/settings/{kind}/{name}",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "POST",
     "path": "/api/settings/{kind}/{name}/enabled",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "POST",
     "path": "/api/settings/copy",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "GET",
     "path": "/api/stack",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "POST",
     "path": "/api/stack/reseed",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "GET",
@@ -344,7 +344,7 @@ export const routes = [
   {
     "method": "GET",
     "path": "/api/fs",
-    "status": "pending"
+    "status": "implemented"
   },
   {
     "method": "GET",

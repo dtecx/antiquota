@@ -121,7 +121,7 @@ pub fn shell_command(line: &str) -> Command {
     }
 }
 
-/// Runs goal checks with the platform shell; output is stdout followed by stderr.
+/// Runs goal checks and user commands with merged shell output.
 #[derive(Debug, Default, Clone)]
 pub struct Shell;
 impl ShellRunner for Shell {
@@ -133,8 +133,13 @@ impl ShellRunner for Shell {
         cancel: Cancellation,
     ) -> PortFuture<'a, CommandOutcome> {
         Box::pin(async move {
-            let mut process = shell_command(command);
-            process.current_dir(cwd);
+            let merged = if cfg!(windows) {
+                format!("({command}) 2>&1")
+            } else {
+                format!("{{\n{command}\n}} 2>&1")
+            };
+            let mut process = shell_command(&merged);
+            process.current_dir(cwd).env("NO_COLOR", "1");
             let captured = capture(
                 process,
                 Duration::from_secs_f64(timeout.max(0.0)),

@@ -8,6 +8,7 @@ mod commands;
 pub use commands::CommandResult;
 mod history;
 mod runner_sink;
+mod session_actions;
 mod sessions;
 pub use sessions::mode as parse_mode;
 mod account_service;
@@ -47,6 +48,7 @@ pub(crate) struct SessionState {
     records: Vec<EventRecord>,
     busy: bool,
     cancel: Cancellation,
+    shells: BTreeMap<String, Cancellation>,
     deleting: bool,
 }
 pub(crate) struct Cell {
@@ -335,6 +337,7 @@ impl Service {
                         records,
                         busy: false,
                         cancel: Cancellation::default(),
+                        shells: BTreeMap::new(),
                         deleting: false,
                     }),
                 }),
@@ -411,12 +414,27 @@ impl Service {
             .unwrap_or_default();
         let turns = cells
             .iter()
-            .filter(|c| c.state.lock().map(|s| s.busy).unwrap_or(false))
+            .filter(|c| {
+                c.state
+                    .lock()
+                    .map(|s| s.busy || !s.shells.is_empty())
+                    .unwrap_or(false)
+            })
             .count();
         turns + self.running_jobs()
     }
     pub fn begin_shutdown(&self) {
         self.account_service.begin_shutdown();
+        if let Ok(cells) = self.cells.read() {
+            for cell in cells.values() {
+                if let Ok(state) = cell.state.lock() {
+                    state.cancel.cancel();
+                    for cancel in state.shells.values() {
+                        cancel.cancel();
+                    }
+                }
+            }
+        }
     }
     pub async fn shutdown(&self) {
         self.begin_shutdown();
@@ -436,7 +454,12 @@ impl Service {
             let busy = self
                 .cell(&s.id)
                 .ok()
-                .and_then(|cell| cell.state.lock().ok().map(|state| state.busy))
+                .and_then(|cell| {
+                    cell.state
+                        .lock()
+                        .ok()
+                        .map(|state| state.busy || !state.shells.is_empty())
+                })
                 .unwrap_or(false);
             if busy {
                 let _ = self.stop(&s.id);
@@ -451,7 +474,7 @@ impl Service {
             let busy = self
                 .cell(id)
                 .ok()
-                .and_then(|c| c.state.lock().ok().map(|s| s.busy))
+                .and_then(|c| c.state.lock().ok().map(|s| s.busy || !s.shells.is_empty()))
                 .unwrap_or(false);
             if !busy {
                 break;

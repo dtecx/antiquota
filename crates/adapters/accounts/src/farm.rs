@@ -9,7 +9,7 @@ use std::{
 };
 const FARMS: [&str; 3] = [".gemini", ".gemini/antigravity-cli", ".gemini/antigravity"];
 const SHARED: [&str; 4] = ["conversations", "brain", "annotations", "implicit"];
-fn private(name: &str) -> bool {
+pub(crate) fn private(name: &str) -> bool {
     name.starts_with("antigravity-oauth-token")
         || name.ends_with("_state.pbtxt")
         || [
@@ -24,7 +24,7 @@ fn private(name: &str) -> bool {
         ]
         .contains(&name)
 }
-fn clone_skip(relative: &str, name: &str) -> bool {
+pub(crate) fn clone_skip(relative: &str, name: &str) -> bool {
     (relative.is_empty() && name == "antigravity")
         || (relative == "config" && name == "projects")
         || (relative == "antigravity-cli"
@@ -49,7 +49,17 @@ pub fn seed(accounts: &FileAccounts, force: bool) -> Result<(), PortError> {
     if linked(&own) || linked(&accounts.root.join("stack")) {
         return Err(PortError::Invalid("own stack root cannot be linked".into()));
     }
+    if linked(&own.join("antigravity-cli")) {
+        return Err(PortError::Invalid(
+            "own stack CLI directory cannot be linked".into(),
+        ));
+    }
     if force || !own.is_dir() {
+        if let Some(value) =
+            crate::files::read_json(&accounts.home.join(".gemini/antigravity-cli/settings.json"))
+        {
+            crate::stack_edit::validate_permissions(&value)?;
+        }
         let protected = crate::files::read_json(&own.join("config/hooks.json"))
             .and_then(|value| value.get("antiquota").cloned());
         fs::create_dir_all(&own).map_err(io_error)?;
@@ -111,7 +121,7 @@ pub fn seed(accounts: &FileAccounts, force: bool) -> Result<(), PortError> {
     expose_usage(accounts)?;
     Ok(())
 }
-fn replace(
+pub(crate) fn replace(
     source: &Path,
     target: &Path,
     relative: &str,
@@ -258,7 +268,7 @@ pub(crate) fn linked(path: &Path) -> bool {
     }
     path.is_symlink()
 }
-fn remove_entry(path: &Path) -> Result<(), PortError> {
+pub(crate) fn remove_entry(path: &Path) -> Result<(), PortError> {
     // A junction must be detached before removing a directory tree.
     // https://docs.rs/junction/2.1.0/junction/fn.delete.html
     #[cfg(windows)]

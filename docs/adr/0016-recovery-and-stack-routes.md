@@ -1,0 +1,13 @@
+# ADR 0016: Recovery and stack routes
+
+Status: Accepted for Slice 9a.
+
+Core builds the deterministic handoff document from session metadata and durable events. The application uses that document for compact, fork, inherit and failed-conversation recovery. Clear and compact retain the transcript. Fork copies the folder, model, effort and mode but starts without conversation, goal, jobs or worktree ownership. The next accepted agent request consumes pending notes.
+
+The store records each editable project file's first before-image and latest after-image for a turn. New checkpoints also record whether the file existed, so an originally empty file remains a file after rewind. Rewind validates every destination and compares the current file with the last after-image before changing any file. Later user edits, linked destinations and ambiguous old checkpoints with an empty before-image cause refusal. A successful rewind consumes the selected and later checkpoints and queues a reread instruction. This repairs B-022 without guessing what old empty snapshots meant.
+
+User shell requests use the existing shell port with closed stdin, merged output, NO_COLOR and a 600 second limit. Each request owns a cancellation token registered with its session. Stop, deletion and engine shutdown cancel those requests and wait for process cleanup. Shell results retain the last 50000 characters; pending notes retain the last 6000. Notes append to project instructions under a shared lock so two sessions using the same folder cannot lose each other's notes.
+
+Account adapters own stack operations. Imports read CLI and supported IDE resources and write only antiquota's stack. Edits reject escapes, linked destinations and private or historical files. Existing malformed JSON is an error rather than an empty object to overwrite. Permission edits and imports use the same broad-runner validation as the permission API. Reseed preserves the owned protection hook and shared history. Metadata inspection uses a signed-in app account slot; without accounts, loaded skills and hooks come from local stack folders without starting sign-in.
+
+The route catalog and generated TypeScript responses cover the remaining legacy routes. Usage replay applies the capture's explicit calendar rule to the replay date while comparing totals exactly. The captured reseed response loses the protection hook; its fixture remains unchanged and the regression asserts the corrected protected-hook response instead. Browser checks prove recovery effects through the existing event connection. Command entry points and settings editors are delivered in the following UI parts.
