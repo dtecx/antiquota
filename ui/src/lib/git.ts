@@ -1,5 +1,5 @@
 /** Owns git review data, the agent's edit history, project files and the side drawer state. */
-import { writable } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 import type { EventRecord } from '../gen/EventRecord';
 import type { Worktree } from '../gen/Worktree';
 
@@ -33,6 +33,7 @@ export interface FileText {
   path: string;
   rel: string;
   text: string;
+  line?: number;
 }
 
 /** A repository status, or null outside a repository (the engine answers `{}`). */
@@ -128,3 +129,16 @@ drawer.subscribe((value) => {
 
 /** The file open in the viewer. */
 export const viewer = writable<FileText | null>(null);
+
+let viewerGeneration = 0;
+
+/** Publishes only the newest admitted read while its initiating view and viewer are unchanged. */
+export async function viewFile(
+  load: () => Promise<FileText | null>,
+  current: () => boolean,
+): Promise<void> {
+  const own = ++viewerGeneration,
+    previous = get(viewer);
+  const file = await load();
+  if (file && own === viewerGeneration && current() && get(viewer) === previous) viewer.set(file);
+}

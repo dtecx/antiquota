@@ -330,6 +330,7 @@ fn denied_commands_get_a_bounded_follow_up_outside_goals() {
         denied[0]["data"]["commands"],
         json!(["touch fake-hook-marker"])
     );
+    assert_eq!(denied[0]["data"]["rules"], json!(["command(touch)"]));
     let follow = done["events"]
         .as_array()
         .unwrap()
@@ -346,6 +347,115 @@ fn denied_commands_get_a_bounded_follow_up_outside_goals() {
             .ends_with("`touch fake-hook-marker`\n\nContinue the task.")
     );
     server.stop();
+}
+
+#[test]
+fn a_failed_write_tool_streams_and_persists_an_edit_only_denial_notice() {
+    let mut server = Server::new_stopped("notice-write-denied", false);
+    let path = server.project.join("protected.txt");
+    fs::write(&path, "User content must survive.").unwrap();
+    let tool = |state: &str| {
+        let mut event = json!({"event":"step_update","step_update":{
+            "conversation_id":"notice-write-fixture", "step_index":1, "step_type":"tool", "state":state,
+            "tool_info":{"name":"replace_file_content","parameters":{"TargetFile":path,"ReplacementContent":"Refused edit"}}
+        }});
+        if state == "ERROR" {
+            event["step_update"]["duration_seconds"] = json!(0.1);
+            event["step_update"]["tool_info"]["error"] =
+                json!({"type":"TOOL_ERROR","message":"user denied permission to edit this file"});
+        }
+        event
+    };
+    script(
+        &server,
+        json!({"write_notes":false,"exit_code":0,"actions":[
+            {"event":{"event":"init","conversation_id":"notice-write-fixture"}},
+            {"event":tool("ACTIVE")},
+            {"delay_ms":100,"event":tool("ERROR")},
+            {"event":{"event":"result","result":{"conversation_id":"notice-write-fixture","status":"SUCCESS","response":"The edit was not performed."}}}
+        ]}),
+    );
+    server.start();
+    let id = server.create();
+    let mut events = crate::support::http::Events::open(server.port, &server.token);
+    assert_eq!(
+        server
+            .call(
+                "POST",
+                &format!("/api/sessions/{id}/send"),
+                Some(json!({"text":"Try the protected edit."}))
+            )
+            .status,
+        200
+    );
+    let mut saw_running = false;
+    let denial = loop {
+        let event = events.next();
+        if event["t"] == "tool"
+            && event["name"] == "replace_file_content"
+            && event["state"] == "running"
+        {
+            saw_running = true;
+        }
+        if event["t"] == "notice" && event["kind"] == "denied" {
+            break event;
+        }
+    };
+    assert!(
+        saw_running,
+        "the running tool must reach the live transcript"
+    );
+    let expected = json!({"commands":[],"actions":[{"action":"replace_file_content","display_name":"replace_file_content"}],"rules":[]});
+    assert_eq!(denial["data"], expected);
+    let finished = server.idle(&id);
+    assert_eq!(notices(&finished, "denied")[0]["data"], expected);
+    assert_eq!(finished["meta"]["turns"], 1);
+    assert_eq!(
+        fs::read_to_string(&path).unwrap(),
+        "User content must survive."
+    );
+    assert!(!server.project.join("notes.txt").exists());
+    drop(events);
+    server.stop();
+}
+
+#[test]
+fn historical_denial_http_views_vet_suggestions_without_rewriting_jsonl() {
+    let mut server = Server::new("notice-history");
+    let id = server.create();
+    server.stop();
+    let path = server.data.join("sessions").join(&id).join("events.jsonl");
+    let mut original = fs::read(&path).unwrap();
+    let data = json!({
+        "commands":["git status", "git status", "/usr/bin/git status --short", "'/bin/bash' -c unsafe", "/usr/bin/python3.11 -c unsafe", "git push --force origin main", "/usr/bin/find . -delete", "/usr/bin/sed -i '' s/a/b/ file", false, null],
+        "rules":["command(*)","command(bash)","command(git push)"],
+        "actions":[{"action":"write_to_file","display_name":"Historical file edit"}],
+        "future":{"retained":true}
+    });
+    for (ts, data) in [(123, data.clone()), (124, json!(false))] {
+        let record =
+            json!({"t":"notice","ts":ts,"kind":"denied","text":"Historical denial.","data":data});
+        original.extend_from_slice(format!("{record}\n").as_bytes());
+    }
+    fs::write(&path, &original).unwrap();
+    server.start();
+    for _ in 0..2 {
+        let view = session(&server, &id);
+        let denials = notices(&view, "denied");
+        assert_eq!(denials.len(), 2);
+        let mut expected = data.clone();
+        expected["rules"] = json!(["command(git status)", "command(/usr/bin/git status)"]);
+        assert_eq!(denials[0]["data"], expected);
+        assert_eq!(denials[1]["data"], json!({"rules":[]}));
+        assert_eq!(view["meta"]["turns"], 0);
+        assert_eq!(
+            fs::read(&path).unwrap(),
+            original,
+            "GET must not rewrite historical bytes"
+        );
+    }
+    server.stop();
+    assert_eq!(fs::read(&path).unwrap(), original);
 }
 
 #[test]

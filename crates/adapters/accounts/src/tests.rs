@@ -57,6 +57,129 @@ impl Drop for Sandbox {
         let _ = fs::remove_dir_all(&self.0);
     }
 }
+
+#[test]
+fn concurrent_permission_grants_keep_every_rule_and_opaque_setting() {
+    let sandbox = Sandbox::new();
+    let source = r#"{"permissions":{"allow":["command(private)"],"deny":["command(rm)"]}}"#;
+    sandbox.write("home/.gemini/antigravity-cli/settings.json", source);
+    sandbox.write(
+        "data/stack/.gemini/antigravity-cli/settings.json",
+        r#"{"permissions":{"allow":["command(ls)"],"deny":["command(rm)"],"future":{"opaque":[false,null,123456789012345678901234567890]}},"general":{"keep":true},"extension":{"value":"unchanged"}}"#,
+    );
+    let accounts = sandbox.accounts();
+    let path = sandbox
+        .0
+        .join("data/stack/.gemini/antigravity-cli/settings.json");
+    let original: serde_json::Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+    let barrier = Arc::new(std::sync::Barrier::new(24));
+    let mut workers = vec![];
+    for index in 0..24 {
+        let accounts = accounts.clone();
+        let barrier = barrier.clone();
+        workers.push(std::thread::spawn(move || {
+            let rule = format!("command(git fixture-{index})");
+            barrier.wait();
+            if index % 2 == 0 {
+                accounts
+                    .grant_permissions(vec![rule.clone(), rule, "command(ls)".into()])
+                    .unwrap();
+            } else {
+                accounts.add_allow_rule(&rule).unwrap();
+                accounts.add_allow_rule(&rule).unwrap();
+            }
+        }));
+    }
+    for worker in workers {
+        worker.join().unwrap();
+    }
+    let stored: serde_json::Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+    let allow = stored["permissions"]["allow"].as_array().unwrap();
+    assert_eq!(allow.len(), 25, "every rule is kept exactly once");
+    assert_eq!(allow[0], "command(ls)");
+    for index in 0..24 {
+        assert!(allow.contains(&serde_json::json!(format!("command(git fixture-{index})"))));
+    }
+    let mut expected = original;
+    expected["permissions"]["allow"] = stored["permissions"]["allow"].clone();
+    assert_eq!(
+        stored, expected,
+        "deny rules and all extensions are preserved"
+    );
+    assert_eq!(
+        fs::read_to_string(sandbox.0.join("home/.gemini/antigravity-cli/settings.json")).unwrap(),
+        source,
+        "the source agy configuration is never changed"
+    );
+}
+
+#[test]
+fn permission_grants_validate_the_whole_batch_before_writing() {
+    let sandbox = Sandbox::new();
+    sandbox.write(
+        "data/stack/.gemini/antigravity-cli/settings.json",
+        r#"{"permissions":{"allow":["command(ls)"],"deny":["command(rm)"],"future":true},"general":{"keep":true}}"#,
+    );
+    let accounts = sandbox.accounts();
+    let path = sandbox
+        .0
+        .join("data/stack/.gemini/antigravity-cli/settings.json");
+    let original = fs::read(&path).unwrap();
+    for invalid in [
+        "".to_owned(),
+        "x".repeat(300),
+        "command(/bin/bash -c)".into(),
+        "command(/bin/bas[h])".into(),
+        "command(/bin/{ba,z}sh)".into(),
+    ] {
+        assert!(
+            accounts
+                .grant_permissions(vec!["command(cat)".into(), invalid.clone()])
+                .is_err(),
+            "invalid batch: {invalid}"
+        );
+        assert_eq!(
+            fs::read(&path).unwrap(),
+            original,
+            "no partial grant: {invalid}"
+        );
+    }
+    let granted = accounts
+        .grant_permissions(vec![
+            "command(ls)".into(),
+            "command(cat)".into(),
+            "command(cat)".into(),
+        ])
+        .unwrap();
+    assert_eq!(
+        granted["allow"],
+        serde_json::json!(["command(ls)", "command(cat)"])
+    );
+    assert_eq!(granted["deny"], serde_json::json!(["command(rm)"]));
+    assert_eq!(granted["future"], true);
+    for malformed in [
+        "{invalid",
+        "null",
+        "false",
+        "[]",
+        r#"{"permissions":false}"#,
+        r#"{"permissions":[]}"#,
+        r#"{"permissions":{"allow":false,"deny":["command(rm)"]}}"#,
+        r#"{"permissions":{"allow":["command(ls)",false],"deny":["command(rm)"]}}"#,
+    ] {
+        sandbox.write(
+            "data/stack/.gemini/antigravity-cli/settings.json",
+            malformed,
+        );
+        assert!(
+            accounts
+                .grant_permissions(vec!["command(cat)".into()])
+                .is_err(),
+            "{malformed}"
+        );
+        assert_eq!(fs::read_to_string(&path).unwrap(), malformed);
+    }
+}
 #[test]
 fn clone_and_sync_preserve_private_identity_history_and_unknown_config() {
     let s = Sandbox::new();

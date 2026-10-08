@@ -1,137 +1,140 @@
-<!-- Owns one user message and its grouped agent activity and replies. -->
+<!-- Renders one prompt and its chronological agent activity, replies and notices. -->
 <script lang="ts">
   import { preferences } from '../lib/preferences';
-  const prefs = preferences.state;
-  import type { TranscriptGroup } from '../lib/transcript';
+  import { transcriptItems, userPresentation, type TranscriptGroup } from '../lib/transcript';
+  import type { Expansion, TranscriptActions } from '../lib/transcript-actions';
   import { duration, formatTokens } from '../lib/format';
-  import ToolStep from './ToolStep.svelte';
+  import ActivityGroup from './ActivityGroup.svelte';
+  import Thinking from './Thinking.svelte';
+  import Markdown from './Markdown.svelte';
+  import Notice from './Notice.svelte';
   import ApprovalCard from './ApprovalCard.svelte';
   import { asJob, jobFailed, jobStatus } from '../lib/jobs';
   import { extensionLabel } from '../lib/media';
   let {
     group,
     running = false,
+    busy = false,
     cwd = '',
     onanswer,
     onlog,
+    onlogin,
     attachmentUrl,
+    actions,
+    expand,
   }: {
     group: TranscriptGroup;
     running?: boolean;
+    busy?: boolean;
     cwd?: string;
     onanswer: (id: string, decision: 'allow' | 'deny', always: boolean) => Promise<void>;
     onlog: (jid: string) => void;
+    onlogin: () => void;
     attachmentUrl: (name: string) => string;
+    actions: TranscriptActions;
+    expand: Expansion;
   } = $props();
-  const activity = $derived(
-    group.events
-      .filter((event) => event.t === 'tool' || event.t === 'thinking')
-      .filter((event) => event.t !== 'thinking' || $prefs.detail === 'detailed'),
-  );
-  const end = $derived([...group.events].reverse().find((event) => event.t === 'turn_end'));
-  const start = $derived(group.events.find((event) => event.t === 'turn_start'));
+  const prefs = preferences.state;
+  const items = $derived(transcriptItems(group.events));
+  const user = $derived(group.user ? userPresentation(group.user) : null);
 </script>
 
 <article class="turn">
-  {#if group.user}
-    <section class="user-message" aria-label="Your message">
-      <div class="speaker">
-        YOU <span
-          >{['message', 'user'].includes(group.user.kind) || !group.user.kind
-            ? ''
-            : group.user.kind}</span
-        >
-      </div>
-      <div class="message">{group.user.text}</div>
+  {#if group.user && user}
+    <section class="user-message" aria-label="Your message" title={user.tooltip}>
+      <div class="speaker">{user.label}</div>
+      <div class="message">{user.text}</div>
       {#if group.user.steered}<span class="steered">sent while agy worked</span>{/if}
       {#if group.user.attachments?.length}<div class="attachments">
-          {#each group.user.attachments as attachment (attachment.path)}{#if attachment.image}<a
+          {#each group.user.attachments as attachment (attachment.path)}
+            {#if attachment.image}<a
                 class="thumb"
                 href={attachmentUrl(attachment.name)}
                 target="_blank"
                 rel="noopener"
                 title={attachment.name}
                 ><img src={attachmentUrl(attachment.name)} alt={attachment.name} /></a
-              >{:else}<span class="attachment" title={attachment.name}
+              >
+            {:else}<span class="attachment" title={attachment.name}
                 ><span class="kind">{extensionLabel(attachment.name)}</span><span class="name"
                   >{attachment.name}</span
                 ></span
-              >{/if}{/each}
+              >{/if}
+          {/each}
         </div>{/if}
     </section>
   {/if}
-  {#snippet activityRows()}
-    <div class="activity-body">
-      {#if start?.t === 'turn_start'}<p class="routing">
-          Turn {start.turn} · {start.model} · {start.slot}
-        </p>{/if}
-      {#each activity as event (`${event.t}-${event.turn}-${event.step}`)}
-        {#if event.t === 'tool'}<ToolStep {event} />
-        {:else if event.t === 'thinking'}<details class="thinking">
-            <summary>Thinking <span>{formatTokens(event.tokens)} tokens</span></summary>
-            <pre>{event.text}</pre>
-          </details>{/if}
-      {/each}
-    </div>
-  {/snippet}
-  {#if start || activity.length}
-    {#if $prefs.view === 'steps'}{@render activityRows()}
-    {:else}<details class="activity">
-        <summary
-          ><span class="activity-line"></span><span
-            >{running && !end ? 'Working…' : 'Agent activity'}</span
-          >{#if activity.length}<span class="steps"
-              >{activity.length} {activity.length === 1 ? 'step' : 'steps'}</span
-            >{/if}<span class="chevron">›</span></summary
-        >{@render activityRows()}
-      </details>{/if}
-  {/if}
-  {#each group.events as event, index (`${event.t}-${event.ts}-${index}`)}
-    {#if event.t === 'assistant' || event.t === 'delta'}
-      <section class="reply" aria-label="Agent reply">
-        <div class="speaker">
-          ANTIQUOTA {#if event.t === 'delta'}<span class="streaming">streaming</span>{/if}
-        </div>
-        <div class="message">{event.text}</div>
-      </section>
-    {:else if event.t === 'notice'}<p
-        class="notice"
-        class:error={event.kind === 'error'}
-        role={event.kind === 'error' ? 'alert' : undefined}
-      >
-        {event.text}
-      </p>
-    {:else if event.t === 'approval'}<ApprovalCard {event} {cwd} {onanswer} />
-    {:else if event.t === 'job' && asJob(event.job)}{@const job = asJob(event.job)!}
-      <p class="jobline" class:bad={jobFailed(event.phase, job)}>
-        <span class="mark">{event.phase === 'ended' ? '■ job' : '▶ job'}</span>
-        <code title={job.cmd}>{job.cmd}</code>
-        <span class="detail"
-          >{jobStatus(event.phase, job)}{event.phase !== 'ended' && job.by === 'agent'
-            ? ' · by agy'
-            : ''}</span
+  {#each items as item (item.key)}
+    {#if 'events' in item}<ActivityGroup events={item.events} {cwd} {expand} />
+    {:else}{@const event = item.event}
+      {#if event.t === 'turn_start'}
+        <div
+          class="routing"
+          class:live={running &&
+            !group.events.some((record) => record.t === 'turn_end' && record.turn === event.turn)}
         >
-        <button class="small" onclick={() => onlog(job.id)}>Log</button>
-      </p>
-    {:else if event.t === 'shell'}<details class="shell">
-        <summary><code>{event.cmd}</code></summary>
-        <pre>{event.output}</pre>
-      </details>{/if}
+          <span>Turn {event.turn}</span><span title={event.slot}>{event.slot}</span><span
+            >{event.model}</span
+          >
+          {#if $prefs.stamps}<time datetime={new Date(event.ts * 1000).toISOString()}
+              >{new Date(event.ts * 1000).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}</time
+            >{/if}
+          <button
+            class="quiet rewind"
+            aria-label={`Rewind before turn ${event.turn}`}
+            disabled={busy}
+            onclick={() => actions.rewind(event.turn)}>↶ rewind</button
+          >
+        </div>
+      {:else if event.t === 'thinking'}<Thinking {event} {expand} {actions} />
+      {:else if event.t === 'assistant' || event.t === 'delta'}
+        <section class="reply" class:live={event.t === 'delta'} aria-label="Agent reply">
+          <div class="speaker">
+            ANTIQUOTA {#if event.t === 'delta'}<span class="streaming">streaming</span
+              >{:else}<button
+                class="quiet copy-message"
+                aria-label="Copy message"
+                onclick={() => actions.copy(event.text)}>Copy</button
+              >{/if}
+          </div>
+          <Markdown text={event.text} onfile={actions.file} oncopy={actions.copy} />
+        </section>
+      {:else if event.t === 'notice'}<Notice {event} {actions} {onlogin} {busy} />
+      {:else if event.t === 'approval'}<ApprovalCard {event} {cwd} {onanswer} />
+      {:else if event.t === 'job' && asJob(event.job)}{@const job = asJob(event.job)!}
+        <p class="jobline" class:bad={jobFailed(event.phase, job)}>
+          <span class="mark">{event.phase === 'ended' ? '■ job' : '▶ job'}</span><code
+            title={job.cmd}>{job.cmd}</code
+          ><span class="detail"
+            >{jobStatus(event.phase, job)}{event.phase !== 'ended' && job.by === 'agent'
+              ? ' · by agy'
+              : ''}</span
+          ><button class="small" onclick={() => onlog(job.id)}>Log</button>
+        </p>
+      {:else if event.t === 'shell'}<details class="shell">
+          <summary><code>{event.cmd}</code></summary>
+          <pre>{event.output}</pre>
+        </details>
+      {:else if event.t === 'turn_end'}<div
+          class="turn-end"
+          class:error={!['completed', 'success', 'stopped'].includes(event.status.toLowerCase())}
+        >
+          {#if $prefs.stamps}<time datetime={new Date(event.ts * 1000).toISOString()}
+              >{new Date(event.ts * 1000).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}</time
+            >{/if}
+          <span class="end-dot"></span><span>{event.status}</span><span>{duration(event.secs)}</span
+          ><span
+            >{formatTokens(event.usage.input_tokens)} in / {formatTokens(event.usage.output_tokens)} out</span
+          ><span>{event.slot}</span>
+        </div>{/if}
+    {/if}
   {/each}
-  {#if end?.t === 'turn_end'}<div
-      class="turn-end"
-      class:error={!['completed', 'success', 'stopped'].includes(end.status.toLowerCase())}
-    >
-      {#if $prefs.stamps}<time datetime={new Date(end.ts * 1000).toISOString()}
-          >{new Date(end.ts * 1000).toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit',
-          })}</time
-        >{/if}
-      <span class="end-dot"></span><span>{end.status}</span><span>{duration(end.secs)}</span><span
-        >{formatTokens(end.usage.input_tokens)} in / {formatTokens(end.usage.output_tokens)} out</span
-      >
-    </div>{/if}
 </article>
 
 <style>
@@ -250,86 +253,33 @@
   .reply {
     padding: var(--space-5) 0 var(--space-3);
   }
+  .copy-message {
+    float: right;
+    min-height: 24px;
+    font: 10px var(--mono);
+  }
+  .routing {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    align-items: center;
+    color: var(--ink-4);
+    font: 10px var(--mono);
+    margin: var(--space-3) 0;
+  }
+  .routing .rewind {
+    margin-left: auto;
+    font: 10px var(--mono);
+    min-height: 24px;
+  }
   .reply .speaker {
     color: var(--baton);
   }
   .reply .streaming {
     color: var(--baton);
   }
-  .reply .message {
+  .reply :global(.markdown) {
     font-size: 14px;
-  }
-  .activity {
-    margin-top: var(--space-3);
-  }
-  .activity > summary {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    list-style: none;
-    cursor: pointer;
-    min-height: 36px;
-    color: var(--ink-3);
-    font-size: 11px;
-  }
-  summary::-webkit-details-marker {
-    display: none;
-  }
-  .activity-line {
-    width: 12px;
-    height: 1px;
-    background: var(--baton);
-  }
-  .steps {
-    color: var(--ink-4);
-    font: 10px var(--mono);
-  }
-  .chevron {
-    margin-left: auto;
-    color: var(--ink-4);
-  }
-  details[open] > summary .chevron {
-    transform: rotate(90deg);
-  }
-  .activity-body {
-    padding: var(--space-2) var(--space-3);
-    border-left: 1px solid var(--rule-2);
-    margin-left: 5px;
-  }
-  .routing {
-    font: 10px var(--mono);
-    color: var(--ink-4);
-    padding-bottom: var(--space-3);
-    overflow-wrap: anywhere;
-  }
-  .thinking {
-    padding: var(--space-2) 0;
-    font-size: 11px;
-    color: var(--ink-3);
-  }
-  .thinking summary {
-    cursor: pointer;
-    min-height: 32px;
-  }
-  .thinking span {
-    margin-left: var(--space-2);
-    color: var(--ink-4);
-    font-family: var(--mono);
-  }
-  .thinking pre {
-    color: var(--ink-2);
-  }
-  .notice {
-    border-left: 2px solid var(--rule-3);
-    padding: var(--space-2) var(--space-3);
-    margin-top: var(--space-3);
-    color: var(--ink-2);
-    font-size: 12px;
-    overflow-wrap: anywhere;
-  }
-  .notice.error {
-    border-color: var(--bad);
-    color: var(--bad);
   }
   .turn-end {
     display: flex;

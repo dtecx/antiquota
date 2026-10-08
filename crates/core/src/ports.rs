@@ -228,6 +228,10 @@ pub trait AccountStore: Send + Sync {
     ) -> Result<serde_json::Value, PortError> {
         unavailable()
     }
+    /// Atomically appends validated permanent allow rules and returns stored permissions.
+    fn grant_permissions(&self, _rules: Vec<String>) -> Result<serde_json::Value, PortError> {
+        unavailable()
+    }
     /// Adds one permanent allow rule; callers have already refused unsafe rules.
     fn add_allow_rule(&self, _rule: &str) -> Result<(), PortError> {
         unavailable()

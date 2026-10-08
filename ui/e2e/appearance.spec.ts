@@ -71,11 +71,12 @@ test('switches grouped activity, independent steps, previews, thinking and times
   await page.getByLabel('Times on turns').uncheck();
   await page.getByRole('button', { name: 'Close settings' }).click();
   await expect(page.locator('.tool .preview')).toHaveCount(0);
-  await expect(page.locator('.thinking')).toHaveCount(0);
+  await expect(page.locator('.thinking')).toHaveCount(1);
+  await expect(page.locator('.thinking')).not.toHaveAttribute('open', '');
   await expect(page.locator('.turn-end time')).toHaveCount(0);
   await appearance();
   await page.getByRole('button', { name: 'Grouped steps', exact: true }).click();
   await page.getByRole('button', { name: 'Close settings' }).click();
   await expect(page.locator('details.activity')).toHaveCount(1);
-  await expect(page.locator('details.activity')).not.toHaveAttribute('open', '');
+  await expect(page.locator('details.activity')).toHaveAttribute('open', '');
 });

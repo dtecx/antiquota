@@ -309,8 +309,11 @@ impl Service {
         id: &str,
         kind: &str,
         text: &str,
-        data: serde_json::Value,
+        mut data: serde_json::Value,
     ) -> Result<(), AppError> {
+        if kind == "denied" {
+            crate::notices::denial_suggestions(&mut data);
+        }
         self.streamed(
             id,
             Event::Notice {

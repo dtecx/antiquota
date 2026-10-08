@@ -1,7 +1,27 @@
 /** Proves replay and live updates produce stable tool/reply groups. */
 import { describe, expect, it } from 'vitest';
 import type { EventRecord } from '../gen/EventRecord';
-import { groupTranscript, parseStreamEvent, projectHistory, reduceTranscript } from './transcript';
+import {
+  groupTranscript,
+  nearBottom,
+  parseStreamEvent,
+  projectHistory,
+  reduceTranscript,
+  transcriptItems,
+  userPresentation,
+} from './transcript';
+
+function ended(turn: number, status = 'success'): Extract<EventRecord, { t: 'turn_end' }> {
+  return {
+    t: 'turn_end',
+    ts: 10,
+    turn,
+    slot: 'slot',
+    status,
+    secs: 1,
+    usage: { input_tokens: 1, output_tokens: 2, thinking_tokens: 0, total_tokens: 3, context: 3 },
+  };
+}
 describe('event projection', () => {
   it('replaces a streamed assistant step with its authoritative final text', () => {
     let events: EventRecord[] = [];
@@ -96,5 +116,149 @@ describe('event projection', () => {
     const projected = projectHistory([user, { ...user }]);
     expect(projected).toHaveLength(2);
     expect(groupTranscript(projected)).toHaveLength(2);
+  });
+  it.each(['success', 'error', 'stopped'])(
+    'finalizes every partial step on %s without moving it',
+    (status) => {
+      const events: EventRecord[] = [
+        { t: 'delta', ts: 1, turn: 1, step: 1, text: 'First partial' },
+        { t: 'notice', ts: 2, kind: 'info', text: 'Between replies', data: null },
+        { t: 'delta', ts: 3, turn: 1, step: 2, text: 'Second partial' },
+        { t: 'delta', ts: 4, turn: 2, step: 1, text: 'Other turn' },
+      ];
+      const end = ended(1, status);
+      const expected: EventRecord[] = [
+        { ...events[0], t: 'assistant' } as EventRecord,
+        events[1]!,
+        { ...events[2], t: 'assistant' } as EventRecord,
+        events[3]!,
+        end,
+      ];
+      const live = reduceTranscript(events, end);
+      expect(live).toEqual(expected);
+      expect(projectHistory([...events, end])).toEqual(expected);
+      expect(events[0]?.t).toBe('delta');
+      expect(
+        reduceTranscript(live, { t: 'delta', ts: 11, turn: 1, step: 99, text: 'Late' }),
+      ).toEqual(live);
+      const authoritative: EventRecord = {
+        t: 'assistant',
+        ts: 9,
+        turn: 1,
+        step: 1,
+        text: 'Final answer',
+      };
+      expect(reduceTranscript(live, authoritative)).toEqual([authoritative, ...expected.slice(1)]);
+    },
+  );
+  it('keeps identical durable turn ends and notices distinct while finalizing partial replies', () => {
+    const end = ended(1);
+    const notice: EventRecord = { t: 'notice', ts: 10, kind: 'info', text: 'Repeated', data: null };
+    const events = projectHistory([
+      { t: 'delta', ts: 1, turn: 1, step: 1, text: 'Partial' },
+      end,
+      { ...end },
+      notice,
+      { ...notice },
+      { t: 'delta', ts: 12, turn: 1, step: 2, text: 'Late' },
+    ]);
+    expect(events.map((event) => event.t)).toEqual([
+      'assistant',
+      'turn_end',
+      'turn_end',
+      'notice',
+      'notice',
+    ]);
+    const items = transcriptItems(events);
+    expect(new Set(items.map((item) => item.key)).size).toBe(5);
+  });
+});
+
+describe('chronological transcript presentation', () => {
+  const tool: Extract<EventRecord, { t: 'tool' }> = {
+    t: 'tool',
+    ts: 1,
+    turn: 1,
+    step: 1,
+    name: 'view_file',
+    params: {},
+    state: 'running',
+  };
+  it('groups only adjacent tools and leaves thinking, replies, notices and turn boundaries in place', () => {
+    const events: EventRecord[] = [
+      tool,
+      { ...tool, step: 2 },
+      { t: 'thinking', ts: 2, turn: 1, step: 3, text: 'Think', tokens: 1 },
+      { ...tool, step: 4 },
+      { t: 'assistant', ts: 3, turn: 1, step: 5, text: 'Reply' },
+      { ...tool, step: 6 },
+      { t: 'notice', ts: 4, kind: 'info', text: 'Notice', data: null },
+      { ...tool, step: 7 },
+      ended(1),
+    ];
+    const items = transcriptItems(events);
+    expect(
+      items.map((item) =>
+        'events' in item ? item.events.map((event) => event.step) : item.event.t,
+      ),
+    ).toEqual([[1, 2], 'thinking', [4], 'assistant', [6], 'notice', [7], 'turn_end']);
+    expect(items.flatMap((item) => ('events' in item ? item.events : [item.event]))).toEqual(
+      events,
+    );
+  });
+  it('keeps tool group and reply keys stable across completion and authoritative replacements', () => {
+    const delta: EventRecord = { t: 'delta', ts: 2, turn: 1, step: 2, text: 'Part' };
+    const first = transcriptItems([tool, delta]);
+    const completed = reduceTranscript([tool, delta], { ...tool, ts: 3, state: 'done' });
+    const final = reduceTranscript(completed, {
+      t: 'assistant',
+      ts: 4,
+      turn: 1,
+      step: 2,
+      text: 'Final',
+    });
+    expect(first.map((item) => item.key)).toEqual(['tools-1-1', 'reply-1-2']);
+    expect(transcriptItems(final).map((item) => item.key)).toEqual(first.map((item) => item.key));
+    expect(transcriptItems([tool, { ...tool, step: 3 }])[0]?.key).toBe('tools-1-1');
+    expect(transcriptItems([{ ...tool, turn: 2 }])[0]?.key).toBe('tools-2-1');
+  });
+  it.each([
+    ['user', 'YOU'],
+    ['message', 'YOU'],
+    ['goal', 'GOAL'],
+    ['nudge', 'GOAL PUSH'],
+    ['job', 'JOB'],
+    ['loop', 'LOOP'],
+    ['future', 'YOU'],
+    ['__proto__', 'YOU'],
+  ])('labels %s prompts as %s', (kind, label) => {
+    expect(
+      userPresentation({ t: 'user', ts: 1, kind, text: 'Prompt', steered: true }),
+    ).toMatchObject({ label, text: 'Prompt' });
+  });
+  it('shows the goal objective while retaining standing instructions in its tooltip', () => {
+    const text = 'Objective: Ship the change\nwith tests\n\nWork autonomously until finished.';
+    expect(userPresentation({ t: 'user', ts: 1, kind: 'goal', text })).toEqual({
+      label: 'GOAL',
+      text: 'Ship the change\nwith tests',
+      tooltip: text,
+    });
+    expect(
+      userPresentation({
+        t: 'user',
+        ts: 1,
+        kind: 'goal',
+        text: 'Objective: Ship it\r\n\r\nInstructions',
+      }).text,
+    ).toBe('Ship it');
+    expect(userPresentation({ t: 'user', ts: 1, kind: 'message', text })).toEqual({
+      label: 'YOU',
+      text,
+    });
+  });
+  it('follows the bottom at the inclusive 120 pixel boundary', () => {
+    expect(nearBottom(119)).toBe(true);
+    expect(nearBottom(120)).toBe(true);
+    expect(nearBottom(121)).toBe(false);
   });
 });

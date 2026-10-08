@@ -1,10 +1,18 @@
 /** Owns event projection, streamed step replacement, and transcript grouping. */
 import type { EventRecord } from '../gen/EventRecord';
 import type { StreamEvent } from '../gen/StreamEvent';
+import type { ToolEvent } from './tools';
 import { isStreamEvent } from './validate';
+
+function finalizeTurn(events: EventRecord[], turn: number): EventRecord[] {
+  return events.map((event) =>
+    event.t === 'delta' && event.turn === turn ? { ...event, t: 'assistant' } : event,
+  );
+}
 
 export function reduceTranscript(events: EventRecord[], event: EventRecord): EventRecord[] {
   if (['meta', 'accounts', 'deleted'].includes(event.t)) return events;
+  if (event.t === 'turn_end') events = finalizeTurn(events, event.turn);
   if (event.t === 'approval') {
     // An answer replaces its pending card in place.
     const index = events.findIndex((item) => item.t === 'approval' && item.id === event.id);
@@ -14,7 +22,9 @@ export function reduceTranscript(events: EventRecord[], event: EventRecord): Eve
   if (
     event.t === 'delta' &&
     events.some(
-      (item) => item.t === 'assistant' && item.turn === event.turn && item.step === event.step,
+      (item) =>
+        (item.t === 'turn_end' && item.turn === event.turn) ||
+        (item.t === 'assistant' && item.turn === event.turn && item.step === event.step),
     )
   )
     return events;
@@ -67,10 +77,66 @@ export function projectHistory(events: EventRecord[]): EventRecord[] {
   // Durable history is authoritative. Equal timestamps and text can be separate messages.
   return events.reduce<EventRecord[]>((projection, event) => {
     if (['meta', 'accounts', 'deleted'].includes(event.t)) return projection;
+    if (event.t === 'turn_end') return [...finalizeTurn(projection, event.turn), event];
     if (['tool', 'assistant', 'thinking', 'delta', 'approval'].includes(event.t))
       return reduceTranscript(projection, event);
     return [...projection, event];
   }, []);
+}
+
+export type TranscriptItem =
+  { key: string; events: ToolEvent[] } | { key: string; event: EventRecord };
+
+/** Groups only adjacent tools, preserving replies, thinking and boundaries in arrival order. */
+export function transcriptItems(events: EventRecord[]): TranscriptItem[] {
+  const items: TranscriptItem[] = [];
+  events.forEach((event, index) => {
+    if (['meta', 'accounts', 'deleted'].includes(event.t)) return;
+    if (event.t === 'tool') {
+      const previous = items.at(-1);
+      if (previous && 'events' in previous) previous.events.push(event);
+      else items.push({ key: `tools-${event.turn}-${event.step}`, events: [event] });
+      return;
+    }
+    const key =
+      event.t === 'delta' || event.t === 'assistant'
+        ? `reply-${event.turn}-${event.step}`
+        : event.t === 'thinking'
+          ? `thinking-${event.turn}-${event.step}`
+          : event.t === 'approval'
+            ? `approval-${event.id}`
+            : `${event.t}-${event.ts}-${index}`;
+    items.push({ key, event });
+  });
+  return items;
+}
+
+/** Describes prompt origins without showing the goal's standing instructions in the bubble. */
+export function userPresentation(user: Extract<EventRecord, { t: 'user' }>): {
+  label: string;
+  text: string;
+  tooltip?: string;
+} {
+  const labels: Record<string, string> = {
+    user: 'YOU',
+    message: 'YOU',
+    goal: 'GOAL',
+    nudge: 'GOAL PUSH',
+    job: 'JOB',
+    loop: 'LOOP',
+  };
+  const label = Object.hasOwn(labels, user.kind) ? labels[user.kind]! : 'YOU';
+  return user.kind === 'goal'
+    ? {
+        label,
+        text: (user.text.split(/\r?\n[ \t]*\r?\n/, 1)[0] ?? '').replace(/^Objective:\s*/, ''),
+        tooltip: user.text,
+      }
+    : { label, text: user.text };
+}
+
+export function nearBottom(distance: number): boolean {
+  return distance <= 120;
 }
 
 export interface TranscriptGroup {

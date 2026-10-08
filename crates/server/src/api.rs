@@ -201,6 +201,8 @@ pub struct AllowRulesResponse {
 #[derive(Debug, Clone, Default, Serialize, Deserialize, TS)]
 pub struct PermissionsRequest {
     #[ts(optional)]
+    pub add_allow: Option<Vec<String>>,
+    #[ts(optional)]
     pub allow: Option<Vec<String>>,
     #[ts(optional)]
     pub deny: Option<Vec<String>>,

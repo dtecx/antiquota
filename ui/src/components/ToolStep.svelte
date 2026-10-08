@@ -1,42 +1,44 @@
-<!-- Owns one tool call's state, command parameters, and expandable output. -->
+<!-- Owns one tool call's stable expansion, readable summary and complete output. -->
 <script lang="ts">
   import { preferences } from '../lib/preferences';
-  const prefs = preferences.state;
-  import type { EventRecord } from '../gen/EventRecord';
+  import { toolView, type ToolEvent } from '../lib/tools';
+  import type { Expansion } from '../lib/transcript-actions';
   import { duration } from '../lib/format';
-  let { event }: { event: Extract<EventRecord, { t: 'tool' }> } = $props();
-  const parameterText = $derived(
-    typeof event.params === 'string' ? event.params : JSON.stringify(event.params, null, 2),
-  );
+  const prefs = preferences.state;
+  let { event, cwd = '', expand }: { event: ToolEvent; cwd?: string; expand: Expansion } = $props();
+  const view = $derived(toolView(event, cwd));
+  let open = $state(false);
+  $effect(() => {
+    const intent = expand;
+    if (intent.version > 0) open = intent.open;
+  });
 </script>
 
-<details class="tool" class:failed={event.state.toLowerCase() === 'error' || Boolean(event.error)}>
-  <summary
-    ><span class="glyph" class:active={['active', 'running'].includes(event.state.toLowerCase())}
-      >{['active', 'running'].includes(event.state.toLowerCase())
-        ? '◌'
-        : event.error
-          ? '×'
-          : '✓'}</span
-    ><span class="name">{event.name}</span><span class="state">{event.state.toLowerCase()}</span
-    >{#if event.secs !== undefined}<span class="time">{duration(event.secs)}</span
-      >{/if}{#if $prefs.detail === 'detailed' && event.output}<span class="preview"
-        >{event.output.split('\n').slice(-3).join('\n')}</span
-      >{/if}</summary
-  >
+<details class="tool" class:failed={view.state === 'error'} bind:open>
+  <summary title={event.name}>
+    <span class="glyph" class:active={view.state === 'running'}
+      >{view.state === 'running' ? '◌' : view.state === 'error' ? '×' : '✓'}</span
+    >
+    <span class="name">{view.verb}</span><span class="arg" title={view.arg}>{view.arg}</span>
+    {#if view.add}<span class="stats">+{view.add}</span>{/if}{#if view.del}<span class="deleted"
+        >−{view.del}</span
+      >{/if}
+    <span class="state">{view.state}</span>{#if view.secs !== undefined}<span class="time"
+        >{duration(view.secs)}</span
+      >{/if}
+    {#if view.error}<span class="tool-error">{view.error.split('\n').slice(0, 2).join('\n')}</span
+      >{/if}
+    {#if $prefs.detail === 'detailed' && view.preview}<span
+        class="preview"
+        class:diff={view.preview.kind === 'diff'}
+        >{view.preview.text}{#if view.preview.more}<span class="more"
+            >… {view.preview.more} more {view.preview.more === 1 ? 'line' : 'lines'} · click to expand</span
+          >{/if}</span
+      >{/if}
+  </summary>
   <div class="body">
-    {#if parameterText && parameterText !== 'null'}<pre>{parameterText}</pre>{/if}
-    {#if event.output}<div class="output">
-        <span>Output</span>
-        <pre>{event.output}</pre>
-      </div>{/if}
-    {#if event.diff}<div class="output">
-        <span>Changes</span>
-        <pre>{event.diff}</pre>
-      </div>{/if}
-    {#if event.error}<pre class="error">{typeof event.error === 'string'
-          ? event.error
-          : JSON.stringify(event.error, null, 2)}</pre>{/if}
+    <pre class:diff={view.body.kind === 'diff'}>{view.body.text}</pre>
+    {#if view.body.error}<pre class="error">{view.body.error}</pre>{/if}
   </div>
 </details>
 
@@ -57,13 +59,12 @@
   summary::-webkit-details-marker {
     display: none;
   }
-  .preview {
+  .preview,
+  .tool-error {
     flex-basis: 100%;
     padding-left: 20px;
     color: var(--ink-3);
     white-space: pre-wrap;
-    max-height: 54px;
-    overflow: hidden;
   }
   .glyph {
     color: var(--ok);
@@ -74,6 +75,21 @@
   }
   .failed .glyph {
     color: var(--bad);
+  }
+  .arg {
+    color: var(--ink-3);
+    overflow-wrap: anywhere;
+  }
+  .stats {
+    color: var(--ok);
+  }
+  .deleted {
+    color: var(--bad);
+  }
+  .more {
+    display: block;
+    color: var(--ink-4);
+    margin-top: var(--space-1);
   }
   .name {
     color: var(--ink-2);
@@ -101,15 +117,8 @@
     color: var(--ink-2);
     font-size: 11px;
   }
-  .output {
-    border-top: 1px solid var(--rule);
-    padding-top: var(--space-3);
-    margin-top: var(--space-3);
-  }
-  .output > span {
-    display: block;
-    color: var(--ink-4);
-    font: 10px var(--mono);
-    margin-bottom: var(--space-2);
+  .tool-error,
+  .error {
+    color: var(--bad);
   }
 </style>

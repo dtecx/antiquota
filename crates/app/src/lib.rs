@@ -21,6 +21,7 @@ mod dictation;
 pub use dictation::{RECORDING_LIMIT, Transcript};
 mod git;
 mod goals;
+mod notices;
 pub use goals::TurnOutcome;
 mod handoff;
 use antiquota_core::{

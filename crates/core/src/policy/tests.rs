@@ -342,6 +342,154 @@ fn permanent_rules_never_allow_arbitrary_programs() {
 }
 
 #[test]
+fn runner_identity_refuses_absolute_quoted_escaped_and_versioned_programs() {
+    for line in [
+        "/bin/bash -c 'echo unsafe'",
+        "'/bin/bash' -c 'echo unsafe'",
+        r"/bin/b\ash -c unsafe",
+        r#""/Applications/Shell Tools/bash" -c unsafe"#,
+        "/usr/bin/env ls",
+        "'/usr/bin/xargs' rm",
+        "/usr/bin/python3 -c 'print(1)'",
+        "/usr/bin/python3.11 -c 'print(1)'",
+        "/usr/bin/python3.11",
+        "nodejs -e 'console.log(1)'",
+        r#""C:\Windows\System32\BASH.EXE" -c unsafe"#,
+        r#""C:\Program Files\PowerShell\PWSH.EXE" -c unsafe"#,
+        r#""C:\Tools\PYTHON3.11.EXE" -c unsafe"#,
+        r"C:\Windows\System32\BASH.EXE -c unsafe",
+        r"C:\Tools\NODEJS.EXE -e unsafe",
+        "/bin/bas[h] -c unsafe",
+        "/bin/{ba,z}sh -c unsafe",
+    ] {
+        let rule = format!("command({line})");
+        assert!(permanent_rule_error(&rule).is_some(), "{line}");
+        assert!(clean_rules("allow", &json!([rule])).is_err(), "{line}");
+        assert!(suggest_rule(line).is_empty(), "{line}");
+    }
+}
+
+#[test]
+fn suggestions_keep_concrete_program_paths_and_whole_word_rules() {
+    for (line, expected) in [
+        (
+            "/usr/bin/git status --short",
+            "command(/usr/bin/git status)",
+        ),
+        (
+            "'/usr/bin/git' status --short",
+            "command(/usr/bin/git status)",
+        ),
+        (
+            r"/usr/bin/g\it status --short",
+            "command(/usr/bin/git status)",
+        ),
+        (
+            "/usr/bin/python3.11 manage.py test",
+            "command(/usr/bin/python3.11 manage.py)",
+        ),
+        ("nodejs app.js", "command(nodejs app.js)"),
+        (
+            r#""C:\Tools\GIT.EXE" status --short"#,
+            r"command(C:\Tools\GIT.EXE status)",
+        ),
+    ] {
+        assert_eq!(suggest_rule(line), expected, "{line}");
+        assert!(permanent_rule_error(expected).is_none(), "{expected}");
+    }
+    let p = rules(
+        &["command(/usr/bin/git status)"],
+        &["command(/usr/bin/git status --ignored)"],
+    );
+    assert_eq!(command(&p, "'/usr/bin/git' status --short"), "allow");
+    assert_eq!(command(&p, "/usr/bin/git statusx"), "ask");
+    assert_eq!(command(&p, "git status"), "ask");
+    assert_eq!(command(&p, "/usr/bin/git status --ignored"), "deny");
+}
+
+#[test]
+fn malformed_or_multiple_commands_never_suggest_permanent_rules() {
+    for line in [
+        "ls && bash -c unsafe",
+        "ls; echo safe",
+        "ls | wc -l",
+        "ls $(echo unsafe)",
+        "ls 'unbalanced",
+        "ls trailing\\",
+        "(bash -c unsafe)",
+        "RUNNER=bash $RUNNER -c unsafe",
+    ] {
+        assert!(suggest_rule(line).is_empty(), "{line}");
+        assert!(
+            permanent_rule_error(&format!("command({line})")).is_some(),
+            "{line}"
+        );
+    }
+}
+
+#[test]
+fn absolute_risky_programs_need_a_decision_despite_existing_allow_rules() {
+    let explicit = rules(
+        &[
+            "command(/usr/bin/find)",
+            "command(/usr/bin/git push)",
+            "command(/usr/bin/sed)",
+        ],
+        &[],
+    );
+    for line in [
+        "/usr/bin/find . -exec rm {} \\;",
+        "/usr/bin/git push --force origin main",
+        "/usr/bin/sed -i '' s/a/b/ file",
+    ] {
+        assert_eq!(command(&explicit, line), "ask", "{line}");
+    }
+    let p = rules(&["command(*)"], &[]);
+    for line in [
+        "/usr/bin/find . -exec rm {} \\;",
+        "'/usr/bin/find' . -delete",
+        "/usr/bin/git push --force origin main",
+        "'/usr/bin/git' push origin :main",
+        "/usr/bin/sed -i '' s/a/b/ file",
+        r#""C:\Tools\GIT.EXE" push --force origin main"#,
+        r#""/Applications/Git Tools/git" push --force origin main"#,
+    ] {
+        assert_eq!(command(&p, line), "ask", "{line}");
+    }
+    assert_eq!(command(&p, "/usr/bin/find . -name '*.rs'"), "allow");
+    assert_eq!(command(&p, "/usr/bin/git push origin main"), "allow");
+    assert_eq!(command(&p, "echo git push --force"), "allow");
+}
+
+#[test]
+fn risky_calls_never_suggest_a_permanent_rule_but_harmless_prefixes_stay_valid() {
+    for line in [
+        "find . -exec sh {} ;",
+        "find . -exec sh {} \\;",
+        "find . -delete",
+        "/usr/bin/find . -exec sh {} \\;",
+        "'/usr/bin/find' . -delete",
+        "/usr/bin/git push --force origin main",
+        "'/usr/bin/git' reset --hard HEAD",
+        "/usr/bin/sed -i '' s/a/b/ file",
+    ] {
+        assert!(suggest_rule(line).is_empty(), "{line}");
+    }
+    for (line, expected) in [
+        ("find . -name '*.rs'", "command(find)"),
+        ("/usr/bin/find . -name '*.rs'", "command(/usr/bin/find)"),
+        (
+            "/usr/bin/git push origin main",
+            "command(/usr/bin/git push)",
+        ),
+        ("'/usr/bin/sed' -n '1,5p' file", "command(/usr/bin/sed)"),
+    ] {
+        assert_eq!(suggest_rule(line), expected, "{line}");
+        assert!(permanent_rule_error(expected).is_none(), "{expected}");
+    }
+}
+
+#[test]
 fn rule_lists_are_validated_and_deduplicated() {
     assert_eq!(
         clean_rules(

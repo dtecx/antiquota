@@ -2,7 +2,7 @@
 
 This is the canonical checklist for parity and cutover. It contains 1009 baseline acceptance items: 397 engine/API/CLI items (F-001–F-397) and 612 UI/shell items (F-398–F-1009), including the requested zoom and window-persistence repairs. The 135 additional items (F-1010–F-1144) record explicit requirements from the user's rewrite task. They are requirements, not claims about legacy behavior. No feature has been dropped.
 
-Every row is independently reviewable and links to its [test report](TEST_REPORT.md). Slices 1, 3–8 and 9a–9d have **582 Passed** acceptance items; the other **562 remain Pending**. Legacy test names and captured Python responses explain the baseline; they are not passing Rust or TypeScript proof. Mark a row complete only after its passing tests and evidence have been recorded. Store logs, screenshots and live-cost records in ignored `.handoff/evidence/`.
+Every row is independently reviewable and links to its [test report](TEST_REPORT.md). Slices 1, 3–8 and 9a–9e have **631 Passed** acceptance items; the other **513 remain Pending**. Legacy test names and captured Python responses explain the baseline; they are not passing Rust or TypeScript proof. Mark a row complete only after its passing tests and evidence have been recorded. Store logs, screenshots and live-cost records in ignored `.handoff/evidence/`.
 
 Legacy sources were read in full at commit `17ec296`; [engine](source-read-engine.md) and [UI/shell](source-read-ui.md) manifests record coverage and hashes. The sourced subsidiary inventories are [FEATURES-engine.md](FEATURES-engine.md) and [FEATURES-ui.md](FEATURES-ui.md). The canonical rows below contain their full acceptance text. UI identifiers were renumbered once from F-400–F-1011 to F-398–F-1009 to remove the unused gap; engine identifiers were unchanged.
 
@@ -594,57 +594,57 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-500 | [ ] <a id="f-500"></a>Model content is escaped before supported Markdown is inserted. | `antiquota/ui/app.js:142` | None identified | [Pending](TEST_REPORT.md#f-500) |
-| F-501 | [ ] <a id="f-501"></a>Markdown renders fenced code blocks. | `antiquota/ui/app.js:156` | None identified | [Pending](TEST_REPORT.md#f-501) |
-| F-502 | [ ] <a id="f-502"></a>Markdown renders four heading levels. | `antiquota/ui/app.js:156` | None identified | [Pending](TEST_REPORT.md#f-502) |
-| F-503 | [ ] <a id="f-503"></a>Markdown renders ordered and unordered lists. | `antiquota/ui/app.js:156` | None identified | [Pending](TEST_REPORT.md#f-503) |
-| F-504 | [ ] <a id="f-504"></a>Markdown renders blockquotes. | `antiquota/ui/app.js:156` | None identified | [Pending](TEST_REPORT.md#f-504) |
-| F-505 | [ ] <a id="f-505"></a>Markdown renders tables with a header separator. | `antiquota/ui/app.js:156` | None identified | [Pending](TEST_REPORT.md#f-505) |
-| F-506 | [ ] <a id="f-506"></a>Markdown renders paragraphs and inline bold, emphasis and code. | `antiquota/ui/app.js:156` | None identified | [Pending](TEST_REPORT.md#f-506) |
-| F-507 | [ ] <a id="f-507"></a>HTTP Markdown links open externally and unsupported schemes remain text. | `antiquota/ui/app.js:142` | None identified | [Pending](TEST_REPORT.md#f-507) |
-| F-508 | [ ] <a id="f-508"></a>File Markdown links open the file viewer. | `antiquota/ui/app.js:142` | None identified | [Pending](TEST_REPORT.md#f-508) |
-| F-509 | [ ] <a id="f-509"></a>Code-block Copy copies only the code contents. | `antiquota/ui/app.js:200` | None identified | [Pending](TEST_REPORT.md#f-509) |
-| F-510 | [ ] <a id="f-510"></a>Copy message copies the completed assistant reply. | `antiquota/ui/app.js:865` | None identified | [Pending](TEST_REPORT.md#f-510) |
-| F-511 | [ ] <a id="f-511"></a>User messages identify user, goal, nudge, job and loop origins. | `antiquota/ui/app.js:626` | None identified | [Pending](TEST_REPORT.md#f-511) |
-| F-512 | [ ] <a id="f-512"></a>Visible goal prompts omit repeated standing instructions but retain full tooltip text. | `antiquota/ui/app.js:626` | None identified | [Pending](TEST_REPORT.md#f-512) |
-| F-513 | [ ] <a id="f-513"></a>Steered messages are marked as arriving while the agent worked. | `antiquota/ui/app.js:626` | None identified | [Pending](TEST_REPORT.md#f-513) |
-| F-514 | [ ] <a id="f-514"></a>Turn markers show number, account, model, clock time and rewind. | `antiquota/ui/app.js:871` | None identified | [Pending](TEST_REPORT.md#f-514) |
+| F-500 | [x] <a id="f-500"></a>Model content is escaped before supported Markdown is inserted. | `antiquota/ui/app.js:142` | None identified | [Passed](TEST_REPORT.md#f-500) |
+| F-501 | [x] <a id="f-501"></a>Markdown renders fenced code blocks. | `antiquota/ui/app.js:156` | None identified | [Passed](TEST_REPORT.md#f-501) |
+| F-502 | [x] <a id="f-502"></a>Markdown renders four heading levels. | `antiquota/ui/app.js:156` | None identified | [Passed](TEST_REPORT.md#f-502) |
+| F-503 | [x] <a id="f-503"></a>Markdown renders ordered and unordered lists. | `antiquota/ui/app.js:156` | None identified | [Passed](TEST_REPORT.md#f-503) |
+| F-504 | [x] <a id="f-504"></a>Markdown renders blockquotes. | `antiquota/ui/app.js:156` | None identified | [Passed](TEST_REPORT.md#f-504) |
+| F-505 | [x] <a id="f-505"></a>Markdown renders tables with a header separator. | `antiquota/ui/app.js:156` | None identified | [Passed](TEST_REPORT.md#f-505) |
+| F-506 | [x] <a id="f-506"></a>Markdown renders paragraphs and inline bold, emphasis and code. | `antiquota/ui/app.js:156` | None identified | [Passed](TEST_REPORT.md#f-506) |
+| F-507 | [x] <a id="f-507"></a>HTTP Markdown links open externally and unsupported schemes remain text. | `antiquota/ui/app.js:142` | None identified | [Passed](TEST_REPORT.md#f-507) |
+| F-508 | [x] <a id="f-508"></a>File Markdown links open the file viewer. | `antiquota/ui/app.js:142` | None identified | [Passed](TEST_REPORT.md#f-508) |
+| F-509 | [x] <a id="f-509"></a>Code-block Copy copies only the code contents. | `antiquota/ui/app.js:200` | None identified | [Passed](TEST_REPORT.md#f-509) |
+| F-510 | [x] <a id="f-510"></a>Copy message copies the completed assistant reply. | `antiquota/ui/app.js:865` | None identified | [Passed](TEST_REPORT.md#f-510) |
+| F-511 | [x] <a id="f-511"></a>User messages identify user, goal, nudge, job and loop origins. | `antiquota/ui/app.js:626` | None identified | [Passed](TEST_REPORT.md#f-511) |
+| F-512 | [x] <a id="f-512"></a>Visible goal prompts omit repeated standing instructions but retain full tooltip text. | `antiquota/ui/app.js:626` | None identified | [Passed](TEST_REPORT.md#f-512) |
+| F-513 | [x] <a id="f-513"></a>Steered messages are marked as arriving while the agent worked. | `antiquota/ui/app.js:626` | None identified | [Passed](TEST_REPORT.md#f-513) |
+| F-514 | [x] <a id="f-514"></a>Turn markers show number, account, model, clock time and rewind. | `antiquota/ui/app.js:871` | None identified | [Passed](TEST_REPORT.md#f-514) |
 | F-515 | [x] <a id="f-515"></a>Streaming deltas update one assistant node until its completed reply replaces them. | `antiquota/ui/app.js:871` | None identified | [Passed](TEST_REPORT.md#f-515) |
-| F-516 | [ ] <a id="f-516"></a>Completed tool rows replace running rows without losing expanded state. | `antiquota/ui/app.js:871` | None identified | [Pending](TEST_REPORT.md#f-516) |
-| F-517 | [ ] <a id="f-517"></a>Tool rows identify run, read, list, search, find, edit, web and MCP actions. | `antiquota/ui/app.js:636` | None identified | [Pending](TEST_REPORT.md#f-517) |
-| F-518 | [ ] <a id="f-518"></a>Unknown tool rows display a readable name and short string argument. | `antiquota/ui/app.js:636` | None identified | [Pending](TEST_REPORT.md#f-518) |
-| F-519 | [ ] <a id="f-519"></a>Tool rows show running, completed or error state with elapsed time. | `antiquota/ui/app.js:691` | None identified | [Pending](TEST_REPORT.md#f-519) |
-| F-520 | [ ] <a id="f-520"></a>Tool rows show added and deleted line counts for diffs. | `antiquota/ui/app.js:691` | None identified | [Pending](TEST_REPORT.md#f-520) |
-| F-521 | [ ] <a id="f-521"></a>ANSI terminal color sequences are removed from command output. | `antiquota/ui/app.js:691` | None identified | [Pending](TEST_REPORT.md#f-521) |
-| F-522 | [ ] <a id="f-522"></a>Command previews show the final four lines with an additional-line indicator. | `antiquota/ui/app.js:669` | None identified | [Pending](TEST_REPORT.md#f-522) |
-| F-523 | [ ] <a id="f-523"></a>Diff previews show up to six changed lines with an additional-line indicator. | `antiquota/ui/app.js:669` | None identified | [Pending](TEST_REPORT.md#f-523) |
-| F-524 | [ ] <a id="f-524"></a>Expanded tools display complete diff or output. | `antiquota/ui/app.js:683` | None identified | [Pending](TEST_REPORT.md#f-524) |
-| F-525 | [ ] <a id="f-525"></a>Expanded tools include extended errors or JSON parameters when output is absent. | `antiquota/ui/app.js:683` | None identified | [Pending](TEST_REPORT.md#f-525) |
-| F-526 | [ ] <a id="f-526"></a>Tool headers and previews toggle complete output expansion. | `antiquota/ui/app.js:691` | None identified | [Pending](TEST_REPORT.md#f-526) |
-| F-527 | [ ] <a id="f-527"></a>Grouped mode folds adjacent tool steps into one expandable summary. | `antiquota/ui/app.js:730` | None identified | [Pending](TEST_REPORT.md#f-527) |
-| F-528 | [ ] <a id="f-528"></a>Grouped summaries count unique read and edited paths. | `antiquota/ui/app.js:730` | None identified | [Pending](TEST_REPORT.md#f-528) |
-| F-529 | [ ] <a id="f-529"></a>Grouped summaries show additions, deletions, failures and step count. | `antiquota/ui/app.js:730` | None identified | [Pending](TEST_REPORT.md#f-529) |
-| F-530 | [ ] <a id="f-530"></a>Grouped summaries show the active running tool. | `antiquota/ui/app.js:730` | None identified | [Pending](TEST_REPORT.md#f-530) |
-| F-531 | [ ] <a id="f-531"></a>Thinking blocks display reasoning Markdown and token counts when present. | `antiquota/ui/app.js:767` | None identified | [Pending](TEST_REPORT.md#f-531) |
-| F-532 | [ ] <a id="f-532"></a>Short thinking blocks start expanded in detailed mode. | `antiquota/ui/app.js:767` | None identified | [Pending](TEST_REPORT.md#f-532) |
-| F-533 | [ ] <a id="f-533"></a>Compact mode hides previews and changes thinking expansion. | `antiquota/ui/app.js:2470` | None identified | [Pending](TEST_REPORT.md#f-533) |
-| F-534 | [ ] <a id="f-534"></a>Detailed or compact mode persists per device. | `antiquota/ui/app.js:2470` | None identified | [Pending](TEST_REPORT.md#f-534) |
-| F-535 | [ ] <a id="f-535"></a>Expand all controls tool groups, individual output and thinking blocks. | `antiquota/ui/app.js:2478` | None identified | [Pending](TEST_REPORT.md#f-535) |
-| F-536 | [ ] <a id="f-536"></a>Turn completion shows status, duration, input/output use and serving account. | `antiquota/ui/app.js:838` | None identified | [Pending](TEST_REPORT.md#f-536) |
-| F-537 | [ ] <a id="f-537"></a>Completed and failed turns remove live transcript markers. | `antiquota/ui/app.js:871` | None identified | [Pending](TEST_REPORT.md#f-537) |
-| F-538 | [ ] <a id="f-538"></a>Events auto-scroll only within 120 pixels of the transcript bottom. | `antiquota/ui/app.js:576` | None identified | [Pending](TEST_REPORT.md#f-538) |
-| F-539 | [ ] <a id="f-539"></a>Handoff notices identify the transition to another account. | `antiquota/ui/app.js:785` | None identified | [Pending](TEST_REPORT.md#f-539) |
-| F-540 | [ ] <a id="f-540"></a>Quota-wall and no-account notices have distinct actionable presentations. | `antiquota/ui/app.js:785` | None identified | [Pending](TEST_REPORT.md#f-540) |
-| F-541 | [ ] <a id="f-541"></a>Goal notices indicate whether the objective is met. | `antiquota/ui/app.js:785` | None identified | [Pending](TEST_REPORT.md#f-541) |
-| F-542 | [ ] <a id="f-542"></a>Check notices show pass/fail and expandable output. | `antiquota/ui/app.js:785` | None identified | [Pending](TEST_REPORT.md#f-542) |
-| F-543 | [ ] <a id="f-543"></a>Verifier notices show done, not met or indeterminate state. | `antiquota/ui/app.js:785` | None identified | [Pending](TEST_REPORT.md#f-543) |
-| F-544 | [ ] <a id="f-544"></a>Verifier notices show missing work and verifier account/model. | `antiquota/ui/app.js:785` | None identified | [Pending](TEST_REPORT.md#f-544) |
-| F-545 | [ ] <a id="f-545"></a>Errors display their error text without markup interpretation. | `antiquota/ui/app.js:785` | None identified | [Pending](TEST_REPORT.md#f-545) |
-| F-546 | [ ] <a id="f-546"></a>Denied-command notices offer adding the suggested rules. | `antiquota/ui/app.js:785` | None identified | [Pending](TEST_REPORT.md#f-546) |
-| F-547 | [ ] <a id="f-547"></a>Allow and retry grants suggested command rules and sends a retry prompt. | `antiquota/ui/app.js:785` | None identified | [Pending](TEST_REPORT.md#f-547) |
-| F-548 | [ ] <a id="f-548"></a>Denied edits without command rules offer accept edits and retry. | `antiquota/ui/app.js:785` | None identified | [Pending](TEST_REPORT.md#f-548) |
+| F-516 | [x] <a id="f-516"></a>Completed tool rows replace running rows without losing expanded state. | `antiquota/ui/app.js:871` | None identified | [Passed](TEST_REPORT.md#f-516) |
+| F-517 | [x] <a id="f-517"></a>Tool rows identify run, read, list, search, find, edit, web and MCP actions. | `antiquota/ui/app.js:636` | None identified | [Passed](TEST_REPORT.md#f-517) |
+| F-518 | [x] <a id="f-518"></a>Unknown tool rows display a readable name and short string argument. | `antiquota/ui/app.js:636` | None identified | [Passed](TEST_REPORT.md#f-518) |
+| F-519 | [x] <a id="f-519"></a>Tool rows show running, completed or error state with elapsed time. | `antiquota/ui/app.js:691` | None identified | [Passed](TEST_REPORT.md#f-519) |
+| F-520 | [x] <a id="f-520"></a>Tool rows show added and deleted line counts for diffs. | `antiquota/ui/app.js:691` | None identified | [Passed](TEST_REPORT.md#f-520) |
+| F-521 | [x] <a id="f-521"></a>ANSI terminal color sequences are removed from command output. | `antiquota/ui/app.js:691` | None identified | [Passed](TEST_REPORT.md#f-521) |
+| F-522 | [x] <a id="f-522"></a>Command previews show the final four lines with an additional-line indicator. | `antiquota/ui/app.js:669` | None identified | [Passed](TEST_REPORT.md#f-522) |
+| F-523 | [x] <a id="f-523"></a>Diff previews show up to six changed lines with an additional-line indicator. | `antiquota/ui/app.js:669` | None identified | [Passed](TEST_REPORT.md#f-523) |
+| F-524 | [x] <a id="f-524"></a>Expanded tools display complete diff or output. | `antiquota/ui/app.js:683` | None identified | [Passed](TEST_REPORT.md#f-524) |
+| F-525 | [x] <a id="f-525"></a>Expanded tools include extended errors or JSON parameters when output is absent. | `antiquota/ui/app.js:683` | None identified | [Passed](TEST_REPORT.md#f-525) |
+| F-526 | [x] <a id="f-526"></a>Tool headers and previews toggle complete output expansion. | `antiquota/ui/app.js:691` | None identified | [Passed](TEST_REPORT.md#f-526) |
+| F-527 | [x] <a id="f-527"></a>Grouped mode folds adjacent tool steps into one expandable summary. | `antiquota/ui/app.js:730` | None identified | [Passed](TEST_REPORT.md#f-527) |
+| F-528 | [x] <a id="f-528"></a>Grouped summaries count unique read and edited paths. | `antiquota/ui/app.js:730` | None identified | [Passed](TEST_REPORT.md#f-528) |
+| F-529 | [x] <a id="f-529"></a>Grouped summaries show additions, deletions, failures and step count. | `antiquota/ui/app.js:730` | None identified | [Passed](TEST_REPORT.md#f-529) |
+| F-530 | [x] <a id="f-530"></a>Grouped summaries show the active running tool. | `antiquota/ui/app.js:730` | None identified | [Passed](TEST_REPORT.md#f-530) |
+| F-531 | [x] <a id="f-531"></a>Thinking blocks display reasoning Markdown and token counts when present. | `antiquota/ui/app.js:767` | None identified | [Passed](TEST_REPORT.md#f-531) |
+| F-532 | [x] <a id="f-532"></a>Short thinking blocks start expanded in detailed mode. | `antiquota/ui/app.js:767` | None identified | [Passed](TEST_REPORT.md#f-532) |
+| F-533 | [x] <a id="f-533"></a>Compact mode hides previews and changes thinking expansion. | `antiquota/ui/app.js:2470` | None identified | [Passed](TEST_REPORT.md#f-533) |
+| F-534 | [x] <a id="f-534"></a>Detailed or compact mode persists per device. | `antiquota/ui/app.js:2470` | None identified | [Passed](TEST_REPORT.md#f-534) |
+| F-535 | [x] <a id="f-535"></a>Expand all controls tool groups, individual output and thinking blocks. | `antiquota/ui/app.js:2478` | None identified | [Passed](TEST_REPORT.md#f-535) |
+| F-536 | [x] <a id="f-536"></a>Turn completion shows status, duration, input/output use and serving account. | `antiquota/ui/app.js:838` | None identified | [Passed](TEST_REPORT.md#f-536) |
+| F-537 | [x] <a id="f-537"></a>Completed and failed turns remove live transcript markers. | `antiquota/ui/app.js:871` | None identified | [Passed](TEST_REPORT.md#f-537) |
+| F-538 | [x] <a id="f-538"></a>Events auto-scroll only within 120 pixels of the transcript bottom. | `antiquota/ui/app.js:576` | None identified | [Passed](TEST_REPORT.md#f-538) |
+| F-539 | [x] <a id="f-539"></a>Handoff notices identify the transition to another account. | `antiquota/ui/app.js:785` | None identified | [Passed](TEST_REPORT.md#f-539) |
+| F-540 | [x] <a id="f-540"></a>Quota-wall and no-account notices have distinct actionable presentations. | `antiquota/ui/app.js:785` | None identified | [Passed](TEST_REPORT.md#f-540) |
+| F-541 | [x] <a id="f-541"></a>Goal notices indicate whether the objective is met. | `antiquota/ui/app.js:785` | None identified | [Passed](TEST_REPORT.md#f-541) |
+| F-542 | [x] <a id="f-542"></a>Check notices show pass/fail and expandable output. | `antiquota/ui/app.js:785` | None identified | [Passed](TEST_REPORT.md#f-542) |
+| F-543 | [x] <a id="f-543"></a>Verifier notices show done, not met or indeterminate state. | `antiquota/ui/app.js:785` | None identified | [Passed](TEST_REPORT.md#f-543) |
+| F-544 | [x] <a id="f-544"></a>Verifier notices show missing work and verifier account/model. | `antiquota/ui/app.js:785` | None identified | [Passed](TEST_REPORT.md#f-544) |
+| F-545 | [x] <a id="f-545"></a>Errors display their error text without markup interpretation. | `antiquota/ui/app.js:785` | None identified | [Passed](TEST_REPORT.md#f-545) |
+| F-546 | [x] <a id="f-546"></a>Denied-command notices offer adding the suggested rules. | `antiquota/ui/app.js:785` | None identified | [Passed](TEST_REPORT.md#f-546) |
+| F-547 | [x] <a id="f-547"></a>Allow and retry grants suggested command rules and sends a retry prompt. | `antiquota/ui/app.js:785` | None identified | [Passed](TEST_REPORT.md#f-547) |
+| F-548 | [x] <a id="f-548"></a>Denied edits without command rules offer accept edits and retry. | `antiquota/ui/app.js:785` | None identified | [Passed](TEST_REPORT.md#f-548) |
 | F-549 | [x] <a id="f-549"></a>Rewind requires a specified turn and confirmation before restoring files. | `antiquota/ui/app.js:855` | None identified | [Passed](TEST_REPORT.md#f-549) |
-| F-550 | [ ] <a id="f-550"></a>Rewind notices identify files changed outside the agent after its edit. | `antiquota/ui/app.js:785` | None identified | [Pending](TEST_REPORT.md#f-550) |
+| F-550 | [x] <a id="f-550"></a>Rewind notices identify files changed outside the agent after its edit. | `antiquota/ui/app.js:785` | None identified | [Passed](TEST_REPORT.md#f-550) |
 | F-551 | [x] <a id="f-551"></a>Markdown export includes prompts, replies, reasoning, tools, turns and notices. | `antiquota/ui/app.js:1414` | None identified | [Passed](TEST_REPORT.md#f-551) |
 | F-552 | [x] <a id="f-552"></a>Export uses a sanitized title limited to sixty characters plus .md. | `antiquota/ui/app.js:1414` | None identified | [Passed](TEST_REPORT.md#f-552) |
 ### Goals, plans, jobs and approvals

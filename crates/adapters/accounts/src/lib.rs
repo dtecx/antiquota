@@ -253,6 +253,9 @@ impl AccountStore for FileAccounts {
     ) -> Result<serde_json::Value, PortError> {
         permissions::save(self, allow, deny)
     }
+    fn grant_permissions(&self, rules: Vec<String>) -> Result<serde_json::Value, PortError> {
+        permissions::grant(self, rules)
+    }
     fn add_allow_rule(&self, rule: &str) -> Result<(), PortError> {
         permissions::add_allow(self, rule)
     }

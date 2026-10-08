@@ -24,23 +24,26 @@ async function screenshot(page: Page, engine: FixtureEngine, name: string) {
 test('creates sends streams groups renames and reloads a session', async ({ page, engine }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  await engine.scenario({ reply: 'A streamed fixture reply.', delay_ms: 800 });
+  await engine.scenario({ reply: 'A streamed fixture reply.', delay_ms: 2500 });
   await create(page, engine);
   await page
     .getByRole('textbox', { name: 'Message', exact: true })
     .fill('Inspect this fixture project.');
   await page.getByRole('button', { name: 'Send', exact: true }).click();
   await expect(page.getByLabel('Your message')).toContainText('Inspect this fixture project.');
-  await expect(page.getByText('Working…', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Stop', exact: true })).toBeVisible();
   await expect(page.getByLabel('Agent reply')).toContainText('A streamed fixture reply.');
   await expect(page.getByText('Agent activity', { exact: true })).toBeVisible();
   await page.getByText('Agent activity', { exact: true }).click();
-  await expect(page.getByText('write_to_file', { exact: true })).toBeVisible();
-  await page.getByText('write_to_file', { exact: true }).click();
+  await expect(page.locator('.tool .name').filter({ hasText: /^Write$/ })).toBeVisible();
+  await page
+    .locator('.tool .name')
+    .filter({ hasText: /^Write$/ })
+    .click();
   await expect(page.locator('.tool .body')).toContainText('notes.txt');
   await screenshot(page, engine, 'desktop-dark-expanded');
   await page.getByText('Agent activity', { exact: true }).click();
-  await expect(page.getByText('write_to_file', { exact: true })).not.toBeVisible();
+  await expect(page.locator('.tool .name').filter({ hasText: /^Write$/ })).not.toBeVisible();
   await page.getByRole('button', { name: 'Rename session' }).click();
   await page.getByRole('textbox', { name: 'Session title' }).fill('Renamed browser fixture');
   await page.getByRole('textbox', { name: 'Session title' }).press('Enter');
@@ -161,9 +164,8 @@ test('reads expandable thinking from compatible durable history', async ({ page,
   );
   await engine.start(port);
   await page.reload();
-  await page.getByText('Agent activity', { exact: true }).click();
-  await page.locator('.thinking summary').click();
-  await expect(page.locator('.thinking pre')).toHaveText(thinking.text);
+  await expect(page.locator('.thinking')).toHaveAttribute('open', '');
+  await expect(page.locator('.thinking .markdown')).toHaveText(thinking.text);
   await expect(page.locator('.thinking summary')).toContainText('42 tokens');
   await screenshot(page, engine, 'thinking-history');
 });

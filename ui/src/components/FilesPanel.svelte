@@ -1,35 +1,54 @@
 <!-- Owns browsing the selected session's project folder: breadcrumbs, folders, file sizes,
      opening files in the viewer and mentioning them in the composer. -->
 <script lang="ts">
+  import { onDestroy } from 'svelte';
   import type { Api } from '../lib/api';
   import type { Workbench } from '../lib/workbench';
-  import { type Tree, breadcrumbs, humanSize, parentPath, viewer } from '../lib/git';
+  import { type Tree, breadcrumbs, humanSize, parentPath, viewFile } from '../lib/git';
   let { workbench, api }: { workbench: Workbench; api: Api } = $props();
   const view = $derived(workbench.state);
   const session = $derived($view.selected);
   let tree = $state<Tree | null>(null);
   let path = $state('');
   let error = $state('');
+  let generation = 0,
+    active = true;
+  onDestroy(() => {
+    active = false;
+  });
   async function load(id: string, folder: string) {
+    const own = ++generation;
     try {
-      tree = await api.tree(id, folder);
-      path = tree.path;
+      const result = await api.tree(id, folder);
+      if (!active || own !== generation || session?.id !== id) return;
+      tree = result;
+      path = result.path;
       error = '';
     } catch (failure) {
-      error = failure instanceof Error ? failure.message : 'The folder could not be read.';
+      if (active && own === generation && session?.id === id)
+        error = failure instanceof Error ? failure.message : 'The folder could not be read.';
     }
   }
   $effect(() => {
     const id = session?.id;
+    tree = null;
+    path = '';
+    error = '';
     if (id) void load(id, '');
   });
   const join = (name: string) => (path ? `${path}/${name}` : name);
   async function open(name: string) {
     if (!session) return;
+    const id = session.id,
+      file = join(name);
     try {
-      viewer.set(await api.file(session.id, join(name)));
+      await viewFile(
+        () => api.file(id, file),
+        () => active && session?.id === id,
+      );
     } catch (failure) {
-      error = failure instanceof Error ? failure.message : 'The file could not be opened.';
+      if (active && session?.id === id)
+        error = failure instanceof Error ? failure.message : 'The file could not be opened.';
     }
   }
 </script>

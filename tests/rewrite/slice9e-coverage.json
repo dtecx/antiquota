@@ -1,0 +1,574 @@
+{
+  "slice": "9e",
+  "passed_before": 582,
+  "passed_after": 631,
+  "added": 49,
+  "passed_after_is_prospective": false,
+  "gate_status": "Final just check passed; just test passed 262 Rust, 369 Vitest and 88 Chromium scenarios with zero final failures, ignored, skipped or flaky tests.",
+  "feature_ids": [
+    "F-500",
+    "F-501",
+    "F-502",
+    "F-503",
+    "F-504",
+    "F-505",
+    "F-506",
+    "F-507",
+    "F-508",
+    "F-509",
+    "F-510",
+    "F-511",
+    "F-512",
+    "F-513",
+    "F-514",
+    "F-516",
+    "F-517",
+    "F-518",
+    "F-519",
+    "F-520",
+    "F-521",
+    "F-522",
+    "F-523",
+    "F-524",
+    "F-525",
+    "F-526",
+    "F-527",
+    "F-528",
+    "F-529",
+    "F-530",
+    "F-531",
+    "F-532",
+    "F-533",
+    "F-534",
+    "F-535",
+    "F-536",
+    "F-537",
+    "F-538",
+    "F-539",
+    "F-540",
+    "F-541",
+    "F-542",
+    "F-543",
+    "F-544",
+    "F-545",
+    "F-546",
+    "F-547",
+    "F-548",
+    "F-550"
+  ],
+  "tests": {
+    "F-500": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "renders safe Markdown, external and file links, and copies exact code and completed replies",
+      "references": [
+        "ui/e2e/transcript.spec.ts::renders safe Markdown, external and file links, and copies exact code and completed replies",
+        "ui/src/lib/markdown.test.ts::escapes markup, quote attributes, scripts and placeholder characters",
+        "ui/src/lib/markdown.test.ts::keeps inline code inside link labels bounded and refuses code placeholders in URLs"
+      ],
+      "proof": "The browser requires no script or img elements in the assistant reply, retains literal script text, and checks window.compromised was never created. Units exercise escaped attributes, scripts, placeholder characters and inline-code link boundaries.",
+      "acceptance": "Model content is escaped before supported Markdown is inserted."
+    },
+    "F-501": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "renders safe Markdown, external and file links, and copies exact code and completed replies",
+      "references": [
+        "ui/e2e/transcript.spec.ts::renders safe Markdown, external and file links, and copies exact code and completed replies",
+        "ui/src/lib/markdown.test.ts::keeps fenced content literal and handles empty and unterminated fences"
+      ],
+      "proof": "A fenced TypeScript block preserves literal script/bracket/Markdown content; its Copy button yields exactly the two code lines. Units also exercise empty and unterminated fences.",
+      "acceptance": "Markdown renders fenced code blocks."
+    },
+    "F-502": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "renders safe Markdown, external and file links, and copies exact code and completed replies",
+      "references": [
+        "ui/e2e/transcript.spec.ts::renders safe Markdown, external and file links, and copies exact code and completed replies",
+        "ui/src/lib/markdown.test.ts::renders four heading levels, mixed lists, quotes, tables and inline formatting"
+      ],
+      "proof": "The browser asserts exact First, Second, Third and Fourth heading text in h3, h4, h5 and h6 respectively.",
+      "acceptance": "Markdown renders four heading levels."
+    },
+    "F-503": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "renders safe Markdown, external and file links, and copies exact code and completed replies",
+      "references": [
+        "ui/e2e/transcript.spec.ts::renders safe Markdown, external and file links, and copies exact code and completed replies",
+        "ui/src/lib/markdown.test.ts::renders four heading levels, mixed lists, quotes, tables and inline formatting"
+      ],
+      "proof": "The rendered ul has exactly unordered/second items and ol has exactly ordered/another items.",
+      "acceptance": "Markdown renders ordered and unordered lists."
+    },
+    "F-504": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "renders safe Markdown, external and file links, and copies exact code and completed replies",
+      "references": [
+        "ui/e2e/transcript.spec.ts::renders safe Markdown, external and file links, and copies exact code and completed replies",
+        "ui/src/lib/markdown.test.ts::renders four heading levels, mixed lists, quotes, tables and inline formatting"
+      ],
+      "proof": "The browser requires the rendered blockquote to contain quote; the unit checks the blockquote tag and multiline quote grammar.",
+      "acceptance": "Markdown renders blockquotes."
+    },
+    "F-505": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "renders safe Markdown, external and file links, and copies exact code and completed replies",
+      "references": [
+        "ui/e2e/transcript.spec.ts::renders safe Markdown, external and file links, and copies exact code and completed replies",
+        "ui/src/lib/markdown.test.ts::renders four heading levels, mixed lists, quotes, tables and inline formatting"
+      ],
+      "proof": "A Markdown header separator produces exact Head/Other header cells and value/bold body cells in the browser table.",
+      "acceptance": "Markdown renders tables with a header separator."
+    },
+    "F-506": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "renders safe Markdown, external and file links, and copies exact code and completed replies",
+      "references": [
+        "ui/e2e/transcript.spec.ts::renders safe Markdown, external and file links, and copies exact code and completed replies",
+        "ui/src/lib/markdown.test.ts::renders four heading levels, mixed lists, quotes, tables and inline formatting"
+      ],
+      "proof": "The browser asserts strong and emphasis text and literal inline code <>&. The unit asserts paragraph inline grammar and the explicit br before next.",
+      "acceptance": "Markdown renders paragraphs and inline bold, emphasis and code."
+    },
+    "F-507": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "renders safe Markdown, external and file links, and copies exact code and completed replies",
+      "references": [
+        "ui/e2e/transcript.spec.ts::renders safe Markdown, external and file links, and copies exact code and completed replies",
+        "ui/src/lib/markdown.test.ts::permits only external HTTP links and file-viewer links with escaped attributes"
+      ],
+      "proof": "Only HTTP and file anchors remain; javascript/data links produce text. The HTTP link has _blank and noopener noreferrer, and a locally intercepted popup reaches exactly https://example.invalid/test.",
+      "acceptance": "HTTP Markdown links open externally and unsupported schemes remain text."
+    },
+    "F-508": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "renders safe Markdown, external and file links, and copies exact code and completed replies",
+      "references": [
+        "ui/e2e/transcript.spec.ts::renders safe Markdown, external and file links, and copies exact code and completed replies",
+        "ui/src/lib/markdown.test.ts::decodes file paths and accepts only positive safe line fragments",
+        "ui/src/lib/transcript-actions.test.ts::opens the complete decoded file target and passes its requested line to the viewer",
+        "ui/src/lib/git.test.ts::does not publish after the initiating selection or component becomes stale",
+        "ui/e2e/transcript.spec.ts::a delayed drawer file cannot replace a newer Markdown viewer"
+      ],
+      "proof": "Clicking the percent-encoded file link opens the complete note with spaces.md viewer and highlights line 2 containing selected line. Shared ownership regressions prevent an older drawer response replacing a newer Markdown file.",
+      "acceptance": "File Markdown links open the file viewer."
+    },
+    "F-509": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "renders safe Markdown, external and file links, and copies exact code and completed replies",
+      "references": [
+        "ui/e2e/transcript.spec.ts::renders safe Markdown, external and file links, and copies exact code and completed replies",
+        "ui/src/lib/transcript-actions.test.ts::copies exactly the source text rather than rendered markup"
+      ],
+      "proof": "Clicking Copy code writes exactly the source code contents, with no fence, language tag, Copy button or rendered markup, to the browser clipboard.",
+      "acceptance": "Code-block Copy copies only the code contents."
+    },
+    "F-510": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "renders safe Markdown, external and file links, and copies exact code and completed replies",
+      "references": [
+        "ui/e2e/transcript.spec.ts::renders safe Markdown, external and file links, and copies exact code and completed replies",
+        "ui/src/lib/transcript-actions.test.ts::copies exactly the source text rather than rendered markup"
+      ],
+      "proof": "Clicking Copy message writes the entire original completed assistant Markdown source, including code, links and inert HTML, exactly to the clipboard.",
+      "acceptance": "Copy message copies the completed assistant reply."
+    },
+    "F-511": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "identifies prompt origins, brief goals, steering, turn markers and completion usage",
+      "references": [
+        "ui/e2e/transcript.spec.ts::identifies prompt origins, brief goals, steering, turn markers and completion usage",
+        "ui/src/lib/transcript.test.ts::labels %s prompts as %s"
+      ],
+      "proof": "The browser requires speaker labels YOU, GOAL, GOAL PUSH, YOU, JOB and LOOP for message/goal/nudge/steered message/job/loop fixtures. Units cover user/message and unknown/prototype-like kind fallback to YOU.",
+      "acceptance": "User messages identify user, goal, nudge, job and loop origins."
+    },
+    "F-512": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "identifies prompt origins, brief goals, steering, turn markers and completion usage",
+      "references": [
+        "ui/e2e/transcript.spec.ts::identifies prompt origins, brief goals, steering, turn markers and completion usage",
+        "ui/src/lib/transcript.test.ts::shows the goal objective while retaining standing instructions in its tooltip"
+      ],
+      "proof": "The goal bubble contains only Ship the fixture.; its title attribute equals the complete Objective prompt plus standing instructions. Unit proof retains a multiline objective and handles CRLF paragraphs.",
+      "acceptance": "Visible goal prompts omit repeated standing instructions but retain full tooltip text."
+    },
+    "F-513": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "identifies prompt origins, brief goals, steering, turn markers and completion usage",
+      "references": [
+        "ui/e2e/transcript.spec.ts::identifies prompt origins, brief goals, steering, turn markers and completion usage",
+        "ui/src/lib/transcript.test.ts::supports history before a user message and optional steering attachments"
+      ],
+      "proof": "A steered durable user record renders sent while agy worked in the browser. Projection tests retain the optional steered prompt record.",
+      "acceptance": "Steered messages are marked as arriving while the agent worked."
+    },
+    "F-514": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "identifies prompt origins, brief goals, steering, turn markers and completion usage",
+      "references": [
+        "ui/e2e/transcript.spec.ts::identifies prompt origins, brief goals, steering, turn markers and completion usage",
+        "ui/src/lib/transcript-actions.test.ts::asks a dangerous question and cancellation leaves the original session unchanged"
+      ],
+      "proof": "The routing marker contains Turn 1, one@example.com and the model; its clock datetime equals the fixture timestamp. Rewind before turn 1 opens the specified confirmation and Cancel closes it without restoration.",
+      "acceptance": "Turn markers show number, account, model, clock time and rewind."
+    },
+    "F-516": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "keeps expanded running tool nodes during real SSE completion and clears failed live replies",
+      "references": [
+        "ui/e2e/transcript.spec.ts::keeps expanded running tool nodes during real SSE completion and clears failed live replies",
+        "ui/src/lib/transcript.test.ts::updates tools in place and keeps separate turns and steps",
+        "ui/src/lib/transcript.test.ts::keeps tool group and reply keys stable across completion and authoritative replacements"
+      ],
+      "proof": "Actual fake-agent SSE transitions the same expanded tool from running to done. A data-identity marker survives completion, the details remains open, elapsed time becomes 2.5s and full completed output is visible.",
+      "acceptance": "Completed tool rows replace running rows without losing expanded state."
+    },
+    "F-517": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking",
+      "references": [
+        "ui/e2e/transcript.spec.ts::groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking",
+        "ui/src/lib/tools.test.ts::labels %s with its relevant argument"
+      ],
+      "proof": "Browser tool labels are exactly Read/Read/Write/Edit/Run/List/Search/Find/Fetch/MCP/mystery tool, with fixture server/tool identity. The parameterized unit matrix covers all known edit, search, web and MCP name variants and relevant path/query arguments.",
+      "acceptance": "Tool rows identify run, read, list, search, find, edit, web and MCP actions."
+    },
+    "F-518": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking",
+      "references": [
+        "ui/e2e/transcript.spec.ts::groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking",
+        "ui/src/lib/tools.test.ts::uses readable unknown names and only string arguments shorter than 300 characters"
+      ],
+      "proof": "The unknown mystery_tool row displays mystery tool and short argument. Units reject nested and >=300-character arguments while retaining a 299-character string and prototype-like unknown names.",
+      "acceptance": "Unknown tool rows display a readable name and short string argument."
+    },
+    "F-519": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "keeps expanded running tool nodes during real SSE completion and clears failed live replies",
+      "references": [
+        "ui/e2e/transcript.spec.ts::keeps expanded running tool nodes during real SSE completion and clears failed live replies",
+        "ui/src/lib/tools.test.ts::normalizes running completed and failure states while retaining zero and fractional seconds",
+        "ui/e2e/transcript.spec.ts::groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking"
+      ],
+      "proof": "The live row shows running, then done and 2.5s. Durable rows separately show done with 1.5s and error. Units cover ACTIVE/running, DONE/SUCCESS/completed and ERROR/failed plus zero/fractional elapsed values.",
+      "acceptance": "Tool rows show running, completed or error state with elapsed time."
+    },
+    "F-520": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking",
+      "references": [
+        "ui/e2e/transcript.spec.ts::groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking",
+        "ui/src/lib/tools.test.ts::previews six changed diff lines and counts changes without headers or context"
+      ],
+      "proof": "The fixture diff has four added and four deleted changed lines; browser summaries require +4 and minus4. Units check counts exclude +++/--- headers and context.",
+      "acceptance": "Tool rows show added and deleted line counts for diffs."
+    },
+    "F-521": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking",
+      "references": [
+        "ui/e2e/transcript.spec.ts::groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking",
+        "ui/src/lib/tools.test.ts::strips terminal sequences and previews the last four trimmed command output lines"
+      ],
+      "proof": "Expanded command output must exactly equal the original six lines with ANSI color sequences removed, while text and line endings remain. Unit proof checks terminal color removal preserves stored input.",
+      "acceptance": "ANSI terminal color sequences are removed from command output."
+    },
+    "F-522": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking",
+      "references": [
+        "ui/e2e/transcript.spec.ts::groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking",
+        "ui/src/lib/tools.test.ts::strips terminal sequences and previews the last four trimmed command output lines"
+      ],
+      "proof": "A six-line command preview contains exactly the final third/fourth/fifth/sixth lines, excludes first, and reports two more lines. Units also cover one-line and whitespace-only output.",
+      "acceptance": "Command previews show the final four lines with an additional-line indicator."
+    },
+    "F-523": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking",
+      "references": [
+        "ui/e2e/transcript.spec.ts::groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking",
+        "ui/src/lib/tools.test.ts::previews six changed diff lines and counts changes without headers or context"
+      ],
+      "proof": "An eight-line change diff preview reaches -old3/+new3 and reports two more lines. Units require exactly the first six changed lines, ignore headers/context, and cover zero extra lines.",
+      "acceptance": "Diff previews show up to six changed lines with an additional-line indicator."
+    },
+    "F-524": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking",
+      "references": [
+        "ui/e2e/transcript.spec.ts::groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking",
+        "ui/src/lib/tools.test.ts::retains all errors and serializes parameters only when no diff or output exists"
+      ],
+      "proof": "Clicking command/diff previews opens full bodies; the browser compares complete ANSI-stripped command output and the complete original diff exactly, including lines absent from previews.",
+      "acceptance": "Expanded tools display complete diff or output."
+    },
+    "F-525": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking",
+      "references": [
+        "ui/e2e/transcript.spec.ts::groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking",
+        "ui/src/lib/tools.test.ts::retains all errors and serializes parameters only when no diff or output exists"
+      ],
+      "proof": "Expanding a no-output read row shows its JSON AbsolutePath parameter; an error row shows all three extended failure lines. Units verify full multiline and structured errors, nested parameter JSON and output/diff precedence.",
+      "acceptance": "Expanded tools include extended errors or JSON parameters when output is absent."
+    },
+    "F-526": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking",
+      "references": [
+        "ui/e2e/transcript.spec.ts::groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking"
+      ],
+      "proof": "Clicking the command preview opens details, clicking its header closes them, and clicking the diff preview reveals complete content. Read/error headers also open full parameter/error bodies.",
+      "acceptance": "Tool headers and previews toggle complete output expansion."
+    },
+    "F-527": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking",
+      "references": [
+        "ui/e2e/transcript.spec.ts::groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking",
+        "ui/src/lib/transcript.test.ts::groups only adjacent tools and leaves thinking, replies, notices and turn boundaries in place"
+      ],
+      "proof": "Browser history produces exactly two activity groups separated by thinking/reply. Opening the first group exposes its eleven tools; DOM child order is user/routing/activity/thinking/reply/activity/thinking/end.",
+      "acceptance": "Grouped mode folds adjacent tool steps into one expandable summary."
+    },
+    "F-528": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking",
+      "references": [
+        "ui/e2e/transcript.spec.ts::groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking",
+        "ui/src/lib/tools.test.ts::counts unique read and edit paths with ordered labels and all tool steps",
+        "ui/src/lib/tools.test.ts::uses plural labels and the most recent running tool instead of completed counts"
+      ],
+      "proof": "Repeated reads and edits of the same notes.txt path count once each: summary Edited 1 file and read 1 file. Units also coalesce equivalent absolute/relative paths and test two distinct read files.",
+      "acceptance": "Grouped summaries count unique read and edited paths."
+    },
+    "F-529": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking",
+      "references": [
+        "ui/e2e/transcript.spec.ts::groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking",
+        "ui/src/lib/tools.test.ts::counts unique read and edit paths with ordered labels and all tool steps",
+        "ui/src/lib/tools.test.ts::does not count thinking as tools and reports payload failures even with a completed state"
+      ],
+      "proof": "The grouped summary requires +4, minus4, 1 failed and 11 steps. Units exclude thinking/replies from steps and count structured payload errors even when the tool state says completed.",
+      "acceptance": "Grouped summaries show additions, deletions, failures and step count."
+    },
+    "F-530": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "keeps expanded running tool nodes during real SSE completion and clears failed live replies",
+      "references": [
+        "ui/e2e/transcript.spec.ts::keeps expanded running tool nodes during real SSE completion and clears failed live replies",
+        "ui/src/lib/tools.test.ts::uses plural labels and the most recent running tool instead of completed counts"
+      ],
+      "proof": "While the real SSE tool is ACTIVE, the group has running styling and its summary reads Run printf live followed by an ellipsis. After completion that running styling disappears.",
+      "acceptance": "Grouped summaries show the active running tool."
+    },
+    "F-531": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking",
+      "references": [
+        "ui/e2e/transcript.spec.ts::groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking",
+        "ui/src/lib/transcript.test.ts::groups only adjacent tools and leaves thinking, replies, notices and turn boundaries in place"
+      ],
+      "proof": "Short reasoning renders a strong reasoned word through Markdown and 42 tokens in its summary; the zero-token long reasoning summary omits a token label.",
+      "acceptance": "Thinking blocks display reasoning Markdown and token counts when present."
+    },
+    "F-532": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking",
+      "references": [
+        "ui/e2e/transcript.spec.ts::groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking"
+      ],
+      "proof": "Initial detailed mode opens the short reasoning block; the >1200-character reasoning block remains closed. Browser assertions check both details open states.",
+      "acceptance": "Short thinking blocks start expanded in detailed mode."
+    },
+    "F-533": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking",
+      "references": [
+        "ui/e2e/transcript.spec.ts::groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking"
+      ],
+      "proof": "Changing Detailed to Compact removes tool previews and closes all thinking. Returning to Detailed reopens only the short thinking block.",
+      "acceptance": "Compact mode hides previews and changes thinking expansion."
+    },
+    "F-534": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking",
+      "references": [
+        "ui/e2e/transcript.spec.ts::groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking",
+        "ui/src/lib/preferences.test.ts::loads compatible keys and persists individual notification choices",
+        "ui/src/lib/preferences.test.ts::uses defaults for corrupt storage and still changes when writes are blocked"
+      ],
+      "proof": "After selecting Compact and reloading the browser, the transcript remains in Compact mode with thinking closed. Returning to Detailed updates the mode and short reasoning expansion. Unit preference loading honors the compatible antiquota.detail device key and tolerates corrupt/blocked storage. A second reload after restoring Detailed asserts its pressed state and one short thinking block open.",
+      "acceptance": "Detailed or compact mode persists per device."
+    },
+    "F-535": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking",
+      "references": [
+        "ui/e2e/transcript.spec.ts::groups adjacent tools with unique paths, readable names, previews, full errors and chronological thinking"
+      ],
+      "proof": "Expand all opens exactly two activity groups, twelve individual tool outputs and two thinking blocks. Collapse all leaves zero open details across all three classes.",
+      "acceptance": "Expand all controls tool groups, individual output and thinking blocks."
+    },
+    "F-536": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "identifies prompt origins, brief goals, steering, turn markers and completion usage",
+      "references": [
+        "ui/e2e/transcript.spec.ts::identifies prompt origins, brief goals, steering, turn markers and completion usage"
+      ],
+      "proof": "The completion footer contains SUCCESS, 1m 5s, 1.2k in / 567 out and one@example.com for the serving account.",
+      "acceptance": "Turn completion shows status, duration, input/output use and serving account."
+    },
+    "F-537": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "keeps expanded running tool nodes during real SSE completion and clears failed live replies",
+      "references": [
+        "ui/e2e/transcript.spec.ts::keeps expanded running tool nodes during real SSE completion and clears failed live replies",
+        "ui/src/lib/transcript.test.ts::finalizes every partial step on %s without moving it",
+        "ui/src/lib/transcript.test.ts::keeps identical durable turn ends and notices distinct while finalizing partial replies",
+        "ui/e2e/transcript.spec.ts::identifies prompt origins, brief goals, steering, turn markers and completion usage",
+        "ui/e2e/transcript.spec.ts::follows streamed events at 120 pixels and preserves scroll beyond that boundary"
+      ],
+      "proof": "Failed actual SSE completion reaches idle/ERROR, preserves the partial reply and leaves no transcript live or activity running markers. Unit success/error/stopped cases finalize every partial step and ignore later deltas, while authoritative replies can still replace partials.",
+      "acceptance": "Completed and failed turns remove live transcript markers."
+    },
+    "F-538": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "follows streamed events at 120 pixels and preserves scroll beyond that boundary",
+      "references": [
+        "ui/e2e/transcript.spec.ts::follows streamed events at 120 pixels and preserves scroll beyond that boundary",
+        "ui/src/lib/transcript.test.ts::follows the bottom at the inclusive 120 pixel boundary"
+      ],
+      "proof": "With actual SSE, scrolling to 121px from bottom preserves the exact prior scrollTop when more text arrives. At 120px, subsequent text follows to within 1px of the bottom. Unit asserts 119/120 true and 121 false.",
+      "acceptance": "Events auto-scroll only within 120 pixels of the transcript bottom."
+    },
+    "F-539": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "presents typed notices, partial verifier data and inert errors without interpreting malformed fields",
+      "references": [
+        "ui/e2e/transcript.spec.ts::presents typed notices, partial verifier data and inert errors without interpreting malformed fields",
+        "ui/src/lib/notices.test.ts::presents %s with strict typed state"
+      ],
+      "proof": "A typed Account handoff notice is visible for Moving one@example.com to two@example.com.; notice presentation maps handoff distinctly without treating text as markup.",
+      "acceptance": "Handoff notices identify the transition to another account."
+    },
+    "F-540": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "presents typed notices, partial verifier data and inert errors without interpreting malformed fields",
+      "references": [
+        "ui/e2e/transcript.spec.ts::presents typed notices, partial verifier data and inert errors without interpreting malformed fields",
+        "ui/src/lib/notices.test.ts::presents %s with strict typed state"
+      ],
+      "proof": "The browser distinguishes Out of quota and No account notices. Clicking the no-account Add Google account button opens the account dialog; it does not fill credentials or accept consent.",
+      "acceptance": "Quota-wall and no-account notices have distinct actionable presentations."
+    },
+    "F-541": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "presents typed notices, partial verifier data and inert errors without interpreting malformed fields",
+      "references": [
+        "ui/e2e/transcript.spec.ts::presents typed notices, partial verifier data and inert errors without interpreting malformed fields",
+        "ui/src/lib/notices.test.ts::presents %s with strict typed state"
+      ],
+      "proof": "Both Goal met and Goal not met presentations are visible for typed true/false met data. Units require booleans and treat the string true as not met.",
+      "acceptance": "Goal notices indicate whether the objective is met."
+    },
+    "F-542": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "presents typed notices, partial verifier data and inert errors without interpreting malformed fields",
+      "references": [
+        "ui/e2e/transcript.spec.ts::presents typed notices, partial verifier data and inert errors without interpreting malformed fields",
+        "ui/src/lib/notices.test.ts::preserves check output and only actual missing-work and account/model strings"
+      ],
+      "proof": "Both Check passed and Check failed notices are visible. Opening successful Output displays exactly check output plus last line; the unit retains literal failed check output.",
+      "acceptance": "Check notices show pass/fail and expandable output."
+    },
+    "F-543": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "presents typed notices, partial verifier data and inert errors without interpreting malformed fields",
+      "references": [
+        "ui/e2e/transcript.spec.ts::presents typed notices, partial verifier data and inert errors without interpreting malformed fields",
+        "ui/src/lib/notices.test.ts::presents %s with strict typed state",
+        "ui/src/lib/notices.test.ts::rejects malformed containers and scalar or nested presentation fields"
+      ],
+      "proof": "Verifier done/not met and indeterminate cases are present. Null and malformed string done values are indeterminate; malformed missing/model fields render no misleading list or identity.",
+      "acceptance": "Verifier notices show done, not met or indeterminate state."
+    },
+    "F-544": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "presents typed notices, partial verifier data and inert errors without interpreting malformed fields",
+      "references": [
+        "ui/e2e/transcript.spec.ts::presents typed notices, partial verifier data and inert errors without interpreting malformed fields",
+        "ui/src/lib/notices.test.ts::preserves check output and only actual missing-work and account/model strings"
+      ],
+      "proof": "The completed verifier notice lists exactly first/second missing items and verifier@example.com plus the model. Partial indeterminate data keeps its valid account identity; invalid missing/model types produce no li/small nodes.",
+      "acceptance": "Verifier notices show missing work and verifier account/model."
+    },
+    "F-545": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "presents typed notices, partial verifier data and inert errors without interpreting malformed fields",
+      "references": [
+        "ui/e2e/transcript.spec.ts::presents typed notices, partial verifier data and inert errors without interpreting malformed fields",
+        "ui/src/lib/notices.test.ts::leaves error text untouched for literal component rendering"
+      ],
+      "proof": "The alert pre contains exact literal img markup and Markdown-looking error text; no img or nested strong markup is generated inside it.",
+      "acceptance": "Errors display their error text without markup interpretation."
+    },
+    "F-546": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "adds vetted denied command rules, retains deny rules, and sends retries only after granting permissions",
+      "references": [
+        "ui/e2e/transcript.spec.ts::adds vetted denied command rules, retains deny rules, and sends retries only after granting permissions",
+        "crates/app/src/tests/session_actions.rs::current_denial_suggestions_are_vetted_before_persistence_and_broadcast",
+        "crates/app/src/tests/session_actions.rs::historical_denial_views_recompute_rules_without_rewriting_stored_records",
+        "crates/core/src/policy/tests.rs::runner_identity_refuses_absolute_quoted_escaped_and_versioned_programs",
+        "crates/core/src/policy/tests.rs::risky_calls_never_suggest_a_permanent_rule_but_harmless_prefixes_stay_valid",
+        "tests/rewrite/approvals.rs::permission_additions_reject_malformed_mixed_and_unsafe_batches_without_writes"
+      ],
+      "proof": "A historical notice with forged command(*) rules is re-vetted into one Allow command(git status) action. Runner/risky-find notices offer no rule buttons. Allow adds that safe rule without sending another user prompt or altering existing deny.",
+      "acceptance": "Denied-command notices offer adding the suggested rules."
+    },
+    "F-547": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "adds vetted denied command rules, retains deny rules, and sends retries only after granting permissions",
+      "references": [
+        "ui/e2e/transcript.spec.ts::adds vetted denied command rules, retains deny rules, and sends retries only after granting permissions",
+        "ui/src/lib/transcript-actions.test.ts::submits only deduplicated additions and never rewrites existing allow or deny",
+        "ui/src/lib/transcript-actions.test.ts::grants before retry and retains the original target across a delayed grant",
+        "ui/src/lib/transcript-actions.test.ts::does not retry after a failed permission grant",
+        "ui/src/lib/transcript-actions.test.ts::two pane grants submit separate atomic additions without stale replacement lists",
+        "tests/rewrite/approvals.rs::simultaneous_permission_additions_keep_all_rules_and_unknown_settings",
+        "tests/rewrite/approvals.rs::captured_permission_approval_and_steer_routes"
+      ],
+      "proof": "Allow & retry adds/deduplicates the safe command rule, preserves existing allow/deny lists and produces the exact Permission granted retry prompt followed by a fake-agent reply. Units require grant before send, original session ownership and no send on failed grant; HTTP concurrently adds sixteen rules without loss or unknown-setting changes.",
+      "acceptance": "Allow and retry grants suggested command rules and sends a retry prompt."
+    },
+    "F-548": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "retries denied edits in accept-edits mode and refuses to rewind over later user edits",
+      "references": [
+        "ui/e2e/transcript.spec.ts::retries denied edits in accept-edits mode and refuses to rewind over later user edits",
+        "ui/src/lib/transcript-actions.test.ts::patches accept edits before retrying its captured session and retains newer selection",
+        "ui/src/lib/transcript-actions.test.ts::does not retry after an accept edits patch fails",
+        "ui/src/lib/notices.test.ts::does not offer edit retry for unknown actions runners or malformed command lists",
+        "crates/app/src/tests/session_actions.rs::a_failed_known_write_tool_emits_a_command_free_denial_notice"
+      ],
+      "proof": "A command-free denied write notice offers Switch to accept edits & retry. Clicking it produces accept-edits session metadata and the exact retry prompt. Units require mode patch before send, original session/draft ownership and no retry after patch failure; the app emits known-write denial data.",
+      "acceptance": "Denied edits without command rules offer accept edits and retry."
+    },
+    "F-550": {
+      "path": "ui/e2e/transcript.spec.ts",
+      "test": "presents typed notices, partial verifier data and inert errors without interpreting malformed fields",
+      "references": [
+        "ui/e2e/transcript.spec.ts::presents typed notices, partial verifier data and inert errors without interpreting malformed fields",
+        "ui/src/lib/notices.test.ts::marks historical rewind paths changed outside the agent including outside-only paths",
+        "crates/adapters/store/src/checkpoints.rs::checkpoints_keep_empty_files_refuse_user_edits_and_preserve_ambiguous_legacy_data",
+        "ui/e2e/transcript.spec.ts::retries denied edits in accept-edits mode and refuses to rewind over later user edits"
+      ],
+      "proof": "Historical rewind notice rendering lists inside.txt, outside.txt and outside-only.txt; the last two explicitly state they had changed after the agent last edited them. The current B-022 correction fails closed instead of overwriting external edits: confirmed rewind reports notes.txt and preserves exact later user bytes.",
+      "acceptance": "Rewind notices identify files changed outside the agent after its edit."
+    }
+  },
+  "pending": {}
+}

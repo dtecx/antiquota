@@ -6,7 +6,7 @@ import type { Mode } from '../gen/Mode';
 import type { SettingsSection } from './settings';
 import { ask } from './confirm';
 import { draftFor, goalDialog } from './goals';
-import { viewer } from './git';
+import { viewFile } from './git';
 import { modelFamilies } from './models';
 import { downloadSession } from './export';
 
@@ -197,21 +197,30 @@ export function createComposerActions(
             }
             case '/memory': {
               need();
-              const file = await api
-                .file(id, 'GEMINI.md')
-                .catch(() => api.file(id, 'AGENTS.md'))
-                .catch(() => null);
-              if (file) viewer.set(file);
-              else say('No GEMINI.md yet: add a line with "# …" or run /init');
+              await viewFile(
+                async () => {
+                  const file = await api
+                    .file(id, 'GEMINI.md')
+                    .catch(() => api.file(id, 'AGENTS.md'))
+                    .catch(() => null);
+                  if (!file && get(workbench.state).selected?.id === id)
+                    say('No GEMINI.md yet: add a line with "# …" or run /init');
+                  return file;
+                },
+                () => get(workbench.state).selected?.id === id,
+              );
               break;
             }
             case '/state':
               need();
-              viewer.set({
-                rel: `handoff state · ${session?.title || id}`,
-                path: 'STATE.md',
-                text: (await api.stateDocument(id)).text,
-              });
+              await viewFile(
+                async () => ({
+                  rel: `handoff state · ${session?.title || id}`,
+                  path: 'STATE.md',
+                  text: (await api.stateDocument(id)).text,
+                }),
+                () => get(workbench.state).selected?.id === id,
+              );
               break;
             case '/stop':
               need();

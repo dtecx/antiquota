@@ -470,6 +470,16 @@ async fn route(
             allow: service.accounts.permissions()?.allow,
         }),
         ("PUT", ["permissions"]) => {
+            if let Some(rules) = body.get("add_allow") {
+                if body.get("allow").is_some() || body.get("deny").is_some() {
+                    return Err(AppError::Invalid(
+                        "add_allow cannot be combined with replacements".into(),
+                    ));
+                }
+                let rules = antiquota_core::policy::clean_rules("allow", rules)
+                    .map_err(AppError::Invalid)?;
+                return Ok(service.accounts.grant_permissions(rules)?);
+            }
             let list = |key: &str| -> Result<Option<Vec<String>>, AppError> {
                 match body.get(key) {
                     None | Some(Value::Null) => Ok(None),

@@ -39,7 +39,7 @@ test('starts a goal from the composer and follows it until met', async ({ page, 
   await dialog.getByRole('button', { name: 'Start goal' }).click();
   await expect(dialog).toBeHidden();
   await expect(page.getByRole('textbox', { name: 'Message', exact: true })).toHaveValue('');
-  const bar = page.getByRole('region', { name: 'Goal' });
+  const bar = page.getByRole('region', { name: 'Goal', exact: true });
   await expect(bar).toContainText('Complete fixture.');
   await expect(bar).toContainText('check: test -f notes.txt');
   await expect(bar.getByRole('button', { name: 'Pause' })).toBeVisible();
@@ -63,7 +63,7 @@ test('pauses and resumes a goal', async ({ page, engine }) => {
   await engine.scenario({ delay_ms: 3000 });
   const id = await create(page, engine, 'Pause fixture');
   await engine.call('POST', `/api/sessions/${id}/goal`, { objective: 'Finish.', verifier: false });
-  const bar = page.getByRole('region', { name: 'Goal' });
+  const bar = page.getByRole('region', { name: 'Goal', exact: true });
   await expect(bar).toContainText('round 0/20');
   await bar.getByRole('button', { name: 'Pause' }).click();
   await expect(bar).toContainText('paused');

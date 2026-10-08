@@ -140,6 +140,7 @@ impl Service {
             ok,
             ..Default::default()
         };
+        let mut denied_actions = Vec::new();
         for record in &records {
             match &record.event {
                 Event::Assistant { turn: t, text, .. } if *t == turn => {
@@ -152,7 +153,7 @@ impl Service {
                     state,
                     error: Some(error),
                     ..
-                } if *t == turn && name == "run_command" && state == "error" => {
+                } if *t == turn && state.eq_ignore_ascii_case("error") => {
                     let message = error
                         .get("message")
                         .and_then(Value::as_str)
@@ -162,22 +163,26 @@ impl Service {
                                 .as_str()
                                 .map_or_else(|| error.to_string(), str::to_owned)
                         });
-                    if message.contains("denied permission")
-                        && let Some(line) = params.get("CommandLine").and_then(Value::as_str)
-                        && !line.is_empty()
-                    {
-                        outcome.denied.push(line.into());
+                    if message.contains("denied permission") {
+                        if name == "run_command"
+                            && let Some(line) = params.get("CommandLine").and_then(Value::as_str)
+                            && !line.is_empty()
+                        {
+                            outcome.denied.push(line.into());
+                        } else if antiquota_core::policy::WRITE_TOOLS.contains(&name.as_str()) {
+                            denied_actions.push(json!({"action":name, "display_name":name}));
+                        }
                     }
                 }
                 _ => {}
             }
         }
-        if !outcome.denied.is_empty() {
+        if !outcome.denied.is_empty() || !denied_actions.is_empty() {
             self.notice(
                 id,
                 "denied",
                 "agy denied a tool call that headless mode cannot ask about.",
-                json!({"actions": [], "commands": outcome.denied}),
+                json!({"actions": denied_actions, "commands": outcome.denied}),
             )?;
         }
         Ok(outcome)

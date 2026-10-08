@@ -1,5 +1,6 @@
 /** Proves git review helpers, edit history grouping and folder navigation helpers. */
-import { describe, expect, it } from 'vitest';
+import { get } from 'svelte/store';
+import { afterEach, describe, expect, it } from 'vitest';
 import type { EventRecord } from '../gen/EventRecord';
 import {
   asStatus,
@@ -10,6 +11,9 @@ import {
   humanSize,
   parentPath,
   statusLine,
+  viewer,
+  viewFile,
+  type FileText,
 } from './git';
 
 const worktree = {
@@ -71,5 +75,120 @@ describe('git review', () => {
     expect(humanSize(12)).toBe('12 B');
     expect(humanSize(2048)).toBe('2.0 KB');
     expect(humanSize(3 * 1024 * 1024)).toBe('3.0 MB');
+  });
+});
+
+function deferredFile() {
+  let resolve: (file: FileText | null) => void = () => {};
+  let reject: (error: Error) => void = () => {};
+  const promise = new Promise<FileText | null>((done, fail) => {
+    resolve = done;
+    reject = fail;
+  });
+  return { promise, resolve, reject };
+}
+function file(path: string): FileText {
+  return { path, rel: path, text: `Contents of ${path}` };
+}
+afterEach(() => viewer.set(null));
+
+describe('shared file viewer ownership', () => {
+  it.each(['older first', 'newer first'])(
+    'keeps the newer read authoritative when requests resolve %s',
+    async (order) => {
+      const previous = file('previous.ts'),
+        older = deferredFile(),
+        newer = deferredFile(),
+        latest = file('newer.ts');
+      viewer.set(previous);
+      const oldRead = viewFile(
+        () => older.promise,
+        () => true,
+      );
+      const newRead = viewFile(
+        () => newer.promise,
+        () => true,
+      );
+      if (order === 'older first') {
+        older.resolve(file('older.ts'));
+        await oldRead;
+        expect(get(viewer)).toBe(previous);
+        newer.resolve(latest);
+        await newRead;
+      } else {
+        newer.resolve(latest);
+        await newRead;
+        older.resolve(file('older.ts'));
+        await oldRead;
+      }
+      expect(get(viewer)).toBe(latest);
+    },
+  );
+  it('does not publish after the initiating selection or component becomes stale', async () => {
+    const response = deferredFile(),
+      previous = file('previous.ts');
+    let current = true;
+    viewer.set(previous);
+    const reading = viewFile(
+      () => response.promise,
+      () => current,
+    );
+    current = false;
+    response.resolve(file('stale.ts'));
+    await reading;
+    expect(get(viewer)).toBe(previous);
+  });
+  it.each(['new direct viewer', 'dismissed viewer'])(
+    'keeps a %s instead of replacing it with a pending read',
+    async (change) => {
+      const response = deferredFile(),
+        newer = change === 'new direct viewer' ? file('direct.ts') : null;
+      viewer.set(file('previous.ts'));
+      const reading = viewFile(
+        () => response.promise,
+        () => true,
+      );
+      viewer.set(newer);
+      response.resolve(file('pending.ts'));
+      await reading;
+      expect(get(viewer)).toBe(newer);
+    },
+  );
+  it('propagates a rejected read and prevents an older request from publishing afterward', async () => {
+    const older = deferredFile(),
+      newest = deferredFile(),
+      previous = file('previous.ts'),
+      error = new Error('Read failed');
+    viewer.set(previous);
+    const oldRead = viewFile(
+      () => older.promise,
+      () => true,
+    );
+    const newRead = viewFile(
+      () => newest.promise,
+      () => true,
+    );
+    const rejected = expect(newRead).rejects.toBe(error);
+    newest.reject(error);
+    await rejected;
+    older.resolve(file('older.ts'));
+    await oldRead;
+    expect(get(viewer)).toBe(previous);
+  });
+  it('does not publish a null result or revive an older pending request', async () => {
+    const older = deferredFile(),
+      previous = file('previous.ts');
+    viewer.set(previous);
+    const oldRead = viewFile(
+      () => older.promise,
+      () => true,
+    );
+    await viewFile(
+      async () => null,
+      () => true,
+    );
+    older.resolve(file('older.ts'));
+    await oldRead;
+    expect(get(viewer)).toBe(previous);
   });
 });

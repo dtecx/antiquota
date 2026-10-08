@@ -1,11 +1,13 @@
 <!-- Owns scroll behavior and empty/loading presentation for the event projection. -->
 <script lang="ts">
-  import { tick } from 'svelte';
+  import { tick, onDestroy, untrack } from 'svelte';
   import { scrollPositions } from '../lib/session-view';
   import type { Login } from '../lib/login';
   import type { Api } from '../lib/api';
   import type { Workbench } from '../lib/workbench';
-  import { groupTranscript } from '../lib/transcript';
+  import { groupTranscript, nearBottom } from '../lib/transcript';
+  import { createTranscriptActions, type Expansion } from '../lib/transcript-actions';
+  import { preferences } from '../lib/preferences';
   import TurnGroup from './TurnGroup.svelte';
   import { isBusy } from '../lib/format';
   let { workbench, login, api }: { workbench: Workbench; login: Login; api: Api } = $props();
@@ -14,6 +16,10 @@
     sid = $derived($view.selected?.id ?? ''),
     loading = $derived($view.loading);
   const groups = $derived(groupTranscript(events));
+  const actions = untrack(() => createTranscriptActions(api, workbench));
+  const prefs = preferences.state;
+  let expand = $state<Expansion>({ version: 0, open: false });
+  onDestroy(actions.dispose);
   let scroller = $state.raw<HTMLDivElement>();
   let shown = '',
     follow = true,
@@ -24,11 +30,11 @@
     if (scroller && shown && id !== shown && !restoring) {
       scrollPositions.set(shown, {
         top: scroller.scrollTop,
-        follow: scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 100,
+        follow: nearBottom(scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight),
       });
       restoring = true;
     } else if (scroller && shown && !restoring && !loading) {
-      follow = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 100;
+      follow = nearBottom(scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight);
     }
   });
   $effect(() => {
@@ -51,7 +57,7 @@
   });
   function scrolled() {
     if (!scroller || restoring || loading || !shown) return;
-    follow = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 100;
+    follow = nearBottom(scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight);
     scrollPositions.set(shown, { top: scroller.scrollTop, follow });
   }
 </script>
@@ -64,6 +70,21 @@
   aria-busy={loading}
 >
   <div class="content">
+    {#if groups.length}<div class="presentation" aria-label="Transcript presentation">
+        <button
+          class="quiet small"
+          aria-pressed={$prefs.detail === 'detailed'}
+          onclick={() =>
+            preferences.change({ detail: $prefs.detail === 'detailed' ? 'compact' : 'detailed' })}
+          >{$prefs.detail === 'detailed' ? 'Detailed' : 'Compact'}</button
+        >
+        <button
+          class="quiet small"
+          aria-pressed={expand.open}
+          onclick={() => (expand = { version: expand.version + 1, open: !expand.open })}
+          >{expand.open ? 'Collapse all' : 'Expand all'}</button
+        >
+      </div>{/if}
     {#if loading && !groups.length}<div class="empty">
         <span class="eyebrow">SESSION</span>
         <h2>Loading conversation…</h2>
@@ -84,6 +105,10 @@
     {:else}{#each groups as group, index (group.key)}<TurnGroup
           {group}
           running={index === groups.length - 1 && isBusy($view.selected?.status)}
+          busy={$view.mutating}
+          {actions}
+          {expand}
+          onlogin={() => login.open()}
           cwd={$view.selected?.cwd ?? ''}
           onanswer={workbench.answer}
           onlog={workbench.openJobLog}
@@ -93,6 +118,12 @@
 </div>
 
 <style>
+  .presentation {
+    display: flex;
+    gap: var(--space-2);
+    justify-content: flex-end;
+    margin-bottom: var(--space-3);
+  }
   .transcript {
     flex: 1;
     min-height: 0;

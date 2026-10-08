@@ -139,3 +139,5 @@ The table below is generated from the legacy match block and special route handl
 | [F-395](FEATURES.md) | `GET` | `/api/permissions` | [permissions](../../tests/fixtures/api/cases/permissions.json) |
 | [F-396](FEATURES.md) | `PUT` | `/api/permissions` | [permissions-put](../../tests/fixtures/api/cases/permissions-put.json) |
 | [F-397](FEATURES.md) | `GET` | `/api/fs` | [filesystem](../../tests/fixtures/api/cases/filesystem.json) |
+
+Slice 9e adds optional `add_allow` to `PUT /api/permissions`. It is a validated list of permanent allow rules, appended atomically without replacing existing allow or deny rules. It cannot be combined with `allow` or `deny`. The response remains the stored permission object. Unsafe or malformed batches fail before writing; the captured replacement requests retain their existing behavior.

@@ -54,6 +54,126 @@ fn approvals(value: &Value) -> Vec<Value> {
 }
 
 #[test]
+fn simultaneous_permission_additions_keep_all_rules_and_unknown_settings() {
+    let mut server = Server::new_stopped("permissions-concurrent-additions", false);
+    seed_rules(
+        &server,
+        json!({"allow": ["command(ls)"], "deny": ["command(rm)"], "future": {"opaque": [false, null, {"keep": true}]}}),
+    );
+    let original: Value = serde_json::from_slice(&fs::read(settings(&server)).unwrap()).unwrap();
+    server.start();
+    let barrier = std::sync::Arc::new(std::sync::Barrier::new(16));
+    let mut workers = vec![];
+    for index in 0..16 {
+        let barrier = barrier.clone();
+        let port = server.port;
+        let token = server.token.clone();
+        workers.push(thread::spawn(move || {
+            let rule = format!("command(git fixture-{index})");
+            let body = json!({"add_allow": [rule, rule, "command(ls)"]}).to_string();
+            let headers = std::collections::BTreeMap::from([
+                ("X-Antiquota-Token".into(), token),
+                ("Content-Type".into(), "application/json".into()),
+            ]);
+            barrier.wait();
+            let response = crate::support::http::request(
+                port,
+                "PUT",
+                "/api/permissions",
+                &headers,
+                body.as_bytes(),
+            );
+            assert_eq!(response.status, 200, "{}", response.json());
+            let saved = response.json();
+            assert!(saved["allow"].as_array().unwrap().contains(&json!(rule)));
+            assert_eq!(saved["deny"], json!(["command(rm)"]));
+        }));
+    }
+    for worker in workers {
+        worker.join().unwrap();
+    }
+    let stored: Value = serde_json::from_slice(&fs::read(settings(&server)).unwrap()).unwrap();
+    let allow = stored["permissions"]["allow"].as_array().unwrap();
+    assert_eq!(
+        allow.len(),
+        17,
+        "concurrent grants are not lost or duplicated"
+    );
+    assert_eq!(allow[0], "command(ls)");
+    for index in 0..16 {
+        assert!(allow.contains(&json!(format!("command(git fixture-{index})"))));
+    }
+    let mut expected = original;
+    expected["permissions"]["allow"] = stored["permissions"]["allow"].clone();
+    assert_eq!(stored, expected, "deny and unknown settings remain intact");
+    assert_eq!(
+        server.call("GET", "/api/permissions", None).json(),
+        json!({"allow": allow})
+    );
+    server.stop();
+}
+
+#[test]
+fn permission_additions_reject_malformed_mixed_and_unsafe_batches_without_writes() {
+    let mut server = Server::new_stopped("permissions-invalid-additions", false);
+    seed_rules(
+        &server,
+        json!({"allow": ["command(ls)"], "deny": ["command(rm)"], "future": {"keep": true}}),
+    );
+    server.start();
+    let original = fs::read(settings(&server)).unwrap();
+    let mut batches = vec![
+        json!({"add_allow": null}),
+        json!({"add_allow": false}),
+        json!({"add_allow": 3}),
+        json!({"add_allow": "command(cat)"}),
+        json!({"add_allow": {"rule": "command(cat)"}}),
+        json!({"add_allow": ["command(cat)", null]}),
+        json!({"add_allow": ["command(cat)", false]}),
+        json!({"add_allow": ["command(cat)", 3]}),
+        json!({"add_allow": ["command(cat)", {}]}),
+        json!({"add_allow": ["command(cat)", []]}),
+        json!({"add_allow": ["command(cat)", ""]}),
+        json!({"add_allow": ["command(cat)", "x".repeat(300)]}),
+        json!({"add_allow": ["command(cat)"], "allow": []}),
+        json!({"add_allow": ["command(cat)"], "deny": []}),
+        json!({"add_allow": ["command(cat)"], "allow": null}),
+        json!({"add_allow": ["command(cat)"], "deny": null}),
+    ];
+    for rule in [
+        "command(/bin/bash -c)",
+        "command(/bin/bas[h])",
+        "command(/bin/{ba,z}sh)",
+        "command(/usr/bin/python3.11 -c)",
+    ] {
+        batches.push(json!({"add_allow": ["command(cat)", rule]}));
+    }
+    for body in batches {
+        let response = server.call("PUT", "/api/permissions", Some(body.clone()));
+        assert_eq!(response.status, 400, "{body}: {}", response.json());
+        assert!(response.json()["error"].is_string(), "{body}");
+        assert_eq!(
+            fs::read(settings(&server)).unwrap(),
+            original,
+            "no partial write: {body}"
+        );
+    }
+    let duplicate = server.call(
+        "PUT",
+        "/api/permissions",
+        Some(json!({"add_allow": ["command(ls)", "command(cat)", "command(cat)"]})),
+    );
+    assert_eq!(duplicate.status, 200);
+    assert_eq!(
+        duplicate.json(),
+        json!({
+            "allow": ["command(ls)", "command(cat)"], "deny": ["command(rm)"], "future": {"keep": true}
+        })
+    );
+    server.stop();
+}
+
+#[test]
 fn captured_permission_approval_and_steer_routes() {
     let mut server = Server::new_stopped("approvals-captured", false);
     seed_rules(&server, json!({"allow": ["command(ls)"]}));

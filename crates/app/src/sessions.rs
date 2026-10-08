@@ -118,6 +118,14 @@ impl Service {
                 .iter()
                 .filter(|r| r.event.is_transcript())
                 .cloned()
+                .map(|mut record| {
+                    if let Event::Notice { kind, data, .. } = &mut record.event
+                        && kind == "denied"
+                    {
+                        crate::notices::denial_suggestions(data);
+                    }
+                    record
+                })
                 .collect(),
         ))
     }

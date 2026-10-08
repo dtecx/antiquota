@@ -1,7 +1,7 @@
 /** Owns durable Markdown transcript export and browser download cleanup. */
 import type { EventRecord } from '../gen/EventRecord';
 import type { Session } from '../gen/Session';
-import { relativePath } from './approvals';
+import { toolInfo } from './tools';
 import { projectHistory } from './transcript';
 
 const speakers: Record<string, string> = {
@@ -12,44 +12,6 @@ const speakers: Record<string, string> = {
   job: 'job',
   loop: 'loop',
 };
-const toolFields: Record<string, string[]> = {
-  run_command: ['CommandLine'],
-  view_file: ['AbsolutePath'],
-  list_dir: ['DirectoryPath', 'SearchPath'],
-  grep_search: ['Query'],
-  find_by_name: ['Pattern'],
-  write_to_file: ['TargetFile'],
-  replace_file_content: ['TargetFile'],
-  multi_replace_file_content: ['TargetFile'],
-  sed_file: ['TargetFile', 'File'],
-  read_url_content: ['Url'],
-  search_web: ['query', 'Query'],
-  open_browser_url: ['Url'],
-};
-const pathTools = new Set([
-  'view_file',
-  'list_dir',
-  'write_to_file',
-  'replace_file_content',
-  'multi_replace_file_content',
-  'sed_file',
-]);
-
-function toolDetail(event: Extract<EventRecord, { t: 'tool' }>, cwd: string): string {
-  if (!event.params || typeof event.params !== 'object' || Array.isArray(event.params)) return '';
-  const params = event.params;
-  if (event.name === 'call_mcp_tool')
-    return [params.ServerName, params.ToolName]
-      .filter((value) => typeof value === 'string')
-      .join(' · ');
-  const fields = Object.hasOwn(toolFields, event.name) ? toolFields[event.name] : undefined;
-  const detail = fields
-    ? fields.map((key) => params[key]).find((value) => typeof value === 'string' && value)
-    : Object.values(params).find((value) => typeof value === 'string' && value.length < 300);
-  const text = typeof detail === 'string' ? detail : '';
-  return pathTools.has(event.name) ? relativePath(text, cwd) : text;
-}
-
 export function sessionMarkdown(
   session: Session,
   events: EventRecord[],
@@ -72,7 +34,7 @@ export function sessionMarkdown(
         out.push('<details><summary>Thought</summary>', '', event.text, '', '</details>', '');
         break;
       case 'tool': {
-        const detail = toolDetail(event, session.cwd);
+        const detail = toolInfo(event, session.cwd).arg;
         out.push(
           `- \`${event.name}\`${detail ? ` ${detail}` : ''}${event.state.toLowerCase() === 'error' ? ' (error)' : ''}`,
         );

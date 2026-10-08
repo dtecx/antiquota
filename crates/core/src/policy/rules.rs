@@ -110,9 +110,92 @@ fn hit(part: &str, rules: &[&str]) -> bool {
     })
 }
 
+/// Identify programs without broadening the actual path prefix stored in a rule.
+fn program_identity(program: &str) -> String {
+    let name = program.rsplit(['/', '\\']).next().unwrap_or(program);
+    let lower = name.to_ascii_lowercase();
+    let name = lower.strip_suffix(".exe").unwrap_or(&lower);
+    if name == "nodejs" {
+        return "node".into();
+    }
+    if let Some(version) = name.strip_prefix("python")
+        && !version.is_empty()
+        && version.starts_with(|c: char| c.is_ascii_digit())
+        && version.chars().all(|c| c.is_ascii_digit() || c == '.')
+    {
+        return "python".into();
+    }
+    name.into()
+}
+
+/// Read one executable token with the existing shell parser. Keeping its quoted boundary
+/// separately matters for paths containing spaces; the parser's joined command loses it.
+fn single_command(line: &str) -> Option<(String, String, String)> {
+    let parts = command_parts(line)?;
+    if parts.len() != 1 {
+        return None;
+    }
+    let line = line.trim_start();
+    let mut quote = None;
+    let mut escaped = false;
+    let mut end = line.len();
+    for (at, c) in line.char_indices() {
+        if escaped {
+            escaped = false;
+        } else if c == '\\' && quote != Some('\'') {
+            escaped = true;
+        } else if quote == Some(c) {
+            quote = None;
+        } else if quote.is_none() {
+            if c == '\'' || c == '"' {
+                quote = Some(c);
+            } else if " \t\r\n();<>|&".contains(c) {
+                end = at;
+                break;
+            }
+        }
+    }
+    let programs = command_parts(&line[..end])?;
+    let [program] = programs.as_slice() else {
+        return None;
+    };
+    // Shell assignments and expansions cannot identify a concrete executable safely.
+    if program.is_empty() || program.contains(['=', '$', '*', '?', '[', ']', '{', '}']) {
+        return None;
+    }
+    let raw = &line[..end];
+    // The shell parser treats bare backslashes as POSIX escapes. Also guard literal Windows
+    // drive paths so that writing a runner rule never depends on the host's shell syntax.
+    let identity = if raw.as_bytes().get(1) == Some(&b':') && raw.contains('\\') {
+        program_identity(raw)
+    } else {
+        program_identity(program)
+    };
+    let tail = parts[0].strip_prefix(program)?.trim_start().to_owned();
+    Some((program.clone(), tail, identity))
+}
+
 /// Whether one command uses a flag that an allow rule never covers.
 pub fn is_risky(part: &str) -> bool {
-    RISKY.is_match(part)
+    // Joined commands may contain a space inside their executable path. For those paths,
+    // conservatively check each possible boundary until its basename identifies a risky tool.
+    let path = part
+        .split_whitespace()
+        .next()
+        .is_some_and(|p| p.contains(['/', '\\']));
+    for (end, _) in part.char_indices().filter(|(_, c)| c.is_whitespace()) {
+        let candidate = part[..end].split_whitespace().next_back().unwrap_or("");
+        let identity = program_identity(candidate);
+        if ["find", "git", "sed"].contains(&identity.as_str())
+            && RISKY.is_match(&format!("{identity}{}", &part[end..]))
+        {
+            return true;
+        }
+        if !path {
+            break;
+        }
+    }
+    false
 }
 
 /// Allow or deny when antiquota's command rules decide a shell line; `None` means ask.
@@ -175,18 +258,26 @@ pub fn mcp_verdict(rule: &str, permissions: &Permissions) -> Option<RuleVerdict>
 
 /// The rule "Always allow" would add for a command: two words for package, VCS, runtime and
 /// build tools whose second word is not a flag, otherwise one. Empty when such a rule would
-/// allow arbitrary programs, so the user approves those calls one at a time.
+/// allow arbitrary programs or the call uses risky flags, so the user approves it one at a time.
 pub fn suggest_rule(line: &str) -> String {
-    let words: Vec<&str> = line.split_whitespace().collect();
-    let Some(first) = words.first() else {
+    let Some((program, tail, identity)) = single_command(line) else {
         return String::new();
     };
-    let n = if TWO_WORD.contains(first) && words.len() > 1 && !words[1].starts_with('-') {
-        2
-    } else {
-        1
+    // Rule matching uses joined words, so it cannot retain a quoted executable boundary.
+    if program.chars().any(char::is_whitespace)
+        || is_risky(&format!("{program} {tail}"))
+        || permanent_rule_error(&format!("command({line})")).is_some()
+    {
+        return String::new();
+    }
+    let second = tail.split_whitespace().next();
+    let prefix = match second {
+        Some(second) if TWO_WORD.contains(&identity.as_str()) && !second.starts_with('-') => {
+            format!("{program} {second}")
+        }
+        _ => program,
     };
-    let rule = format!("command({})", words[..n].join(" "));
+    let rule = format!("command({prefix})");
     if permanent_rule_error(&rule).is_some() {
         String::new()
     } else {
@@ -202,14 +293,16 @@ pub fn permanent_rule_error(rule: &str) -> Option<String> {
     let body = rule
         .strip_prefix("command(")
         .and_then(|r| r.strip_suffix(')'))?;
-    let words: Vec<&str> = body.split_whitespace().collect();
-    let refused = match words.as_slice() {
-        [] => true,
-        ["*", ..] => true,
-        [first, ..] if RUNNERS.contains(first) => true,
-        [first] if INTERPRETERS.contains(first) => true,
-        [first, second, ..] if INTERPRETERS.contains(first) && second.starts_with('-') => true,
-        _ => false,
+    let refused = match single_command(body) {
+        None => true,
+        Some((_, tail, identity)) => {
+            RUNNERS.contains(&identity.as_str())
+                || (INTERPRETERS.contains(&identity.as_str())
+                    && tail
+                        .split_whitespace()
+                        .next()
+                        .is_none_or(|s| s.starts_with('-')))
+        }
     };
     refused.then(|| {
         format!(

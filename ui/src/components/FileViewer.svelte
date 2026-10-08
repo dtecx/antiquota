@@ -1,5 +1,6 @@
 <!-- Owns the read-only file viewer: numbered lines, copy, and closing by button or backdrop. -->
 <script lang="ts">
+  import { tick } from 'svelte';
   import { viewer } from '../lib/git';
   import Icon from './Icon.svelte';
   let dialog: HTMLDialogElement;
@@ -9,6 +10,12 @@
     if ($viewer) {
       copied = false;
       if (!dialog?.open) dialog?.showModal();
+      const current = $viewer;
+      if (current.line)
+        void tick().then(() => {
+          if ($viewer === current)
+            dialog.querySelector('.line.highlight')?.scrollIntoView({ block: 'center' });
+        });
     } else dialog?.close();
   });
   async function copy() {
@@ -40,7 +47,10 @@
       >
     </div>
     <div class="body" aria-label="File contents">
-      {#each lines as line, index (index)}<div class="line">
+      {#each lines as line, index (index)}<div
+          class="line"
+          class:highlight={$viewer.line === index + 1}
+        >
           <span class="number">{index + 1}</span><span class="text">{line}</span>
         </div>{/each}
     </div>
@@ -48,6 +58,9 @@
 </dialog>
 
 <style>
+  .line.highlight {
+    background: var(--baton-soft);
+  }
   dialog {
     width: min(960px, calc(100vw - 32px));
     padding: 0;
