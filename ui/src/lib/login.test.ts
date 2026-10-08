@@ -156,6 +156,37 @@ describe('account sign-in store', () => {
     expect(tab.close).toHaveBeenCalled();
     expect(get(login.state).open).toBe(false);
   });
+  for (const outcome of ['resolve', 'reject'] as const)
+    it(`cancels consent when a deferred native opener ${outcome}s after close`, async () => {
+      vi.useFakeTimers();
+      const { login, api, tab, refresh } = fixture();
+      let resolve: () => void = () => {};
+      let reject: (error: Error) => void = () => {};
+      tab.navigate.mockImplementation(
+        () =>
+          new Promise<void>((done, fail) => {
+            resolve = done;
+            reject = fail;
+          }),
+      );
+      login.open();
+      const pending = login.start();
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(tab.navigate).toHaveBeenCalledWith('https://example.invalid/consent');
+      login.close();
+      if (outcome === 'resolve') resolve();
+      else reject(new Error('The native opener failed.'));
+      await pending;
+      await vi.advanceTimersByTimeAsync(65_000);
+      expect(get(login.state)).toMatchObject({ open: false, id: '', phase: 'idle', error: '' });
+      expect(api.cancelLogin).toHaveBeenCalledExactlyOnceWith('login-1');
+      expect(tab.close).toHaveBeenCalled();
+      expect(api.loginState).not.toHaveBeenCalled();
+      expect(api.submitLogin).not.toHaveBeenCalled();
+      expect(refresh).not.toHaveBeenCalled();
+      expect(vi.getTimerCount()).toBe(0);
+    });
   it('validates clipboard codes, tolerates denied access and preserves manual input', async () => {
     const { login, browser, api } = fixture();
     login.open();

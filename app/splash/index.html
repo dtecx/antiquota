@@ -51,6 +51,9 @@
   T.event.listen('engine-status', e => {
     text.textContent = e.payload.text;
     main.classList.toggle('error', !!e.payload.error);
+  }).then(() => T.core.invoke('retry_engine')).catch(error => {
+    text.textContent = String(error);
+    main.classList.add('error');
   });
   document.getElementById('retry').onclick = () => {
     main.classList.remove('error');

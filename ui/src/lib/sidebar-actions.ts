@@ -6,6 +6,7 @@ import { asWorktree, type Workbench } from './workbench';
 import { createSessionActions } from './session-actions';
 import { openMenu, type MenuItem } from './context-menu';
 import { preferences } from './preferences';
+import { native, revealNativePath } from './native';
 import { projectName } from './format';
 
 export function createSidebarActions(api: Api, workbench: Workbench, select = workbench.select) {
@@ -76,6 +77,9 @@ export function createSidebarActions(api: Api, workbench: Workbench, select = wo
       },
       { label: 'Expand every project', action: () => preferences.change({ collapsed: [] }) },
       { label: 'Copy path', action: () => actions.copy(cwd), disabled },
+      ...(native
+        ? [{ label: 'Reveal in file manager', action: () => revealNativePath(cwd), disabled }]
+        : []),
       {
         label: `Archive its ${listed.length} sessions`,
         action: () => actions.archive(listed),

@@ -1,5 +1,6 @@
 <!-- Presents engine identity and deliberate lifecycle actions. -->
 <script lang="ts">
+  import { native, restartEngine, openNativePath, appInformation } from '../lib/native';
   import { onMount } from 'svelte';
   import type { Api } from '../lib/api';
   import type { SettingsStore } from '../lib/settings';
@@ -8,49 +9,68 @@
   let { api, settings }: { api: Api; settings: SettingsStore } = $props();
   let engine = $state<EngineResponse | null>(null),
     log = $state<string | null>(null),
-    feedback = $state('');
+    feedback = $state(''),
+    desktopVersion = $state(''),
+    restarting = $state(false);
+  let active = true;
+  const fail = (error: unknown) => {
+    if (active) settings.fail(error);
+  };
   onMount(() => {
-    let active = true;
+    if (native)
+      void appInformation()
+        .then((info) => {
+          if (active) desktopVersion = `${info.version} · ${info.os}`;
+        })
+        .catch(fail);
     void api
       .engine()
       .then((value) => {
         if (active) engine = value;
       })
-      .catch(settings.fail);
+      .catch(fail);
     return () => {
       active = false;
     };
   });
   async function showLog() {
     try {
-      log = (await api.engineLog()).text;
+      const result = await api.engineLog();
+      if (active) log = result.text;
     } catch (error) {
-      settings.fail(error);
+      fail(error);
     }
   }
   async function restart() {
-    if (
-      await ask(
-        'Restart the engine?',
-        'Running turns stop and goals pause; background jobs keep running. The desktop app starts the engine again. In a browser, restart antiquota serve.',
-        { ok: 'Restart' },
+    if (restarting) return;
+    restarting = true;
+    try {
+      if (
+        !(await ask(
+          'Restart the engine?',
+          'Running turns stop and goals pause; background jobs keep running. The desktop app starts the engine again. In a browser, restart antiquota serve.',
+          { ok: 'Restart' },
+        )) ||
+        !active
       )
-    ) {
-      try {
-        await api.shutdown();
-        feedback = 'Engine restarting…';
-      } catch (error) {
-        settings.fail(error);
-      }
+        return;
+      if (native) await restartEngine();
+      else await api.shutdown();
+      if (active) feedback = native ? 'Engine restarted.' : 'Engine restarting…';
+    } catch (error) {
+      fail(error);
+    } finally {
+      restarting = false;
     }
   }
   async function replace() {
     if (
-      await ask(
+      (await ask(
         'Replace antiquota’s private configuration?',
         'Edits made here are lost; conversations stay. Your agy CLI and IDE remain separate.',
         { ok: 'Replace', danger: true },
-      )
+      )) &&
+      active
     )
       await settings.copy('cli', 'everything');
   }
@@ -64,8 +84,14 @@
         </dt>
         <dd>{value}</dd>{/each}
     </dl>
+    {#if desktopVersion}<p>Desktop {desktopVersion}</p>{/if}
     <div class="actions">
-      <button onclick={showLog}>Engine log</button><button onclick={restart}>Restart engine</button>
+      {#if native}<button onclick={() => openNativePath(engine!.base).catch(fail)}
+          >Data directory</button
+        >{/if}
+      <button onclick={showLog}>Engine log</button><button onclick={restart} disabled={restarting}
+        >Restart engine</button
+      >
     </div>
     <h3>antiquota stack</h3>
     <p>

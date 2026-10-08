@@ -1,6 +1,7 @@
 /** Owns durable Markdown transcript export and browser download cleanup. */
 import type { EventRecord } from '../gen/EventRecord';
 import type { Session } from '../gen/Session';
+import { native, saveNativeFile } from './native';
 import { toolInfo } from './tools';
 import { projectHistory } from './transcript';
 
@@ -57,8 +58,11 @@ export function sessionMarkdown(
   };
 }
 
-export function downloadSession(session: Session, events: EventRecord[]): void {
+export function downloadSession(session: Session, events: EventRecord[]): void | Promise<void> {
   const { filename, text } = sessionMarkdown(session, events);
+  if (native) {
+    return saveNativeFile(filename, text).then(() => {});
+  }
   const anchor = document.createElement('a');
   const url = URL.createObjectURL(new Blob([text], { type: 'text/markdown;charset=utf-8' }));
   try {

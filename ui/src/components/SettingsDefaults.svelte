@@ -1,5 +1,7 @@
 <!-- Uses existing field tokens for new-session defaults and goal controls. -->
 <script lang="ts">
+  import { onMount } from 'svelte';
+  import { native, autostartEnabled, setAutostart } from '../lib/native';
   import type { SettingsStore, SettingsSection } from '../lib/settings';
   import type { Model } from '../gen/Model';
   import type { Settings } from '../gen/Settings';
@@ -12,6 +14,39 @@
   }: { settings: SettingsStore; section: SettingsSection; models: Model[] } = $props();
   const view = $derived(settings.state);
   const prefs = preferences.state;
+  let alive = true;
+  let autostartAvailable = $state(false);
+  let autostart = $state(false),
+    nativeBusy = $state(false);
+  onMount(() => {
+    if (native)
+      void autostartEnabled()
+        .then((value) => {
+          if (alive) {
+            autostart = value;
+            autostartAvailable = true;
+          }
+        })
+        .catch(() => {
+          if (alive) autostartAvailable = false;
+        });
+    return () => {
+      alive = false;
+    };
+  });
+  async function changeAutostart(on: boolean) {
+    if (nativeBusy) return;
+    nativeBusy = true;
+    try {
+      await setAutostart(on);
+      const enabled = await autostartEnabled();
+      if (alive) autostart = enabled;
+    } catch (error) {
+      if (alive) settings.fail(error);
+    } finally {
+      nativeBusy = false;
+    }
+  }
   const families = $derived(modelFamilies(models, $view.fields?.model ?? 'gemini-3.8-flash-high'));
   const family = $derived(
     families.find((f) => f.variants.some((v) => v.id === $view.fields?.model)) ?? families[0],
@@ -86,7 +121,17 @@
           onchange={(e) => change('keep_awake', e.currentTarget.checked ? 'on' : 'off')}
         />Keep awake while agents work</label
       >
-      <p>The display may still turn off. Open at login is available in the desktop app.</p>
+      {#if native && autostartAvailable}<label class="toggle"
+          ><input
+            type="checkbox"
+            checked={autostart}
+            disabled={nativeBusy}
+            onchange={(event) => changeAutostart(event.currentTarget.checked)}
+          />Open at login</label
+        >
+        <p>Starts in the tray; your window stays hidden.</p>{:else}<p>
+          The display may still turn off. Open at login is available in the desktop app.
+        </p>{/if}
       <h3>Notifications</h3>
       <p>Saved on this device. The browser asks for notification permission when needed.</p>
       {#each Object.entries(notificationLabels) as [kind, label] (kind)}<label class="toggle"

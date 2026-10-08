@@ -5,12 +5,12 @@
   "description": "antiquota desktop app: a native shell around the antiquota engine",
   "scripts": {
     "tauri": "tauri",
-    "test": "node --test ../tests/ui.test.cjs",
+    "test": "cargo test --locked --jobs 2 -p antiquota-desktop",
     "dev": "tauri dev",
     "build": "sh scripts/build-app.sh",
     "engine": "sh scripts/build-engine.sh"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2.12.1"
+    "@tauri-apps/cli": "2.12.1"
   }
 }

@@ -159,7 +159,7 @@ export function createComposerActions(
             case '/export': {
               need();
               const durable = await api.session(id);
-              downloadSession(durable.meta, durable.events);
+              await downloadSession(durable.meta, durable.events);
               break;
             }
             case '/init':

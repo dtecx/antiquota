@@ -1,5 +1,7 @@
 <!-- Owns the shared browser/webview shell and connects stores to focused views. -->
 <script lang="ts">
+  import { native, applyNativeZoom, connectNative, nativeAttention } from './lib/native';
+  import { dispatchNative, zoomBy } from './lib/native-actions';
   import { onMount, tick } from 'svelte';
   import { createApi } from './lib/api';
   import { createWorkbench } from './lib/workbench';
@@ -70,6 +72,8 @@
       workbench.onEvent(event);
       if (get(pane).sid) panes.right.onEvent(event);
       accounts.onEvent(event);
+      if (native && event.t === 'approval' && event.state === 'pending')
+        void nativeAttention().catch(() => {});
       const selected = get(view).selected;
       if (selected && event.sid === selected.id)
         notifications.event(event, selected.title || 'antiquota', get(preferences.state));
@@ -80,7 +84,60 @@
     },
   );
   const connection = stream.connection;
+  function findSession() {
+    workbench.change({ sidebarOpen: true });
+    void tick().then(() => {
+      const input = document.querySelector<HTMLInputElement>('[aria-label="Filter sessions"]');
+      input?.focus();
+      input?.select();
+    });
+  }
+  function toggleSplit() {
+    if (get(pane).sid) panes.close();
+    else document.querySelector<HTMLButtonElement>('[aria-label="Split view"]')?.click();
+  }
+  function step(delta: number) {
+    const right = get(pane).active === 'right' && !!get(pane).sid;
+    const value = get(right ? panes.right.state : view);
+    const groups = groupSessions(value.snapshot?.sessions ?? [], value.filter, {
+      current: value.selected?.id ?? '',
+      showArchived: value.showArchived,
+    });
+    const id = stepSession(groups, value.selected?.id ?? '', delta);
+    if (id) {
+      if (right && id === get(view).selected?.id) void panes.swap('right');
+      else if (right) void panes.open(id);
+      else void panes.select(id);
+    }
+  }
+
   onMount(() => {
+    const failNative = (error: unknown) =>
+      toast.show(error instanceof Error ? error.message : String(error));
+    const stopNative = connectNative((action) => {
+      void dispatchNative(
+        action,
+        api,
+        get(pane).active === 'right' && get(pane).sid ? panes.right : workbench,
+        {
+          newSession: () => {
+            panes.focus('left');
+            workbench.openDialog('create');
+          },
+          settings: accounts.open,
+          find: findSession,
+          split: toggleSplit,
+          step,
+          select: async (id) => {
+            panes.focus('left');
+            await panes.select(id);
+          },
+        },
+      ).catch(failNative);
+    }, failNative);
+    const stopZoom = preferences.state.subscribe((value) => {
+      void applyNativeZoom(value.zoom).catch(failNative);
+    });
     let previousAccounts: unknown;
     let previousDefaults: unknown;
     const unsubscribe = view.subscribe((value) => {
@@ -107,6 +164,8 @@
     if (token && token !== '__ANTIQUOTA_TOKEN__') stream.open();
     return () => {
       unsubscribe();
+      stopNative();
+      stopZoom();
       stopEffects();
       stopRightEffects();
       toast.dispose();
@@ -133,6 +192,11 @@
   function shortcut(event: KeyboardEvent) {
     if (event.defaultPrevented || document.querySelector('dialog[open]') || $contextMenu) return;
     const mod = event.metaKey || event.ctrlKey;
+    if (native && mod && ['=', '+', '-', '0'].includes(event.key)) {
+      event.preventDefault();
+      zoomBy(event.key === '0' ? 0 : event.key === '-' ? -0.1 : 0.1);
+      return;
+    }
     if (mod && event.key === '/') {
       event.preventDefault();
       shortcutsOpen.set(true);
@@ -151,35 +215,17 @@
     }
     if (mod && event.key.toLowerCase() === 'k') {
       event.preventDefault();
-      workbench.change({ sidebarOpen: true });
-      void tick().then(() => {
-        const input = document.querySelector<HTMLInputElement>('[aria-label="Filter sessions"]');
-        input?.focus();
-        input?.select();
-      });
+      findSession();
       return;
     }
     if (mod && event.key === '\\') {
       event.preventDefault();
-      if ($pane.sid) panes.close();
-      else document.querySelector<HTMLButtonElement>('[aria-label="Split view"]')?.click();
+      toggleSplit();
       return;
     }
     if (mod && event.shiftKey && ['[', ']', '{', '}'].includes(event.key)) {
       event.preventDefault();
-      const groups = groupSessions($view.snapshot?.sessions ?? [], $view.filter, {
-        current: $view.selected?.id ?? '',
-        showArchived: $view.showArchived,
-      });
-      const id = stepSession(
-        groups,
-        $view.selected?.id ?? '',
-        [']', '}'].includes(event.key) ? 1 : -1,
-      );
-      if (id) {
-        panes.focus('left');
-        void panes.select(id);
-      }
+      step([']', '}'].includes(event.key) ? 1 : -1);
       return;
     }
 

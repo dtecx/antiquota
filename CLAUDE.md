@@ -26,7 +26,7 @@ The legacy implementation is in this branch for reference: `antiquota/*.py` (eng
 - `tests/fake-agy`: the fake agent used by every test. It reads `FAKE_AGY_SCRIPT` (JSON, such as `{"scenario":"delay","delay_ms":300}`) and writes each argv to `fake-calls.jsonl`.
 - `tests/rewrite/*.rs`: HTTP integration tests. Each is included by a `crates/server/tests/*_contract.rs` file through `#[path]`. `tests/rewrite/support` provides `Server` (an isolated engine under `~/Desktop/test`), `Replay` (replays captured cases from `tests/fixtures/api/cases/*.json`) and raw HTTP helpers.
 - `ui/`: Svelte 5, strict TypeScript and Vite. `src/gen/` holds types generated from Rust by ts-rs. `src/lib/*.ts` holds the logic, with Vitest tests next to it. `src/components/*.svelte` holds the components. `e2e/*.spec.ts` holds the Playwright tests; `e2e/fixtures.ts` starts a sandbox engine per test.
-- `docs/ARCHITECTURE.md`, `docs/adr/` (ADR 0001 to 0021), and `docs/rewrite/`:
+- `docs/ARCHITECTURE.md`, `docs/adr/` (ADR 0001 to 0022), and `docs/rewrite/`:
   - `FEATURES.md` is the canonical checklist: 1144 rows, each with acceptance text and a `[ ]`/`[x]` box.
   - `TEST_REPORT.md` holds one row per feature (tests, status, evidence) and a section per slice.
   - `known-bugs.md` lists B- (legacy defects), R- (risks) and W- (defects found during the rewrite) entries.
@@ -34,7 +34,7 @@ The legacy implementation is in this branch for reference: `antiquota/*.py` (eng
 
 ## Status
 
-Slices 1, 3 to 8, 9a, 9b, 9c, 9d, 9e and 9f are done and committed: sessions, permissions and approvals, goals, jobs, worktrees, terminal, attachments and dictation. Slice 2 (accounts and handoff) has code and tests; 33 fully proved backend rows are now folded into the report through `tests/rewrite/slice9f-account-coverage.json`; 32 partial proposal rows retain explicit remaining acceptance. Its account UI evidence is folded in Slice 9b. 741 of 1144 rows are Passed.
+Slices 1, 3 to 8, 9a, 9b, 9c, 9d, 9e and 9f are done and committed: sessions, permissions and approvals, goals, jobs, worktrees, terminal, attachments and dictation. Slice 2 (accounts and handoff) has code and tests; 33 fully proved backend rows are now folded into the report through `tests/rewrite/slice9f-account-coverage.json`; 32 partial proposal rows retain explicit remaining acceptance. Its account UI evidence is folded in Slice 9b. 758 of 1144 rows are Passed. Slice 10 native-shell code and the macOS app/DMG build are implemented and tested; actual native engine navigation, zoom, lifecycle, menus, tray, OS permissions and AAC recording remain Pending because the background test app blocks on a sandbox engine.json filesystem open (R-009).
 
 Next work, in order:
 

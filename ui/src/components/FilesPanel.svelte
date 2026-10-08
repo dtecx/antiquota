@@ -1,6 +1,7 @@
 <!-- Owns browsing the selected session's project folder: breadcrumbs, folders, file sizes,
      opening files in the viewer and mentioning them in the composer. -->
 <script lang="ts">
+  import { native, openNativePath, revealNativePath } from '../lib/native';
   import { onDestroy } from 'svelte';
   import type { Api } from '../lib/api';
   import type { Workbench } from '../lib/workbench';
@@ -37,6 +38,19 @@
     if (id) void load(id, '');
   });
   const join = (name: string) => (path ? `${path}/${name}` : name);
+  async function nativeTarget(target: string, reveal: boolean) {
+    const id = session?.id;
+    if (!id) return;
+    try {
+      await (reveal ? revealNativePath(target) : openNativePath(target));
+    } catch (failure) {
+      if (active && session?.id === id) error = String(failure);
+    }
+  }
+  function nativeFile(name: string, reveal: boolean) {
+    if (!session || !tree) return;
+    return nativeTarget(`${tree.root.replace(/[\\/]$/, '')}/${join(name)}`, reveal);
+  }
   async function open(name: string) {
     if (!session) return;
     const id = session.id,
@@ -57,6 +71,11 @@
   {#if !session}
     <p class="empty">Open a session to browse its folder.</p>
   {:else}
+    {#if native}<div class="native-actions">
+        <button onclick={() => nativeTarget(session!.cwd, false)}>Open folder</button><button
+          onclick={() => nativeTarget(session!.cwd, true)}>Reveal folder</button
+        >
+      </div>{/if}
     <nav aria-label="Folder path">
       {#each breadcrumbs(path) as crumb, index (crumb.path)}{#if index}<span>/</span>{/if}<button
           class="crumb"
@@ -85,6 +104,16 @@
                 title="Mention in the message"
                 aria-label={`Mention ${entry.name}`}
                 onclick={() => workbench.mention(join(entry.name))}>@</button
+              >{/if}
+            {#if native}<button
+                class="mention"
+                aria-label={`Open ${entry.name} externally`}
+                onclick={() => nativeFile(entry.name, false)}>Open</button
+              >
+              <button
+                class="mention"
+                aria-label={`Reveal ${entry.name}`}
+                onclick={() => nativeFile(entry.name, true)}>Reveal</button
               >{/if}
           </li>
         {:else}

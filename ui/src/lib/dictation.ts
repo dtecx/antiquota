@@ -79,7 +79,11 @@ export function browserEnvironment(): DictationEnvironment {
     speech,
     microphone: (constraints) => navigator.mediaDevices.getUserMedia(constraints),
     recorder: (stream) => {
-      const mimeType = RECORDING_TYPES.find((type) => MediaRecorder.isTypeSupported(type));
+      const types =
+        scope.__TAURI__ && /Macintosh|Mac OS X/.test(navigator.userAgent)
+          ? ['audio/mp4;codecs=mp4a.40.2', 'audio/mp4', ...RECORDING_TYPES]
+          : RECORDING_TYPES;
+      const mimeType = types.find((type) => MediaRecorder.isTypeSupported(type));
       return new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
     },
     audioContext: () => new (window.AudioContext ?? scope.webkitAudioContext ?? AudioContext)(),

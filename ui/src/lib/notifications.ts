@@ -1,4 +1,10 @@
 /** Sends opted-in browser notifications; native delivery is provided by the desktop adapter. */
+import {
+  native,
+  nativeNotificationPermission,
+  requestNativeNotifications,
+  sendNativeNotification,
+} from './native';
 import type { EventRecord } from '../gen/EventRecord';
 import type { Preferences, NotificationKind } from './preferences';
 interface BrowserNotifications {
@@ -48,9 +54,15 @@ export function createNotifications(browser: BrowserNotifications) {
 export const notifications = createNotifications({
   visible: () => !document.hidden,
   focused: () => document.hasFocus(),
-  permission: () => (typeof Notification === 'undefined' ? null : Notification.permission),
-  request: () => Notification.requestPermission(),
+  permission: () =>
+    native
+      ? nativeNotificationPermission()
+      : typeof Notification === 'undefined'
+        ? null
+        : Notification.permission,
+  request: () => (native ? requestNativeNotifications() : Notification.requestPermission()),
   send: (title, body) => {
-    new Notification(title, { body, tag: 'antiquota' });
+    if (native) void sendNativeNotification(title, body).catch(() => {});
+    else new Notification(title, { body, tag: 'antiquota' });
   },
 });

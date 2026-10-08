@@ -99,3 +99,17 @@ it('ignores a second swap while the first selection pair is pending', async () =
   expect(get(panes.state).sid).toBe('a');
   panes.dispose();
 });
+it('keeps navigation in the active right pane when swapping with the primary session', async () => {
+  const { left, panes } = setup();
+  await left.refresh('a');
+  await panes.open('b');
+  left.draft('left unchanged');
+  panes.right.draft('right unchanged');
+  await panes.swap('right');
+  expect(get(panes.state)).toEqual({ sid: 'a', active: 'right' });
+  expect(get(left.state).selected?.id).toBe('b');
+  expect(get(panes.right.state).selected?.id).toBe('a');
+  expect(get(left.state).drafts.a).toBe('left unchanged');
+  expect(get(panes.right.state).drafts.b).toBe('right unchanged');
+  panes.dispose();
+});

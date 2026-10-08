@@ -1,12 +1,21 @@
 <!-- Presents device preferences without applying CSS scale to the browser root. -->
 <script lang="ts">
+  import { native } from '../lib/native';
+  import { zoomBy } from '../lib/native-actions';
   import { preferences } from '../lib/preferences';
   const prefs = preferences.state;
 </script>
 
 <section>
   <h3>Interface size</h3>
-  <p>Use your browser’s zoom controls: ⌘/Ctrl= larger, ⌘/Ctrl− smaller, ⌘/Ctrl0 actual size.</p>
+  {#if native}<div role="group" aria-label="Interface size">
+      <button aria-label="Smaller interface" onclick={() => zoomBy(-0.1)}>−</button><button
+        aria-label="Actual size"
+        onclick={() => zoomBy(0)}>{Math.round($prefs.zoom * 100)}%</button
+      ><button aria-label="Larger interface" onclick={() => zoomBy(0.1)}>+</button>
+    </div>{:else}<p>
+      Use your browser’s zoom controls: ⌘/Ctrl= larger, ⌘/Ctrl− smaller, ⌘/Ctrl0 actual size.
+    </p>{/if}
   <h3>Transcript</h3>
   <div role="group" aria-label="Transcript view">
     {#each [['grouped', 'Grouped steps'], ['steps', 'Every step']] as [value, label] (value)}<button

@@ -575,13 +575,13 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 
 | ID | Acceptance behavior | Legacy source | Existing legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-875 | [ ] Browser scale stays under the browser's own zoom controls. | `antiquota/ui/app.js:81` | tests/ui.test.cjs:57 | [Pending](TEST_REPORT.md#f-875) |
+| F-875 | [x] Browser scale stays under the browser's own zoom controls. | `antiquota/ui/app.js:81` | tests/ui.test.cjs:57 | [Passed](TEST_REPORT.md#f-875) |
 
 ## Scale validation
 
 | ID | Acceptance behavior | Legacy source | Existing legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-876 | [ ] Invalid scale resets to one and extreme scale clamps to 70–160 percent. | `antiquota/ui/app.js:81` | tests/ui.test.cjs:65 | [Pending](TEST_REPORT.md#f-876) |
+| F-876 | [x] Invalid scale resets to one and extreme scale clamps to 70–160 percent. | `antiquota/ui/app.js:81` | tests/ui.test.cjs:65 | [Passed](TEST_REPORT.md#f-876) |
 
 ## Every native application menu action
 
@@ -653,16 +653,16 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 | --- | --- | --- | --- | --- |
 | F-931 | [ ] Discovery honors ANTIQUOTA_DIR or uses ~/.antiquota. | `app/src-tauri/src/engine.rs:28` | None identified | [Pending](TEST_REPORT.md#f-931) |
 | F-932 | [ ] Discovery reads state/engine.json and GUI token to attach to the shared engine. | `app/src-tauri/src/engine.rs:64` | None identified | [Pending](TEST_REPORT.md#f-932) |
-| F-933 | [ ] Discovery accepts only a health response identifying antiquota. | `app/src-tauri/src/engine.rs:51` | None identified | [Pending](TEST_REPORT.md#f-933) |
+| F-933 | [x] Discovery accepts only a health response identifying antiquota. | `app/src-tauri/src/engine.rs:51` | None identified | [Passed](TEST_REPORT.md#f-933) |
 | F-934 | [ ] Ownership in engine.json controls shutdown behavior across later app starts. | `app/src-tauri/src/engine.rs:64` | None identified | [Pending](TEST_REPORT.md#f-934) |
 | F-935 | [ ] Native engine requests have a five-second global timeout. | `app/src-tauri/src/engine.rs:39` | None identified | [Pending](TEST_REPORT.md#f-935) |
-| F-936 | [ ] ANTIQUOTA_ENGINE takes precedence over bundled and source engines. | `app/src-tauri/src/engine.rs:98` | None identified | [Pending](TEST_REPORT.md#f-936) |
+| F-936 | [x] ANTIQUOTA_ENGINE takes precedence over bundled and source engines. | `app/src-tauri/src/engine.rs:98` | None identified | [Passed](TEST_REPORT.md#f-936) |
 | F-937 | [ ] A release discovers its platform engine in bundled resources. | `app/src-tauri/src/engine.rs:98` | None identified | [Pending](TEST_REPORT.md#f-937) |
 | F-938 | [ ] Legacy source discovery honors ANTIQUOTA_DEV_ROOT or repository location. | `app/src-tauri/src/engine.rs:98` | None identified | [Pending](TEST_REPORT.md#f-938) |
-| F-939 | [ ] Legacy discovery searches for Python. Authorized replacement: discover the single Rust antiquota sidecar or an explicit Rust-engine executable while retaining shared engine.json discovery and actionable missing-engine errors; no Python interpreter is required. | `app/src-tauri/src/engine.rs:128` | None identified | [Pending](TEST_REPORT.md#f-939) |
-| F-940 | [ ] Spawned engine output appends to private state/engine.log. | `app/src-tauri/src/engine.rs:150` | None identified | [Pending](TEST_REPORT.md#f-940) |
-| F-941 | [ ] App engine launch supplies serve --port 8765 and app ownership/path markers. | `app/src-tauri/src/engine.rs:150` | None identified | [Pending](TEST_REPORT.md#f-941) |
-| F-942 | [ ] POSIX engines use an independent process group and survive app exit. | `app/src-tauri/src/engine.rs:174` | None identified | [Pending](TEST_REPORT.md#f-942) |
+| F-939 | [x] Legacy discovery searches for Python. Authorized replacement: discover the single Rust antiquota sidecar or an explicit Rust-engine executable while retaining shared engine.json discovery and actionable missing-engine errors; no Python interpreter is required. | `app/src-tauri/src/engine.rs:128` | None identified | [Passed](TEST_REPORT.md#f-939) |
+| F-940 | [x] Spawned engine output appends to private state/engine.log. | `app/src-tauri/src/engine.rs:150` | None identified | [Passed](TEST_REPORT.md#f-940) |
+| F-941 | [x] App engine launch supplies serve --port 8765 and app ownership/path markers. | `app/src-tauri/src/engine.rs:150` | None identified | [Passed](TEST_REPORT.md#f-941) |
+| F-942 | [x] POSIX engines use an independent process group and survive app exit. | `app/src-tauri/src/engine.rs:174` | None identified | [Passed](TEST_REPORT.md#f-942) |
 | F-943 | [ ] Windows engines use a new process group without a console window. | `app/src-tauri/src/engine.rs:180` | None identified | [Pending](TEST_REPORT.md#f-943) |
 | F-944 | [ ] Startup polls engine discovery every 250 ms up to thirty seconds. | `app/src-tauri/src/engine.rs:188` | None identified | [Pending](TEST_REPORT.md#f-944) |
 | F-945 | [ ] Startup failure reports timeout with up to twelve engine-log tail lines. | `app/src-tauri/src/engine.rs:188` | None identified | [Pending](TEST_REPORT.md#f-945) |
@@ -676,8 +676,8 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 | F-948 | [ ] Up to six working sessions appear with truncated title and status. | `app/src-tauri/src/tray.rs:107` | None identified | [Pending](TEST_REPORT.md#f-948) |
 | F-949 | [ ] Selecting a tray session reveals the main window and opens that session. | `app/src-tauri/src/tray.rs:26` | None identified | [Pending](TEST_REPORT.md#f-949) |
 | F-950 | [ ] Up to ten accounts appear as disabled quota/status rows. | `app/src-tauri/src/tray.rs:107` | None identified | [Pending](TEST_REPORT.md#f-950) |
-| F-951 | [ ] Account rows distinguish Gemini quota, wall, cooldown, signed-out and unprobed state. | `app/src-tauri/src/tray.rs:80` | None identified | [Pending](TEST_REPORT.md#f-951) |
-| F-952 | [ ] Rewrite correction: tray verification-needed state accepts the actual account API verification URL string, as well as compatible legacy object/boolean representations. The URL-string mismatch is confirmed by source, not claimed as observed during the Gemini run. | `app/src-tauri/src/tray.rs:80` | None identified | [Pending](TEST_REPORT.md#f-952) |
+| F-951 | [x] Account rows distinguish Gemini quota, wall, cooldown, signed-out and unprobed state. | `app/src-tauri/src/tray.rs:80` | None identified | [Passed](TEST_REPORT.md#f-951) |
+| F-952 | [x] Rewrite correction: tray verification-needed state accepts the actual account API verification URL string, as well as compatible legacy object/boolean representations. The URL-string mismatch is confirmed by source, not claimed as observed during the Gemini run. | `app/src-tauri/src/tray.rs:80` | None identified | [Passed](TEST_REPORT.md#f-952) |
 | F-953 | [ ] Tray Open antiquota reveals the main window. | `app/src-tauri/src/tray.rs:147` | None identified | [Pending](TEST_REPORT.md#f-953) |
 | F-954 | [ ] Tray New session… reveals the window and opens session creation. | `app/src-tauri/src/tray.rs:148` | None identified | [Pending](TEST_REPORT.md#f-954) |
 | F-955 | [ ] Tray Stop all running is enabled only while sessions work and stops every active session. | `app/src-tauri/src/tray.rs:149` | None identified | [Pending](TEST_REPORT.md#f-955) |
@@ -690,11 +690,11 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 
 | ID | Acceptance behavior | Legacy source | Existing legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-960 | [ ] The splash displays startup progress from engine-status events. | `app/splash/index.html:38` | None identified | [Pending](TEST_REPORT.md#f-960) |
-| F-961 | [ ] The splash displays error text with Try again and Quit only in error state. | `app/splash/index.html:51` | None identified | [Pending](TEST_REPORT.md#f-961) |
-| F-962 | [ ] Try again clears the error state and invokes retry_engine. | `app/splash/index.html:54` | None identified | [Pending](TEST_REPORT.md#f-962) |
+| F-960 | [x] The splash displays startup progress from engine-status events. | `app/splash/index.html:38` | None identified | [Passed](TEST_REPORT.md#f-960) |
+| F-961 | [x] The splash displays error text with Try again and Quit only in error state. | `app/splash/index.html:51` | None identified | [Passed](TEST_REPORT.md#f-961) |
+| F-962 | [x] Try again clears the error state and invokes retry_engine. | `app/splash/index.html:54` | None identified | [Passed](TEST_REPORT.md#f-962) |
 | F-963 | [ ] Splash Quit invokes work-aware quit_app. | `app/splash/index.html:59` | None identified | [Pending](TEST_REPORT.md#f-963) |
-| F-964 | [ ] The splash respects reduced-motion preference. | `app/splash/index.html:34` | None identified | [Pending](TEST_REPORT.md#f-964) |
+| F-964 | [x] The splash respects reduced-motion preference. | `app/splash/index.html:34` | None identified | [Passed](TEST_REPORT.md#f-964) |
 
 ## Native permissions scope
 
@@ -714,13 +714,13 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 
 | ID | Acceptance behavior | Legacy source | Existing legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-969 | [ ] The bundled engine forwards serve and current CLI commands to the engine entry point. | `app/engine/antiquotad.py:4` | None identified | [Pending](TEST_REPORT.md#f-969) |
+| F-969 | [x] The bundled engine forwards serve and current CLI commands to the engine entry point. | `app/engine/antiquotad.py:4` | None identified | [Passed](TEST_REPORT.md#f-969) |
 
 ## Platform release packages
 
 | ID | Acceptance behavior | Legacy source | Existing legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-970 | [ ] macOS release builds an app and compressed DMG with an Applications shortcut. | `app/scripts/build-app.sh:7` | None identified | [Pending](TEST_REPORT.md#f-970) |
+| F-970 | [x] macOS release builds an app and compressed DMG with an Applications shortcut. | `app/scripts/build-app.sh:7` | None identified | [Passed](TEST_REPORT.md#f-970) |
 | F-971 | [ ] Linux release builds deb, rpm and AppImage outputs. | `app/scripts/build-app.sh:21` | None identified | [Pending](TEST_REPORT.md#f-971) |
 | F-972 | [ ] Other release platforms use the configured Tauri bundle targets. | `app/scripts/build-app.sh:24` | None identified | [Pending](TEST_REPORT.md#f-972) |
 

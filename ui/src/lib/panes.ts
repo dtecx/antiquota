@@ -44,7 +44,7 @@ export function createPanes(api: Api, left: Workbench) {
     state.set({ sid: null, active: 'left' });
     right.clearSelection();
   }
-  async function swap() {
+  async function swap(active: 'left' | 'right' = 'left') {
     const l = get(left.state).selected?.id,
       r = get(state).sid;
     if (!l || !r || l === r || swapping) return;
@@ -54,7 +54,7 @@ export function createPanes(api: Api, left: Workbench) {
       await Promise.all([left.select(r), right.select(l)]);
       if (own !== generation) return;
       preferences.change({ split: l });
-      state.set({ sid: l, active: 'left' });
+      state.set({ sid: l, active });
     } finally {
       swapping = false;
     }

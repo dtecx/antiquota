@@ -5,12 +5,14 @@
 //! through `~/.antiquota/state/engine.json`, which the engine writes once it listens.
 
 use serde_json::Value;
+use std::ffi::OsStr;
 use std::fs;
+use std::io::{Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Engine {
     pub url: String,
     pub token: String,
@@ -18,60 +20,107 @@ pub struct Engine {
     pub by_app: bool,
 }
 
-pub fn home_dir() -> PathBuf {
-    std::env::var_os("HOME")
-        .or_else(|| std::env::var_os("USERPROFILE"))
-        .map(PathBuf::from)
-        .unwrap_or_default()
-}
-
-pub fn base_dir() -> PathBuf {
-    match std::env::var_os("ANTIQUOTA_DIR") {
-        Some(d) => PathBuf::from(d),
-        None => home_dir().join(".antiquota"),
+impl std::fmt::Debug for Engine {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Engine")
+            .field("url", &self.url)
+            .field("token", &"[redacted]")
+            .field("by_app", &self.by_app)
+            .finish()
     }
 }
 
-fn state_file(name: &str) -> PathBuf {
-    base_dir().join("state").join(name)
+pub fn home_dir() -> PathBuf {
+    antiquota_store::user_home().unwrap_or_default()
+}
+
+pub fn base_dir() -> PathBuf {
+    antiquota_store::data_root().unwrap_or_else(|_| home_dir().join(".antiquota"))
 }
 
 fn agent() -> ureq::Agent {
     ureq::Agent::config_builder()
         .timeout_global(Some(Duration::from_secs(5)))
         .http_status_as_error(false)
+        .max_redirects(0)
+        .proxy(None)
         .build()
         .into()
 }
 
-fn info() -> Option<Value> {
-    serde_json::from_str(&fs::read_to_string(state_file("engine.json")).ok()?).ok()
+fn loopback_port(url: &str) -> Option<u16> {
+    let port = url
+        .strip_prefix("http://127.0.0.1:")?
+        .strip_suffix('/')?
+        .parse::<u16>()
+        .ok()?;
+    (port != 0 && url == format!("http://127.0.0.1:{port}/")).then_some(port)
+}
+
+fn health(url: &str) -> Option<Value> {
+    loopback_port(url)?;
+    let Ok(mut r) = agent().get(&format!("{url}api/health")).call() else {
+        return None;
+    };
+    if r.status() != 200 {
+        return None;
+    }
+    let body = r
+        .body_mut()
+        .with_config()
+        .limit(65536)
+        .read_to_string()
+        .ok()?;
+    let value: Value = serde_json::from_str(&body).ok()?;
+    (value["app"] == "antiquota"
+        && value["ok"] == true
+        && value["pid"]
+            .as_u64()
+            .is_some_and(|pid| pid > 0 && pid <= u32::MAX.into()))
+    .then_some(value)
 }
 
 pub fn healthy(url: &str) -> bool {
-    let Ok(mut r) = agent().get(&format!("{url}api/health")).call() else { return false };
-    let Ok(body) = r.body_mut().read_to_string() else { return false };
-    serde_json::from_str::<Value>(&body)
-        .map(|v| v["app"] == "antiquota")
-        .unwrap_or(false)
-}
-
-fn token() -> Option<String> {
-    fs::read_to_string(state_file("gui-token")).ok().map(|t| t.trim().to_string())
+    health(url).is_some()
 }
 
 /// The engine already running for this antiquota folder, if it answers.
 pub fn running() -> Option<Engine> {
-    let v = info()?;
+    discover(&base_dir())
+}
+
+fn discover(base: &Path) -> Option<Engine> {
+    let state = base.join("state");
+    let raw = fs::read_to_string(state.join("engine.json")).ok()?;
+    let v: Value = serde_json::from_str(&raw).ok()?;
     let url = v["url"].as_str()?.to_string();
-    if !healthy(&url) {
+    let port = loopback_port(&url)?;
+    let pid = v["pid"]
+        .as_u64()
+        .filter(|pid| *pid > 0 && *pid <= u32::MAX.into())?;
+    if v["port"].as_u64()? != u64::from(port) {
         return None;
     }
-    Some(Engine { url, token: token()?, by_app: v["by"] == "app" })
+    let token = fs::read_to_string(state.join("gui-token"))
+        .ok()?
+        .trim()
+        .to_string();
+    if token.is_empty() {
+        return None;
+    }
+    if health(&url)?["pid"].as_u64()? != pid {
+        return None;
+    }
+    Some(Engine {
+        url,
+        token,
+        by_app: v["by"] == "app",
+    })
 }
 
 impl Engine {
     pub fn get(&self, path: &str) -> Option<Value> {
+        loopback_port(&self.url)?;
         let mut r = agent()
             .get(&format!("{}{}", self.url, path))
             .header("X-Antiquota-Token", &self.token)
@@ -84,6 +133,9 @@ impl Engine {
     }
 
     pub fn post(&self, path: &str) -> bool {
+        if loopback_port(&self.url).is_none() {
+            return false;
+        }
         agent()
             .post(&format!("{}{}", self.url, path))
             .header("X-Antiquota-Token", &self.token)
@@ -94,62 +146,75 @@ impl Engine {
     }
 }
 
-/// How to start the engine: a bundled `antiquotad`, an explicit one, or the source tree (dev).
+/// Select the Rust engine and its UI resources without invoking a Python installation.
 fn engine_command(resources: Option<&Path>) -> Result<Command, String> {
-    if let Some(exe) = std::env::var_os("ANTIQUOTA_ENGINE") {
-        let mut c = Command::new(exe);
-        c.arg("serve");
-        return Ok(c);
-    }
-    let exe_name = if cfg!(windows) { "antiquotad.exe" } else { "antiquotad" };
-    if let Some(dir) = resources {
-        let bundled = dir.join("engine").join("antiquotad").join(exe_name);
-        if bundled.is_file() {
-            let mut c = Command::new(bundled);
-            c.arg("serve");
-            return Ok(c);
-        }
-    }
-    // Development: run the engine from this repository with a Python new enough for it.
     let root = std::env::var_os("ANTIQUOTA_DEV_ROOT")
         .map(PathBuf::from)
         .unwrap_or_else(|| Path::new(env!("CARGO_MANIFEST_DIR")).join("../.."));
-    if !root.join("antiquota").join("__main__.py").is_file() {
-        return Err("The antiquota engine is missing from this build.".into());
-    }
-    let python = find_python().ok_or(
-        "Python 3.10 or newer was not found. Install it, or set ANTIQUOTA_PYTHON to its path.",
-    )?;
-    let mut c = Command::new(python);
-    c.args(["-m", "antiquota", "serve"]).current_dir(&root).env("PYTHONPATH", &root);
-    Ok(c)
+    command_for(
+        resources,
+        std::env::var_os("ANTIQUOTA_ENGINE").as_deref(),
+        &root,
+        std::env::var_os("ANTIQUOTA_UI_DIR").as_deref(),
+    )
 }
 
-fn find_python() -> Option<PathBuf> {
-    let mut candidates: Vec<PathBuf> = std::env::var_os("ANTIQUOTA_PYTHON").map(PathBuf::from).into_iter().collect();
-    for p in [
-        "/opt/homebrew/bin/python3",
-        "/usr/local/bin/python3",
-        "/Library/Frameworks/Python.framework/Versions/Current/bin/python3",
-        "/usr/bin/python3",
-    ] {
-        candidates.push(PathBuf::from(p));
+fn command_for(
+    resources: Option<&Path>,
+    explicit: Option<&OsStr>,
+    root: &Path,
+    ui_override: Option<&OsStr>,
+) -> Result<Command, String> {
+    let name = if cfg!(windows) {
+        "antiquota.exe"
+    } else {
+        "antiquota"
+    };
+    let mut candidates = vec![];
+    if let Some(resources) = resources {
+        candidates.push(resources.join("engine").join(name));
     }
-    candidates.push(PathBuf::from(if cfg!(windows) { "python" } else { "python3" }));
-    candidates.into_iter().find(|p| {
-        Command::new(p)
-            .args(["-c", "import sys; sys.exit(sys.version_info < (3, 10))"])
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .status()
-            .map(|s| s.success())
-            .unwrap_or(false)
-    })
+    candidates.extend([
+        root.join("target/debug").join(name),
+        root.join("target/release").join(name),
+    ]);
+    let executable = match explicit {
+        Some(path) if !path.is_empty() => PathBuf::from(path),
+        Some(_) => return Err("ANTIQUOTA_ENGINE is empty.".into()),
+        None => candidates.into_iter().find(|path| path.is_file()).ok_or(
+            "The Rust antiquota engine is missing. Build it with cargo build -p antiquota-cli.",
+        )?,
+    };
+    let ui = ui_override
+        .filter(|path| !path.is_empty())
+        .map(PathBuf::from)
+        .or_else(|| {
+            resources
+                .map(|path| path.join("ui"))
+                .filter(|path| path.join("index.html").is_file())
+        })
+        .unwrap_or_else(|| root.join("ui/dist"));
+    if !ui.join("index.html").is_file() {
+        return Err(
+            "The antiquota UI is missing. Build ui/dist or include the bundled UI resources."
+                .into(),
+        );
+    }
+    let mut command = Command::new(executable);
+    command.arg("serve").env("ANTIQUOTA_UI_DIR", ui);
+    Ok(command)
 }
 
 fn spawn(resources: Option<&Path>) -> Result<(), String> {
-    let mut cmd = engine_command(resources)?;
-    let log_path = state_file("engine.log");
+    launch_command(engine_command(resources)?, &base_dir())?
+        .spawn()
+        .map_err(|e| format!("could not start the engine: {e}"))?;
+    Ok(())
+}
+
+/// Configure an app-owned engine without changing the launching process's environment.
+fn launch_command(mut cmd: Command, base: &Path) -> Result<Command, String> {
+    let log_path = base.join("state/engine.log");
     if let Some(dir) = log_path.parent() {
         let _ = fs::create_dir_all(dir);
     }
@@ -158,16 +223,21 @@ fn spawn(resources: Option<&Path>) -> Result<(), String> {
         .append(true)
         .open(&log_path)
         .map_err(|e| format!("cannot write {}: {e}", log_path.display()))?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        log.set_permissions(fs::Permissions::from_mode(0o600))
+            .map_err(|error| format!("cannot protect {}: {error}", log_path.display()))?;
+    }
     let err = log.try_clone().map_err(|e| e.to_string())?;
     cmd.args(["--port", "8765"])
         .env("ANTIQUOTA_LAUNCHED_BY", "app")
-        .env("ANTIQUOTA_FIX_PATH", "1") // an app gets a bare PATH; the engine asks the login shell
+        .env("ANTIQUOTA_DIR", base)
         .stdin(Stdio::null())
         .stdout(log)
         .stderr(err);
     detach(&mut cmd);
-    cmd.spawn().map_err(|e| format!("could not start the engine: {e}"))?;
-    Ok(())
+    Ok(cmd)
 }
 
 #[cfg(unix)]
@@ -197,8 +267,56 @@ pub fn ensure(resources: Option<&Path>) -> Result<Engine, String> {
         }
         std::thread::sleep(Duration::from_millis(250));
     }
-    let tail = fs::read_to_string(state_file("engine.log"))
-        .map(|t| t.lines().rev().take(12).collect::<Vec<_>>().into_iter().rev().collect::<Vec<_>>().join("\n"))
-        .unwrap_or_default();
-    Err(format!("The engine did not start within 30 seconds.\n\n{tail}"))
+    Err(startup_failure(&base_dir()))
 }
+
+/// Read only the bounded end of a failed launch's log, never exposing the GUI token.
+fn startup_failure(base: &Path) -> String {
+    let log_path = base.join("state/engine.log");
+    let header = format!(
+        "The engine did not start within 30 seconds. See {} for details.",
+        log_path.display()
+    );
+    let tail = (|| -> std::io::Result<String> {
+        let token = match fs::read_to_string(base.join("state/gui-token")) {
+            Ok(token) => token,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => String::new(),
+            Err(error) => return Err(error),
+        };
+        let mut file = fs::File::open(&log_path)?;
+        let length = file.metadata()?.len();
+        const LIMIT: u64 = 65536;
+        let start = length.saturating_sub(LIMIT);
+        file.seek(SeekFrom::Start(start))?;
+        let mut bytes = Vec::new();
+        file.take(LIMIT).read_to_end(&mut bytes)?;
+        // A truncated first line can contain part of a secret; exclude it entirely.
+        let begin = if start > 0 {
+            bytes
+                .iter()
+                .position(|byte| *byte == b'\n')
+                .map_or(bytes.len(), |index| index + 1)
+        } else {
+            0
+        };
+        let text = String::from_utf8_lossy(&bytes[begin..]);
+        let mut lines = text.lines().rev().take(12).collect::<Vec<_>>();
+        lines.reverse();
+        let tail = lines.join("\n");
+        let token = token.trim();
+        Ok(if token.is_empty() {
+            tail
+        } else {
+            tail.replace(token, "[redacted]")
+        })
+    })()
+    .unwrap_or_default();
+    if tail.is_empty() {
+        header
+    } else {
+        format!("{header}\n\n{tail}")
+    }
+}
+
+#[cfg(test)]
+mod tests;

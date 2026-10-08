@@ -150,3 +150,14 @@ kbd {
     transition: none !important;
   }
 }
+
+:root[data-native-os='macos'] .brand-row {
+  padding-top: var(--native-top, 52px);
+  min-height: calc(64px + var(--native-top, 52px));
+}
+@media (max-width: 859px) {
+  :root[data-native-os='macos'] .session-pane > header {
+    padding-top: var(--native-top, 52px);
+    min-height: calc(64px + var(--native-top, 52px));
+  }
+}

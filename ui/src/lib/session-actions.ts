@@ -1,4 +1,5 @@
 /** Owns sidebar mutations and confirmation boundaries while retaining their original targets. */
+import { writeClipboard } from './native';
 import { get, writable } from 'svelte/store';
 import type { Api } from './api';
 import type { Session } from '../gen/Session';
@@ -61,7 +62,7 @@ export function createSessionActions(api: Api, workbench: Workbench, select = wo
     remove,
     copy: (path: string) =>
       act(async () => {
-        await navigator.clipboard.writeText(path);
+        await writeClipboard(path);
       }),
   };
 }

@@ -1,0 +1,116 @@
+{
+  "format": 1,
+  "slice": "10",
+  "passed_before": 741,
+  "added": 17,
+  "passed_after": 758,
+  "pending_after": 386,
+  "passed_after_is_prospective": false,
+  "gate_status": "Final just check and just test passed: 292 Rust,448 Vitest in45files,117Chromium;zero final failed/ignored/skipped/flaky. just build and installed package checks passed. Native OS integration remains Pending.",
+  "feature_ids": [
+    "F-875",
+    "F-876",
+    "F-933",
+    "F-936",
+    "F-939",
+    "F-940",
+    "F-941",
+    "F-942",
+    "F-951",
+    "F-952",
+    "F-960",
+    "F-961",
+    "F-962",
+    "F-964",
+    "F-969",
+    "F-970",
+    "F-1069"
+  ],
+  "proofs": {
+    "F-875": {
+      "proof": "[browser routing leaves native zoom untouched](../../ui/src/lib/native.test.ts); [browser layout rejects CSS root zoom](../../ui/e2e/layout.spec.ts). Browser scale remains controlled by the browser.",
+      "evidence": ".handoff/evidence/slice10-test.log"
+    },
+    "F-876": {
+      "proof": "[invalid and extreme preference scale](../../ui/src/lib/preferences.test.ts); [serialized native zoom clamps boundaries](../../ui/src/lib/native.test.ts). Invalid scale becomes one; boundaries are 0.7 and 1.6.",
+      "evidence": ".handoff/evidence/slice10-test.log"
+    },
+    "F-933": {
+      "proof": "[discovery_matches_actual_health_pid_and_retains_external_engine_ownership](../../app/src-tauri/src/engine/tests.rs); stale PID, non-antiquota body, failed status and redirected-health regressions reject discovery.",
+      "evidence": ".handoff/evidence/slice10-test.log"
+    },
+    "F-936": {
+      "proof": "[explicit_rust_engine_preserves_serve_and_selects_the_ui_override](../../app/src-tauri/src/engine/tests.rs); explicit Rust executable selection precedes the bundled/development lookup in the tested command builder.",
+      "evidence": ".handoff/evidence/slice10-test.log"
+    },
+    "F-939": {
+      "proof": "[development_requires_built_rust_engine_and_ui_without_python_fallback](../../app/src-tauri/src/engine/tests.rs); explicit, bundled and debug/release command selection tests preserve shared discovery and produce actionable missing-engine/UI errors.",
+      "evidence": ".handoff/evidence/slice10-test.log"
+    },
+    "F-940": {
+      "proof": "[launch_configuration_appends_both_streams_and_sets_exact_owned_engine_arguments](../../app/src-tauri/src/engine/tests.rs) runs a synthetic child and verifies both streams append to the existing engine log with mode 0600 on macOS.",
+      "evidence": ".handoff/evidence/slice10-test.log"
+    },
+    "F-941": {
+      "proof": "[launch_configuration_appends_both_streams_and_sets_exact_owned_engine_arguments](../../app/src-tauri/src/engine/tests.rs) asserts serve --port 8765, app ownership and the isolated app data root.",
+      "evidence": ".handoff/evidence/slice10-test.log"
+    },
+    "F-942": {
+      "proof": "[detached_engine_survives_its_launcher_exit_in_an_independent_process_group](../../app/src-tauri/src/engine/tests.rs) verifies the synthetic POSIX child survives its launcher and uses its own process group.",
+      "evidence": ".handoff/evidence/slice10-test.log"
+    },
+    "F-951": {
+      "proof": "[quota_uses_lowest_gemini_window_and_only_future_walls_override_it](../../app/src-tauri/src/tray.rs) and verification-shape tests distinguish Gemini minimum quota, future quota/rate walls, signed-out and unprobed labels. This proves row formatting, not the macOS tray presentation.",
+      "evidence": ".handoff/evidence/slice10-test.log"
+    },
+    "F-952": {
+      "proof": "[verification_accepts_api_urls_and_legacy_shapes_but_not_null_or_empty](../../app/src-tauri/src/tray.rs) accepts the actual account URL string plus compatible object/boolean forms and rejects empty/null/false.",
+      "evidence": ".handoff/evidence/slice10-test.log"
+    },
+    "F-960": {
+      "proof": "[bootstrap waits for the status listener before requesting engine startup](../../ui/e2e/splash.spec.ts) executes the actual splash HTML with mocked Tauri IPC and verifies status progress. A separate native background capture shows the starting splash.",
+      "evidence": ".handoff/evidence/slice10-test.log"
+    },
+    "F-961": {
+      "proof": "[status errors expose retry and quit and retry restores the starting presentation](../../ui/e2e/splash.spec.ts) verifies actual splash HTML error text and error-only buttons using mocked IPC.",
+      "evidence": ".handoff/evidence/slice10-test.log"
+    },
+    "F-962": {
+      "proof": "[status errors expose retry and quit and retry restores the starting presentation](../../ui/e2e/splash.spec.ts) verifies Try again clears error state and invokes retry_engine.",
+      "evidence": ".handoff/evidence/slice10-test.log"
+    },
+    "F-964": {
+      "proof": "[reduced motion disables both splash animations](../../ui/e2e/splash.spec.ts) exercises the actual splash HTML in Chromium with reduced motion.",
+      "evidence": ".handoff/evidence/slice10-test.log"
+    },
+    "F-969": {
+      "proof": "The installed DMG sidecar is byte-identical to the tested release Rust CLI. Its root, serve, run, goal, accounts and hook --help commands pass; existing CLI/HTTP replay tests exercise the same entry point. No Python forwarding layer remains.",
+      "evidence": ".handoff/evidence/slice10-package-proof.json"
+    },
+    "F-970": {
+      "proof": "Fresh just build produces the macOS app and UDZO compressed DMG. A background read-only mount verifies the Applications shortcut, copies the app into Desktop/test, and verifies its deep strict ad hoc signature and bundled Rust/UI resources.",
+      "evidence": ".handoff/evidence/slice10-package-proof.json"
+    },
+    "F-1069": {
+      "proof": "[just build](../../justfile) builds the release Rust engine, browser UI and Tauri sidecar application, then the compressed macOS installer. Installer contents and signature are independently checked.",
+      "evidence": ".handoff/evidence/slice10-build.log"
+    }
+  },
+  "remaining": {
+    "F-938": "The command builder tests debug/release selection from a supplied repository root. Direct ANTIQUOTA_DEV_ROOT environment and repository-location integration remains unproved.",
+    "F-944": "The 250 ms/30-second polling loop exists. Actual native startup blocks inside a synchronous engine.json filesystem open before polling; the bound cannot interrupt that kernel call (R-009).",
+    "F-945": "Four passing unit tests cover missing/empty logs, a bounded 64 KiB tail, last twelve lines, invalid UTF-8 and GUI-token redaction. Actual native thirty-second timeout presentation remains unobserved.",
+    "F-935": "The five-second HTTP timeout is configured; a slow-response elapsed-time native proof remains unperformed.",
+    "F-937": "Bundled command selection and installed resource checks pass. Actual native discovery/navigation remains blocked on a sandbox engine.json read.",
+    "F-968": "The installed app contains one Rust sidecar and the same UI build, with no PyInstaller dependency. Native shared-engine attachment and navigation remain blocked.",
+    "F-965": "Static capability tests validate named main-window 127.0.0.1 loopback scope. Actual OS permission enforcement and the legacy localhost-origin clause remain unproved.",
+    "F-966": "Mocked official SDK calls cover zoom, attention, clipboard, notifications, autostart and save. Actual native OS capability proof remains unperformed.",
+    "F-967": "Static tests validate HOME path scope and hidden-folder support. Actual native allowed-home and denied-outside-home opening remains unproved.",
+    "F-963": "Actual splash HTML invokes quit_app under mocked IPC. Actual native work-aware quit confirmation remains unproved."
+  },
+  "paid_calls": 0,
+  "limitations": [
+    "Actual macOS window/zoom/menu/tray/permission proof blocked before HTTP by synchronous engine.json open; cause unconfirmed.",
+    "No actual WKWebView AAC recording, live provider calls, Linux/Windows execution, notarization or remote CI success claimed."
+  ]
+}

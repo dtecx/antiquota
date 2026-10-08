@@ -1,6 +1,37 @@
 [advisories]
+# Tauri's Linux GTK3 build macro has no patched version. Review when Tauri leaves GTK3.
+ignore = [{ id = "RUSTSEC-2024-0370", reason = "Unmaintained proc-macro-error is required only by GTK3 build macros; no patched upstream version exists." }]
 [licenses]
 allow = ["MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "ISC", "Unicode-3.0", "Zlib"]
+# Scoped licenses from the pinned Tauri dependency tree; no project files use these licenses.
+[[licenses.exceptions]]
+name = "clipboard-win"
+allow = ["BSL-1.0"]
+[[licenses.exceptions]]
+name = "error-code"
+allow = ["BSL-1.0"]
+[[licenses.exceptions]]
+name = "cssparser"
+allow = ["MPL-2.0"]
+[[licenses.exceptions]]
+name = "cssparser-macros"
+allow = ["MPL-2.0"]
+[[licenses.exceptions]]
+name = "dtoa-short"
+allow = ["MPL-2.0"]
+[[licenses.exceptions]]
+name = "option-ext"
+allow = ["MPL-2.0"]
+[[licenses.exceptions]]
+name = "selectors"
+allow = ["MPL-2.0"]
+[[licenses.exceptions]]
+name = "target-lexicon"
+allow = ["Apache-2.0 WITH LLVM-exception"]
+[[licenses.exceptions]]
+name = "webpki-roots"
+allow = ["CDLA-Permissive-2.0"]
+
 [bans]
 multiple-versions = "warn"
 [sources]

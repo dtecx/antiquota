@@ -2,7 +2,7 @@
 
 This is the canonical checklist for parity and cutover. It contains 1009 baseline acceptance items: 397 engine/API/CLI items (F-001–F-397) and 612 UI/shell items (F-398–F-1009), including the requested zoom and window-persistence repairs. The 135 additional items (F-1010–F-1144) record explicit requirements from the user's rewrite task. They are requirements, not claims about legacy behavior. No feature has been dropped.
 
-Every row is independently reviewable and links to its [test report](TEST_REPORT.md). Slices 1, 3–8 and 9a–9f have **741 Passed** acceptance items; the other **403 remain Pending**. Legacy test names and captured Python responses explain the baseline; they are not passing Rust or TypeScript proof. Mark a row complete only after its passing tests and evidence have been recorded. Store logs, screenshots and live-cost records in ignored `.handoff/evidence/`.
+Every row is independently reviewable and links to its [test report](TEST_REPORT.md). Slices 1, 3–8, 9a–9f and the proved Slice 10 subset have **758 Passed** acceptance items; the other **386 remain Pending**. Legacy test names and captured Python responses explain the baseline; they are not passing Rust or TypeScript proof. Mark a row complete only after its passing tests and evidence have been recorded. Store logs, screenshots and live-cost records in ignored `.handoff/evidence/`.
 
 Legacy sources were read in full at commit `17ec296`; [engine](source-read-engine.md) and [UI/shell](source-read-ui.md) manifests record coverage and hashes. The sourced subsidiary inventories are [FEATURES-engine.md](FEATURES-engine.md) and [FEATURES-ui.md](FEATURES-ui.md). The canonical rows below contain their full acceptance text. UI identifiers were renumbered once from F-400–F-1011 to F-398–F-1009 to remove the unused gap; engine identifiers were unchanged.
 
@@ -1029,12 +1029,12 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-875 | [ ] <a id="f-875"></a>Browser scale stays under the browser's own zoom controls. | `antiquota/ui/app.js:81` | tests/ui.test.cjs:57 | [Pending](TEST_REPORT.md#f-875) |
+| F-875 | [x] <a id="f-875"></a>Browser scale stays under the browser's own zoom controls. | `antiquota/ui/app.js:81` | tests/ui.test.cjs:57 | [Passed](TEST_REPORT.md#f-875) |
 ### Scale validation
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-876 | [ ] <a id="f-876"></a>Invalid scale resets to one and extreme scale clamps to 70–160 percent. | `antiquota/ui/app.js:81` | tests/ui.test.cjs:65 | [Pending](TEST_REPORT.md#f-876) |
+| F-876 | [x] <a id="f-876"></a>Invalid scale resets to one and extreme scale clamps to 70–160 percent. | `antiquota/ui/app.js:81` | tests/ui.test.cjs:65 | [Passed](TEST_REPORT.md#f-876) |
 ### Every native application menu action
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
@@ -1103,16 +1103,16 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | --- | --- | --- | --- | --- |
 | F-931 | [ ] <a id="f-931"></a>Discovery honors ANTIQUOTA_DIR or uses ~/.antiquota. | `app/src-tauri/src/engine.rs:28` | None identified | [Pending](TEST_REPORT.md#f-931) |
 | F-932 | [ ] <a id="f-932"></a>Discovery reads state/engine.json and GUI token to attach to the shared engine. | `app/src-tauri/src/engine.rs:64` | None identified | [Pending](TEST_REPORT.md#f-932) |
-| F-933 | [ ] <a id="f-933"></a>Discovery accepts only a health response identifying antiquota. | `app/src-tauri/src/engine.rs:51` | None identified | [Pending](TEST_REPORT.md#f-933) |
+| F-933 | [x] <a id="f-933"></a>Discovery accepts only a health response identifying antiquota. | `app/src-tauri/src/engine.rs:51` | None identified | [Passed](TEST_REPORT.md#f-933) |
 | F-934 | [ ] <a id="f-934"></a>Ownership in engine.json controls shutdown behavior across later app starts. | `app/src-tauri/src/engine.rs:64` | None identified | [Pending](TEST_REPORT.md#f-934) |
 | F-935 | [ ] <a id="f-935"></a>Native engine requests have a five-second global timeout. | `app/src-tauri/src/engine.rs:39` | None identified | [Pending](TEST_REPORT.md#f-935) |
-| F-936 | [ ] <a id="f-936"></a>ANTIQUOTA_ENGINE takes precedence over bundled and source engines. | `app/src-tauri/src/engine.rs:98` | None identified | [Pending](TEST_REPORT.md#f-936) |
+| F-936 | [x] <a id="f-936"></a>ANTIQUOTA_ENGINE takes precedence over bundled and source engines. | `app/src-tauri/src/engine.rs:98` | None identified | [Passed](TEST_REPORT.md#f-936) |
 | F-937 | [ ] <a id="f-937"></a>A release discovers its platform engine in bundled resources. | `app/src-tauri/src/engine.rs:98` | None identified | [Pending](TEST_REPORT.md#f-937) |
 | F-938 | [ ] <a id="f-938"></a>Legacy source discovery honors ANTIQUOTA_DEV_ROOT or repository location. | `app/src-tauri/src/engine.rs:98` | None identified | [Pending](TEST_REPORT.md#f-938) |
-| F-939 | [ ] <a id="f-939"></a>Legacy discovery searches for Python. Authorized replacement: discover the single Rust antiquota sidecar or an explicit Rust-engine executable while retaining shared engine.json discovery and actionable missing-engine errors; no Python interpreter is required. | `app/src-tauri/src/engine.rs:128` | None identified | [Pending](TEST_REPORT.md#f-939) |
-| F-940 | [ ] <a id="f-940"></a>Spawned engine output appends to private state/engine.log. | `app/src-tauri/src/engine.rs:150` | None identified | [Pending](TEST_REPORT.md#f-940) |
-| F-941 | [ ] <a id="f-941"></a>App engine launch supplies serve --port 8765 and app ownership/path markers. | `app/src-tauri/src/engine.rs:150` | None identified | [Pending](TEST_REPORT.md#f-941) |
-| F-942 | [ ] <a id="f-942"></a>POSIX engines use an independent process group and survive app exit. | `app/src-tauri/src/engine.rs:174` | None identified | [Pending](TEST_REPORT.md#f-942) |
+| F-939 | [x] <a id="f-939"></a>Legacy discovery searches for Python. Authorized replacement: discover the single Rust antiquota sidecar or an explicit Rust-engine executable while retaining shared engine.json discovery and actionable missing-engine errors; no Python interpreter is required. | `app/src-tauri/src/engine.rs:128` | None identified | [Passed](TEST_REPORT.md#f-939) |
+| F-940 | [x] <a id="f-940"></a>Spawned engine output appends to private state/engine.log. | `app/src-tauri/src/engine.rs:150` | None identified | [Passed](TEST_REPORT.md#f-940) |
+| F-941 | [x] <a id="f-941"></a>App engine launch supplies serve --port 8765 and app ownership/path markers. | `app/src-tauri/src/engine.rs:150` | None identified | [Passed](TEST_REPORT.md#f-941) |
+| F-942 | [x] <a id="f-942"></a>POSIX engines use an independent process group and survive app exit. | `app/src-tauri/src/engine.rs:174` | None identified | [Passed](TEST_REPORT.md#f-942) |
 | F-943 | [ ] <a id="f-943"></a>Windows engines use a new process group without a console window. | `app/src-tauri/src/engine.rs:180` | None identified | [Pending](TEST_REPORT.md#f-943) |
 | F-944 | [ ] <a id="f-944"></a>Startup polls engine discovery every 250 ms up to thirty seconds. | `app/src-tauri/src/engine.rs:188` | None identified | [Pending](TEST_REPORT.md#f-944) |
 | F-945 | [ ] <a id="f-945"></a>Startup failure reports timeout with up to twelve engine-log tail lines. | `app/src-tauri/src/engine.rs:188` | None identified | [Pending](TEST_REPORT.md#f-945) |
@@ -1125,8 +1125,8 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | F-948 | [ ] <a id="f-948"></a>Up to six working sessions appear with truncated title and status. | `app/src-tauri/src/tray.rs:107` | None identified | [Pending](TEST_REPORT.md#f-948) |
 | F-949 | [ ] <a id="f-949"></a>Selecting a tray session reveals the main window and opens that session. | `app/src-tauri/src/tray.rs:26` | None identified | [Pending](TEST_REPORT.md#f-949) |
 | F-950 | [ ] <a id="f-950"></a>Up to ten accounts appear as disabled quota/status rows. | `app/src-tauri/src/tray.rs:107` | None identified | [Pending](TEST_REPORT.md#f-950) |
-| F-951 | [ ] <a id="f-951"></a>Account rows distinguish Gemini quota, wall, cooldown, signed-out and unprobed state. | `app/src-tauri/src/tray.rs:80` | None identified | [Pending](TEST_REPORT.md#f-951) |
-| F-952 | [ ] <a id="f-952"></a>Rewrite correction: tray verification-needed state accepts the actual account API verification URL string, as well as compatible legacy object/boolean representations. The URL-string mismatch is confirmed by source, not claimed as observed during the Gemini run. | `app/src-tauri/src/tray.rs:80` | None identified | [Pending](TEST_REPORT.md#f-952) |
+| F-951 | [x] <a id="f-951"></a>Account rows distinguish Gemini quota, wall, cooldown, signed-out and unprobed state. | `app/src-tauri/src/tray.rs:80` | None identified | [Passed](TEST_REPORT.md#f-951) |
+| F-952 | [x] <a id="f-952"></a>Rewrite correction: tray verification-needed state accepts the actual account API verification URL string, as well as compatible legacy object/boolean representations. The URL-string mismatch is confirmed by source, not claimed as observed during the Gemini run. | `app/src-tauri/src/tray.rs:80` | None identified | [Passed](TEST_REPORT.md#f-952) |
 | F-953 | [ ] <a id="f-953"></a>Tray Open antiquota reveals the main window. | `app/src-tauri/src/tray.rs:147` | None identified | [Pending](TEST_REPORT.md#f-953) |
 | F-954 | [ ] <a id="f-954"></a>Tray New session… reveals the window and opens session creation. | `app/src-tauri/src/tray.rs:148` | None identified | [Pending](TEST_REPORT.md#f-954) |
 | F-955 | [ ] <a id="f-955"></a>Tray Stop all running is enabled only while sessions work and stops every active session. | `app/src-tauri/src/tray.rs:149` | None identified | [Pending](TEST_REPORT.md#f-955) |
@@ -1138,11 +1138,11 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-960 | [ ] <a id="f-960"></a>The splash displays startup progress from engine-status events. | `app/splash/index.html:38` | None identified | [Pending](TEST_REPORT.md#f-960) |
-| F-961 | [ ] <a id="f-961"></a>The splash displays error text with Try again and Quit only in error state. | `app/splash/index.html:51` | None identified | [Pending](TEST_REPORT.md#f-961) |
-| F-962 | [ ] <a id="f-962"></a>Try again clears the error state and invokes retry_engine. | `app/splash/index.html:54` | None identified | [Pending](TEST_REPORT.md#f-962) |
+| F-960 | [x] <a id="f-960"></a>The splash displays startup progress from engine-status events. | `app/splash/index.html:38` | None identified | [Passed](TEST_REPORT.md#f-960) |
+| F-961 | [x] <a id="f-961"></a>The splash displays error text with Try again and Quit only in error state. | `app/splash/index.html:51` | None identified | [Passed](TEST_REPORT.md#f-961) |
+| F-962 | [x] <a id="f-962"></a>Try again clears the error state and invokes retry_engine. | `app/splash/index.html:54` | None identified | [Passed](TEST_REPORT.md#f-962) |
 | F-963 | [ ] <a id="f-963"></a>Splash Quit invokes work-aware quit_app. | `app/splash/index.html:59` | None identified | [Pending](TEST_REPORT.md#f-963) |
-| F-964 | [ ] <a id="f-964"></a>The splash respects reduced-motion preference. | `app/splash/index.html:34` | None identified | [Pending](TEST_REPORT.md#f-964) |
+| F-964 | [x] <a id="f-964"></a>The splash respects reduced-motion preference. | `app/splash/index.html:34` | None identified | [Passed](TEST_REPORT.md#f-964) |
 ### Native permissions scope
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
@@ -1159,12 +1159,12 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-969 | [ ] <a id="f-969"></a>The bundled engine forwards serve and current CLI commands to the engine entry point. | `app/engine/antiquotad.py:4` | None identified | [Pending](TEST_REPORT.md#f-969) |
+| F-969 | [x] <a id="f-969"></a>The bundled engine forwards serve and current CLI commands to the engine entry point. | `app/engine/antiquotad.py:4` | None identified | [Passed](TEST_REPORT.md#f-969) |
 ### Platform release packages
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-970 | [ ] <a id="f-970"></a>macOS release builds an app and compressed DMG with an Applications shortcut. | `app/scripts/build-app.sh:7` | None identified | [Pending](TEST_REPORT.md#f-970) |
+| F-970 | [x] <a id="f-970"></a>macOS release builds an app and compressed DMG with an Applications shortcut. | `app/scripts/build-app.sh:7` | None identified | [Passed](TEST_REPORT.md#f-970) |
 | F-971 | [ ] <a id="f-971"></a>Linux release builds deb, rpm and AppImage outputs. | `app/scripts/build-app.sh:21` | None identified | [Pending](TEST_REPORT.md#f-971) |
 | F-972 | [ ] <a id="f-972"></a>Other release platforms use the configured Tauri bundle targets. | `app/scripts/build-app.sh:24` | None identified | [Pending](TEST_REPORT.md#f-972) |
 ### Legacy CI matrix
@@ -1313,7 +1313,7 @@ The following acceptance items come from the authorized rewrite task, not from a
 | F-1066 | [ ] <a id="f-1066"></a>just dev runs both development toolchains with a working UI and engine. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1066) |
 | F-1067 | [x] <a id="f-1067"></a>just test runs the Rust and TypeScript test suites. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1067) |
 | F-1068 | [x] <a id="f-1068"></a>just check runs the required Rust, TypeScript, formatting and generated-type checks. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1068) |
-| F-1069 | [ ] <a id="f-1069"></a>just build builds the engine, UI and sidecar desktop bundle. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1069) |
+| F-1069 | [x] <a id="f-1069"></a>just build builds the engine, UI and sidecar desktop bundle. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1069) |
 | F-1070 | [ ] <a id="f-1070"></a>just gen-types regenerates the TypeScript API types from Rust. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1070) |
 | F-1071 | [ ] <a id="f-1071"></a>Use thiserror in library crates and reserve anyhow for executable binaries. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1071) |
 | F-1072 | [ ] <a id="f-1072"></a>Use tracing for Rust logs and serde for persisted and wire types. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1072) |

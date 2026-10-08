@@ -15,12 +15,11 @@ build-ui:
     pnpm --dir ui install --frozen-lockfile
     pnpm --dir ui build
 
-build: build-engine build-ui
-    @echo 'Rust engine and browser UI built. Desktop shell packaging is Pending until Slice 10.'
+build: build-shell
 
 build-shell:
-    @echo 'Desktop shell packaging is Pending until Slice 10.' >&2
-    @exit 1
+    npm --prefix app ci
+    sh app/scripts/build-app.sh
 
 gen-types:
     cargo run --jobs 2 -p antiquota-server --example export_types

@@ -1,7 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/core", "crates/features", "crates/app", "crates/server", "crates/cli", "crates/adapters/agy", "crates/adapters/accounts", "crates/adapters/store", "crates/adapters/pty", "crates/adapters/shell", "crates/adapters/git", "tests/fake-agy"]
-exclude = ["app/src-tauri"]
+members = ["crates/core", "crates/features", "crates/app", "crates/server", "crates/cli", "crates/adapters/agy", "crates/adapters/accounts", "crates/adapters/store", "crates/adapters/pty", "crates/adapters/shell", "crates/adapters/git", "tests/fake-agy", "app/src-tauri"]
 
 [workspace.package]
 version = "0.5.0"

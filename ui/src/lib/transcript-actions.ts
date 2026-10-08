@@ -1,4 +1,5 @@
 /** Owns transcript file, clipboard, rewind and denied-action retries for their initiating session. */
+import { writeClipboard } from './native';
 import { get } from 'svelte/store';
 import type { Api } from './api';
 import type { Workbench } from './workbench';
@@ -14,7 +15,7 @@ export function createTranscriptActions(api: Api, workbench: Workbench) {
     },
     copy: async (text: string) => {
       try {
-        await navigator.clipboard.writeText(text);
+        await writeClipboard(text);
         workbench.change({ feedback: 'Copied' });
       } catch (error) {
         workbench.change({

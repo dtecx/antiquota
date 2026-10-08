@@ -53,7 +53,7 @@
   }
 </script>
 
-<header>
+<header data-tauri-drag-region="deep">
   {#if !onclose}<button
       class="icon quiet menu"
       aria-label="Open sessions"

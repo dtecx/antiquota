@@ -1,7 +1,8 @@
 {
   "bundle": {
     "resources": {
-      "../engine-dist/antiquotad/": "engine/antiquotad/"
+      "../engine-dist/bin/": "engine/",
+      "../engine-dist/ui/": "ui/"
     }
   }
 }

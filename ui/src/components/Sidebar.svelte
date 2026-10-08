@@ -60,7 +60,7 @@
 </script>
 
 <aside class:open={$view.sidebarOpen} aria-label="Sessions">
-  <div class="brand-row">
+  <div class="brand-row" data-tauri-drag-region="deep">
     <div class="brand"><span class="baton" aria-hidden="true"></span>antiquota</div>
     <button
       class="icon quiet close-sidebar"

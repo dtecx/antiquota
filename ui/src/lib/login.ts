@@ -2,6 +2,7 @@
 import { get, writable } from 'svelte/store';
 import type { LoginState } from '../gen/LoginState';
 import type { Api } from './api';
+import { native, externalLink, readClipboard } from './native';
 
 export interface LoginView {
   open: boolean;
@@ -17,7 +18,7 @@ export interface LoginView {
   message: string;
 }
 export interface ConsentTab {
-  navigate: (url: string) => void;
+  navigate: (url: string) => void | Promise<void>;
   close: () => void;
 }
 export interface LoginBrowser {
@@ -26,6 +27,7 @@ export interface LoginBrowser {
 }
 export const loginBrowser: LoginBrowser = {
   reserve: () => {
+    if (native) return { navigate: externalLink, close: () => {} };
     const tab = window.open('', '_blank');
     if (!tab) return null;
     tab.opener = null;
@@ -36,7 +38,7 @@ export const loginBrowser: LoginBrowser = {
       close: () => tab.close(),
     };
   },
-  clipboard: () => navigator.clipboard.readText(),
+  clipboard: readClipboard,
 };
 const codePattern = /^4\/[0-9A-Za-z_-]{20,}$/;
 const empty: LoginView = {
@@ -129,11 +131,16 @@ export function createLogin(
       let opened = false;
       try {
         if (tab) {
-          tab.navigate(link.url);
+          await tab.navigate(link.url);
           opened = true;
         }
       } catch {
         tab?.close();
+      }
+      if (own !== generation) {
+        tab?.close();
+        await cancel(link.id);
+        return;
       }
       const until = Date.now() + link.seconds * 1000;
       state.set({

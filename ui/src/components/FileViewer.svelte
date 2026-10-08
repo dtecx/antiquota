@@ -1,5 +1,6 @@
 <!-- Owns the read-only file viewer: numbered lines, copy, and closing by button or backdrop. -->
 <script lang="ts">
+  import { writeClipboard } from '../lib/native';
   import { tick } from 'svelte';
   import { viewer } from '../lib/git';
   import Icon from './Icon.svelte';
@@ -21,8 +22,9 @@
   async function copy() {
     if (!$viewer) return;
     try {
-      await navigator.clipboard.writeText($viewer.text);
-      copied = true;
+      const file = $viewer;
+      await writeClipboard(file.text);
+      if ($viewer === file) copied = true;
     } catch {
       copied = false;
     }

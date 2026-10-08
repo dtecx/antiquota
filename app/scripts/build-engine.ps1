@@ -1,16 +1,21 @@
-# Windows: build the engine as a self-contained folder (app\engine-dist\antiquotad) with PyInstaller.
-# pywinpty gives agy the console it needs to read the Google sign-in code.
+# Bundle the Rust engine and the same production UI used by browsers.
 $ErrorActionPreference = "Stop"
 $here = Split-Path -Parent $PSScriptRoot
 $root = Split-Path -Parent $here
-$venv = Join-Path $here ".venv"
-if (-not (Test-Path (Join-Path $venv "Scripts\python.exe"))) { python -m venv $venv }
-$py = Join-Path $venv "Scripts\python.exe"
-& $py -m pip install --quiet --upgrade pip pyinstaller pywinpty
 Push-Location $root
-& (Join-Path $venv "Scripts\pyinstaller.exe") --noconfirm --clean --onedir --name antiquotad `
-  --distpath (Join-Path $here "engine-dist") --workpath (Join-Path $here ".build") --specpath (Join-Path $here ".build") `
-  --paths $root --add-data "$root\antiquota\ui;antiquota\ui" --collect-submodules antiquota --hidden-import winpty `
-  (Join-Path $here "engine\antiquotad.py")
-Pop-Location
-Write-Host "engine: $here\engine-dist\antiquotad"
+try {
+    & cargo build --release --locked --jobs 2 -p antiquota-cli
+    if ($LASTEXITCODE -ne 0) { throw "Rust engine build failed" }
+    & pnpm --dir ui install --frozen-lockfile
+    if ($LASTEXITCODE -ne 0) { throw "UI dependency installation failed" }
+    & pnpm --dir ui build
+    if ($LASTEXITCODE -ne 0) { throw "UI build failed" }
+    $bin = Join-Path $here "engine-dist/bin"
+    New-Item -ItemType Directory -Force -Path $bin | Out-Null
+    Copy-Item (Join-Path $root "target/release/antiquota.exe") (Join-Path $bin "antiquota.exe") -Force
+    $ui = Join-Path $here "engine-dist/ui"
+    if (Test-Path $ui) { Remove-Item $ui -Recurse -Force }
+    Copy-Item (Join-Path $root "ui/dist") $ui -Recurse
+    & (Join-Path $bin "antiquota.exe") --help
+    if ($LASTEXITCODE -ne 0) { throw "Bundled engine does not start" }
+} finally { Pop-Location }

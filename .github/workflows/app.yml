@@ -1,60 +1,83 @@
-name: app
+name: Rust rewrite
 
 on:
   push:
+    branches: [rust]
     tags: ["v*"]
+  pull_request:
+    branches: [rust]
   workflow_dispatch:
 
 jobs:
-  build:
+  verify-and-bundle:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: macos-14
-          - os: windows-latest
-          - os: ubuntu-22.04
+        os: [macos-14, windows-latest, ubuntu-22.04]
     runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        working-directory: app
+    env:
+      CARGO_BUILD_JOBS: "2"
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "26.10.0"
       - uses: dtolnay/rust-toolchain@stable
-      - name: Linux packages for the web view
+        with:
+          components: rustfmt, clippy
+      - name: Linux webview dependencies
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
-      - name: Engine tests
-        working-directory: .
+      - name: Install pinned UI and gate tools
+        shell: bash
+        run: |
+          mkdir -p "$HOME/Desktop/test"
+          npm install --global pnpm@11.19.0
+          cargo install just cargo-deny --locked
+          pnpm --dir ui install --frozen-lockfile
+          pnpm --dir ui exec playwright install --with-deps chromium
+      - name: Check generated types, Rust and TypeScript
+        shell: bash
+        run: just check
+      - name: Rust, HTTP replay, Vitest and Playwright
+        shell: bash
+        run: just test
+      - name: Stage Rust sidecar and UI (POSIX)
         if: runner.os != 'Windows'
-        run: python -m pip install pytest && python -m pytest -q
-      - run: npm ci
-      - run: npm test
-      - name: Build the engine (POSIX)
-        if: runner.os != 'Windows'
-        run: sh scripts/build-engine.sh
-      - name: Build the engine (Windows)
+        shell: bash
+        run: sh app/scripts/build-engine.sh
+      - name: Stage Rust sidecar and UI (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
-        run: ./scripts/build-engine.ps1
-      - name: Build the app
-        run: npx tauri build --config src-tauri/tauri.bundle.json
+        run: ./app/scripts/build-engine.ps1
+      - name: Verify packaged engine command
+        shell: bash
+        run: |
+          engine="app/engine-dist/bin/antiquota"
+          if [ "$RUNNER_OS" = Windows ]; then engine="$engine.exe"; fi
+          "$engine" --help
+          "$engine" serve --help
+          test -s app/engine-dist/ui/index.html
+      - name: Build native platform installers
+        if: runner.os != 'macOS'
+        working-directory: app
+        run: |
+          npm ci
+          npx --no-install tauri build --config src-tauri/tauri.bundle.json
+      - name: Build and verify macOS application and compressed installer
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          npm --prefix app ci
+          sh app/scripts/build-app.sh
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: antiquota-${{ matrix.os }}
           path: |
-            app/src-tauri/target/release/bundle/**/*.dmg
-            app/src-tauri/target/release/bundle/**/*.app
-            app/src-tauri/target/release/bundle/**/*.msi
-            app/src-tauri/target/release/bundle/**/*.exe
-            app/src-tauri/target/release/bundle/**/*.deb
-            app/src-tauri/target/release/bundle/**/*.rpm
-            app/src-tauri/target/release/bundle/**/*.AppImage
+            target/release/bundle/**
+            app/dist/**
+            .handoff/evidence/**
+          if-no-files-found: warn
