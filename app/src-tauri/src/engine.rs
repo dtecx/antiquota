@@ -76,7 +76,7 @@ fn health(url: &str) -> Option<Value> {
         && value["ok"] == true
         && value["pid"]
             .as_u64()
-            .is_some_and(|pid| pid > 0 && pid <= u32::MAX.into()))
+            .is_some_and(|pid| pid > 0 && pid <= u64::from(u32::MAX)))
     .then_some(value)
 }
 
@@ -97,7 +97,7 @@ fn discover(base: &Path) -> Option<Engine> {
     let port = loopback_port(&url)?;
     let pid = v["pid"]
         .as_u64()
-        .filter(|pid| *pid > 0 && *pid <= u32::MAX.into())?;
+        .filter(|pid| *pid > 0 && *pid <= u64::from(u32::MAX))?;
     if v["port"].as_u64()? != u64::from(port) {
         return None;
     }

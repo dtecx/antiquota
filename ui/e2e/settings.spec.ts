@@ -58,8 +58,12 @@ test('persists defaults, goals and device controls without replacing focused dra
     { id: 'gemini-pro-high', label: 'Gemini Pro (High)' },
     { id: 'gemini-pro-low', label: 'Gemini Pro (Low)' },
   ];
+  // The engine saves agy's model list once after startup; replace it while stopped so that save cannot win.
+  const port = engine.port;
+  await engine.stop();
   await engine.scenario({ metadata: { models } });
   await writeFile(join(engine.sandbox.data, 'state', 'models.json'), JSON.stringify(models));
+  await engine.start(port);
   await open(page, engine);
   await expect(
     page.getByRole('navigation', { name: 'Settings sections' }).getByRole('button'),
