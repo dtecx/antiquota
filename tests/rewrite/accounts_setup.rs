@@ -102,7 +102,12 @@ pub fn start(server: &mut Server) {
             .filter(|row| row["argv"][0] == "models")
             .count()
             > previous;
-        let rows = server.call("GET", "/api/accounts", None).json();
+        // Overview briefly tests the real lease; do not race the first model acquisition.
+        let rows = if models {
+            server.call("GET", "/api/accounts", None).json()
+        } else {
+            Value::Null
+        };
         if models
             && rows
                 .as_array()
@@ -114,7 +119,9 @@ pub fn start(server: &mut Server) {
         }
         assert!(
             Instant::now() < deadline,
-            "startup metadata did not settle: {rows}"
+            "startup metadata did not settle: {rows}; calls: {}; engine log: {}",
+            serde_json::to_string(&calls(server)).unwrap(),
+            fs::read_to_string(server.root.join("server.log")).unwrap_or_default()
         );
         thread::sleep(Duration::from_millis(10));
     }

@@ -115,6 +115,7 @@ export function createApi(token: string, request: typeof fetch = fetch) {
   const loginPath = (id: string) => `/api/accounts/login/${encodeURIComponent(id)}`;
   return {
     state: () => call<StateResponse>('GET', '/api/state'),
+    shutdown: () => call<OkResponse>('POST', '/api/shutdown', {}),
     search: (q: string) => call<SearchHit[]>('GET', `/api/search?${new URLSearchParams({ q })}`),
     fork: (id: string) => call<Session>('POST', `${sessionPath(id)}/fork`, {}),
     clear: (id: string) => call<OkResponse>('POST', `${sessionPath(id)}/clear`, {}),

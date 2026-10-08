@@ -109,6 +109,10 @@ test('persists rotation choices and range endpoints without losing focused draft
   await page.getByRole('spinbutton', { name: 'Quota check', exact: true }).press('Tab');
   await page.reload();
   await page.getByRole('button', { name: 'Accounts and quota' }).click();
+  await page
+    .getByRole('navigation', { name: 'Settings sections' })
+    .getByRole('button', { name: 'Accounts', exact: true })
+    .click();
   await expect(page.getByRole('spinbutton', { name: 'Reserve', exact: true })).toHaveValue('8');
   const settings: unknown = JSON.parse(
     await readFile(join(engine.sandbox.data, 'settings.json'), 'utf8'),
@@ -255,6 +259,11 @@ test('keeps account settings legible in light theme and narrow windows with keyb
   await page.keyboard.press('Escape');
   await expect(page.getByRole('heading', { name: 'Accounts', exact: true })).not.toBeVisible();
   await page.keyboard.press('Control+,');
+  await expect(page.getByRole('heading', { name: 'General', exact: true })).toBeVisible();
+  await page
+    .getByRole('navigation', { name: 'Settings sections' })
+    .getByRole('button', { name: 'Accounts', exact: true })
+    .click();
   await expect(page.getByRole('heading', { name: 'Accounts', exact: true })).toBeVisible();
 });
 for (const scenario of ['quota', 'rate', 'auth'])
@@ -285,6 +294,10 @@ for (const scenario of ['quota', 'rate', 'auth'])
       'two · Gemini',
     );
     await page.getByRole('button', { name: 'Accounts and quota' }).click();
+    await page
+      .getByRole('navigation', { name: 'Settings sections' })
+      .getByRole('button', { name: 'Accounts', exact: true })
+      .click();
     const routing = page.getByLabel('Routing log');
     await expect(routing.locator('.row').first()).toContainText('two');
     await expect(routing.locator('.row').first()).toContainText(
@@ -329,6 +342,10 @@ test('shows a leased account as running and disables check and removal until sto
   await page.getByRole('button', { name: 'Send', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Stop', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Accounts and quota' }).click();
+  await page
+    .getByRole('navigation', { name: 'Settings sections' })
+    .getByRole('button', { name: 'Accounts', exact: true })
+    .click();
   const one = page.getByRole('article', { name: 'one@example.com', exact: true });
   await expect(one.locator('.probe')).toContainText('running');
   await expect(one.getByRole('button', { name: 'Check', exact: true })).toBeDisabled();

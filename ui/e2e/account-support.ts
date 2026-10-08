@@ -86,6 +86,10 @@ export async function openAccounts(page: Page, engine: FixtureEngine) {
   await page.goto(engine.url);
   await expect(page.getByText('Engine connected')).toBeVisible();
   await page.getByRole('button', { name: 'Accounts and quota' }).click();
+  await page
+    .getByRole('navigation', { name: 'Settings sections' })
+    .getByRole('button', { name: 'Accounts', exact: true })
+    .click();
   await expect(page.getByRole('heading', { name: 'Accounts', exact: true })).toBeVisible();
   await expect(page.getByText('Refreshing accounts and settings…')).not.toBeVisible();
 }

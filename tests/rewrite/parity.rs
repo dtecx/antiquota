@@ -63,10 +63,37 @@ fn captured_settings_routes_keep_sources_read_only_and_reseed_keeps_the_hook() {
         old_hooks,
         fs::read(server.data.join("stack/.gemini/config/hooks.json")).unwrap()
     );
-    assert_eq!(fs::read_to_string(state).unwrap(), "keep history");
+    assert_eq!(fs::read_to_string(&state).unwrap(), "keep history");
     assert_eq!(
         fs::read_to_string(server.data.join("stack/.gemini/config/rules/example.md")).unwrap(),
         "Keep changes small.\n"
+    );
+    assert_eq!(
+        fs::read_to_string(server.home.join(".gemini/config/hooks.json")).unwrap(),
+        "{}"
+    );
+    setup::write(
+        &server.data.join("stack/.gemini/config/rules/example.md"),
+        "private change",
+    );
+    assert_eq!(
+        server
+            .call(
+                "POST",
+                "/api/settings/copy",
+                Some(json!({"source":"cli","kind":"everything"}))
+            )
+            .status,
+        200
+    );
+    assert_eq!(
+        fs::read_to_string(server.data.join("stack/.gemini/config/rules/example.md")).unwrap(),
+        "Keep changes small.\n"
+    );
+    assert_eq!(fs::read_to_string(&state).unwrap(), "keep history");
+    assert_eq!(
+        old_hooks,
+        fs::read(server.data.join("stack/.gemini/config/hooks.json")).unwrap()
     );
     assert_eq!(
         fs::read_to_string(server.home.join(".gemini/config/hooks.json")).unwrap(),

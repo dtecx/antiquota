@@ -11,7 +11,7 @@
   import Composer from './components/Composer.svelte';
   import DropZone from './components/DropZone.svelte';
   import Icon from './components/Icon.svelte';
-  import AccountsPanel from './components/AccountsPanel.svelte';
+  import SettingsPanel from './components/SettingsPanel.svelte';
   import LoginDialog from './components/LoginDialog.svelte';
   import ConfirmRemoval from './components/ConfirmRemoval.svelte';
   import GoalBar from './components/GoalBar.svelte';
@@ -26,6 +26,10 @@
   import { createAccounts } from './lib/accounts';
   import { createLogin } from './lib/login';
   import { createPermissions } from './lib/permissions';
+  import { get } from 'svelte/store';
+  import { notifications } from './lib/notifications';
+  import { preferences } from './lib/preferences';
+  import { createSettings } from './lib/settings';
   const token =
     document.querySelector<HTMLMetaElement>('meta[name="antiquota-token"]')?.content ?? '';
   const api = createApi(token);
@@ -33,7 +37,10 @@
     history.replaceState(null, '', `#${encodeURIComponent(id)}`),
   );
   const view = workbench.state;
-  const accounts = createAccounts(api);
+  const settings = createSettings(api, () => {
+    void workbench.refresh();
+  });
+  const accounts = createAccounts(api, settings);
   const login = createLogin(api, () => accounts.refresh());
   const permissions = createPermissions(api);
   const stream = createStream(
@@ -41,6 +48,9 @@
     (event) => {
       workbench.onEvent(event);
       accounts.onEvent(event);
+      const selected = get(view).selected;
+      if (selected && event.sid === selected.id)
+        notifications.event(event, selected.title || 'antiquota', get(preferences.state));
     },
     () => workbench.refresh(),
   );
@@ -65,12 +75,13 @@
       unsubscribe();
       stream.close();
       login.dispose();
+      settings.dispose();
     };
   });
   function shortcut(event: KeyboardEvent) {
     if ((event.metaKey || event.ctrlKey) && event.key === ',') {
       event.preventDefault();
-      accounts.open();
+      accounts.open('general');
       return;
     }
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'b') {
@@ -130,7 +141,15 @@
   <JobLog />
   <FileViewer />
   <ConfirmDialog />
-  <AccountsPanel {accounts} {login} {permissions} sessions={$view.snapshot?.sessions ?? []} />
+  <SettingsPanel
+    {api}
+    {workbench}
+    {accounts}
+    {login}
+    {permissions}
+    {settings}
+    sessions={$view.snapshot?.sessions ?? []}
+  />
   <LoginDialog {login} {accounts} />
   <ConfirmRemoval {accounts} />
 </div>

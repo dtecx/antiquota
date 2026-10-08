@@ -58,6 +58,10 @@ test('answers approval cards and keeps rules in settings', async ({ page, engine
   await screenshot(page, engine, 'approval-answered');
 
   await page.keyboard.press('ControlOrMeta+,');
+  await page
+    .getByRole('navigation', { name: 'Settings sections' })
+    .getByRole('button', { name: 'Permissions', exact: true })
+    .click();
   const settings = page.getByRole('region', { name: 'Permissions' });
   const allow = page.getByRole('list', { name: 'Allow without asking' });
   await expect(allow).toContainText('command(touch)');

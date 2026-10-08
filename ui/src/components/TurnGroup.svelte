@@ -1,5 +1,7 @@
 <!-- Owns one user message and its grouped agent activity and replies. -->
 <script lang="ts">
+  import { preferences } from '../lib/preferences';
+  const prefs = preferences.state;
   import type { TranscriptGroup } from '../lib/transcript';
   import { duration, formatTokens } from '../lib/format';
   import ToolStep from './ToolStep.svelte';
@@ -22,7 +24,9 @@
     attachmentUrl: (name: string) => string;
   } = $props();
   const activity = $derived(
-    group.events.filter((event) => event.t === 'tool' || event.t === 'thinking'),
+    group.events
+      .filter((event) => event.t === 'tool' || event.t === 'thinking')
+      .filter((event) => event.t !== 'thinking' || $prefs.detail === 'detailed'),
   );
   const end = $derived([...group.events].reverse().find((event) => event.t === 'turn_end'));
   const start = $derived(group.events.find((event) => event.t === 'turn_start'));
@@ -56,28 +60,31 @@
         </div>{/if}
     </section>
   {/if}
+  {#snippet activityRows()}
+    <div class="activity-body">
+      {#if start?.t === 'turn_start'}<p class="routing">
+          Turn {start.turn} · {start.model} · {start.slot}
+        </p>{/if}
+      {#each activity as event (`${event.t}-${event.turn}-${event.step}`)}
+        {#if event.t === 'tool'}<ToolStep {event} />
+        {:else if event.t === 'thinking'}<details class="thinking">
+            <summary>Thinking <span>{formatTokens(event.tokens)} tokens</span></summary>
+            <pre>{event.text}</pre>
+          </details>{/if}
+      {/each}
+    </div>
+  {/snippet}
   {#if start || activity.length}
-    <details class="activity">
-      <summary
-        ><span class="activity-line"></span><span
-          >{running && !end ? 'Working…' : 'Agent activity'}</span
-        >{#if activity.length}<span class="steps"
-            >{activity.length} {activity.length === 1 ? 'step' : 'steps'}</span
-          >{/if}<span class="chevron">›</span></summary
-      >
-      <div class="activity-body">
-        {#if start?.t === 'turn_start'}<p class="routing">
-            Turn {start.turn} · {start.model} · {start.slot}
-          </p>{/if}
-        {#each activity as event (`${event.t}-${event.turn}-${event.step}`)}
-          {#if event.t === 'tool'}<ToolStep {event} />
-          {:else if event.t === 'thinking'}<details class="thinking">
-              <summary>Thinking <span>{formatTokens(event.tokens)} tokens</span></summary>
-              <pre>{event.text}</pre>
-            </details>{/if}
-        {/each}
-      </div>
-    </details>
+    {#if $prefs.view === 'steps'}{@render activityRows()}
+    {:else}<details class="activity">
+        <summary
+          ><span class="activity-line"></span><span
+            >{running && !end ? 'Working…' : 'Agent activity'}</span
+          >{#if activity.length}<span class="steps"
+              >{activity.length} {activity.length === 1 ? 'step' : 'steps'}</span
+            >{/if}<span class="chevron">›</span></summary
+        >{@render activityRows()}
+      </details>{/if}
   {/if}
   {#each group.events as event, index (`${event.t}-${event.ts}-${index}`)}
     {#if event.t === 'assistant' || event.t === 'delta'}
@@ -115,6 +122,12 @@
       class="turn-end"
       class:error={!['completed', 'success', 'stopped'].includes(end.status.toLowerCase())}
     >
+      {#if $prefs.stamps}<time datetime={new Date(end.ts * 1000).toISOString()}
+          >{new Date(end.ts * 1000).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          })}</time
+        >{/if}
       <span class="end-dot"></span><span>{end.status}</span><span>{duration(end.secs)}</span><span
         >{formatTokens(end.usage.input_tokens)} in / {formatTokens(end.usage.output_tokens)} out</span
       >

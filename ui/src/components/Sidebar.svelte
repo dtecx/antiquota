@@ -79,7 +79,7 @@
       </p>
     {/if}
   </nav>
-  <button class="quiet settings-link" onclick={() => accounts.open()}
+  <button class="quiet settings-link" onclick={() => accounts.open('general')}
     >Settings <kbd>⌘ ,</kbd></button
   >
   <AccountPill {accounts} {login} session={$view.selected} />

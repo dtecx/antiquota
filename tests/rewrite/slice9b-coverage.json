@@ -1,0 +1,1000 @@
+{
+  "slice": "9b",
+  "passed_before": 331,
+  "passed_after": 438,
+  "added": 107,
+  "feature_ids": [
+    "F-091",
+    "F-1111",
+    "F-411",
+    "F-412",
+    "F-671",
+    "F-672",
+    "F-673",
+    "F-674",
+    "F-676",
+    "F-677",
+    "F-678",
+    "F-679",
+    "F-680",
+    "F-682",
+    "F-683",
+    "F-685",
+    "F-686",
+    "F-687",
+    "F-688",
+    "F-689",
+    "F-690",
+    "F-691",
+    "F-695",
+    "F-696",
+    "F-697",
+    "F-698",
+    "F-699",
+    "F-700",
+    "F-701",
+    "F-703",
+    "F-706",
+    "F-707",
+    "F-708",
+    "F-709",
+    "F-710",
+    "F-711",
+    "F-712",
+    "F-713",
+    "F-714",
+    "F-715",
+    "F-716",
+    "F-717",
+    "F-720",
+    "F-721",
+    "F-723",
+    "F-724",
+    "F-725",
+    "F-726",
+    "F-727",
+    "F-728",
+    "F-729",
+    "F-730",
+    "F-731",
+    "F-732",
+    "F-733",
+    "F-734",
+    "F-735",
+    "F-736",
+    "F-737",
+    "F-738",
+    "F-739",
+    "F-740",
+    "F-741",
+    "F-742",
+    "F-743",
+    "F-744",
+    "F-745",
+    "F-746",
+    "F-748",
+    "F-749",
+    "F-752",
+    "F-753",
+    "F-754",
+    "F-755",
+    "F-756",
+    "F-757",
+    "F-758",
+    "F-759",
+    "F-760",
+    "F-761",
+    "F-762",
+    "F-763",
+    "F-764",
+    "F-765",
+    "F-766",
+    "F-767",
+    "F-768",
+    "F-769",
+    "F-770",
+    "F-771",
+    "F-773",
+    "F-776",
+    "F-777",
+    "F-778",
+    "F-780",
+    "F-781",
+    "F-782",
+    "F-783",
+    "F-784",
+    "F-785",
+    "F-786",
+    "F-787",
+    "F-788",
+    "F-789",
+    "F-790",
+    "F-791",
+    "F-792"
+  ],
+  "tests": {
+    "F-091": {
+      "path": "tests/rewrite/parity.rs",
+      "test": "captured_settings_routes_keep_sources_read_only_and_reseed_keeps_the_hook",
+      "proof": "Successful CLI everything-copy restores private files while retaining the owned hook and conversation history. Non-CLI imports remain refused by the Slice 9a route tests."
+    },
+    "F-1111": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "renders exact usage with bounded hover and keyboard tooltips in both themes",
+      "proof": "Seven, fourteen and thirty days show exact ledger totals, turns and ordered account/model tables. Canvas pixels prove the latest-day accent in both themes; empty days and boundary tooltips support keyboard focus. Failed period requests keep cached data with its original period labels.",
+      "references": [
+        "ui/e2e/settings.spec.ts::renders exact usage with bounded hover and keyboard tooltips in both themes",
+        "ui/src/lib/usage.test.ts::totals tokens and sorts contributions without rounding the ledger"
+      ]
+    },
+    "F-411": {
+      "path": "ui/src/lib/preferences.test.ts",
+      "test": "uses defaults for corrupt storage and still changes when writes are blocked",
+      "proof": "Corrupt or blocked storage uses safe defaults; write failures do not prevent preference changes."
+    },
+    "F-412": {
+      "path": "ui/src/lib/preferences.test.ts",
+      "test": "uses defaults for corrupt storage and still changes when writes are blocked",
+      "proof": "Corrupt or blocked storage uses safe defaults; write failures do not prevent preference changes."
+    },
+    "F-671": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "persists defaults, goals and device controls without replacing focused drafts",
+      "proof": "Real engine settings saves cover model variants, all modes, folder fallback, on/off defaults and numeric endpoints. Local presentation and notification choices survive reload; browser zoom stays under browser control."
+    },
+    "F-672": {
+      "path": "ui/e2e/accounts.spec.ts",
+      "test": "shows pool windows pauses resumes checks removes and refreshes accounts",
+      "proof": "Accounts settings exposes accounts, sign-in, rotation controls and routing history. ",
+      "references": [
+        "ui/e2e/accounts.spec.ts::shows pool windows pauses resumes checks removes and refreshes accounts",
+        "ui/e2e/accounts.spec.ts::persists rotation choices and range endpoints without losing focused drafts",
+        "ui/e2e/account-display.spec.ts::renders every routing kind newest first with the prior account and session",
+        "ui/e2e/accounts.spec.ts::signs in synthetically with Enter and removes the adopted account"
+      ]
+    },
+    "F-673": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "renders exact usage with bounded hover and keyboard tooltips in both themes",
+      "proof": "Seven, fourteen and thirty days show exact ledger totals, turns and ordered account/model tables. Canvas pixels prove the latest-day accent in both themes; empty days and boundary tooltips support keyboard focus. Failed period requests keep cached data with its original period labels.",
+      "references": [
+        "ui/e2e/settings.spec.ts::renders exact usage with bounded hover and keyboard tooltips in both themes",
+        "ui/src/lib/usage.test.ts::totals tokens and sorts contributions without rounding the ledger"
+      ]
+    },
+    "F-674": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "persists defaults, goals and device controls without replacing focused drafts",
+      "proof": "Real engine settings saves cover model variants, all modes, folder fallback, on/off defaults and numeric endpoints. Local presentation and notification choices survive reload; browser zoom stays under browser control."
+    },
+    "F-676": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "edits and imports only the private stack with guarded JSON and deletion",
+      "proof": "Private text and JSON editors load, save and cancel. Creation produces rule, skill, hook and MCP templates; invalid JSON retains its draft, toggles preserve items and confirmed deletion preserves sources. Closing settings closes its editor. Engine log and confirmed CLI replacement use the real HTTP routes.",
+      "references": [
+        "ui/e2e/settings.spec.ts::edits and imports only the private stack with guarded JSON and deletion",
+        "ui/src/lib/settings.test.ts::private settings",
+        "tests/rewrite/parity.rs::captured_settings_routes_keep_sources_read_only_and_reseed_keeps_the_hook"
+      ]
+    },
+    "F-677": {
+      "path": "ui/e2e/stack-sources.spec.ts",
+      "test": "copies CLI and IDE comparisons, toggles bundles and preserves every source",
+      "proof": "Rules, hooks and plugins compare CLI sources; skills and MCP compare CLI and IDE sources. Per-item and all-differing imports, plugin toggles/deletion and permission replacement preserve every source byte.",
+      "references": [
+        "ui/e2e/stack-sources.spec.ts::copies CLI and IDE comparisons, toggles bundles and preserves every source",
+        "ui/src/lib/settings.test.ts::private settings",
+        "tests/rewrite/parity.rs::captured_settings_routes_keep_sources_read_only_and_reseed_keeps_the_hook"
+      ]
+    },
+    "F-678": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "edits and imports only the private stack with guarded JSON and deletion",
+      "proof": "Private text and JSON editors load, save and cancel. Creation produces rule, skill, hook and MCP templates; invalid JSON retains its draft, toggles preserve items and confirmed deletion preserves sources. Closing settings closes its editor. Engine log and confirmed CLI replacement use the real HTTP routes.",
+      "references": [
+        "ui/e2e/settings.spec.ts::edits and imports only the private stack with guarded JSON and deletion",
+        "ui/src/lib/settings.test.ts::private settings",
+        "tests/rewrite/parity.rs::captured_settings_routes_keep_sources_read_only_and_reseed_keeps_the_hook"
+      ]
+    },
+    "F-679": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "edits and imports only the private stack with guarded JSON and deletion",
+      "proof": "Private text and JSON editors load, save and cancel. Creation produces rule, skill, hook and MCP templates; invalid JSON retains its draft, toggles preserve items and confirmed deletion preserves sources. Closing settings closes its editor. Engine log and confirmed CLI replacement use the real HTTP routes.",
+      "references": [
+        "ui/e2e/settings.spec.ts::edits and imports only the private stack with guarded JSON and deletion",
+        "ui/src/lib/settings.test.ts::private settings",
+        "tests/rewrite/parity.rs::captured_settings_routes_keep_sources_read_only_and_reseed_keeps_the_hook"
+      ]
+    },
+    "F-680": {
+      "path": "ui/e2e/stack-sources.spec.ts",
+      "test": "copies CLI and IDE comparisons, toggles bundles and preserves every source",
+      "proof": "Rules, hooks and plugins compare CLI sources; skills and MCP compare CLI and IDE sources. Per-item and all-differing imports, plugin toggles/deletion and permission replacement preserve every source byte."
+    },
+    "F-682": {
+      "path": "ui/src/lib/settings.test.ts",
+      "test": "ignores settings reads started before a successful save, including account refreshes",
+      "proof": "Cached defaults remain visible through slow and failed reads. Generations preserve dirty fields and newer editor drafts through refresh, save, deletion and cancellation; account refreshes share the same settings store."
+    },
+    "F-683": {
+      "path": "ui/src/lib/settings.test.ts",
+      "test": "ignores settings reads started before a successful save, including account refreshes",
+      "proof": "Cached defaults remain visible through slow and failed reads. Generations preserve dirty fields and newer editor drafts through refresh, save, deletion and cancellation; account refreshes share the same settings store."
+    },
+    "F-685": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "edits and imports only the private stack with guarded JSON and deletion",
+      "proof": "Private text and JSON editors load, save and cancel. Creation produces rule, skill, hook and MCP templates; invalid JSON retains its draft, toggles preserve items and confirmed deletion preserves sources. Closing settings closes its editor. Engine log and confirmed CLI replacement use the real HTTP routes."
+    },
+    "F-686": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "persists defaults, goals and device controls without replacing focused drafts",
+      "proof": "Real engine settings saves cover model variants, all modes, folder fallback, on/off defaults and numeric endpoints. Local presentation and notification choices survive reload; browser zoom stays under browser control."
+    },
+    "F-687": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "persists defaults, goals and device controls without replacing focused drafts",
+      "proof": "Real engine settings saves cover model variants, all modes, folder fallback, on/off defaults and numeric endpoints. Local presentation and notification choices survive reload; browser zoom stays under browser control."
+    },
+    "F-688": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "persists defaults, goals and device controls without replacing focused drafts",
+      "proof": "Real engine settings saves cover model variants, all modes, folder fallback, on/off defaults and numeric endpoints. Local presentation and notification choices survive reload; browser zoom stays under browser control."
+    },
+    "F-689": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "persists defaults, goals and device controls without replacing focused drafts",
+      "proof": "Real engine settings saves cover model variants, all modes, folder fallback, on/off defaults and numeric endpoints. Local presentation and notification choices survive reload; browser zoom stays under browser control."
+    },
+    "F-690": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "persists defaults, goals and device controls without replacing focused drafts",
+      "proof": "Real engine settings saves cover model variants, all modes, folder fallback, on/off defaults and numeric endpoints. Local presentation and notification choices survive reload; browser zoom stays under browser control."
+    },
+    "F-691": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "persists defaults, goals and device controls without replacing focused drafts",
+      "proof": "Real engine settings saves cover model variants, all modes, folder fallback, on/off defaults and numeric endpoints. Local presentation and notification choices survive reload; browser zoom stays under browser control."
+    },
+    "F-695": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "persists defaults, goals and device controls without replacing focused drafts",
+      "proof": "Real engine settings saves cover model variants, all modes, folder fallback, on/off defaults and numeric endpoints. Local presentation and notification choices survive reload; browser zoom stays under browser control.",
+      "references": [
+        "ui/e2e/settings.spec.ts::persists defaults, goals and device controls without replacing focused drafts",
+        "ui/src/lib/notifications.test.ts::routes each live notice to its independent preference and skips resolved approvals",
+        "ui/src/lib/preferences.test.ts::loads compatible keys and persists individual notification choices"
+      ]
+    },
+    "F-696": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "persists defaults, goals and device controls without replacing focused drafts",
+      "proof": "Real engine settings saves cover model variants, all modes, folder fallback, on/off defaults and numeric endpoints. Local presentation and notification choices survive reload; browser zoom stays under browser control.",
+      "references": [
+        "ui/e2e/settings.spec.ts::persists defaults, goals and device controls without replacing focused drafts",
+        "ui/src/lib/notifications.test.ts::routes each live notice to its independent preference and skips resolved approvals",
+        "ui/src/lib/preferences.test.ts::loads compatible keys and persists individual notification choices"
+      ]
+    },
+    "F-697": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "persists defaults, goals and device controls without replacing focused drafts",
+      "proof": "Real engine settings saves cover model variants, all modes, folder fallback, on/off defaults and numeric endpoints. Local presentation and notification choices survive reload; browser zoom stays under browser control.",
+      "references": [
+        "ui/e2e/settings.spec.ts::persists defaults, goals and device controls without replacing focused drafts",
+        "ui/src/lib/notifications.test.ts::routes each live notice to its independent preference and skips resolved approvals",
+        "ui/src/lib/preferences.test.ts::loads compatible keys and persists individual notification choices"
+      ]
+    },
+    "F-698": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "persists defaults, goals and device controls without replacing focused drafts",
+      "proof": "Real engine settings saves cover model variants, all modes, folder fallback, on/off defaults and numeric endpoints. Local presentation and notification choices survive reload; browser zoom stays under browser control.",
+      "references": [
+        "ui/e2e/settings.spec.ts::persists defaults, goals and device controls without replacing focused drafts",
+        "ui/src/lib/notifications.test.ts::routes each live notice to its independent preference and skips resolved approvals",
+        "ui/src/lib/preferences.test.ts::loads compatible keys and persists individual notification choices"
+      ]
+    },
+    "F-699": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "persists defaults, goals and device controls without replacing focused drafts",
+      "proof": "Real engine settings saves cover model variants, all modes, folder fallback, on/off defaults and numeric endpoints. Local presentation and notification choices survive reload; browser zoom stays under browser control.",
+      "references": [
+        "ui/e2e/settings.spec.ts::persists defaults, goals and device controls without replacing focused drafts",
+        "ui/src/lib/notifications.test.ts::routes each live notice to its independent preference and skips resolved approvals",
+        "ui/src/lib/preferences.test.ts::loads compatible keys and persists individual notification choices"
+      ]
+    },
+    "F-700": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "persists defaults, goals and device controls without replacing focused drafts",
+      "proof": "Real engine settings saves cover model variants, all modes, folder fallback, on/off defaults and numeric endpoints. Local presentation and notification choices survive reload; browser zoom stays under browser control.",
+      "references": [
+        "ui/e2e/settings.spec.ts::persists defaults, goals and device controls without replacing focused drafts",
+        "ui/src/lib/notifications.test.ts::routes each live notice to its independent preference and skips resolved approvals",
+        "ui/src/lib/preferences.test.ts::loads compatible keys and persists individual notification choices"
+      ]
+    },
+    "F-701": {
+      "path": "ui/src/lib/notifications.test.ts",
+      "test": "suppresses focused, disabled and ungranted notices and tolerates browser errors",
+      "proof": "Focused windows suppress delivery unless enabled. Each event uses its own preference; browser permission and notification errors are harmless.",
+      "references": [
+        "ui/src/lib/notifications.test.ts::suppresses focused, disabled and ungranted notices and tolerates browser errors",
+        "ui/src/lib/notifications.test.ts::routes each live notice to its independent preference and skips resolved approvals",
+        "ui/src/lib/preferences.test.ts::loads compatible keys and persists individual notification choices"
+      ]
+    },
+    "F-703": {
+      "path": "ui/src/lib/notifications.test.ts",
+      "test": "suppresses focused, disabled and ungranted notices and tolerates browser errors",
+      "proof": "Focused windows suppress delivery unless enabled. Each event uses its own preference; browser permission and notification errors are harmless.",
+      "references": [
+        "ui/src/lib/notifications.test.ts::suppresses focused, disabled and ungranted notices and tolerates browser errors",
+        "ui/src/lib/notifications.test.ts::routes each live notice to its independent preference and skips resolved approvals",
+        "ui/src/lib/preferences.test.ts::loads compatible keys and persists individual notification choices"
+      ]
+    },
+    "F-706": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "persists defaults, goals and device controls without replacing focused drafts",
+      "proof": "Real engine settings saves cover model variants, all modes, folder fallback, on/off defaults and numeric endpoints. Local presentation and notification choices survive reload; browser zoom stays under browser control."
+    },
+    "F-707": {
+      "path": "ui/e2e/appearance.spec.ts",
+      "test": "switches grouped activity, independent steps, previews, thinking and timestamps",
+      "proof": "A durable transcript switches between grouped folds and independent rows, detailed previews/reasoning and compact mode, and timestamp visibility."
+    },
+    "F-708": {
+      "path": "ui/e2e/appearance.spec.ts",
+      "test": "switches grouped activity, independent steps, previews, thinking and timestamps",
+      "proof": "A durable transcript switches between grouped folds and independent rows, detailed previews/reasoning and compact mode, and timestamp visibility."
+    },
+    "F-709": {
+      "path": "ui/e2e/appearance.spec.ts",
+      "test": "switches grouped activity, independent steps, previews, thinking and timestamps",
+      "proof": "A durable transcript switches between grouped folds and independent rows, detailed previews/reasoning and compact mode, and timestamp visibility."
+    },
+    "F-710": {
+      "path": "ui/e2e/appearance.spec.ts",
+      "test": "switches grouped activity, independent steps, previews, thinking and timestamps",
+      "proof": "A durable transcript switches between grouped folds and independent rows, detailed previews/reasoning and compact mode, and timestamp visibility."
+    },
+    "F-711": {
+      "path": "ui/e2e/accounts.spec.ts",
+      "test": "shows pool windows pauses resumes checks removes and refreshes accounts",
+      "proof": "Accounts Probe now probes every account. Newly recorded /quota calls for both account identities are asserted after Probe now.",
+      "references": [
+        "ui/e2e/accounts.spec.ts::shows pool windows pauses resumes checks removes and refreshes accounts"
+      ]
+    },
+    "F-712": {
+      "path": "ui/e2e/accounts.spec.ts",
+      "test": "signs in synthetically with Enter and removes the adopted account",
+      "proof": "Accounts Add account opens sign-in. ",
+      "references": [
+        "ui/e2e/accounts.spec.ts::signs in synthetically with Enter and removes the adopted account"
+      ]
+    },
+    "F-713": {
+      "path": "ui/e2e/accounts.spec.ts",
+      "test": "shows pool windows pauses resumes checks removes and refreshes accounts",
+      "proof": "Account cards show identity and paused, busy and last-probed states. ",
+      "references": [
+        "ui/e2e/accounts.spec.ts::shows pool windows pauses resumes checks removes and refreshes accounts",
+        "ui/e2e/accounts.spec.ts::shows a leased account as running and disables check and removal until stop"
+      ]
+    },
+    "F-714": {
+      "path": "ui/e2e/account-display.spec.ts",
+      "test": "shows all four today counters and excludes earlier local-day usage",
+      "proof": "Account cards show today's input, output, thinking and turn counts. ",
+      "references": [
+        "ui/e2e/account-display.spec.ts::shows all four today counters and excludes earlier local-day usage",
+        "ui/e2e/accounts.spec.ts::quota handoff preserves one user message and shows the next serving account",
+        "ui/e2e/accounts.spec.ts::rate handoff preserves one user message and shows the next serving account",
+        "ui/e2e/accounts.spec.ts::auth handoff preserves one user message and shows the next serving account"
+      ]
+    },
+    "F-715": {
+      "path": "ui/e2e/accounts.spec.ts",
+      "test": "shows pool windows pauses resumes checks removes and refreshes accounts",
+      "proof": "Gemini and Claude/GPT quota windows appear separately. ",
+      "references": [
+        "ui/e2e/accounts.spec.ts::shows pool windows pauses resumes checks removes and refreshes accounts"
+      ]
+    },
+    "F-716": {
+      "path": "ui/e2e/accounts.spec.ts",
+      "test": "shows pool windows pauses resumes checks removes and refreshes accounts",
+      "proof": "Quota windows show their reset time or disabled-window explanation in a tooltip. ",
+      "references": [
+        "ui/e2e/accounts.spec.ts::shows pool windows pauses resumes checks removes and refreshes accounts",
+        "ui/src/lib/account-format.test.ts::uses the minimum window and preserves missing versus disabled readings"
+      ]
+    },
+    "F-717": {
+      "path": "ui/e2e/account-display.spec.ts",
+      "test": "displays wall cooldown signed-out verification and paused attention states",
+      "proof": "Account cards show walls, signed-out, cooldown and verification reasons. ",
+      "references": [
+        "ui/e2e/account-display.spec.ts::displays wall cooldown signed-out verification and paused attention states",
+        "ui/e2e/accounts.spec.ts::opens exact verification link and checks continued verification then readiness",
+        "ui/e2e/accounts.spec.ts::quota handoff preserves one user message and shows the next serving account",
+        "ui/e2e/accounts.spec.ts::rate handoff preserves one user message and shows the next serving account",
+        "ui/e2e/accounts.spec.ts::auth handoff preserves one user message and shows the next serving account"
+      ]
+    },
+    "F-720": {
+      "path": "ui/e2e/accounts.spec.ts",
+      "test": "shows pool windows pauses resumes checks removes and refreshes accounts",
+      "proof": "Check refreshes quota and sign-in state. ",
+      "references": [
+        "ui/e2e/accounts.spec.ts::shows pool windows pauses resumes checks removes and refreshes accounts",
+        "ui/e2e/accounts.spec.ts::opens exact verification link and checks continued verification then readiness"
+      ]
+    },
+    "F-721": {
+      "path": "ui/e2e/accounts.spec.ts",
+      "test": "signs in synthetically with Enter and removes the adopted account",
+      "proof": "Sign in again opens the account sign-in dialog. ",
+      "references": [
+        "ui/e2e/accounts.spec.ts::signs in synthetically with Enter and removes the adopted account"
+      ]
+    },
+    "F-723": {
+      "path": "ui/e2e/accounts.spec.ts",
+      "test": "opens exact verification link and checks continued verification then readiness",
+      "proof": "A verification-required account opens its exact Google verification URL. The exact synthetic href and a locally intercepted provider popup are asserted. No provider request occurs.",
+      "references": [
+        "ui/e2e/accounts.spec.ts::opens exact verification link and checks continued verification then readiness"
+      ]
+    },
+    "F-724": {
+      "path": "ui/e2e/accounts.spec.ts",
+      "test": "opens exact verification link and checks continued verification then readiness",
+      "proof": "Check again reports readiness or continued verification after probing. ",
+      "references": [
+        "ui/e2e/accounts.spec.ts::opens exact verification link and checks continued verification then readiness"
+      ]
+    },
+    "F-725": {
+      "path": "ui/e2e/accounts.spec.ts",
+      "test": "persists rotation choices and range endpoints without losing focused drafts",
+      "proof": "Next account selects soonest-reset-first, one-by-one or round-robin rotation. ",
+      "references": [
+        "ui/e2e/accounts.spec.ts::persists rotation choices and range endpoints without losing focused drafts"
+      ]
+    },
+    "F-726": {
+      "path": "ui/e2e/accounts.spec.ts",
+      "test": "persists rotation choices and range endpoints without losing focused drafts",
+      "proof": "Reserve accepts and persists 0\u201350 percent. ",
+      "references": [
+        "ui/e2e/accounts.spec.ts::persists rotation choices and range endpoints without losing focused drafts"
+      ]
+    },
+    "F-727": {
+      "path": "ui/e2e/accounts.spec.ts",
+      "test": "persists rotation choices and range endpoints without losing focused drafts",
+      "proof": "Quota check accepts and persists 2\u2013240 minutes. ",
+      "references": [
+        "ui/e2e/accounts.spec.ts::persists rotation choices and range endpoints without losing focused drafts"
+      ]
+    },
+    "F-728": {
+      "path": "ui/e2e/account-display.spec.ts",
+      "test": "renders every routing kind newest first with the prior account and session",
+      "proof": "Routing history displays newest-first pick decisions with session and prior account. Compatible history proves all row kinds and order; actual quota/rate/auth runs prove the prior account and known session title.",
+      "references": [
+        "ui/e2e/account-display.spec.ts::renders every routing kind newest first with the prior account and session",
+        "ui/e2e/accounts.spec.ts::quota handoff preserves one user message and shows the next serving account",
+        "ui/e2e/accounts.spec.ts::rate handoff preserves one user message and shows the next serving account",
+        "ui/e2e/accounts.spec.ts::auth handoff preserves one user message and shows the next serving account"
+      ]
+    },
+    "F-729": {
+      "path": "ui/e2e/account-display.spec.ts",
+      "test": "renders every routing kind newest first with the prior account and session",
+      "proof": "Routing history displays walls, cooldowns, retries, signed-out, paused and resumed decisions. ",
+      "references": [
+        "ui/e2e/account-display.spec.ts::renders every routing kind newest first with the prior account and session",
+        "ui/src/lib/account-format.test.ts::formats every captured routing kind and the prior account of a pick"
+      ]
+    },
+    "F-730": {
+      "path": "ui/e2e/accounts.spec.ts",
+      "test": "shows pool windows pauses resumes checks removes and refreshes accounts",
+      "proof": "No routing decisions has an explicit empty state. ",
+      "references": [
+        "ui/e2e/accounts.spec.ts::shows pool windows pauses resumes checks removes and refreshes accounts"
+      ]
+    },
+    "F-731": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "renders exact usage with bounded hover and keyboard tooltips in both themes",
+      "proof": "Seven, fourteen and thirty days show exact ledger totals, turns and ordered account/model tables. Canvas pixels prove the latest-day accent in both themes; empty days and boundary tooltips support keyboard focus. Failed period requests keep cached data with its original period labels.",
+      "references": [
+        "ui/e2e/settings.spec.ts::renders exact usage with bounded hover and keyboard tooltips in both themes",
+        "ui/src/lib/usage.test.ts::totals tokens and sorts contributions without rounding the ledger"
+      ]
+    },
+    "F-732": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "renders exact usage with bounded hover and keyboard tooltips in both themes",
+      "proof": "Seven, fourteen and thirty days show exact ledger totals, turns and ordered account/model tables. Canvas pixels prove the latest-day accent in both themes; empty days and boundary tooltips support keyboard focus. Failed period requests keep cached data with its original period labels.",
+      "references": [
+        "ui/e2e/settings.spec.ts::renders exact usage with bounded hover and keyboard tooltips in both themes",
+        "ui/src/lib/usage.test.ts::totals tokens and sorts contributions without rounding the ledger"
+      ]
+    },
+    "F-733": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "renders exact usage with bounded hover and keyboard tooltips in both themes",
+      "proof": "Seven, fourteen and thirty days show exact ledger totals, turns and ordered account/model tables. Canvas pixels prove the latest-day accent in both themes; empty days and boundary tooltips support keyboard focus. Failed period requests keep cached data with its original period labels.",
+      "references": [
+        "ui/e2e/settings.spec.ts::renders exact usage with bounded hover and keyboard tooltips in both themes",
+        "ui/src/lib/usage.test.ts::totals tokens and sorts contributions without rounding the ledger"
+      ]
+    },
+    "F-734": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "renders exact usage with bounded hover and keyboard tooltips in both themes",
+      "proof": "Seven, fourteen and thirty days show exact ledger totals, turns and ordered account/model tables. Canvas pixels prove the latest-day accent in both themes; empty days and boundary tooltips support keyboard focus. Failed period requests keep cached data with its original period labels.",
+      "references": [
+        "ui/e2e/settings.spec.ts::renders exact usage with bounded hover and keyboard tooltips in both themes",
+        "ui/src/lib/usage.test.ts::totals tokens and sorts contributions without rounding the ledger"
+      ]
+    },
+    "F-735": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "renders exact usage with bounded hover and keyboard tooltips in both themes",
+      "proof": "Seven, fourteen and thirty days show exact ledger totals, turns and ordered account/model tables. Canvas pixels prove the latest-day accent in both themes; empty days and boundary tooltips support keyboard focus. Failed period requests keep cached data with its original period labels.",
+      "references": [
+        "ui/e2e/settings.spec.ts::renders exact usage with bounded hover and keyboard tooltips in both themes",
+        "ui/src/lib/usage.test.ts::totals tokens and sorts contributions without rounding the ledger"
+      ]
+    },
+    "F-736": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "renders exact usage with bounded hover and keyboard tooltips in both themes",
+      "proof": "Seven, fourteen and thirty days show exact ledger totals, turns and ordered account/model tables. Canvas pixels prove the latest-day accent in both themes; empty days and boundary tooltips support keyboard focus. Failed period requests keep cached data with its original period labels.",
+      "references": [
+        "ui/e2e/settings.spec.ts::renders exact usage with bounded hover and keyboard tooltips in both themes",
+        "ui/src/lib/usage.test.ts::totals tokens and sorts contributions without rounding the ledger"
+      ]
+    },
+    "F-737": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "renders exact usage with bounded hover and keyboard tooltips in both themes",
+      "proof": "Seven, fourteen and thirty days show exact ledger totals, turns and ordered account/model tables. Canvas pixels prove the latest-day accent in both themes; empty days and boundary tooltips support keyboard focus. Failed period requests keep cached data with its original period labels.",
+      "references": [
+        "ui/e2e/settings.spec.ts::renders exact usage with bounded hover and keyboard tooltips in both themes",
+        "ui/src/lib/usage.test.ts::totals tokens and sorts contributions without rounding the ledger"
+      ]
+    },
+    "F-738": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "renders exact usage with bounded hover and keyboard tooltips in both themes",
+      "proof": "Seven, fourteen and thirty days show exact ledger totals, turns and ordered account/model tables. Canvas pixels prove the latest-day accent in both themes; empty days and boundary tooltips support keyboard focus. Failed period requests keep cached data with its original period labels.",
+      "references": [
+        "ui/e2e/settings.spec.ts::renders exact usage with bounded hover and keyboard tooltips in both themes",
+        "ui/src/lib/usage.test.ts::totals tokens and sorts contributions without rounding the ledger"
+      ]
+    },
+    "F-739": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "renders exact usage with bounded hover and keyboard tooltips in both themes",
+      "proof": "Seven, fourteen and thirty days show exact ledger totals, turns and ordered account/model tables. Canvas pixels prove the latest-day accent in both themes; empty days and boundary tooltips support keyboard focus. Failed period requests keep cached data with its original period labels.",
+      "references": [
+        "ui/e2e/settings.spec.ts::renders exact usage with bounded hover and keyboard tooltips in both themes",
+        "ui/src/lib/usage.test.ts::totals tokens and sorts contributions without rounding the ledger"
+      ]
+    },
+    "F-740": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "renders exact usage with bounded hover and keyboard tooltips in both themes",
+      "proof": "Seven, fourteen and thirty days show exact ledger totals, turns and ordered account/model tables. Canvas pixels prove the latest-day accent in both themes; empty days and boundary tooltips support keyboard focus. Failed period requests keep cached data with its original period labels.",
+      "references": [
+        "ui/e2e/settings.spec.ts::renders exact usage with bounded hover and keyboard tooltips in both themes",
+        "ui/src/lib/usage.test.ts::totals tokens and sorts contributions without rounding the ledger"
+      ]
+    },
+    "F-741": {
+      "path": "ui/e2e/accounts.spec.ts",
+      "test": "shows pool windows pauses resumes checks removes and refreshes accounts",
+      "proof": "The sidebar account pill displays available count and serving account/quota. ",
+      "references": [
+        "ui/e2e/accounts.spec.ts::shows pool windows pauses resumes checks removes and refreshes accounts",
+        "ui/src/lib/account-format.test.ts::shows paused, wall, low, attention and serving-account states per pool",
+        "ui/e2e/accounts.spec.ts::quota handoff preserves one user message and shows the next serving account",
+        "ui/e2e/accounts.spec.ts::rate handoff preserves one user message and shows the next serving account",
+        "ui/e2e/accounts.spec.ts::auth handoff preserves one user message and shows the next serving account"
+      ]
+    },
+    "F-742": {
+      "path": "ui/e2e/accounts.spec.ts",
+      "test": "shows pool windows pauses resumes checks removes and refreshes accounts",
+      "proof": "The sidebar account strip shows account quota and paused/wall/attention status. ",
+      "references": [
+        "ui/e2e/accounts.spec.ts::shows pool windows pauses resumes checks removes and refreshes accounts",
+        "ui/e2e/account-display.spec.ts::displays wall cooldown signed-out verification and paused attention states",
+        "ui/src/lib/account-format.test.ts::shows paused, wall, low, attention and serving-account states per pool"
+      ]
+    },
+    "F-743": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "renders exact usage with bounded hover and keyboard tooltips in both themes",
+      "proof": "Seven, fourteen and thirty days show exact ledger totals, turns and ordered account/model tables. Canvas pixels prove the latest-day accent in both themes; empty days and boundary tooltips support keyboard focus. Failed period requests keep cached data with its original period labels.",
+      "references": [
+        "ui/e2e/settings.spec.ts::renders exact usage with bounded hover and keyboard tooltips in both themes",
+        "ui/src/lib/usage.test.ts::totals tokens and sorts contributions without rounding the ledger"
+      ]
+    },
+    "F-744": {
+      "path": "ui/e2e/login.spec.ts",
+      "test": "opens sign-in from an empty account pill welcome and empty session",
+      "proof": "The account pill opens Add Google account when no accounts exist. ",
+      "references": [
+        "ui/e2e/login.spec.ts::opens sign-in from an empty account pill welcome and empty session"
+      ]
+    },
+    "F-745": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "persists defaults, goals and device controls without replacing focused drafts",
+      "proof": "Real engine settings saves cover model variants, all modes, folder fallback, on/off defaults and numeric endpoints. Local presentation and notification choices survive reload; browser zoom stays under browser control."
+    },
+    "F-746": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "persists defaults, goals and device controls without replacing focused drafts",
+      "proof": "Real engine settings saves cover model variants, all modes, folder fallback, on/off defaults and numeric endpoints. Local presentation and notification choices survive reload; browser zoom stays under browser control."
+    },
+    "F-748": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "persists defaults, goals and device controls without replacing focused drafts",
+      "proof": "Real engine settings saves cover model variants, all modes, folder fallback, on/off defaults and numeric endpoints. Local presentation and notification choices survive reload; browser zoom stays under browser control."
+    },
+    "F-749": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "persists defaults, goals and device controls without replacing focused drafts",
+      "proof": "Real engine settings saves cover model variants, all modes, folder fallback, on/off defaults and numeric endpoints. Local presentation and notification choices survive reload; browser zoom stays under browser control."
+    },
+    "F-752": {
+      "path": "ui/e2e/stack-sources.spec.ts",
+      "test": "copies CLI and IDE comparisons, toggles bundles and preserves every source",
+      "proof": "Rules, hooks and plugins compare CLI sources; skills and MCP compare CLI and IDE sources. Per-item and all-differing imports, plugin toggles/deletion and permission replacement preserve every source byte."
+    },
+    "F-753": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "edits and imports only the private stack with guarded JSON and deletion",
+      "proof": "Private text and JSON editors load, save and cancel. Creation produces rule, skill, hook and MCP templates; invalid JSON retains its draft, toggles preserve items and confirmed deletion preserves sources. Closing settings closes its editor. Engine log and confirmed CLI replacement use the real HTTP routes.",
+      "references": [
+        "ui/e2e/settings.spec.ts::edits and imports only the private stack with guarded JSON and deletion",
+        "ui/src/lib/settings.test.ts::private settings",
+        "tests/rewrite/parity.rs::captured_settings_routes_keep_sources_read_only_and_reseed_keeps_the_hook"
+      ]
+    },
+    "F-754": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "edits and imports only the private stack with guarded JSON and deletion",
+      "proof": "Private text and JSON editors load, save and cancel. Creation produces rule, skill, hook and MCP templates; invalid JSON retains its draft, toggles preserve items and confirmed deletion preserves sources. Closing settings closes its editor. Engine log and confirmed CLI replacement use the real HTTP routes.",
+      "references": [
+        "ui/e2e/settings.spec.ts::edits and imports only the private stack with guarded JSON and deletion",
+        "ui/src/lib/settings.test.ts::private settings",
+        "tests/rewrite/parity.rs::captured_settings_routes_keep_sources_read_only_and_reseed_keeps_the_hook"
+      ]
+    },
+    "F-755": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "edits and imports only the private stack with guarded JSON and deletion",
+      "proof": "Private text and JSON editors load, save and cancel. Creation produces rule, skill, hook and MCP templates; invalid JSON retains its draft, toggles preserve items and confirmed deletion preserves sources. Closing settings closes its editor. Engine log and confirmed CLI replacement use the real HTTP routes.",
+      "references": [
+        "ui/e2e/settings.spec.ts::edits and imports only the private stack with guarded JSON and deletion",
+        "ui/src/lib/settings.test.ts::private settings",
+        "tests/rewrite/parity.rs::captured_settings_routes_keep_sources_read_only_and_reseed_keeps_the_hook"
+      ]
+    },
+    "F-756": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "edits and imports only the private stack with guarded JSON and deletion",
+      "proof": "Private text and JSON editors load, save and cancel. Creation produces rule, skill, hook and MCP templates; invalid JSON retains its draft, toggles preserve items and confirmed deletion preserves sources. Closing settings closes its editor. Engine log and confirmed CLI replacement use the real HTTP routes.",
+      "references": [
+        "ui/e2e/settings.spec.ts::edits and imports only the private stack with guarded JSON and deletion",
+        "ui/src/lib/settings.test.ts::private settings",
+        "tests/rewrite/parity.rs::captured_settings_routes_keep_sources_read_only_and_reseed_keeps_the_hook"
+      ]
+    },
+    "F-757": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "edits and imports only the private stack with guarded JSON and deletion",
+      "proof": "Private text and JSON editors load, save and cancel. Creation produces rule, skill, hook and MCP templates; invalid JSON retains its draft, toggles preserve items and confirmed deletion preserves sources. Closing settings closes its editor. Engine log and confirmed CLI replacement use the real HTTP routes.",
+      "references": [
+        "ui/e2e/settings.spec.ts::edits and imports only the private stack with guarded JSON and deletion",
+        "ui/src/lib/settings.test.ts::private settings",
+        "tests/rewrite/parity.rs::captured_settings_routes_keep_sources_read_only_and_reseed_keeps_the_hook"
+      ]
+    },
+    "F-758": {
+      "path": "ui/e2e/stack-sources.spec.ts",
+      "test": "copies CLI and IDE comparisons, toggles bundles and preserves every source",
+      "proof": "Rules, hooks and plugins compare CLI sources; skills and MCP compare CLI and IDE sources. Per-item and all-differing imports, plugin toggles/deletion and permission replacement preserve every source byte.",
+      "references": [
+        "ui/e2e/stack-sources.spec.ts::copies CLI and IDE comparisons, toggles bundles and preserves every source",
+        "ui/src/lib/settings.test.ts::private settings",
+        "tests/rewrite/parity.rs::captured_settings_routes_keep_sources_read_only_and_reseed_keeps_the_hook"
+      ]
+    },
+    "F-759": {
+      "path": "ui/e2e/stack-sources.spec.ts",
+      "test": "copies CLI and IDE comparisons, toggles bundles and preserves every source",
+      "proof": "Rules, hooks and plugins compare CLI sources; skills and MCP compare CLI and IDE sources. Per-item and all-differing imports, plugin toggles/deletion and permission replacement preserve every source byte.",
+      "references": [
+        "ui/e2e/stack-sources.spec.ts::copies CLI and IDE comparisons, toggles bundles and preserves every source",
+        "ui/src/lib/settings.test.ts::private settings",
+        "tests/rewrite/parity.rs::captured_settings_routes_keep_sources_read_only_and_reseed_keeps_the_hook"
+      ]
+    },
+    "F-760": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "edits and imports only the private stack with guarded JSON and deletion",
+      "proof": "Private text and JSON editors load, save and cancel. Creation produces rule, skill, hook and MCP templates; invalid JSON retains its draft, toggles preserve items and confirmed deletion preserves sources. Closing settings closes its editor. Engine log and confirmed CLI replacement use the real HTTP routes.",
+      "references": [
+        "ui/e2e/settings.spec.ts::edits and imports only the private stack with guarded JSON and deletion",
+        "ui/src/lib/settings.test.ts::private settings",
+        "tests/rewrite/parity.rs::captured_settings_routes_keep_sources_read_only_and_reseed_keeps_the_hook"
+      ]
+    },
+    "F-761": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "edits and imports only the private stack with guarded JSON and deletion",
+      "proof": "Private text and JSON editors load, save and cancel. Creation produces rule, skill, hook and MCP templates; invalid JSON retains its draft, toggles preserve items and confirmed deletion preserves sources. Closing settings closes its editor. Engine log and confirmed CLI replacement use the real HTTP routes.",
+      "references": [
+        "ui/e2e/settings.spec.ts::edits and imports only the private stack with guarded JSON and deletion",
+        "ui/src/lib/settings.test.ts::private settings",
+        "tests/rewrite/parity.rs::captured_settings_routes_keep_sources_read_only_and_reseed_keeps_the_hook"
+      ]
+    },
+    "F-762": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "edits and imports only the private stack with guarded JSON and deletion",
+      "proof": "Private text and JSON editors load, save and cancel. Creation produces rule, skill, hook and MCP templates; invalid JSON retains its draft, toggles preserve items and confirmed deletion preserves sources. Closing settings closes its editor. Engine log and confirmed CLI replacement use the real HTTP routes.",
+      "references": [
+        "ui/e2e/settings.spec.ts::edits and imports only the private stack with guarded JSON and deletion",
+        "ui/src/lib/settings.test.ts::private settings",
+        "tests/rewrite/parity.rs::captured_settings_routes_keep_sources_read_only_and_reseed_keeps_the_hook"
+      ]
+    },
+    "F-763": {
+      "path": "ui/e2e/stack-sources.spec.ts",
+      "test": "copies CLI and IDE comparisons, toggles bundles and preserves every source",
+      "proof": "Rules, hooks and plugins compare CLI sources; skills and MCP compare CLI and IDE sources. Per-item and all-differing imports, plugin toggles/deletion and permission replacement preserve every source byte.",
+      "references": [
+        "ui/e2e/stack-sources.spec.ts::copies CLI and IDE comparisons, toggles bundles and preserves every source",
+        "ui/src/lib/settings.test.ts::private settings",
+        "tests/rewrite/parity.rs::captured_settings_routes_keep_sources_read_only_and_reseed_keeps_the_hook"
+      ]
+    },
+    "F-764": {
+      "path": "ui/e2e/stack-sources.spec.ts",
+      "test": "copies CLI and IDE comparisons, toggles bundles and preserves every source",
+      "proof": "Rules, hooks and plugins compare CLI sources; skills and MCP compare CLI and IDE sources. Per-item and all-differing imports, plugin toggles/deletion and permission replacement preserve every source byte.",
+      "references": [
+        "ui/e2e/stack-sources.spec.ts::copies CLI and IDE comparisons, toggles bundles and preserves every source",
+        "ui/src/lib/settings.test.ts::private settings",
+        "tests/rewrite/parity.rs::captured_settings_routes_keep_sources_read_only_and_reseed_keeps_the_hook"
+      ]
+    },
+    "F-765": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "edits and imports only the private stack with guarded JSON and deletion",
+      "proof": "Private text and JSON editors load, save and cancel. Creation produces rule, skill, hook and MCP templates; invalid JSON retains its draft, toggles preserve items and confirmed deletion preserves sources. Closing settings closes its editor. Engine log and confirmed CLI replacement use the real HTTP routes.",
+      "references": [
+        "ui/e2e/settings.spec.ts::edits and imports only the private stack with guarded JSON and deletion",
+        "ui/src/lib/settings.test.ts::private settings",
+        "tests/rewrite/parity.rs::captured_settings_routes_keep_sources_read_only_and_reseed_keeps_the_hook"
+      ]
+    },
+    "F-766": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "edits and imports only the private stack with guarded JSON and deletion",
+      "proof": "Private text and JSON editors load, save and cancel. Creation produces rule, skill, hook and MCP templates; invalid JSON retains its draft, toggles preserve items and confirmed deletion preserves sources. Closing settings closes its editor. Engine log and confirmed CLI replacement use the real HTTP routes.",
+      "references": [
+        "ui/e2e/settings.spec.ts::edits and imports only the private stack with guarded JSON and deletion",
+        "ui/src/lib/settings.test.ts::private settings",
+        "tests/rewrite/parity.rs::captured_settings_routes_keep_sources_read_only_and_reseed_keeps_the_hook"
+      ]
+    },
+    "F-767": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "edits and imports only the private stack with guarded JSON and deletion",
+      "proof": "Private text and JSON editors load, save and cancel. Creation produces rule, skill, hook and MCP templates; invalid JSON retains its draft, toggles preserve items and confirmed deletion preserves sources. Closing settings closes its editor. Engine log and confirmed CLI replacement use the real HTTP routes.",
+      "references": [
+        "ui/e2e/settings.spec.ts::edits and imports only the private stack with guarded JSON and deletion",
+        "ui/src/lib/settings.test.ts::private settings",
+        "tests/rewrite/parity.rs::captured_settings_routes_keep_sources_read_only_and_reseed_keeps_the_hook"
+      ]
+    },
+    "F-768": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "edits and imports only the private stack with guarded JSON and deletion",
+      "proof": "Private text and JSON editors load, save and cancel. Creation produces rule, skill, hook and MCP templates; invalid JSON retains its draft, toggles preserve items and confirmed deletion preserves sources. Closing settings closes its editor. Engine log and confirmed CLI replacement use the real HTTP routes.",
+      "references": [
+        "ui/e2e/settings.spec.ts::edits and imports only the private stack with guarded JSON and deletion",
+        "ui/src/lib/settings.test.ts::private settings",
+        "tests/rewrite/parity.rs::captured_settings_routes_keep_sources_read_only_and_reseed_keeps_the_hook"
+      ]
+    },
+    "F-769": {
+      "path": "ui/src/lib/settings.test.ts",
+      "test": "validates safe names and uses the actual JSON file paths",
+      "proof": "All permitted punctuation and letters/digits are accepted; unsafe, empty, overlong and leading-dot names are rejected. New item creation refuses existing private names.",
+      "references": [
+        "ui/src/lib/settings.test.ts::validates safe names and uses the actual JSON file paths",
+        "ui/src/lib/settings.test.ts::private settings",
+        "tests/rewrite/parity.rs::captured_settings_routes_keep_sources_read_only_and_reseed_keeps_the_hook"
+      ]
+    },
+    "F-770": {
+      "path": "ui/src/lib/settings.test.ts",
+      "test": "validates safe names and uses the actual JSON file paths",
+      "proof": "All permitted punctuation and letters/digits are accepted; unsafe, empty, overlong and leading-dot names are rejected. New item creation refuses existing private names.",
+      "references": [
+        "ui/src/lib/settings.test.ts::validates safe names and uses the actual JSON file paths",
+        "ui/src/lib/settings.test.ts::private settings",
+        "tests/rewrite/parity.rs::captured_settings_routes_keep_sources_read_only_and_reseed_keeps_the_hook"
+      ]
+    },
+    "F-771": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "edits and imports only the private stack with guarded JSON and deletion",
+      "proof": "Private text and JSON editors load, save and cancel. Creation produces rule, skill, hook and MCP templates; invalid JSON retains its draft, toggles preserve items and confirmed deletion preserves sources. Closing settings closes its editor. Engine log and confirmed CLI replacement use the real HTTP routes."
+    },
+    "F-773": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "edits and imports only the private stack with guarded JSON and deletion",
+      "proof": "Private text and JSON editors load, save and cancel. Creation produces rule, skill, hook and MCP templates; invalid JSON retains its draft, toggles preserve items and confirmed deletion preserves sources. Closing settings closes its editor. Engine log and confirmed CLI replacement use the real HTTP routes."
+    },
+    "F-776": {
+      "path": "ui/e2e/settings.spec.ts",
+      "test": "edits and imports only the private stack with guarded JSON and deletion",
+      "proof": "Private text and JSON editors load, save and cancel. Creation produces rule, skill, hook and MCP templates; invalid JSON retains its draft, toggles preserve items and confirmed deletion preserves sources. Closing settings closes its editor. Engine log and confirmed CLI replacement use the real HTTP routes."
+    },
+    "F-777": {
+      "path": "ui/src/lib/login.test.ts",
+      "test": "reserves a tab before consent and cancels old login before requesting a new link",
+      "proof": "Opening Add Google account resets prior code, sign-in state and timers. ",
+      "references": [
+        "ui/src/lib/login.test.ts::reserves a tab before consent and cancels old login before requesting a new link",
+        "ui/e2e/login.spec.ts::highlights fifteen seconds and displays countdown expiry without retaining it after cancel"
+      ]
+    },
+    "F-778": {
+      "path": "ui/src/lib/login.test.ts",
+      "test": "reserves a tab before consent and cancels old login before requesting a new link",
+      "proof": "Browser sign-in reserves a tab before requesting the URL to avoid popup blocking. An injected browser-port unit test proves reserve-before-request ordering. Chromium exercises a reserved popup with provider interception.",
+      "references": [
+        "ui/src/lib/login.test.ts::reserves a tab before consent and cancels old login before requesting a new link",
+        "ui/e2e/accounts.spec.ts::signs in synthetically with Enter and removes the adopted account"
+      ]
+    },
+    "F-780": {
+      "path": "ui/e2e/accounts.spec.ts",
+      "test": "offers a manual consent link when popups are blocked and accepts polled completion",
+      "proof": "Sign-in exposes a manual link when opening the browser fails. ",
+      "references": [
+        "ui/e2e/accounts.spec.ts::offers a manual consent link when popups are blocked and accepts polled completion",
+        "ui/src/lib/login.test.ts::closes a reserved popup and releases controls when starting sign-in fails"
+      ]
+    },
+    "F-781": {
+      "path": "ui/e2e/accounts.spec.ts",
+      "test": "cancels old links and handles rejected sign-in followed by automatic pasted-code success",
+      "proof": "New sign-in link cancels the previous login before creating another. ",
+      "references": [
+        "ui/e2e/accounts.spec.ts::cancels old links and handles rejected sign-in followed by automatic pasted-code success",
+        "ui/src/lib/login.test.ts::reserves a tab before consent and cancels old login before requesting a new link"
+      ]
+    },
+    "F-782": {
+      "path": "ui/e2e/login.spec.ts",
+      "test": "highlights fifteen seconds and displays countdown expiry without retaining it after cancel",
+      "proof": "Sign-in countdown highlights its last fifteen seconds and expiry. The browser fixture changes only the returned countdown to fifteen seconds. UI highlighting and expiry are proven; backend expiry enforcement is separate.",
+      "references": [
+        "ui/e2e/login.spec.ts::highlights fifteen seconds and displays countdown expiry without retaining it after cancel",
+        "ui/src/lib/login.test.ts::offers a manual link when blocked and counts down through the last fifteen seconds"
+      ]
+    },
+    "F-783": {
+      "path": "ui/e2e/accounts.spec.ts",
+      "test": "offers a manual consent link when popups are blocked and accepts polled completion",
+      "proof": "State polling runs every two seconds and accepts completion without pasting a code. ",
+      "references": [
+        "ui/e2e/accounts.spec.ts::offers a manual consent link when popups are blocked and accepts polled completion",
+        "ui/src/lib/login.test.ts::polls every two seconds and closes completed sign-in after 1.2 seconds without a code"
+      ]
+    },
+    "F-784": {
+      "path": "ui/e2e/login.spec.ts",
+      "test": "reads a valid clipboard code on returning focus only while the code field is empty",
+      "proof": "Returning focus reads a valid code from the clipboard when the field is empty. Chromium replaces only navigator.clipboard.readText with a synthetic value and dispatches focus. A nonempty manual field remains unchanged.",
+      "references": [
+        "ui/e2e/login.spec.ts::reads a valid clipboard code on returning focus only while the code field is empty",
+        "ui/src/lib/login.test.ts::validates clipboard codes, tolerates denied access and preserves manual input"
+      ]
+    },
+    "F-785": {
+      "path": "ui/e2e/login.spec.ts",
+      "test": "explains denied clipboard access and rejects an invalid pasted code",
+      "proof": "Paste rejects values outside the 4/ code format with at least twenty permitted characters. Synthetic native ClipboardEvents prove rejection and automatic valid submission without reading the user clipboard.",
+      "references": [
+        "ui/e2e/login.spec.ts::explains denied clipboard access and rejects an invalid pasted code",
+        "ui/e2e/accounts.spec.ts::cancels old links and handles rejected sign-in followed by automatic pasted-code success",
+        "ui/src/lib/login.test.ts::validates clipboard codes, tolerates denied access and preserves manual input"
+      ]
+    },
+    "F-786": {
+      "path": "ui/e2e/login.spec.ts",
+      "test": "explains denied clipboard access and rejects an invalid pasted code",
+      "proof": "Clipboard access failure explains manual paste. ",
+      "references": [
+        "ui/e2e/login.spec.ts::explains denied clipboard access and rejects an invalid pasted code"
+      ]
+    },
+    "F-787": {
+      "path": "ui/e2e/login.spec.ts",
+      "test": "disables duplicate code submission and restores controls after an API error",
+      "proof": "Submitting a code disables Add account while its check runs. A held local HTTP response proves disabled controls before a synthetic 400; a second real fixture-engine request succeeds.",
+      "references": [
+        "ui/e2e/login.spec.ts::disables duplicate code submission and restores controls after an API error",
+        "ui/src/lib/login.test.ts::restores code submission after errors and ignores double submit while checking"
+      ]
+    },
+    "F-788": {
+      "path": "ui/e2e/accounts.spec.ts",
+      "test": "signs in synthetically with Enter and removes the adopted account",
+      "proof": "Successful sign-in reports identity, refreshes accounts and closes after 1.2 seconds. Fake timers prove the exact 1.2-second delay. Chromium proves identity, refresh and automatic close.",
+      "references": [
+        "ui/e2e/accounts.spec.ts::signs in synthetically with Enter and removes the adopted account",
+        "ui/e2e/accounts.spec.ts::offers a manual consent link when popups are blocked and accepts polled completion",
+        "ui/src/lib/login.test.ts::polls every two seconds and closes completed sign-in after 1.2 seconds without a code"
+      ]
+    },
+    "F-789": {
+      "path": "ui/e2e/accounts.spec.ts",
+      "test": "shows sign-in verification and preserves the parked account",
+      "proof": "Verification state disables code controls and shows verification actions. ",
+      "references": [
+        "ui/e2e/accounts.spec.ts::shows sign-in verification and preserves the parked account"
+      ]
+    },
+    "F-790": {
+      "path": "ui/e2e/accounts.spec.ts",
+      "test": "cancels old links and handles rejected sign-in followed by automatic pasted-code success",
+      "proof": "Failed sign-in disables expired controls and offers a new sign-in link. ",
+      "references": [
+        "ui/e2e/accounts.spec.ts::cancels old links and handles rejected sign-in followed by automatic pasted-code success"
+      ]
+    },
+    "F-791": {
+      "path": "ui/e2e/login.spec.ts",
+      "test": "disables duplicate code submission and restores controls after an API error",
+      "proof": "A code-submission API error restores Add account and displays the error. ",
+      "references": [
+        "ui/e2e/login.spec.ts::disables duplicate code submission and restores controls after an API error"
+      ]
+    },
+    "F-792": {
+      "path": "ui/e2e/accounts.spec.ts",
+      "test": "cancels old links and handles rejected sign-in followed by automatic pasted-code success",
+      "proof": "Closing or restarting sign-in cancels its pending login and clears timers. Unit tests prove pending-login cancellation and timer cleanup; Chromium proves replacement and Escape/cancel.",
+      "references": [
+        "ui/e2e/accounts.spec.ts::cancels old links and handles rejected sign-in followed by automatic pasted-code success",
+        "ui/e2e/login.spec.ts::opens sign-in from an empty account pill welcome and empty session",
+        "ui/src/lib/login.test.ts::cancels late consent after close without restoring stale state",
+        "ui/src/lib/login.test.ts::offers a manual link when blocked and counts down through the last fifteen seconds"
+      ]
+    }
+  }
+}

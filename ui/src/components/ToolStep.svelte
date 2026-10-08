@@ -1,5 +1,7 @@
 <!-- Owns one tool call's state, command parameters, and expandable output. -->
 <script lang="ts">
+  import { preferences } from '../lib/preferences';
+  const prefs = preferences.state;
   import type { EventRecord } from '../gen/EventRecord';
   import { duration } from '../lib/format';
   let { event }: { event: Extract<EventRecord, { t: 'tool' }> } = $props();
@@ -17,7 +19,10 @@
           ? '×'
           : '✓'}</span
     ><span class="name">{event.name}</span><span class="state">{event.state.toLowerCase()}</span
-    >{#if event.secs !== undefined}<span class="time">{duration(event.secs)}</span>{/if}</summary
+    >{#if event.secs !== undefined}<span class="time">{duration(event.secs)}</span
+      >{/if}{#if $prefs.detail === 'detailed' && event.output}<span class="preview"
+        >{event.output.split('\n').slice(-3).join('\n')}</span
+      >{/if}</summary
   >
   <div class="body">
     {#if parameterText && parameterText !== 'null'}<pre>{parameterText}</pre>{/if}
@@ -41,6 +46,7 @@
   }
   summary {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: var(--space-2);
     cursor: pointer;
@@ -50,6 +56,14 @@
   }
   summary::-webkit-details-marker {
     display: none;
+  }
+  .preview {
+    flex-basis: 100%;
+    padding-left: 20px;
+    color: var(--ink-3);
+    white-space: pre-wrap;
+    max-height: 54px;
+    overflow: hidden;
   }
   .glyph {
     color: var(--ok);

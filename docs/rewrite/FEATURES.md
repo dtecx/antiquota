@@ -2,7 +2,7 @@
 
 This is the canonical checklist for parity and cutover. It contains 1009 baseline acceptance items: 397 engine/API/CLI items (F-001–F-397) and 612 UI/shell items (F-398–F-1009), including the requested zoom and window-persistence repairs. The 135 additional items (F-1010–F-1144) record explicit requirements from the user's rewrite task. They are requirements, not claims about legacy behavior. No feature has been dropped.
 
-Every row is independently reviewable and links to its [test report](TEST_REPORT.md). Slices 1, 3–8 and 9a have **331 Passed** acceptance items; the other **813 remain Pending**. Legacy test names and captured Python responses explain the baseline; they are not passing Rust or TypeScript proof. Mark a row complete only after its passing tests and evidence have been recorded. Store logs, screenshots and live-cost records in ignored `.handoff/evidence/`.
+Every row is independently reviewable and links to its [test report](TEST_REPORT.md). Slices 1, 3–8, 9a and 9b have **438 Passed** acceptance items; the other **706 remain Pending**. Legacy test names and captured Python responses explain the baseline; they are not passing Rust or TypeScript proof. Mark a row complete only after its passing tests and evidence have been recorded. Store logs, screenshots and live-cost records in ignored `.handoff/evidence/`.
 
 Legacy sources were read in full at commit `17ec296`; [engine](source-read-engine.md) and [UI/shell](source-read-ui.md) manifests record coverage and hashes. The sourced subsidiary inventories are [FEATURES-engine.md](FEATURES-engine.md) and [FEATURES-ui.md](FEATURES-ui.md). The canonical rows below contain their full acceptance text. UI identifiers were renumbered once from F-400–F-1011 to F-398–F-1009 to remove the unused gap; engine identifiers were unchanged.
 
@@ -122,7 +122,7 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | F-088 | [ ] <a id="f-088"></a>Show hook, MCP and plugin enabled status using own config and agy mcp list; tolerate an unreadable MCP status command. | `antiquota/stack.py:112`; `antiquota/stack.py:155` | `tests/test_stack.py::test_edit_and_delete_touch_only_the_stack` | [Pending](TEST_REPORT.md#f-088) |
 | F-089 | [ ] <a id="f-089"></a>Expose own GEMINI.md comparison and both allow/deny permissions with CLI comparison. | `antiquota/stack.py:165` | `tests/test_stack.py::test_edit_and_delete_touch_only_the_stack` | [Pending](TEST_REPORT.md#f-089) |
 | F-090 | [x] <a id="f-090"></a>Copy one item or all items of a kind from supported CLI/IDE sources into the own stack; reject missing source entries. | `antiquota/stack.py:173` | `tests/test_stack.py::test_copy_items_in_and_rewrite_paths_into_the_stack` | [Passed](TEST_REPORT.md#f-090) |
-| F-091 | [ ] <a id="f-091"></a>Copy everything only from CLI by reseeding own configuration while preserving conversation history. | `antiquota/stack.py:176` | `tests/test_accounts.py::test_stack_is_separate_from_your_agy_cli` | [Pending](TEST_REPORT.md#f-091) |
+| F-091 | [x] <a id="f-091"></a>Copy everything only from CLI by reseeding own configuration while preserving conversation history. | `antiquota/stack.py:176` | `tests/test_accounts.py::test_stack_is_separate_from_your_agy_cli` | [Passed](TEST_REPORT.md#f-091) |
 | F-092 | [x] <a id="f-092"></a>Copy GEMINI.md and permissions only from CLI, preserving other own settings when replacing the permission object. | `antiquota/stack.py:181` | `tests/test_stack.py::test_edit_and_delete_touch_only_the_stack` | [Passed](TEST_REPORT.md#f-092) |
 | F-093 | [x] <a id="f-093"></a>Copy plugin directories plus plugin data and corresponding own config entry. | `antiquota/stack.py:200` | Not covered | [Passed](TEST_REPORT.md#f-093) |
 | F-094 | [x] <a id="f-094"></a>Copy hook JSON with rewritten script paths and copy supporting hook scripts. | `antiquota/stack.py:211`; `antiquota/stack.py:221` | `tests/test_stack.py::test_copy_items_in_and_rewrite_paths_into_the_stack` | [Passed](TEST_REPORT.md#f-094) |
@@ -493,8 +493,8 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | F-408 | [ ] <a id="f-408"></a>External desktop links open in the system browser. | `antiquota/ui/app.js:18` | None identified | [Pending](TEST_REPORT.md#f-408) |
 | F-409 | [ ] <a id="f-409"></a>Clipboard reads use native APIs in desktop mode and browser APIs otherwise. | `antiquota/ui/app.js:19` | None identified | [Pending](TEST_REPORT.md#f-409) |
 | F-410 | [ ] <a id="f-410"></a>Clipboard writes use native APIs in desktop mode and browser APIs otherwise. | `antiquota/ui/app.js:20` | None identified | [Pending](TEST_REPORT.md#f-410) |
-| F-411 | [ ] <a id="f-411"></a>Malformed or unavailable localStorage does not prevent preference initialization. | `antiquota/ui/app.js:69` | None identified | [Pending](TEST_REPORT.md#f-411) |
-| F-412 | [ ] <a id="f-412"></a>Preference writes tolerate unavailable localStorage. | `antiquota/ui/app.js:96` | None identified | [Pending](TEST_REPORT.md#f-412) |
+| F-411 | [x] <a id="f-411"></a>Malformed or unavailable localStorage does not prevent preference initialization. | `antiquota/ui/app.js:69` | None identified | [Passed](TEST_REPORT.md#f-411) |
+| F-412 | [x] <a id="f-412"></a>Preference writes tolerate unavailable localStorage. | `antiquota/ui/app.js:96` | None identified | [Passed](TEST_REPORT.md#f-412) |
 ### Sessions and projects
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
@@ -785,144 +785,144 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | --- | --- | --- | --- | --- |
 | F-669 | [ ] <a id="f-669"></a>General settings exposes new-session defaults, keep-awake, autostart and notification controls. | `antiquota/ui/app.js:2098` | None identified | [Pending](TEST_REPORT.md#f-669) |
 | F-670 | [ ] <a id="f-670"></a>Appearance settings exposes desktop size and transcript presentation controls. | `antiquota/ui/app.js:2098` | None identified | [Pending](TEST_REPORT.md#f-670) |
-| F-671 | [ ] <a id="f-671"></a>Keyboard settings exposes shortcuts and slash-command reference. | `antiquota/ui/app.js:2098` | None identified | [Pending](TEST_REPORT.md#f-671) |
-| F-672 | [ ] <a id="f-672"></a>Accounts settings exposes accounts, sign-in, rotation controls and routing history. | `antiquota/ui/app.js:2098` | None identified | [Pending](TEST_REPORT.md#f-672) |
-| F-673 | [ ] <a id="f-673"></a>Usage settings exposes period controls, statistics, chart and account/model breakdowns. | `antiquota/ui/app.js:2098` | None identified | [Pending](TEST_REPORT.md#f-673) |
-| F-674 | [ ] <a id="f-674"></a>Agents & goals settings exposes verifier, round, approval and denial controls. | `antiquota/ui/app.js:2098` | None identified | [Pending](TEST_REPORT.md#f-674) |
+| F-671 | [x] <a id="f-671"></a>Keyboard settings exposes shortcuts and slash-command reference. | `antiquota/ui/app.js:2098` | None identified | [Passed](TEST_REPORT.md#f-671) |
+| F-672 | [x] <a id="f-672"></a>Accounts settings exposes accounts, sign-in, rotation controls and routing history. | `antiquota/ui/app.js:2098` | None identified | [Passed](TEST_REPORT.md#f-672) |
+| F-673 | [x] <a id="f-673"></a>Usage settings exposes period controls, statistics, chart and account/model breakdowns. | `antiquota/ui/app.js:2098` | None identified | [Passed](TEST_REPORT.md#f-673) |
+| F-674 | [x] <a id="f-674"></a>Agents & goals settings exposes verifier, round, approval and denial controls. | `antiquota/ui/app.js:2098` | None identified | [Passed](TEST_REPORT.md#f-674) |
 | F-675 | [x] <a id="f-675"></a>Permissions settings exposes independent allow and deny rules. | `antiquota/ui/app.js:2098` | None identified | [Passed](TEST_REPORT.md#f-675) |
-| F-676 | [ ] <a id="f-676"></a>Rules settings exposes private GEMINI.md and triggered rule files. | `antiquota/ui/app.js:2098` | None identified | [Pending](TEST_REPORT.md#f-676) |
-| F-677 | [ ] <a id="f-677"></a>Skills settings exposes installed and source skill comparisons and private editors. | `antiquota/ui/app.js:2098` | None identified | [Pending](TEST_REPORT.md#f-677) |
-| F-678 | [ ] <a id="f-678"></a>Hooks settings exposes event hook entries and enable/edit/copy/delete controls. | `antiquota/ui/app.js:2098` | None identified | [Pending](TEST_REPORT.md#f-678) |
-| F-679 | [ ] <a id="f-679"></a>MCP servers settings exposes tool servers and their configuration controls. | `antiquota/ui/app.js:2098` | None identified | [Pending](TEST_REPORT.md#f-679) |
-| F-680 | [ ] <a id="f-680"></a>Plugins settings exposes installed bundles and copying differing CLI bundles. | `antiquota/ui/app.js:2098` | None identified | [Pending](TEST_REPORT.md#f-680) |
+| F-676 | [x] <a id="f-676"></a>Rules settings exposes private GEMINI.md and triggered rule files. | `antiquota/ui/app.js:2098` | None identified | [Passed](TEST_REPORT.md#f-676) |
+| F-677 | [x] <a id="f-677"></a>Skills settings exposes installed and source skill comparisons and private editors. | `antiquota/ui/app.js:2098` | None identified | [Passed](TEST_REPORT.md#f-677) |
+| F-678 | [x] <a id="f-678"></a>Hooks settings exposes event hook entries and enable/edit/copy/delete controls. | `antiquota/ui/app.js:2098` | None identified | [Passed](TEST_REPORT.md#f-678) |
+| F-679 | [x] <a id="f-679"></a>MCP servers settings exposes tool servers and their configuration controls. | `antiquota/ui/app.js:2098` | None identified | [Passed](TEST_REPORT.md#f-679) |
+| F-680 | [x] <a id="f-680"></a>Plugins settings exposes installed bundles and copying differing CLI bundles. | `antiquota/ui/app.js:2098` | None identified | [Passed](TEST_REPORT.md#f-680) |
 | F-681 | [ ] <a id="f-681"></a>Engine settings exposes diagnostics, log, data directory, restart and private-stack replacement. | `antiquota/ui/app.js:2098` | None identified | [Pending](TEST_REPORT.md#f-681) |
-| F-682 | [ ] <a id="f-682"></a>Settings immediately displays cached content or a loading message while reading fresh data. | `antiquota/ui/app.js:2115` | None identified | [Pending](TEST_REPORT.md#f-682) |
-| F-683 | [ ] <a id="f-683"></a>Fresh data does not redraw an active editor or focused settings input. | `antiquota/ui/app.js:2124` | None identified | [Pending](TEST_REPORT.md#f-683) |
+| F-682 | [x] <a id="f-682"></a>Settings immediately displays cached content or a loading message while reading fresh data. | `antiquota/ui/app.js:2115` | None identified | [Passed](TEST_REPORT.md#f-682) |
+| F-683 | [x] <a id="f-683"></a>Fresh data does not redraw an active editor or focused settings input. | `antiquota/ui/app.js:2124` | None identified | [Passed](TEST_REPORT.md#f-683) |
 | F-684 | [ ] <a id="f-684"></a>Navigation shows installed item counts, account attention and private stack path. | `antiquota/ui/app.js:2131` | None identified | [Pending](TEST_REPORT.md#f-684) |
-| F-685 | [ ] <a id="f-685"></a>Close settings hides the panel and closes the active editor. | `antiquota/ui/app.js:2123` | None identified | [Pending](TEST_REPORT.md#f-685) |
+| F-685 | [x] <a id="f-685"></a>Close settings hides the panel and closes the active editor. | `antiquota/ui/app.js:2123` | None identified | [Passed](TEST_REPORT.md#f-685) |
 ### General and appearance controls
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-686 | [ ] <a id="f-686"></a>Default model family saves the selected concrete model and effort. | `antiquota/ui/app.js:2251` | None identified | [Pending](TEST_REPORT.md#f-686) |
-| F-687 | [ ] <a id="f-687"></a>Default effort saves the chosen model variant. | `antiquota/ui/app.js:2251` | None identified | [Pending](TEST_REPORT.md#f-687) |
-| F-688 | [ ] <a id="f-688"></a>Default mode persists default, accept-edits, plan or bypass. | `antiquota/ui/app.js:2251` | None identified | [Pending](TEST_REPORT.md#f-688) |
-| F-689 | [ ] <a id="f-689"></a>Default folder persists the entered folder and falls back to home when empty. | `antiquota/ui/app.js:2251` | None identified | [Pending](TEST_REPORT.md#f-689) |
-| F-690 | [ ] <a id="f-690"></a>Separate git worktree by default persists on/off. | `antiquota/ui/app.js:2251` | None identified | [Pending](TEST_REPORT.md#f-690) |
-| F-691 | [ ] <a id="f-691"></a>Keep awake while agents work persists on/off. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-691) |
+| F-686 | [x] <a id="f-686"></a>Default model family saves the selected concrete model and effort. | `antiquota/ui/app.js:2251` | None identified | [Passed](TEST_REPORT.md#f-686) |
+| F-687 | [x] <a id="f-687"></a>Default effort saves the chosen model variant. | `antiquota/ui/app.js:2251` | None identified | [Passed](TEST_REPORT.md#f-687) |
+| F-688 | [x] <a id="f-688"></a>Default mode persists default, accept-edits, plan or bypass. | `antiquota/ui/app.js:2251` | None identified | [Passed](TEST_REPORT.md#f-688) |
+| F-689 | [x] <a id="f-689"></a>Default folder persists the entered folder and falls back to home when empty. | `antiquota/ui/app.js:2251` | None identified | [Passed](TEST_REPORT.md#f-689) |
+| F-690 | [x] <a id="f-690"></a>Separate git worktree by default persists on/off. | `antiquota/ui/app.js:2251` | None identified | [Passed](TEST_REPORT.md#f-690) |
+| F-691 | [x] <a id="f-691"></a>Keep awake while agents work persists on/off. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-691) |
 | F-692 | [ ] <a id="f-692"></a>Open at login reads current native autostart state. | `antiquota/ui/app.js:2226` | None identified | [Pending](TEST_REPORT.md#f-692) |
 | F-693 | [ ] <a id="f-693"></a>Open at login enables or disables native autostart. | `antiquota/ui/app.js:2226` | None identified | [Pending](TEST_REPORT.md#f-693) |
 | F-694 | [ ] <a id="f-694"></a>An unavailable native autostart adapter removes its settings row. | `antiquota/ui/app.js:2226` | None identified | [Pending](TEST_REPORT.md#f-694) |
-| F-695 | [ ] <a id="f-695"></a>Turn-finished notifications can be enabled or disabled independently. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-695) |
-| F-696 | [ ] <a id="f-696"></a>Goal-met notifications can be enabled or disabled independently. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-696) |
-| F-697 | [ ] <a id="f-697"></a>Approval-needed notifications can be enabled or disabled independently. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-697) |
-| F-698 | [ ] <a id="f-698"></a>Job-finished notifications can be enabled or disabled independently. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-698) |
-| F-699 | [ ] <a id="f-699"></a>Exhausted-quota notifications can be enabled or disabled independently. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-699) |
-| F-700 | [ ] <a id="f-700"></a>Also while antiquota is in front persists focused-window notification preference. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-700) |
-| F-701 | [ ] <a id="f-701"></a>Focused visible app windows suppress notifications unless their focused preference is on. | `antiquota/ui/app.js:1398` | None identified | [Pending](TEST_REPORT.md#f-701) |
+| F-695 | [x] <a id="f-695"></a>Turn-finished notifications can be enabled or disabled independently. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-695) |
+| F-696 | [x] <a id="f-696"></a>Goal-met notifications can be enabled or disabled independently. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-696) |
+| F-697 | [x] <a id="f-697"></a>Approval-needed notifications can be enabled or disabled independently. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-697) |
+| F-698 | [x] <a id="f-698"></a>Job-finished notifications can be enabled or disabled independently. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-698) |
+| F-699 | [x] <a id="f-699"></a>Exhausted-quota notifications can be enabled or disabled independently. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-699) |
+| F-700 | [x] <a id="f-700"></a>Also while antiquota is in front persists focused-window notification preference. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-700) |
+| F-701 | [x] <a id="f-701"></a>Focused visible app windows suppress notifications unless their focused preference is on. | `antiquota/ui/app.js:1398` | None identified | [Passed](TEST_REPORT.md#f-701) |
 | F-702 | [ ] <a id="f-702"></a>Native notification permission is requested before sending an allowed notification. | `antiquota/ui/app.js:1398` | None identified | [Pending](TEST_REPORT.md#f-702) |
-| F-703 | [ ] <a id="f-703"></a>Browser notifications require granted permission and tolerate notification failures. | `antiquota/ui/app.js:1398` | None identified | [Pending](TEST_REPORT.md#f-703) |
+| F-703 | [x] <a id="f-703"></a>Browser notifications require granted permission and tolerate notification failures. | `antiquota/ui/app.js:1398` | None identified | [Passed](TEST_REPORT.md#f-703) |
 | F-704 | [ ] <a id="f-704"></a>The first browser message requests notification permission when its state is default. | `antiquota/ui/app.js:1100` | None identified | [Pending](TEST_REPORT.md#f-704) |
 | F-705 | [ ] <a id="f-705"></a>Native Interface size offers 80, 90, 100, 110, 125 and 140 percent presets. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-705) |
-| F-706 | [ ] <a id="f-706"></a>Browser Interface size explains the browser zoom controls instead of applying CSS scale. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-706) |
-| F-707 | [ ] <a id="f-707"></a>Grouped steps saves grouped mode and rebuilds the selected transcript. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-707) |
-| F-708 | [ ] <a id="f-708"></a>Every step saves ungrouped mode and rebuilds the selected transcript. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-708) |
-| F-709 | [ ] <a id="f-709"></a>Previews and thinking selects detailed or compact transcript mode. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-709) |
-| F-710 | [ ] <a id="f-710"></a>Times on turns persists timestamp visibility. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-710) |
+| F-706 | [x] <a id="f-706"></a>Browser Interface size explains the browser zoom controls instead of applying CSS scale. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-706) |
+| F-707 | [x] <a id="f-707"></a>Grouped steps saves grouped mode and rebuilds the selected transcript. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-707) |
+| F-708 | [x] <a id="f-708"></a>Every step saves ungrouped mode and rebuilds the selected transcript. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-708) |
+| F-709 | [x] <a id="f-709"></a>Previews and thinking selects detailed or compact transcript mode. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-709) |
+| F-710 | [x] <a id="f-710"></a>Times on turns persists timestamp visibility. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-710) |
 ### Account cards, rotation and usage
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-711 | [ ] <a id="f-711"></a>Accounts Probe now probes every account. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-711) |
-| F-712 | [ ] <a id="f-712"></a>Accounts Add account opens sign-in. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-712) |
-| F-713 | [ ] <a id="f-713"></a>Account cards show identity and paused, busy and last-probed states. | `antiquota/ui/app.js:1773` | None identified | [Pending](TEST_REPORT.md#f-713) |
-| F-714 | [ ] <a id="f-714"></a>Account cards show today's input, output, thinking and turn counts. | `antiquota/ui/app.js:1773` | None identified | [Pending](TEST_REPORT.md#f-714) |
-| F-715 | [ ] <a id="f-715"></a>Gemini and Claude/GPT quota windows appear separately. | `antiquota/ui/app.js:1773` | None identified | [Pending](TEST_REPORT.md#f-715) |
-| F-716 | [ ] <a id="f-716"></a>Quota windows show their reset time or disabled-window explanation in a tooltip. | `antiquota/ui/app.js:1773` | None identified | [Pending](TEST_REPORT.md#f-716) |
-| F-717 | [ ] <a id="f-717"></a>Account cards show walls, signed-out, cooldown and verification reasons. | `antiquota/ui/app.js:1773` | None identified | [Pending](TEST_REPORT.md#f-717) |
+| F-711 | [x] <a id="f-711"></a>Accounts Probe now probes every account. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-711) |
+| F-712 | [x] <a id="f-712"></a>Accounts Add account opens sign-in. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-712) |
+| F-713 | [x] <a id="f-713"></a>Account cards show identity and paused, busy and last-probed states. | `antiquota/ui/app.js:1773` | None identified | [Passed](TEST_REPORT.md#f-713) |
+| F-714 | [x] <a id="f-714"></a>Account cards show today's input, output, thinking and turn counts. | `antiquota/ui/app.js:1773` | None identified | [Passed](TEST_REPORT.md#f-714) |
+| F-715 | [x] <a id="f-715"></a>Gemini and Claude/GPT quota windows appear separately. | `antiquota/ui/app.js:1773` | None identified | [Passed](TEST_REPORT.md#f-715) |
+| F-716 | [x] <a id="f-716"></a>Quota windows show their reset time or disabled-window explanation in a tooltip. | `antiquota/ui/app.js:1773` | None identified | [Passed](TEST_REPORT.md#f-716) |
+| F-717 | [x] <a id="f-717"></a>Account cards show walls, signed-out, cooldown and verification reasons. | `antiquota/ui/app.js:1773` | None identified | [Passed](TEST_REPORT.md#f-717) |
 | F-718 | [ ] <a id="f-718"></a>Pause keeps an account out of rotation. | `antiquota/ui/app.js:1773` | None identified | [Pending](TEST_REPORT.md#f-718) |
 | F-719 | [ ] <a id="f-719"></a>Resume puts a paused account back into rotation. | `antiquota/ui/app.js:1773` | None identified | [Pending](TEST_REPORT.md#f-719) |
-| F-720 | [ ] <a id="f-720"></a>Check refreshes quota and sign-in state. | `antiquota/ui/app.js:1773` | None identified | [Pending](TEST_REPORT.md#f-720) |
-| F-721 | [ ] <a id="f-721"></a>Sign in again opens the account sign-in dialog. | `antiquota/ui/app.js:1773` | None identified | [Pending](TEST_REPORT.md#f-721) |
+| F-720 | [x] <a id="f-720"></a>Check refreshes quota and sign-in state. | `antiquota/ui/app.js:1773` | None identified | [Passed](TEST_REPORT.md#f-720) |
+| F-721 | [x] <a id="f-721"></a>Sign in again opens the account sign-in dialog. | `antiquota/ui/app.js:1773` | None identified | [Passed](TEST_REPORT.md#f-721) |
 | F-722 | [ ] <a id="f-722"></a>Remove requires confirmation and preserves separate CLI sign-in. | `antiquota/ui/app.js:1773` | None identified | [Pending](TEST_REPORT.md#f-722) |
-| F-723 | [ ] <a id="f-723"></a>A verification-required account opens its exact Google verification URL. | `antiquota/ui/app.js:1687` | None identified | [Pending](TEST_REPORT.md#f-723) |
-| F-724 | [ ] <a id="f-724"></a>Check again reports readiness or continued verification after probing. | `antiquota/ui/app.js:1687` | None identified | [Pending](TEST_REPORT.md#f-724) |
-| F-725 | [ ] <a id="f-725"></a>Next account selects soonest-reset-first, one-by-one or round-robin rotation. | `antiquota/ui/app.js:2273` | None identified | [Pending](TEST_REPORT.md#f-725) |
-| F-726 | [ ] <a id="f-726"></a>Reserve accepts and persists 0–50 percent. | `antiquota/ui/app.js:2273` | None identified | [Pending](TEST_REPORT.md#f-726) |
-| F-727 | [ ] <a id="f-727"></a>Quota check accepts and persists 2–240 minutes. | `antiquota/ui/app.js:2273` | None identified | [Pending](TEST_REPORT.md#f-727) |
-| F-728 | [ ] <a id="f-728"></a>Routing history displays newest-first pick decisions with session and prior account. | `antiquota/ui/app.js:1799` | None identified | [Pending](TEST_REPORT.md#f-728) |
-| F-729 | [ ] <a id="f-729"></a>Routing history displays walls, cooldowns, retries, signed-out, paused and resumed decisions. | `antiquota/ui/app.js:1799` | None identified | [Pending](TEST_REPORT.md#f-729) |
-| F-730 | [ ] <a id="f-730"></a>No routing decisions has an explicit empty state. | `antiquota/ui/app.js:1799` | None identified | [Pending](TEST_REPORT.md#f-730) |
-| F-731 | [ ] <a id="f-731"></a>Usage selects seven, fourteen or thirty days. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-731) |
-| F-732 | [ ] <a id="f-732"></a>Usage displays period total tokens and turns. | `antiquota/ui/app.js:1708` | None identified | [Pending](TEST_REPORT.md#f-732) |
-| F-733 | [ ] <a id="f-733"></a>Usage displays today's tokens and turns. | `antiquota/ui/app.js:1708` | None identified | [Pending](TEST_REPORT.md#f-733) |
-| F-734 | [ ] <a id="f-734"></a>Usage displays peak day and mean tokens per turn. | `antiquota/ui/app.js:1708` | None identified | [Pending](TEST_REPORT.md#f-734) |
-| F-735 | [ ] <a id="f-735"></a>Daily chart bars highlight the latest day with the accent color. | `antiquota/ui/app.js:1708` | None identified | [Pending](TEST_REPORT.md#f-735) |
-| F-736 | [ ] <a id="f-736"></a>Hover shows date, tokens, turns and account contributions sorted by tokens. | `antiquota/ui/app.js:1708` | None identified | [Pending](TEST_REPORT.md#f-736) |
-| F-737 | [ ] <a id="f-737"></a>Chart tooltips stay inside left, middle and right chart boundaries. | `antiquota/ui/app.js:1708` | None identified | [Pending](TEST_REPORT.md#f-737) |
-| F-738 | [ ] <a id="f-738"></a>Usage account tables show period tokens, today tokens and turns ordered by total tokens. | `antiquota/ui/app.js:1756` | None identified | [Pending](TEST_REPORT.md#f-738) |
-| F-739 | [ ] <a id="f-739"></a>Usage model tables show tokens and percentage share ordered by tokens. | `antiquota/ui/app.js:1762` | None identified | [Pending](TEST_REPORT.md#f-739) |
-| F-740 | [ ] <a id="f-740"></a>Empty periods display No turns in this period yet. | `antiquota/ui/app.js:1759` | None identified | [Pending](TEST_REPORT.md#f-740) |
-| F-741 | [ ] <a id="f-741"></a>The sidebar account pill displays available count and serving account/quota. | `antiquota/ui/app.js:385` | None identified | [Pending](TEST_REPORT.md#f-741) |
-| F-742 | [ ] <a id="f-742"></a>The sidebar account strip shows account quota and paused/wall/attention status. | `antiquota/ui/app.js:385` | None identified | [Pending](TEST_REPORT.md#f-742) |
-| F-743 | [ ] <a id="f-743"></a>The account pill opens Usage when accounts exist. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-743) |
-| F-744 | [ ] <a id="f-744"></a>The account pill opens Add Google account when no accounts exist. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-744) |
+| F-723 | [x] <a id="f-723"></a>A verification-required account opens its exact Google verification URL. | `antiquota/ui/app.js:1687` | None identified | [Passed](TEST_REPORT.md#f-723) |
+| F-724 | [x] <a id="f-724"></a>Check again reports readiness or continued verification after probing. | `antiquota/ui/app.js:1687` | None identified | [Passed](TEST_REPORT.md#f-724) |
+| F-725 | [x] <a id="f-725"></a>Next account selects soonest-reset-first, one-by-one or round-robin rotation. | `antiquota/ui/app.js:2273` | None identified | [Passed](TEST_REPORT.md#f-725) |
+| F-726 | [x] <a id="f-726"></a>Reserve accepts and persists 0–50 percent. | `antiquota/ui/app.js:2273` | None identified | [Passed](TEST_REPORT.md#f-726) |
+| F-727 | [x] <a id="f-727"></a>Quota check accepts and persists 2–240 minutes. | `antiquota/ui/app.js:2273` | None identified | [Passed](TEST_REPORT.md#f-727) |
+| F-728 | [x] <a id="f-728"></a>Routing history displays newest-first pick decisions with session and prior account. | `antiquota/ui/app.js:1799` | None identified | [Passed](TEST_REPORT.md#f-728) |
+| F-729 | [x] <a id="f-729"></a>Routing history displays walls, cooldowns, retries, signed-out, paused and resumed decisions. | `antiquota/ui/app.js:1799` | None identified | [Passed](TEST_REPORT.md#f-729) |
+| F-730 | [x] <a id="f-730"></a>No routing decisions has an explicit empty state. | `antiquota/ui/app.js:1799` | None identified | [Passed](TEST_REPORT.md#f-730) |
+| F-731 | [x] <a id="f-731"></a>Usage selects seven, fourteen or thirty days. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-731) |
+| F-732 | [x] <a id="f-732"></a>Usage displays period total tokens and turns. | `antiquota/ui/app.js:1708` | None identified | [Passed](TEST_REPORT.md#f-732) |
+| F-733 | [x] <a id="f-733"></a>Usage displays today's tokens and turns. | `antiquota/ui/app.js:1708` | None identified | [Passed](TEST_REPORT.md#f-733) |
+| F-734 | [x] <a id="f-734"></a>Usage displays peak day and mean tokens per turn. | `antiquota/ui/app.js:1708` | None identified | [Passed](TEST_REPORT.md#f-734) |
+| F-735 | [x] <a id="f-735"></a>Daily chart bars highlight the latest day with the accent color. | `antiquota/ui/app.js:1708` | None identified | [Passed](TEST_REPORT.md#f-735) |
+| F-736 | [x] <a id="f-736"></a>Hover shows date, tokens, turns and account contributions sorted by tokens. | `antiquota/ui/app.js:1708` | None identified | [Passed](TEST_REPORT.md#f-736) |
+| F-737 | [x] <a id="f-737"></a>Chart tooltips stay inside left, middle and right chart boundaries. | `antiquota/ui/app.js:1708` | None identified | [Passed](TEST_REPORT.md#f-737) |
+| F-738 | [x] <a id="f-738"></a>Usage account tables show period tokens, today tokens and turns ordered by total tokens. | `antiquota/ui/app.js:1756` | None identified | [Passed](TEST_REPORT.md#f-738) |
+| F-739 | [x] <a id="f-739"></a>Usage model tables show tokens and percentage share ordered by tokens. | `antiquota/ui/app.js:1762` | None identified | [Passed](TEST_REPORT.md#f-739) |
+| F-740 | [x] <a id="f-740"></a>Empty periods display No turns in this period yet. | `antiquota/ui/app.js:1759` | None identified | [Passed](TEST_REPORT.md#f-740) |
+| F-741 | [x] <a id="f-741"></a>The sidebar account pill displays available count and serving account/quota. | `antiquota/ui/app.js:385` | None identified | [Passed](TEST_REPORT.md#f-741) |
+| F-742 | [x] <a id="f-742"></a>The sidebar account strip shows account quota and paused/wall/attention status. | `antiquota/ui/app.js:385` | None identified | [Passed](TEST_REPORT.md#f-742) |
+| F-743 | [x] <a id="f-743"></a>The account pill opens Usage when accounts exist. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-743) |
+| F-744 | [x] <a id="f-744"></a>The account pill opens Add Google account when no accounts exist. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-744) |
 ### Agent, permission and stack controls
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-745 | [ ] <a id="f-745"></a>Verifier model saves a concrete verifier model ID. | `antiquota/ui/app.js:2286` | None identified | [Pending](TEST_REPORT.md#f-745) |
-| F-746 | [ ] <a id="f-746"></a>Rounds accepts and saves 1–500 rounds. | `antiquota/ui/app.js:2286` | None identified | [Pending](TEST_REPORT.md#f-746) |
+| F-745 | [x] <a id="f-745"></a>Verifier model saves a concrete verifier model ID. | `antiquota/ui/app.js:2286` | None identified | [Passed](TEST_REPORT.md#f-745) |
+| F-746 | [x] <a id="f-746"></a>Rounds accepts and saves 1–500 rounds. | `antiquota/ui/app.js:2286` | None identified | [Passed](TEST_REPORT.md#f-746) |
 | F-747 | [x] <a id="f-747"></a>Approval wait accepts and saves 1–240 minutes. | `antiquota/ui/app.js:2286` | None identified | [Passed](TEST_REPORT.md#f-747) |
-| F-748 | [ ] <a id="f-748"></a>Retries after a denial accepts and saves 0–10 retries. | `antiquota/ui/app.js:2286` | None identified | [Pending](TEST_REPORT.md#f-748) |
-| F-749 | [ ] <a id="f-749"></a>Plan mode explains its read-only planning and execution workflow. | `antiquota/ui/app.js:2286` | None identified | [Pending](TEST_REPORT.md#f-749) |
+| F-748 | [x] <a id="f-748"></a>Retries after a denial accepts and saves 0–10 retries. | `antiquota/ui/app.js:2286` | None identified | [Passed](TEST_REPORT.md#f-748) |
+| F-749 | [x] <a id="f-749"></a>Plan mode explains its read-only planning and execution workflow. | `antiquota/ui/app.js:2286` | None identified | [Passed](TEST_REPORT.md#f-749) |
 | F-750 | [x] <a id="f-750"></a>Allow rules can be listed, added and individually removed. | `antiquota/ui/app.js:2307` | None identified | [Passed](TEST_REPORT.md#f-750) |
 | F-751 | [x] <a id="f-751"></a>Deny rules can be listed, added and individually removed. | `antiquota/ui/app.js:2307` | None identified | [Passed](TEST_REPORT.md#f-751) |
-| F-752 | [ ] <a id="f-752"></a>Copy from agy CLI replaces differing private permission rules. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-752) |
-| F-753 | [ ] <a id="f-753"></a>Rules edits private GEMINI.md with Save and Cancel. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-753) |
-| F-754 | [ ] <a id="f-754"></a>New rule creates an always_on template and adds .md when absent. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-754) |
-| F-755 | [ ] <a id="f-755"></a>New skill creates SKILL.md with name and description metadata. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-755) |
-| F-756 | [ ] <a id="f-756"></a>New hook creates a named PostToolUse command-hook template. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-756) |
-| F-757 | [ ] <a id="f-757"></a>Add server creates a named MCP command/argument template. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-757) |
-| F-758 | [ ] <a id="f-758"></a>Plugins lists private bundles and imports differing CLI bundles. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-758) |
-| F-759 | [ ] <a id="f-759"></a>Stack rows show same, different or source-only state for each supported source. | `antiquota/ui/app.js:2188` | None identified | [Pending](TEST_REPORT.md#f-759) |
-| F-760 | [ ] <a id="f-760"></a>Enable or disable preserves a stack item without deleting it. | `antiquota/ui/app.js:2188` | None identified | [Pending](TEST_REPORT.md#f-760) |
-| F-761 | [ ] <a id="f-761"></a>Edit opens the private rule or skill text editor. | `antiquota/ui/app.js:2188` | None identified | [Pending](TEST_REPORT.md#f-761) |
-| F-762 | [ ] <a id="f-762"></a>Edit opens the private hook or MCP JSON editor. | `antiquota/ui/app.js:2188` | None identified | [Pending](TEST_REPORT.md#f-762) |
-| F-763 | [ ] <a id="f-763"></a>Copy or Replace imports the selected source, kind and optional name into the private stack. | `antiquota/ui/app.js:2144` | None identified | [Pending](TEST_REPORT.md#f-763) |
-| F-764 | [ ] <a id="f-764"></a>Copy all differing items imports every differing item from its supported source. | `antiquota/ui/app.js:2155` | None identified | [Pending](TEST_REPORT.md#f-764) |
-| F-765 | [ ] <a id="f-765"></a>Delete requires confirmation and preserves the source CLI or IDE item. | `antiquota/ui/app.js:2188` | None identified | [Pending](TEST_REPORT.md#f-765) |
-| F-766 | [ ] <a id="f-766"></a>Invalid editor JSON is rejected before saving. | `antiquota/ui/app.js:2178` | None identified | [Pending](TEST_REPORT.md#f-766) |
-| F-767 | [ ] <a id="f-767"></a>Text editors load the private file, save changes or cancel the editor. | `antiquota/ui/app.js:2171` | None identified | [Pending](TEST_REPORT.md#f-767) |
-| F-768 | [ ] <a id="f-768"></a>JSON editors load the private item, save valid changes or cancel the editor. | `antiquota/ui/app.js:2178` | None identified | [Pending](TEST_REPORT.md#f-768) |
-| F-769 | [ ] <a id="f-769"></a>New item names allow letters, digits, dot, underscore, colon, at, plus and minus. | `antiquota/ui/app.js:2210` | None identified | [Pending](TEST_REPORT.md#f-769) |
-| F-770 | [ ] <a id="f-770"></a>New item names reject unsafe characters and a leading dot. | `antiquota/ui/app.js:2210` | None identified | [Pending](TEST_REPORT.md#f-770) |
-| F-771 | [ ] <a id="f-771"></a>An empty stack section displays Nothing here yet. | `antiquota/ui/app.js:250` | None identified | [Pending](TEST_REPORT.md#f-771) |
+| F-752 | [x] <a id="f-752"></a>Copy from agy CLI replaces differing private permission rules. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-752) |
+| F-753 | [x] <a id="f-753"></a>Rules edits private GEMINI.md with Save and Cancel. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-753) |
+| F-754 | [x] <a id="f-754"></a>New rule creates an always_on template and adds .md when absent. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-754) |
+| F-755 | [x] <a id="f-755"></a>New skill creates SKILL.md with name and description metadata. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-755) |
+| F-756 | [x] <a id="f-756"></a>New hook creates a named PostToolUse command-hook template. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-756) |
+| F-757 | [x] <a id="f-757"></a>Add server creates a named MCP command/argument template. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-757) |
+| F-758 | [x] <a id="f-758"></a>Plugins lists private bundles and imports differing CLI bundles. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-758) |
+| F-759 | [x] <a id="f-759"></a>Stack rows show same, different or source-only state for each supported source. | `antiquota/ui/app.js:2188` | None identified | [Passed](TEST_REPORT.md#f-759) |
+| F-760 | [x] <a id="f-760"></a>Enable or disable preserves a stack item without deleting it. | `antiquota/ui/app.js:2188` | None identified | [Passed](TEST_REPORT.md#f-760) |
+| F-761 | [x] <a id="f-761"></a>Edit opens the private rule or skill text editor. | `antiquota/ui/app.js:2188` | None identified | [Passed](TEST_REPORT.md#f-761) |
+| F-762 | [x] <a id="f-762"></a>Edit opens the private hook or MCP JSON editor. | `antiquota/ui/app.js:2188` | None identified | [Passed](TEST_REPORT.md#f-762) |
+| F-763 | [x] <a id="f-763"></a>Copy or Replace imports the selected source, kind and optional name into the private stack. | `antiquota/ui/app.js:2144` | None identified | [Passed](TEST_REPORT.md#f-763) |
+| F-764 | [x] <a id="f-764"></a>Copy all differing items imports every differing item from its supported source. | `antiquota/ui/app.js:2155` | None identified | [Passed](TEST_REPORT.md#f-764) |
+| F-765 | [x] <a id="f-765"></a>Delete requires confirmation and preserves the source CLI or IDE item. | `antiquota/ui/app.js:2188` | None identified | [Passed](TEST_REPORT.md#f-765) |
+| F-766 | [x] <a id="f-766"></a>Invalid editor JSON is rejected before saving. | `antiquota/ui/app.js:2178` | None identified | [Passed](TEST_REPORT.md#f-766) |
+| F-767 | [x] <a id="f-767"></a>Text editors load the private file, save changes or cancel the editor. | `antiquota/ui/app.js:2171` | None identified | [Passed](TEST_REPORT.md#f-767) |
+| F-768 | [x] <a id="f-768"></a>JSON editors load the private item, save valid changes or cancel the editor. | `antiquota/ui/app.js:2178` | None identified | [Passed](TEST_REPORT.md#f-768) |
+| F-769 | [x] <a id="f-769"></a>New item names allow letters, digits, dot, underscore, colon, at, plus and minus. | `antiquota/ui/app.js:2210` | None identified | [Passed](TEST_REPORT.md#f-769) |
+| F-770 | [x] <a id="f-770"></a>New item names reject unsafe characters and a leading dot. | `antiquota/ui/app.js:2210` | None identified | [Passed](TEST_REPORT.md#f-770) |
+| F-771 | [x] <a id="f-771"></a>An empty stack section displays Nothing here yet. | `antiquota/ui/app.js:250` | None identified | [Passed](TEST_REPORT.md#f-771) |
 | F-772 | [ ] <a id="f-772"></a>Engine diagnostics shows version, URL/PID/ownership, data, stack, agy, hook and counts. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-772) |
-| F-773 | [ ] <a id="f-773"></a>Engine log opens engine output in the viewer. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-773) |
+| F-773 | [x] <a id="f-773"></a>Engine log opens engine output in the viewer. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-773) |
 | F-774 | [ ] <a id="f-774"></a>Show data folder reveals the private directory in desktop mode. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-774) |
 | F-775 | [ ] <a id="f-775"></a>Restart engine confirms before requesting shutdown and reports the expected app restart. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-775) |
-| F-776 | [ ] <a id="f-776"></a>Copy everything again from agy CLI confirms replacement of private configuration edits. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-776) |
+| F-776 | [x] <a id="f-776"></a>Copy everything again from agy CLI confirms replacement of private configuration edits. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-776) |
 ### Account sign-in states
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-777 | [ ] <a id="f-777"></a>Opening Add Google account resets prior code, sign-in state and timers. | `antiquota/ui/app.js:1996` | None identified | [Pending](TEST_REPORT.md#f-777) |
-| F-778 | [ ] <a id="f-778"></a>Browser sign-in reserves a tab before requesting the URL to avoid popup blocking. | `antiquota/ui/app.js:2013` | None identified | [Pending](TEST_REPORT.md#f-778) |
+| F-777 | [x] <a id="f-777"></a>Opening Add Google account resets prior code, sign-in state and timers. | `antiquota/ui/app.js:1996` | None identified | [Passed](TEST_REPORT.md#f-777) |
+| F-778 | [x] <a id="f-778"></a>Browser sign-in reserves a tab before requesting the URL to avoid popup blocking. | `antiquota/ui/app.js:2013` | None identified | [Passed](TEST_REPORT.md#f-778) |
 | F-779 | [ ] <a id="f-779"></a>Native sign-in opens the returned consent URL in the system browser. | `antiquota/ui/app.js:2013` | None identified | [Pending](TEST_REPORT.md#f-779) |
-| F-780 | [ ] <a id="f-780"></a>Sign-in exposes a manual link when opening the browser fails. | `antiquota/ui/app.js:2013` | None identified | [Pending](TEST_REPORT.md#f-780) |
-| F-781 | [ ] <a id="f-781"></a>New sign-in link cancels the previous login before creating another. | `antiquota/ui/app.js:2013` | None identified | [Pending](TEST_REPORT.md#f-781) |
-| F-782 | [ ] <a id="f-782"></a>Sign-in countdown highlights its last fifteen seconds and expiry. | `antiquota/ui/app.js:2013` | None identified | [Pending](TEST_REPORT.md#f-782) |
-| F-783 | [ ] <a id="f-783"></a>State polling runs every two seconds and accepts completion without pasting a code. | `antiquota/ui/app.js:2013` | None identified | [Pending](TEST_REPORT.md#f-783) |
-| F-784 | [ ] <a id="f-784"></a>Returning focus reads a valid code from the clipboard when the field is empty. | `antiquota/ui/app.js:2074` | None identified | [Pending](TEST_REPORT.md#f-784) |
-| F-785 | [ ] <a id="f-785"></a>Paste rejects values outside the 4/ code format with at least twenty permitted characters. | `antiquota/ui/app.js:2074` | None identified | [Pending](TEST_REPORT.md#f-785) |
-| F-786 | [ ] <a id="f-786"></a>Clipboard access failure explains manual paste. | `antiquota/ui/app.js:2074` | None identified | [Pending](TEST_REPORT.md#f-786) |
-| F-787 | [ ] <a id="f-787"></a>Submitting a code disables Add account while its check runs. | `antiquota/ui/app.js:2087` | None identified | [Pending](TEST_REPORT.md#f-787) |
-| F-788 | [ ] <a id="f-788"></a>Successful sign-in reports identity, refreshes accounts and closes after 1.2 seconds. | `antiquota/ui/app.js:2051` | None identified | [Pending](TEST_REPORT.md#f-788) |
-| F-789 | [ ] <a id="f-789"></a>Verification state disables code controls and shows verification actions. | `antiquota/ui/app.js:2051` | None identified | [Pending](TEST_REPORT.md#f-789) |
-| F-790 | [ ] <a id="f-790"></a>Failed sign-in disables expired controls and offers a new sign-in link. | `antiquota/ui/app.js:2051` | None identified | [Pending](TEST_REPORT.md#f-790) |
-| F-791 | [ ] <a id="f-791"></a>A code-submission API error restores Add account and displays the error. | `antiquota/ui/app.js:2087` | None identified | [Pending](TEST_REPORT.md#f-791) |
-| F-792 | [ ] <a id="f-792"></a>Closing or restarting sign-in cancels its pending login and clears timers. | `antiquota/ui/app.js:2007` | None identified | [Pending](TEST_REPORT.md#f-792) |
+| F-780 | [x] <a id="f-780"></a>Sign-in exposes a manual link when opening the browser fails. | `antiquota/ui/app.js:2013` | None identified | [Passed](TEST_REPORT.md#f-780) |
+| F-781 | [x] <a id="f-781"></a>New sign-in link cancels the previous login before creating another. | `antiquota/ui/app.js:2013` | None identified | [Passed](TEST_REPORT.md#f-781) |
+| F-782 | [x] <a id="f-782"></a>Sign-in countdown highlights its last fifteen seconds and expiry. | `antiquota/ui/app.js:2013` | None identified | [Passed](TEST_REPORT.md#f-782) |
+| F-783 | [x] <a id="f-783"></a>State polling runs every two seconds and accepts completion without pasting a code. | `antiquota/ui/app.js:2013` | None identified | [Passed](TEST_REPORT.md#f-783) |
+| F-784 | [x] <a id="f-784"></a>Returning focus reads a valid code from the clipboard when the field is empty. | `antiquota/ui/app.js:2074` | None identified | [Passed](TEST_REPORT.md#f-784) |
+| F-785 | [x] <a id="f-785"></a>Paste rejects values outside the 4/ code format with at least twenty permitted characters. | `antiquota/ui/app.js:2074` | None identified | [Passed](TEST_REPORT.md#f-785) |
+| F-786 | [x] <a id="f-786"></a>Clipboard access failure explains manual paste. | `antiquota/ui/app.js:2074` | None identified | [Passed](TEST_REPORT.md#f-786) |
+| F-787 | [x] <a id="f-787"></a>Submitting a code disables Add account while its check runs. | `antiquota/ui/app.js:2087` | None identified | [Passed](TEST_REPORT.md#f-787) |
+| F-788 | [x] <a id="f-788"></a>Successful sign-in reports identity, refreshes accounts and closes after 1.2 seconds. | `antiquota/ui/app.js:2051` | None identified | [Passed](TEST_REPORT.md#f-788) |
+| F-789 | [x] <a id="f-789"></a>Verification state disables code controls and shows verification actions. | `antiquota/ui/app.js:2051` | None identified | [Passed](TEST_REPORT.md#f-789) |
+| F-790 | [x] <a id="f-790"></a>Failed sign-in disables expired controls and offers a new sign-in link. | `antiquota/ui/app.js:2051` | None identified | [Passed](TEST_REPORT.md#f-790) |
+| F-791 | [x] <a id="f-791"></a>A code-submission API error restores Add account and displays the error. | `antiquota/ui/app.js:2087` | None identified | [Passed](TEST_REPORT.md#f-791) |
+| F-792 | [x] <a id="f-792"></a>Closing or restarting sign-in cancels its pending login and clears timers. | `antiquota/ui/app.js:2007` | None identified | [Passed](TEST_REPORT.md#f-792) |
 ### Every slash-command entry point
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
@@ -1365,7 +1365,7 @@ The following acceptance items come from the authorized rewrite task, not from a
 | F-1108 | [ ] <a id="f-1108"></a>Playwright verifies both split panes at 80, 100, 125 and 150 percent zoom. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1108) |
 | F-1109 | [ ] <a id="f-1109"></a>Playwright types into the terminal, resizes it and restarts its process. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1109) |
 | F-1110 | [x] <a id="f-1110"></a>Playwright uses recorded WAV audio and silence to verify dictation text and the silence guard. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1110) |
-| F-1111 | [ ] <a id="f-1111"></a>Playwright verifies the usage chart and its tooltips. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1111) |
+| F-1111 | [x] <a id="f-1111"></a>Playwright verifies the usage chart and its tooltips. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1111) |
 | F-1112 | [ ] <a id="f-1112"></a>Playwright exercises project and session menus. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1112) |
 | F-1113 | [x] <a id="f-1113"></a>Playwright captures light and dark themes and narrow-window states. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1113) |
 

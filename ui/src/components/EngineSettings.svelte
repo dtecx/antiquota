@@ -1,0 +1,134 @@
+<!-- Presents engine identity and deliberate lifecycle actions. -->
+<script lang="ts">
+  import { onMount } from 'svelte';
+  import type { Api } from '../lib/api';
+  import type { SettingsStore } from '../lib/settings';
+  import type { EngineResponse } from '../gen/EngineResponse';
+  import { ask } from '../lib/confirm';
+  let { api, settings }: { api: Api; settings: SettingsStore } = $props();
+  let engine = $state<EngineResponse | null>(null),
+    log = $state<string | null>(null),
+    feedback = $state('');
+  onMount(() => {
+    let active = true;
+    void api
+      .engine()
+      .then((value) => {
+        if (active) engine = value;
+      })
+      .catch(settings.fail);
+    return () => {
+      active = false;
+    };
+  });
+  async function showLog() {
+    try {
+      log = (await api.engineLog()).text;
+    } catch (error) {
+      settings.fail(error);
+    }
+  }
+  async function restart() {
+    if (
+      await ask(
+        'Restart the engine?',
+        'Running turns stop and goals pause; background jobs keep running. The desktop app starts the engine again. In a browser, restart antiquota serve.',
+        { ok: 'Restart' },
+      )
+    ) {
+      try {
+        await api.shutdown();
+        feedback = 'Engine restarting…';
+      } catch (error) {
+        settings.fail(error);
+      }
+    }
+  }
+  async function replace() {
+    if (
+      await ask(
+        'Replace antiquota’s private configuration?',
+        'Edits made here are lost; conversations stay. Your agy CLI and IDE remain separate.',
+        { ok: 'Replace', danger: true },
+      )
+    )
+      await settings.copy('cli', 'everything');
+  }
+</script>
+
+<section>
+  {#if engine}<dl>
+      {#each [['Version', engine.version], ['Engine', `${engine.url} · pid ${engine.pid} · ${engine.by}`], ['Data', engine.base], ['Stack', engine.stack], ['agy', engine.agy || 'not found'], ['Permissions', engine.hook ? 'antiquota decides each tool call (hook on)' : 'agy’s own headless rules (hook off)'], ['Sessions', `${engine.sessions} · ${engine.accounts} accounts`]] as [label, value] (label)}<dt
+        >
+          {label}
+        </dt>
+        <dd>{value}</dd>{/each}
+    </dl>
+    <div class="actions">
+      <button onclick={showLog}>Engine log</button><button onclick={restart}>Restart engine</button>
+    </div>
+    <h3>antiquota stack</h3>
+    <p>
+      Every account uses antiquota’s private rules, skills, hooks, servers, plugins and permissions.
+      These edits never change your agy CLI or IDE setup.
+    </p>
+    <button onclick={replace}>Copy everything again from agy CLI</button>{:else}<p>
+      Reading engine details…
+    </p>{/if}{#if log !== null}<div class="log">
+      <header>
+        <h3>Engine log</h3>
+        <button onclick={() => (log = null)}>Close log</button>
+      </header>
+      <pre>{log}</pre>
+    </div>{/if}{#if feedback}<p role="status">{feedback}</p>{/if}
+</section>
+
+<style>
+  section {
+    display: grid;
+    gap: var(--space-4);
+  }
+  dl {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: var(--space-3);
+    font-size: 12px;
+  }
+  dt {
+    color: var(--ink-3);
+  }
+  dd {
+    overflow-wrap: anywhere;
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+  .actions,
+  header {
+    display: flex;
+    gap: var(--space-2);
+    justify-content: space-between;
+  }
+  button {
+    font-size: 11px;
+  }
+  h3 {
+    font-size: 13px;
+    font-weight: 500;
+  }
+  p {
+    font-size: 11px;
+    color: var(--ink-3);
+    line-height: 1.7;
+  }
+  .log {
+    padding: var(--space-4);
+    background: var(--well);
+    border-radius: var(--r-sm);
+  }
+  pre {
+    max-height: 320px;
+    overflow: auto;
+    margin-top: var(--space-3);
+    font-size: 11px;
+  }
+</style>

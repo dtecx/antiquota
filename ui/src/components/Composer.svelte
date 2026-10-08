@@ -1,5 +1,6 @@
 <!-- Owns the prompt control, attachments, dictation and send/stop; drafts live in the store. -->
 <script lang="ts">
+  import { notifications } from '../lib/notifications';
   import { tick } from 'svelte';
   import type { Api } from '../lib/api';
   import type { Workbench } from '../lib/workbench';
@@ -44,6 +45,7 @@
   }
   async function submit() {
     if (tray.some((file) => file.uploading)) return say('Still uploading…');
+    void notifications.request();
     const id = sid;
     const paths = ready;
     revising.set(false);

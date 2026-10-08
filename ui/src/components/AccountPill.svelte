@@ -14,7 +14,7 @@
 <button
   class="pill quiet"
   aria-label="Accounts and quota"
-  onclick={() => ($view.accounts.length ? accounts.open() : login.open())}
+  onclick={() => ($view.accounts.length ? accounts.open('usage') : login.open())}
 >
   <span class="strip" aria-label="Account quota status"
     >{#each $view.accounts as account (account.slot)}{@const strip = accountStrip(account, pool)}<i

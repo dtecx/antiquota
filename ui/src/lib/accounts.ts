@@ -7,9 +7,11 @@ import type { StateResponse } from '../gen/StateResponse';
 import type { StreamEvent } from '../gen/StreamEvent';
 import type { RoutingEntry } from '../gen/RoutingEntry';
 import type { Api } from './api';
+import type { SettingsSection, SettingsStore } from './settings';
 
 export interface AccountsView {
   open: boolean;
+  section: SettingsSection;
   accounts: Account[];
   defaults: Settings | null;
   fields: { rotation: string; reserve: string; quota_poll: string };
@@ -22,9 +24,13 @@ export interface AccountsView {
   error: string;
   feedback: string;
 }
-export function createAccounts(api: Api) {
+export function createAccounts(
+  api: Api,
+  settingsStore?: Pick<SettingsStore, 'accept' | 'reading'>,
+) {
   const state = writable<AccountsView>({
     open: false,
+    section: 'accounts',
     accounts: [],
     defaults: null,
     fields: { rotation: 'perishable', reserve: '3', quota_poll: '10' },
@@ -66,6 +72,7 @@ export function createAccounts(api: Api) {
     }));
   }
   async function refresh() {
+    const settingsReading = settingsStore?.reading();
     const own = ++generation;
     const before = revision;
     const routingOwn = ++routingGeneration;
@@ -79,6 +86,7 @@ export function createAccounts(api: Api) {
       if (own !== generation) return;
       if (revision === before) accept(accounts);
       defaults(settings.defaults);
+      settingsStore?.accept(settings, settingsReading);
       if (routingOwn === routingGeneration) state.update((value) => ({ ...value, routing }));
     } catch (error) {
       if (own === generation) fail(error);
@@ -182,10 +190,11 @@ export function createAccounts(api: Api) {
           });
       }
     },
-    open: () => {
-      state.update((value) => ({ ...value, open: true, error: '', feedback: '' }));
+    open: (section: SettingsSection = 'accounts') => {
+      state.update((value) => ({ ...value, open: true, section, error: '', feedback: '' }));
       void refresh();
     },
+    section: (section: SettingsSection) => state.update((value) => ({ ...value, section })),
     close: () => state.update((value) => ({ ...value, open: false, remove: null, error: '' })),
     field,
     pause: (account: Account) =>
