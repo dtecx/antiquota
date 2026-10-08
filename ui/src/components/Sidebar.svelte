@@ -7,6 +7,7 @@
   import type { Api } from '../lib/api';
   import type { Panes } from '../lib/panes';
   import type { Connection } from '../lib/stream';
+  import { minuteClock } from '../lib/workbench-lifecycle';
   import { isBusy, projectName, relativeTime } from '../lib/format';
   import { groupSessions, PINNED } from '../lib/navigation';
   import { preferences } from '../lib/preferences';
@@ -119,6 +120,7 @@
         </div>
         {#if !closed}{#each group.sessions as session (session.id)}<SessionRow
               {session}
+              now={$minuteClock}
               current={$view.selected?.id}
               onselect={select}
               onmenu={sessionMenu}
@@ -139,9 +141,8 @@
               class="hit"
               title={hit.cwd}
               onclick={() => select(hit.id, false)}
-              ><b>{hit.title || 'New session'}</b><time>{relativeTime(hit.ts)}</time><small
-                >{hit.who === 'user' ? 'you' : 'agy'}: {hit.snippet}</small
-              ></button
+              ><b>{hit.title || 'New session'}</b><time>{relativeTime(hit.ts, $minuteClock)}</time
+              ><small>{hit.who === 'user' ? 'you' : 'agy'}: {hit.snippet}</small></button
             >{:else}<p class="empty">Nothing found.</p>{/each}{/if}
       </section>{/if}
     {#if archived}<button

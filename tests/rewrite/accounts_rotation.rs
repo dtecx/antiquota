@@ -11,6 +11,50 @@ fn panel(fraction: f64, weekly_reset: &str) -> Value {
 }
 
 #[test]
+fn every_rotation_keeps_affinity_at_and_above_the_exact_reserve() {
+    use antiquota_core::{Account, Quota, RoutingEntry, Settings, rank_accounts};
+    for strategy in ["sticky", "perishable", "round-robin"] {
+        let settings = Settings {
+            rotation: strategy.into(),
+            reserve: "3".into(),
+            ..Settings::default()
+        };
+        for fraction in [0.029, 0.03, 0.031] {
+            let account = |slot: &str, fraction, reset| Account {
+                slot: slot.into(),
+                quota: Quota(
+                    [(
+                        "gemini".into(),
+                        [("weekly".into(), (fraction, Some(reset)))].into(),
+                    )]
+                    .into(),
+                ),
+                ..Account::default()
+            };
+            // Every strategy would prefer a without affinity: its name sorts first, its reset
+            // is earlier, and it was used less recently. Equality must not put z below reserve.
+            let rows = [account("a", 0.9, 50.0), account("z", fraction, 100.0)];
+            let history = [RoutingEntry {
+                slot: Some("z".into()),
+                event: "pick".into(),
+                ts: 10.0,
+                ..RoutingEntry::default()
+            }];
+            let expected = if fraction < 0.03 {
+                ["a", "z"]
+            } else {
+                ["z", "a"]
+            };
+            assert_eq!(
+                rank_accounts(&rows, "gemini", Some("z"), &settings, &history, 20.0),
+                expected,
+                "{strategy}: {fraction}"
+            );
+        }
+    }
+}
+
+#[test]
 fn every_rotation_puts_an_account_below_reserve_after_healthy_accounts() {
     for strategy in ["sticky", "perishable", "round-robin"] {
         let mut server = Server::new_stopped(&format!("reserve-{strategy}"), true);
@@ -127,7 +171,19 @@ fn rate_limit_with_quota_left_uses_escalating_short_cooldowns() {
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_secs_f64();
-        let routes=(0..strikes).map(|_| json!({"slot":setup::ONE,"bucket":"gemini","event":"cooldown","secs":60,"why":"prior fixture","ts":now-10.0}).to_string()).collect::<Vec<_>>().join("\n");
+        let mut history = vec![
+            json!({"slot":setup::ONE,"bucket":"gemini","event":"cooldown","secs":60,"ts":now-3600.0}),
+            json!({"slot":setup::ONE,"bucket":"gemini","event":"cooldown","secs":60,"ts":now-7200.0}),
+            json!({"slot":setup::TWO,"bucket":"gemini","event":"cooldown","secs":60,"ts":now-10.0}),
+            json!({"slot":setup::ONE,"bucket":"cg","event":"cooldown","secs":60,"ts":now-10.0}),
+            json!({"slot":setup::ONE,"bucket":"gemini","event":"retry","secs":60,"ts":now-10.0}),
+        ];
+        history.extend((0..strikes).map(|_| json!({"slot":setup::ONE,"bucket":"gemini","event":"cooldown","secs":60,"why":"prior fixture","ts":now-10.0})));
+        let routes = history
+            .iter()
+            .map(Value::to_string)
+            .collect::<Vec<_>>()
+            .join("\n");
         setup::write(&server.data.join("state/routing.jsonl"), &(routes + "\n"));
         setup::start(&mut server);
         let id = server.create();

@@ -7,10 +7,12 @@
   let {
     session,
     current,
+    now,
     onselect,
     onmenu,
   }: {
     session: Session;
+    now: number;
     current: string | undefined;
     onselect: (id: string, right: boolean) => void;
     onmenu: (session: Session, event: MouseEvent) => void;
@@ -47,7 +49,7 @@
     >
     {#if session.pinned}<Icon name="pin" size={12} />{/if}{#if session.worktree}<span
         title="Own git worktree"><Icon name="branch" size={11} /></span
-      >{/if}<time>{relativeTime(session.updated)}</time>
+      >{/if}<time>{relativeTime(session.updated, now)}</time>
   </button><button
     class="more quiet"
     aria-label={`Session actions: ${session.title || 'New session'}`}

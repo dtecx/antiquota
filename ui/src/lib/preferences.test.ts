@@ -75,3 +75,14 @@ it('restores per-device collapse and split choices while rejecting malformed val
   });
   expect(get(invalid.state)).toMatchObject({ collapsed: [], split: null });
 });
+it('normalizes invalid zoom changes and clamps extreme values at the shared boundary', () => {
+  const prefs = createPreferences();
+  for (const zoom of [NaN, Infinity, -Infinity]) {
+    prefs.change({ zoom });
+    expect(get(prefs.state).zoom).toBe(1);
+  }
+  prefs.change({ zoom: 0 });
+  expect(get(prefs.state).zoom).toBe(0.7);
+  prefs.change({ zoom: 5 });
+  expect(get(prefs.state).zoom).toBe(1.6);
+});

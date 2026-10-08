@@ -1,5 +1,5 @@
 /** Owns in-app confirmation questions; the dialog component answers them. */
-import { writable } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 
 export interface Question {
   title: string;
@@ -14,8 +14,9 @@ export const question = writable<Question | null>(null);
 export function ask(
   title: string,
   text: string,
-  { ok = 'OK', danger = false }: { ok?: string; danger?: boolean } = {},
+  { ok = 'Continue', danger = false }: { ok?: string; danger?: boolean } = {},
 ): Promise<boolean> {
+  get(question)?.answer(false);
   return new Promise((resolve) => {
     question.set({
       title,

@@ -68,3 +68,17 @@ it('keeps inline code inside link labels bounded and refuses code placeholders i
   );
   expect(markdown('[label](https://example.test/`path`)')).not.toContain('<a');
 });
+it('parses inclusive file line ranges while rejecting unsafe and reversed endpoints', () => {
+  expect(fileTarget('/test/code.ts#L2-L4')).toEqual({ path: '/test/code.ts', line: 2, endLine: 4 });
+  expect(fileTarget('/test/code.ts#2-4')).toEqual({ path: '/test/code.ts', line: 2, endLine: 4 });
+  expect(fileTarget('/test/code.ts#line-2-line-4')).toEqual({
+    path: '/test/code.ts',
+    line: 2,
+    endLine: 4,
+  });
+  expect(fileTarget('/test/code.ts#L4-L2')).toEqual({ path: '/test/code.ts', line: 4 });
+  expect(fileTarget('/test/code.ts#L2-L999999999999999999')).toEqual({
+    path: '/test/code.ts',
+    line: 2,
+  });
+});

@@ -81,7 +81,7 @@
           onclick={beginRename}>{session ? session.title || 'Untitled' : 'New session'}</button
         >{/if}
     </h1>
-    <p class:branch={!!worktree} title={path.tooltip}>
+    <p class="cwd" class:branch={!!worktree} title={path.tooltip}>
       {#if worktree}<Icon name="branch" size={11} />{/if}
       {path.label || 'Choose a project to start'}
     </p>
@@ -89,7 +89,8 @@
         {#if status}<span class="status" class:attention={session.status === 'approval'}
             >{status}</span
           >{/if}
-        {#if usage}<span title="Cumulative input and output tokens">{usage}</span>{/if}
+        {#if usage}<span class="tokens" title="Cumulative input and output tokens">{usage}</span
+          >{/if}
         {#if session.queue.length}<span>{session.queue.length} queued</span>{/if}
       </div>{/if}
   </div>
@@ -210,6 +211,10 @@
     display: none;
   }
   @media (max-width: 859px) {
+    .cwd,
+    .tokens {
+      display: none;
+    }
     header {
       padding: var(--space-2);
     }

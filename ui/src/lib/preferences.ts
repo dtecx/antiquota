@@ -61,6 +61,14 @@ export function createPreferences(storage?: Pick<Storage, 'getItem' | 'setItem'>
   }
   const state = writable(initial);
   function change(patch: Partial<Preferences>) {
+    if ('zoom' in patch)
+      patch = {
+        ...patch,
+        zoom:
+          typeof patch.zoom === 'number' && Number.isFinite(patch.zoom)
+            ? Math.min(1.6, Math.max(0.7, patch.zoom))
+            : 1,
+      };
     state.update((value) => ({ ...value, ...patch }));
     try {
       storage?.setItem('antiquota.prefs', JSON.stringify(get(state)));

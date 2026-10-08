@@ -2,7 +2,7 @@
 
 This is the canonical checklist for parity and cutover. It contains 1009 baseline acceptance items: 397 engine/API/CLI items (F-001–F-397) and 612 UI/shell items (F-398–F-1009), including the requested zoom and window-persistence repairs. The 135 additional items (F-1010–F-1144) record explicit requirements from the user's rewrite task. They are requirements, not claims about legacy behavior. No feature has been dropped.
 
-Every row is independently reviewable and links to its [test report](TEST_REPORT.md). Slices 1, 3–8 and 9a–9e have **631 Passed** acceptance items; the other **513 remain Pending**. Legacy test names and captured Python responses explain the baseline; they are not passing Rust or TypeScript proof. Mark a row complete only after its passing tests and evidence have been recorded. Store logs, screenshots and live-cost records in ignored `.handoff/evidence/`.
+Every row is independently reviewable and links to its [test report](TEST_REPORT.md). Slices 1, 3–8 and 9a–9f have **741 Passed** acceptance items; the other **403 remain Pending**. Legacy test names and captured Python responses explain the baseline; they are not passing Rust or TypeScript proof. Mark a row complete only after its passing tests and evidence have been recorded. Store logs, screenshots and live-cost records in ignored `.handoff/evidence/`.
 
 Legacy sources were read in full at commit `17ec296`; [engine](source-read-engine.md) and [UI/shell](source-read-ui.md) manifests record coverage and hashes. The sourced subsidiary inventories are [FEATURES-engine.md](FEATURES-engine.md) and [FEATURES-ui.md](FEATURES-ui.md). The canonical rows below contain their full acceptance text. UI identifiers were renumbered once from F-400–F-1011 to F-398–F-1009 to remove the unused gap; engine identifiers were unchanged.
 
@@ -47,46 +47,46 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | F-025 | [ ] <a id="f-025"></a>Report unshared entries and identity mismatch in doctor without changing the real CLI token. | `antiquota/accounts.py:325`; `antiquota/__main__.py:74` | `tests/test_accounts.py::test_accounts_are_named_by_email_and_use_their_own_stack` | [Pending](TEST_REPORT.md#f-025) |
 | F-026 | [x] <a id="f-026"></a>Inspect loaded skills/hooks through a signed-in slot; with no accounts, inspect the own-stack folders instead of waiting for sign-in. | `antiquota/accounts.py:337` | Not covered | [Passed](TEST_REPORT.md#f-026) |
 | F-027 | [ ] <a id="f-027"></a>Validate account identifiers against the 1–100 character account-name allowlist, rejecting hidden names and traversal. | `antiquota/accounts.py:375` | `tests/test_server.py::test_add_account_from_the_gui` | [Pending](TEST_REPORT.md#f-027) |
-| F-028 | [ ] <a id="f-028"></a>Start sign-in in a temporary empty HOME under slots and create no final account on failure. | `antiquota/accounts.py:431` | `tests/test_accounts.py::test_sign_in_needs_the_right_code_and_never_half_creates_an_account` | [Pending](TEST_REPORT.md#f-028) |
+| F-028 | [x] <a id="f-028"></a>Start sign-in in a temporary empty HOME under slots and create no final account on failure. | `antiquota/accounts.py:431` | `tests/test_accounts.py::test_sign_in_needs_the_right_code_and_never_half_creates_an_account` | [Passed](TEST_REPORT.md#f-028) |
 | F-029 | [ ] <a id="f-029"></a>Use a POSIX PTY or Windows ConPTY for agy's authorization-code input; Windows without the optional console implementation supports browser-only completion. | `antiquota/accounts.py:380`; `antiquota/accounts.py:454` | Not covered | [Pending](TEST_REPORT.md#f-029) |
-| F-030 | [ ] <a id="f-030"></a>Capture only agy's Google sign-in URL and allow wait_url to return when the URL appears or the process ends. | `antiquota/accounts.py:369`; `antiquota/accounts.py:489` | `tests/test_server.py::test_add_account_from_the_gui` | [Pending](TEST_REPORT.md#f-030) |
+| F-030 | [x] <a id="f-030"></a>Capture only agy's Google sign-in URL and allow wait_url to return when the URL appears or the process ends. | `antiquota/accounts.py:369`; `antiquota/accounts.py:489` | `tests/test_server.py::test_add_account_from_the_gui` | [Passed](TEST_REPORT.md#f-030) |
 | F-031 | [ ] <a id="f-031"></a>Accept only a trimmed, nonempty, single-line authorization code of at most 2000 characters with no CR/LF/NUL; reject submission after completion. | `antiquota/accounts.py:496` | `tests/test_server.py::test_add_account_from_the_gui` | [Pending](TEST_REPORT.md#f-031) |
-| F-032 | [ ] <a id="f-032"></a>Support sign-in states waiting, done, failed and verify; report error, adopted account name and verification URL. | `antiquota/accounts.py:517` | `tests/test_accounts.py::test_an_account_google_wants_verified_is_kept_and_parked` | [Pending](TEST_REPORT.md#f-032) |
+| F-032 | [x] <a id="f-032"></a>Support sign-in states waiting, done, failed and verify; report error, adopted account name and verification URL. | `antiquota/accounts.py:517` | `tests/test_accounts.py::test_an_account_google_wants_verified_is_kept_and_parked` | [Passed](TEST_REPORT.md#f-032) |
 | F-033 | [ ] <a id="f-033"></a>Adopt a successful account using the email in agy's auth log, move only account files, retain other sign-in artifacts in .antiquota-login and clear old walls/verification. | `antiquota/accounts.py:523`; `antiquota/accounts.py:564` | `tests/test_accounts.py::test_accounts_are_named_by_email_and_use_their_own_stack` | [Pending](TEST_REPORT.md#f-033) |
 | F-034 | [ ] <a id="f-034"></a>Preserve a valid signed-in token when Google requires verification, store the continue URL and park both quota buckets for 30 days until a successful probe. | `antiquota/accounts.py:544`; `antiquota/accounts.py:593` | `tests/test_accounts.py::test_an_account_google_wants_verified_is_kept_and_parked` | [Pending](TEST_REPORT.md#f-034) |
 | F-035 | [ ] <a id="f-035"></a>Cancel or replace a pending sign-in, kill its process, clean temporary data and retain redacted failure evidence. | `antiquota/accounts.py:511`; `antiquota/accounts.py:551`; `antiquota/server.py:135` | `tests/test_server.py::test_a_new_sign_in_link_replaces_the_old_one` | [Pending](TEST_REPORT.md#f-035) |
-| F-036 | [ ] <a id="f-036"></a>Permit only one active web sign-in link; a replaced link reports failed on GET and is rejected on POST. | `antiquota/server.py:135`; `antiquota/server.py:487` | `tests/test_server.py::test_a_new_sign_in_link_replaces_the_old_one` | [Pending](TEST_REPORT.md#f-036) |
+| F-036 | [x] <a id="f-036"></a>Permit only one active web sign-in link; a replaced link reports failed on GET and is rejected on POST. | `antiquota/server.py:135`; `antiquota/server.py:487` | `tests/test_server.py::test_a_new_sign_in_link_replaces_the_old_one` | [Passed](TEST_REPORT.md#f-036) |
 | F-037 | [ ] <a id="f-037"></a>Remove a valid existing account only after acquiring its lease; reject removal while busy and clear both bucket walls. | `antiquota/accounts.py:646` | `tests/test_accounts.py::test_sign_in_needs_the_right_code_and_never_half_creates_an_account` | [Pending](TEST_REPORT.md#f-037) |
 | F-038 | [ ] <a id="f-038"></a>Pause/unpause an account out of automatic rotation, retain named/pinned access, persist the marker and record routing history. | `antiquota/accounts.py:673` | `tests/test_engine.py::test_paused_accounts_sit_out_and_sessions_pin_fork_search` | [Pending](TEST_REPORT.md#f-038) |
-| F-039 | [ ] <a id="f-039"></a>Expose account busy/probed/quota/walls/reasons/paused/verify/today fields without exposing credentials. | `antiquota/accounts.py:719` | `tests/test_server.py::test_page_carries_token_and_api_demands_it` | [Pending](TEST_REPORT.md#f-039) |
+| F-039 | [x] <a id="f-039"></a>Expose account busy/probed/quota/walls/reasons/paused/verify/today fields without exposing credentials. | `antiquota/accounts.py:719` | `tests/test_server.py::test_page_carries_token_and_api_demands_it` | [Passed](TEST_REPORT.md#f-039) |
 ### Quota, routing and usage
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
 | F-040 | [ ] <a id="f-040"></a>Classify models beginning with claude or gpt into cg; all other/default models use gemini; accept both --model M and --model=M. | `antiquota/accounts.py:952` | `tests/test_accounts.py::test_run_is_sticky_and_fails_over` | [Pending](TEST_REPORT.md#f-040) |
-| F-041 | [ ] <a id="f-041"></a>Parse real quota groups into gemini/cg windows of remaining fraction and reset epoch. | `antiquota/accounts.py:962` | `tests/test_accounts.py::test_parse_real_quota_output` | [Pending](TEST_REPORT.md#f-041) |
-| F-042 | [ ] <a id="f-042"></a>Treat a disabled quota window with no fraction/reset as empty, using another window's reset for its wall. | `antiquota/accounts.py:965` | `tests/test_accounts.py::test_parse_quota_when_weekly_is_spent_and_5h_disabled` | [Pending](TEST_REPORT.md#f-042) |
+| F-041 | [x] <a id="f-041"></a>Parse real quota groups into gemini/cg windows of remaining fraction and reset epoch. | `antiquota/accounts.py:962` | `tests/test_accounts.py::test_parse_real_quota_output` | [Passed](TEST_REPORT.md#f-041) |
+| F-042 | [x] <a id="f-042"></a>Treat a disabled quota window with no fraction/reset as empty, using another window's reset for its wall. | `antiquota/accounts.py:965` | `tests/test_accounts.py::test_parse_quota_when_weekly_is_spent_and_5h_disabled` | [Passed](TEST_REPORT.md#f-042) |
 | F-043 | [ ] <a id="f-043"></a>Probe /quota without model tokens, with a 90 second timeout; cache timestamp and parsed windows. | `antiquota/accounts.py:976` | `tests/test_accounts.py::test_probe_walls_spent_basket_until_panel_reset` | [Pending](TEST_REPORT.md#f-043) |
 | F-044 | [ ] <a id="f-044"></a>Wall a bucket when any window has at most 2% left; choose latest applicable reset plus 120 seconds, or fallback reset when absent. | `antiquota/accounts.py:995` | `tests/test_accounts.py::test_probe_walls_spent_basket_until_panel_reset` | [Pending](TEST_REPORT.md#f-044) |
-| F-045 | [ ] <a id="f-045"></a>Use the 5 hour 10 minute fallback wall when quota cannot be read after a quota error. | `antiquota/accounts.py:51`; `antiquota/accounts.py:805` | Not covered | [Pending](TEST_REPORT.md#f-045) |
-| F-046 | [ ] <a id="f-046"></a>Clear a bucket wall and verification marker after a healthy quota reading. | `antiquota/accounts.py:992` | `tests/test_accounts.py::test_an_account_google_wants_verified_is_kept_and_parked` | [Pending](TEST_REPORT.md#f-046) |
+| F-045 | [x] <a id="f-045"></a>Use the 5 hour 10 minute fallback wall when quota cannot be read after a quota error. | `antiquota/accounts.py:51`; `antiquota/accounts.py:805` | Not covered | [Passed](TEST_REPORT.md#f-045) |
+| F-046 | [x] <a id="f-046"></a>Clear a bucket wall and verification marker after a healthy quota reading. | `antiquota/accounts.py:992` | `tests/test_accounts.py::test_an_account_google_wants_verified_is_kept_and_parked` | [Passed](TEST_REPORT.md#f-046) |
 | F-047 | [ ] <a id="f-047"></a>Park a signed-out account for 30 days in both buckets until sign-in/probe repairs it. | `antiquota/accounts.py:855` | `tests/test_engine.py::test_temporary_errors_retry_then_move_on_and_bad_sign_in_parks` | [Pending](TEST_REPORT.md#f-047) |
 | F-048 | [ ] <a id="f-048"></a>Keep gemini and cg walls independent, ignore expired walls and allow explicit unwall of both buckets. | `antiquota/accounts.py:664`; `antiquota/__main__.py:103` | `tests/test_accounts.py::test_run_is_sticky_and_fails_over` | [Pending](TEST_REPORT.md#f-048) |
-| F-049 | [ ] <a id="f-049"></a>Acquire an exclusive account lease across processes; skip busy accounts and release every lease after the call. | `antiquota/accounts.py:758` | `tests/test_accounts.py::test_busy_account_is_skipped` | [Pending](TEST_REPORT.md#f-049) |
-| F-050 | [ ] <a id="f-050"></a>Wait up to 10 seconds for a session's preferred busy account before considering another live account; continue polling leases until stopped. | `antiquota/accounts.py:772` | Not covered | [Pending](TEST_REPORT.md#f-050) |
-| F-051 | [ ] <a id="f-051"></a>Stop acquisition promptly when the supplied cancellation event is set; return no account when all candidates are walled. | `antiquota/accounts.py:775` | `tests/test_engine.py::test_stop_ends_the_turn_and_pauses_the_goal` | [Pending](TEST_REPORT.md#f-051) |
+| F-049 | [x] <a id="f-049"></a>Acquire an exclusive account lease across processes; skip busy accounts and release every lease after the call. | `antiquota/accounts.py:758` | `tests/test_accounts.py::test_busy_account_is_skipped` | [Passed](TEST_REPORT.md#f-049) |
+| F-050 | [x] <a id="f-050"></a>Wait up to 10 seconds for a session's preferred busy account before considering another live account; continue polling leases until stopped. | `antiquota/accounts.py:772` | Not covered | [Passed](TEST_REPORT.md#f-050) |
+| F-051 | [x] <a id="f-051"></a>Stop acquisition promptly when the supplied cancellation event is set; return no account when all candidates are walled. | `antiquota/accounts.py:775` | `tests/test_engine.py::test_stop_ends_the_turn_and_pauses_the_goal` | [Passed](TEST_REPORT.md#f-051) |
 | F-052 | [ ] <a id="f-052"></a>Refresh only idle accounts with a quota snapshot older than max_age, returning whether a valid update occurred. | `antiquota/accounts.py:704` | Not covered | [Pending](TEST_REPORT.md#f-052) |
 | F-053 | [ ] <a id="f-053"></a>Use quota_poll minutes for freshness, clamped to at least 120 seconds, with 600 seconds fallback for invalid input. | `antiquota/accounts.py:873` | Not covered | [Pending](TEST_REPORT.md#f-053) |
 | F-054 | [ ] <a id="f-054"></a>Calculate account headroom as the minimum window fraction and expiry as the latest known window reset; missing quota remains unknown. | `antiquota/accounts.py:881` | `tests/test_accounts.py::test_rank_spends_the_soonest_reset_first_but_keeps_a_warm_account` | [Pending](TEST_REPORT.md#f-054) |
 | F-055 | [ ] <a id="f-055"></a>Default perishable routing spends the allowance that resets soonest first, then prefers more headroom, with unknown expiry last. | `antiquota/accounts.py:893` | `tests/test_accounts.py::test_rank_spends_the_soonest_reset_first_but_keeps_a_warm_account` | [Pending](TEST_REPORT.md#f-055) |
 | F-056 | [ ] <a id="f-056"></a>Sticky routing follows sorted account order; round-robin follows least-recent pick in routing history. | `antiquota/accounts.py:912` | `tests/test_accounts.py::test_rank_spends_the_soonest_reset_first_but_keeps_a_warm_account` | [Pending](TEST_REPORT.md#f-056) |
-| F-057 | [ ] <a id="f-057"></a>Across every routing strategy, put accounts strictly below the reserve last and retain the preferred account first while above it. | `antiquota/accounts.py:914` | `tests/test_accounts.py::test_rank_spends_the_soonest_reset_first_but_keeps_a_warm_account` | [Pending](TEST_REPORT.md#f-057) |
+| F-057 | [x] <a id="f-057"></a>Across every routing strategy, put accounts strictly below the reserve last and retain the preferred account first while above it. | `antiquota/accounts.py:914` | `tests/test_accounts.py::test_rank_spends_the_soonest_reset_first_but_keeps_a_warm_account` | [Passed](TEST_REPORT.md#f-057) |
 | F-058 | [ ] <a id="f-058"></a>Exclude paused or currently walled accounts from automatic ranking. | `antiquota/accounts.py:905` | `tests/test_engine.py::test_paused_accounts_sit_out_and_sessions_pin_fork_search` | [Pending](TEST_REPORT.md#f-058) |
 | F-059 | [ ] <a id="f-059"></a>Find the earliest reset across currently walled signed-in accounts for the requested bucket. | `antiquota/accounts.py:792` | Not covered | [Pending](TEST_REPORT.md#f-059) |
 | F-060 | [ ] <a id="f-060"></a>Classify only genuine agy error channels, excluding successful model response text and successful stderr chatter. | `antiquota/accounts.py:825` | `tests/test_accounts.py::test_only_agy_errors_wall_never_model_text; tests/test_accounts.py::test_classify_reads_only_agys_error_channels` | [Pending](TEST_REPORT.md#f-060) |
 | F-061 | [ ] <a id="f-061"></a>Apply classification precedence auth, then quota/rate/429, then transient network/capacity/5 xx/deadline errors. | `antiquota/accounts.py:831` | `tests/test_accounts.py::test_classify_reads_only_agys_error_channels` | [Pending](TEST_REPORT.md#f-061) |
-| F-062 | [ ] <a id="f-062"></a>Probe after a quota-looking error; distinguish exhausted allowance from a rate limit with remaining quota. | `antiquota/accounts.py:797` | `tests/test_engine.py::test_rate_limit_with_quota_left_only_rests_the_account` | [Pending](TEST_REPORT.md#f-062) |
-| F-063 | [ ] <a id="f-063"></a>Escalate repeated rate limits to 60, 300 and 900 second cooldowns, counting the previous hour's matching cooldown entries. | `antiquota/accounts.py:59`; `antiquota/accounts.py:809` | `tests/test_engine.py::test_rate_limit_with_quota_left_only_rests_the_account` | [Pending](TEST_REPORT.md#f-063) |
+| F-062 | [x] <a id="f-062"></a>Probe after a quota-looking error; distinguish exhausted allowance from a rate limit with remaining quota. | `antiquota/accounts.py:797` | `tests/test_engine.py::test_rate_limit_with_quota_left_only_rests_the_account` | [Passed](TEST_REPORT.md#f-062) |
+| F-063 | [x] <a id="f-063"></a>Escalate repeated rate limits to 60, 300 and 900 second cooldowns, counting the previous hour's matching cooldown entries. | `antiquota/accounts.py:59`; `antiquota/accounts.py:809` | `tests/test_engine.py::test_rate_limit_with_quota_left_only_rests_the_account` | [Passed](TEST_REPORT.md#f-063) |
 | F-064 | [ ] <a id="f-064"></a>Record timestamped pick/wall/cooldown/retry/paused/resumed/signed-out decisions in routing.jsonl; skip malformed lines on reading. | `antiquota/accounts.py:925` | `tests/test_engine.py::test_temporary_errors_retry_then_move_on_and_bad_sign_in_parks` | [Pending](TEST_REPORT.md#f-064) |
 | F-065 | [ ] <a id="f-065"></a>Trim routing history above 2 MB to its latest 5000 lines; requested reads default to 200 entries internally and 60 through HTTP. | `antiquota/accounts.py:931`; `antiquota/server.py:478` | Not covered | [Pending](TEST_REPORT.md#f-065) |
 | F-066 | [ ] <a id="f-066"></a>Aggregate today's input/output/thinking/turn count by account using local midnight and tolerate malformed ledger lines. | `antiquota/accounts.py:1019` | Not covered | [Pending](TEST_REPORT.md#f-066) |
@@ -219,17 +219,17 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | F-173 | [ ] <a id="f-173"></a>Retry thinking retrieval after process completion when thinking tokens exist but the database write was delayed; persist thinking text/tokens by turn and step. | `antiquota/engine.py:768`; `antiquota/engine.py:851` | Not covered | [Pending](TEST_REPORT.md#f-173) |
 | F-174 | [ ] <a id="f-174"></a>Count only DONE step usage for this turn; never count result's cumulative conversation totals; context is largest input plus cached-input count. | `antiquota/engine.py:757`; `antiquota/engine.py:782` | `tests/test_engine.py::test_a_reply_wins_over_the_resumed_conversations_old_error` | [Pending](TEST_REPORT.md#f-174) |
 | F-175 | [ ] <a id="f-175"></a>Append per-account session/model input/output/thinking usage ledger when token usage is nonzero. | `antiquota/engine.py:788` | `tests/test_engine.py::test_plan_mode_plans_by_instruction_and_usage_history` | [Pending](TEST_REPORT.md#f-175) |
-| F-176 | [ ] <a id="f-176"></a>A completed final response wins over stale quota/error fields in a resumed result; otherwise use genuine process/result error classification. | `antiquota/engine.py:773` | `tests/test_engine.py::test_a_reply_wins_over_the_resumed_conversations_old_error` | [Pending](TEST_REPORT.md#f-176) |
+| F-176 | [x] <a id="f-176"></a>A completed final response wins over stale quota/error fields in a resumed result; otherwise use genuine process/result error classification. | `antiquota/engine.py:773` | `tests/test_engine.py::test_a_reply_wins_over_the_resumed_conversations_old_error` | [Passed](TEST_REPORT.md#f-176) |
 | F-177 | [ ] <a id="f-177"></a>Persist turn_end account/status/usage/elapsed time, with statuses stopped, quota, auth, transient, SUCCESS or other error/exit text. | `antiquota/engine.py:798` | `tests/test_engine.py::test_quota_wall_passes_the_turn_on_in_the_same_conversation` | [Pending](TEST_REPORT.md#f-177) |
 | F-178 | [ ] <a id="f-178"></a>Use latest streamed assistant reply as final turn text, falling back to result.response. | `antiquota/engine.py:803` | `tests/test_engine.py::test_turn_streams_persists_and_survives_restart` | [Pending](TEST_REPORT.md#f-178) |
 | F-179 | [ ] <a id="f-179"></a>Report denied tool commands/actions; for successful non-goal turns send a bounded no-retry continuation, resetting the allowance for each actual user message. | `antiquota/engine.py:590`; `antiquota/engine.py:609`; `antiquota/engine.py:793` | `tests/test_engine.py::test_a_denied_command_gets_one_follow_up_that_names_it` | [Pending](TEST_REPORT.md#f-179) |
 | F-180 | [ ] <a id="f-180"></a>Missing accounts emit noaccount and return idle; all paused live accounts emit a wall explanation instead of waiting indefinitely. | `antiquota/engine.py:632`; `antiquota/engine.py:644` | `tests/test_engine.py::test_no_account_says_so; tests/test_engine.py::test_paused_accounts_sit_out_and_sessions_pin_fork_search` | [Pending](TEST_REPORT.md#f-180) |
 | F-181 | [x] <a id="f-181"></a>Without an active goal, all-walled accounts report next reset and finish; active goals sleep until reset plus 30 seconds, with minimum 5 seconds and cancellation support. | `antiquota/engine.py:649` | `tests/test_engine.py::test_every_account_walled_reports_instead_of_hanging` | [Passed](TEST_REPORT.md#f-181) |
-| F-182 | [ ] <a id="f-182"></a>Handoff on exhausted quota or short rate limit in the same conversation using a continuation nudge because the original prompt is already stored. | `antiquota/engine.py:673` | `tests/test_engine.py::test_quota_wall_passes_the_turn_on_in_the_same_conversation` | [Pending](TEST_REPORT.md#f-182) |
-| F-183 | [ ] <a id="f-183"></a>Handoff on rejected auth while parking the failed account; retain conversation/nudge behavior. | `antiquota/engine.py:684` | `tests/test_engine.py::test_temporary_errors_retry_then_move_on_and_bad_sign_in_parks` | [Pending](TEST_REPORT.md#f-183) |
-| F-184 | [ ] <a id="f-184"></a>Retry temporary errors on the same account after 10 then 30 seconds; after retries cool it for 300 seconds and hand off. | `antiquota/engine.py:689` | `tests/test_engine.py::test_temporary_errors_retry_then_move_on_and_bad_sign_in_parks` | [Pending](TEST_REPORT.md#f-184) |
+| F-182 | [x] <a id="f-182"></a>Handoff on exhausted quota or short rate limit in the same conversation using a continuation nudge because the original prompt is already stored. | `antiquota/engine.py:673` | `tests/test_engine.py::test_quota_wall_passes_the_turn_on_in_the_same_conversation` | [Passed](TEST_REPORT.md#f-182) |
+| F-183 | [x] <a id="f-183"></a>Handoff on rejected auth while parking the failed account; retain conversation/nudge behavior. | `antiquota/engine.py:684` | `tests/test_engine.py::test_temporary_errors_retry_then_move_on_and_bad_sign_in_parks` | [Passed](TEST_REPORT.md#f-183) |
+| F-184 | [x] <a id="f-184"></a>Retry temporary errors on the same account after 10 then 30 seconds; after retries cool it for 300 seconds and hand off. | `antiquota/engine.py:689` | `tests/test_engine.py::test_temporary_errors_retry_then_move_on_and_bad_sign_in_parks` | [Passed](TEST_REPORT.md#f-184) |
 | F-185 | [ ] <a id="f-185"></a>Bound turn handoffs to twice the signed-in account count plus one attempt allowance. | `antiquota/engine.py:638` | Not covered | [Pending](TEST_REPORT.md#f-185) |
-| F-186 | [ ] <a id="f-186"></a>If resume fails specifically because conversation is lost, clear conversation id and start anew with deterministic handoff state plus current request. | `antiquota/engine.py:706`; `antiquota/engine.py:780` | Not covered | [Pending](TEST_REPORT.md#f-186) |
+| F-186 | [x] <a id="f-186"></a>If resume fails specifically because conversation is lost, clear conversation id and start anew with deterministic handoff state plus current request. | `antiquota/engine.py:706`; `antiquota/engine.py:780` | Not covered | [Passed](TEST_REPORT.md#f-186) |
 | F-187 | [ ] <a id="f-187"></a>After a healthy turn, refresh stale quota while still holding the account lease and broadcast updated accounts. | `antiquota/engine.py:667` | Not covered | [Pending](TEST_REPORT.md#f-187) |
 | F-188 | [ ] <a id="f-188"></a>On an internal worker exception, persist an error notice and return the session to idle without leaving a stuck running state. | `antiquota/engine.py:623` | Not covered | [Pending](TEST_REPORT.md#f-188) |
 | F-189 | [ ] <a id="f-189"></a>Timestamp every event; persist final events append-only under session lock while live SSE includes sid and meta snapshots. | `antiquota/engine.py:282` | `tests/test_engine.py::test_turn_streams_persists_and_survives_restart` | [Pending](TEST_REPORT.md#f-189) |
@@ -362,7 +362,7 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | F-292 | [ ] <a id="f-292"></a>login opens agy's own URL, reads authorization codes from terminal without changing real CLI config and reports adopted account or failure. | `antiquota/accounts.py:616`; `antiquota/__main__.py:192` | `tests/test_accounts.py::test_sign_in_needs_the_right_code_and_never_half_creates_an_account` | [Pending](TEST_REPORT.md#f-292) |
 | F-293 | [ ] <a id="f-293"></a>probe refreshes every idle account without model tokens, skips busy accounts and prints unreadable/ok results. | `antiquota/accounts.py:1077`; `antiquota/__main__.py:198` | `tests/test_accounts.py::test_probe_walls_spent_basket_until_panel_reset` | [Pending](TEST_REPORT.md#f-293) |
 | F-294 | [ ] <a id="f-294"></a>doctor reports own stack skills/hooks/MCP, file-token isolation, conversation store link, shared-entry parity and actual account identity; exit 1 if problems. | `antiquota/__main__.py:57` | `tests/test_accounts.py::test_accounts_are_named_by_email_and_use_their_own_stack` | [Pending](TEST_REPORT.md#f-294) |
-| F-295 | [ ] <a id="f-295"></a>stack prints the own-stack folder; stack reseed recopies source configuration while retaining conversations. | `antiquota/__main__.py:93` | `tests/test_accounts.py::test_stack_is_separate_from_your_agy_cli` | [Pending](TEST_REPORT.md#f-295) |
+| F-295 | [x] <a id="f-295"></a>stack prints the own-stack folder; stack reseed recopies source configuration while retaining conversations. | `antiquota/__main__.py:93` | `tests/test_accounts.py::test_stack_is_separate_from_your_agy_cli` | [Passed](TEST_REPORT.md#f-295) |
 | F-296 | [ ] <a id="f-296"></a>unwall <name\|all> clears both quota walls and prints the target. | `antiquota/__main__.py:103` | Not covered | [Pending](TEST_REPORT.md#f-296) |
 | F-297 | [ ] <a id="f-297"></a>run accepts leading --slot S and optional -- before forwarding all remaining agy arguments, rejecting absent accounts or unknown slot. | `antiquota/__main__.py:176`; `antiquota/accounts.py:1119` | `tests/test_accounts.py::test_run_is_sticky_and_fails_over` | [Pending](TEST_REPORT.md#f-297) |
 | F-298 | [ ] <a id="f-298"></a>run uses the selected account's isolated environment and returns its exit code; quota errors/all-walled return 75, leaving a failure/call audit record. | `antiquota/accounts.py:1124` | `tests/test_accounts.py::test_run_is_sticky_and_fails_over` | [Pending](TEST_REPORT.md#f-298) |
@@ -410,7 +410,7 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | F-332 | [x] <a id="f-332"></a>`POST /api/approvals/{aid}/answer` accepts decision allow/deny, always boolean and why truncated 500 characters; returns final decision/reason. | `antiquota/server.py:334` | `tests/test_server.py::test_approvals_through_the_hook_and_messages_mid_turn` | [Passed](TEST_REPORT.md#f-332) |
 | F-333 | [x] <a id="f-333"></a>`POST /api/sessions/{sid}/fork` returns new session metadata after handoff inheritance. | `antiquota/server.py:338` | `tests/test_engine.py::test_paused_accounts_sit_out_and_sessions_pin_fork_search` | [Passed](TEST_REPORT.md#f-333) |
 | F-334 | [x] <a id="f-334"></a>`GET /api/search?q=…` returns newest message-search hits; absent/short query returns []. | `antiquota/server.py:340` | `tests/test_engine.py::test_paused_accounts_sit_out_and_sessions_pin_fork_search` | [Passed](TEST_REPORT.md#f-334) |
-| F-335 | [ ] <a id="f-335"></a>`POST /api/accounts/{name}/pause` accepts on default true, rejects unknown account, broadcasts and returns updated account list. | `antiquota/server.py:342` | `tests/test_engine.py::test_paused_accounts_sit_out_and_sessions_pin_fork_search` | [Pending](TEST_REPORT.md#f-335) |
+| F-335 | [x] <a id="f-335"></a>`POST /api/accounts/{name}/pause` accepts on default true, rejects unknown account, broadcasts and returns updated account list. | `antiquota/server.py:342` | `tests/test_engine.py::test_paused_accounts_sit_out_and_sessions_pin_fork_search` | [Passed](TEST_REPORT.md#f-335) |
 | F-336 | [x] <a id="f-336"></a>`POST /api/sessions/{sid}/steer` drains eligible queued strings and returns messages for the hook. | `antiquota/server.py:349` | `tests/test_server.py::test_approvals_through_the_hook_and_messages_mid_turn` | [Passed](TEST_REPORT.md#f-336) |
 | F-337 | [x] <a id="f-337"></a>`GET /api/engine` returns version/pid/url/by/started/base/stack/log/hook/agy/session-count/account-count. | `antiquota/server.py:351` | Not covered | [Passed](TEST_REPORT.md#f-337) |
 | F-338 | [x] <a id="f-338"></a>`GET /api/engine/log` returns last 400 log lines or the no-engine-log explanation. | `antiquota/server.py:358` | Not covered | [Passed](TEST_REPORT.md#f-338) |
@@ -450,17 +450,17 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | F-372 | [x] <a id="f-372"></a>`POST /api/sessions/{sid}/goal/resume` resets goal round, resumes work and returns ok true. | `antiquota/server.py:470` | Not covered | [Passed](TEST_REPORT.md#f-372) |
 | F-373 | [x] <a id="f-373"></a>`DELETE /api/sessions/{sid}/goal` clears only the goal and returns ok true. | `antiquota/server.py:473` | Not covered | [Passed](TEST_REPORT.md#f-373) |
 | F-374 | [x] <a id="f-374"></a>`GET /api/usage?days=14` returns local-day/account/model token summaries with days clamped 1–90. | `antiquota/server.py:476` | `tests/test_engine.py::test_plan_mode_plans_by_instruction_and_usage_history` | [Passed](TEST_REPORT.md#f-374) |
-| F-375 | [ ] <a id="f-375"></a>`GET /api/routing?n=60` returns newest requested routing records in stored order, skipping malformed lines. | `antiquota/server.py:478` | Not covered | [Pending](TEST_REPORT.md#f-375) |
-| F-376 | [ ] <a id="f-376"></a>`GET /api/accounts` returns account overview rows without credentials. | `antiquota/server.py:480` | `tests/test_server.py::test_add_account_from_the_gui` | [Pending](TEST_REPORT.md#f-376) |
-| F-377 | [ ] <a id="f-377"></a>`POST /api/accounts/probe` triggers async account probing and returns ok true immediately. | `antiquota/server.py:482` | `tests/test_accounts.py::test_probe_walls_spent_basket_until_panel_reset` | [Pending](TEST_REPORT.md#f-377) |
-| F-378 | [ ] <a id="f-378"></a>`POST /api/accounts/login` starts/replaces agy's sign-in, returns id/url/seconds 60 or a validation error. | `antiquota/server.py:485` | `tests/test_server.py::test_add_account_from_the_gui` | [Pending](TEST_REPORT.md#f-378) |
-| F-379 | [ ] <a id="f-379"></a>`GET /api/accounts/login/{lid}` returns state/error/name/verify_url or failed/replaced explanation for unknown/replaced links. | `antiquota/server.py:487` | `tests/test_server.py::test_a_new_sign_in_link_replaces_the_old_one` | [Pending](TEST_REPORT.md#f-379) |
-| F-380 | [ ] <a id="f-380"></a>`POST /api/accounts/login/{lid}` accepts code and returns state/error/name/verify_url; replaced link or invalid code 400. | `antiquota/server.py:492` | `tests/test_server.py::test_add_account_from_the_gui` | [Pending](TEST_REPORT.md#f-380) |
-| F-381 | [ ] <a id="f-381"></a>`DELETE /api/accounts/login/{lid}` cancels/removes a pending link and returns ok true even when absent. | `antiquota/server.py:498` | Not covered | [Pending](TEST_REPORT.md#f-381) |
-| F-382 | [ ] <a id="f-382"></a>`POST /api/accounts/{name}/check` synchronously probes a known idle account and returns updated account list; busy 400 or unknown 404. | `antiquota/server.py:502` | Not covered | [Pending](TEST_REPORT.md#f-382) |
-| F-383 | [ ] <a id="f-383"></a>`DELETE /api/accounts/{name}` removes an idle valid account and returns ok true, then probes remaining accounts asynchronously. | `antiquota/server.py:504` | `tests/test_server.py::test_add_account_from_the_gui` | [Pending](TEST_REPORT.md#f-383) |
-| F-384 | [ ] <a id="f-384"></a>`GET /api/settings` returns stack overview plus persisted defaults. | `antiquota/server.py:508` | `tests/test_stack.py::test_overview_compares_with_your_cli_and_ide` | [Pending](TEST_REPORT.md#f-384) |
-| F-385 | [ ] <a id="f-385"></a>`PUT /api/settings/defaults` updates recognized defaults, validates them and returns the merged setting map. | `antiquota/server.py:510` | `tests/test_stack.py::test_gui_defaults_round_trip` | [Pending](TEST_REPORT.md#f-385) |
+| F-375 | [x] <a id="f-375"></a>`GET /api/routing?n=60` returns newest requested routing records in stored order, skipping malformed lines. | `antiquota/server.py:478` | Not covered | [Passed](TEST_REPORT.md#f-375) |
+| F-376 | [x] <a id="f-376"></a>`GET /api/accounts` returns account overview rows without credentials. | `antiquota/server.py:480` | `tests/test_server.py::test_add_account_from_the_gui` | [Passed](TEST_REPORT.md#f-376) |
+| F-377 | [x] <a id="f-377"></a>`POST /api/accounts/probe` triggers async account probing and returns ok true immediately. | `antiquota/server.py:482` | `tests/test_accounts.py::test_probe_walls_spent_basket_until_panel_reset` | [Passed](TEST_REPORT.md#f-377) |
+| F-378 | [x] <a id="f-378"></a>`POST /api/accounts/login` starts/replaces agy's sign-in, returns id/url/seconds 60 or a validation error. | `antiquota/server.py:485` | `tests/test_server.py::test_add_account_from_the_gui` | [Passed](TEST_REPORT.md#f-378) |
+| F-379 | [x] <a id="f-379"></a>`GET /api/accounts/login/{lid}` returns state/error/name/verify_url or failed/replaced explanation for unknown/replaced links. | `antiquota/server.py:487` | `tests/test_server.py::test_a_new_sign_in_link_replaces_the_old_one` | [Passed](TEST_REPORT.md#f-379) |
+| F-380 | [x] <a id="f-380"></a>`POST /api/accounts/login/{lid}` accepts code and returns state/error/name/verify_url; replaced link or invalid code 400. | `antiquota/server.py:492` | `tests/test_server.py::test_add_account_from_the_gui` | [Passed](TEST_REPORT.md#f-380) |
+| F-381 | [x] <a id="f-381"></a>`DELETE /api/accounts/login/{lid}` cancels/removes a pending link and returns ok true even when absent. | `antiquota/server.py:498` | Not covered | [Passed](TEST_REPORT.md#f-381) |
+| F-382 | [x] <a id="f-382"></a>`POST /api/accounts/{name}/check` synchronously probes a known idle account and returns updated account list; busy 400 or unknown 404. | `antiquota/server.py:502` | Not covered | [Passed](TEST_REPORT.md#f-382) |
+| F-383 | [x] <a id="f-383"></a>`DELETE /api/accounts/{name}` removes an idle valid account and returns ok true, then probes remaining accounts asynchronously. | `antiquota/server.py:504` | `tests/test_server.py::test_add_account_from_the_gui` | [Passed](TEST_REPORT.md#f-383) |
+| F-384 | [x] <a id="f-384"></a>`GET /api/settings` returns stack overview plus persisted defaults. | `antiquota/server.py:508` | `tests/test_stack.py::test_overview_compares_with_your_cli_and_ide` | [Passed](TEST_REPORT.md#f-384) |
+| F-385 | [x] <a id="f-385"></a>`PUT /api/settings/defaults` updates recognized defaults, validates them and returns the merged setting map. | `antiquota/server.py:510` | `tests/test_stack.py::test_gui_defaults_round_trip` | [Passed](TEST_REPORT.md#f-385) |
 | F-386 | [x] <a id="f-386"></a>`GET /api/settings/file?path=…` returns editable file path/text/exists, with containment and size validation. | `antiquota/server.py:512` | `tests/test_stack.py::test_edit_and_delete_touch_only_the_stack` | [Passed](TEST_REPORT.md#f-386) |
 | F-387 | [x] <a id="f-387"></a>`PUT /api/settings/file` accepts path/text, writes owned stack only, invalidates stack cache and returns ok true. | `antiquota/server.py:514` | `tests/test_stack.py::test_edit_and_delete_touch_only_the_stack` | [Passed](TEST_REPORT.md#f-387) |
 | F-388 | [x] <a id="f-388"></a>`GET /api/settings/{kind}/{name}` returns a hook/MCP JSON object and validates kind/name. | `antiquota/server.py:518` | `tests/test_stack.py::test_edit_and_delete_touch_only_the_stack` | [Passed](TEST_REPORT.md#f-388) |
@@ -480,14 +480,14 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-398 | [ ] <a id="f-398"></a>Authenticated JSON calls send X-Antiquota-Token and display API errors as a toast. | `antiquota/ui/app.js:98` | None identified | [Pending](TEST_REPORT.md#f-398) |
+| F-398 | [x] <a id="f-398"></a>Authenticated JSON calls send X-Antiquota-Token and display API errors as a toast. | `antiquota/ui/app.js:98` | None identified | [Passed](TEST_REPORT.md#f-398) |
 | F-399 | [x] <a id="f-399"></a>The session event stream uses a token-authenticated EventSource. | `antiquota/ui/app.js:1029` | None identified | [Passed](TEST_REPORT.md#f-399) |
 | F-400 | [x] <a id="f-400"></a>A reconnected event stream reloads authoritative state after a disconnect. | `antiquota/ui/app.js:1029` | None identified | [Passed](TEST_REPORT.md#f-400) |
-| F-401 | [ ] <a id="f-401"></a>Initial load selects the URL-fragment session when it exists. | `antiquota/ui/app.js:2511` | None identified | [Pending](TEST_REPORT.md#f-401) |
-| F-402 | [ ] <a id="f-402"></a>Initial load otherwise opens the first session or the start screen. | `antiquota/ui/app.js:2511` | None identified | [Pending](TEST_REPORT.md#f-402) |
-| F-403 | [ ] <a id="f-403"></a>A missing initial model list is retried after four seconds. | `antiquota/ui/app.js:2511` | None identified | [Pending](TEST_REPORT.md#f-403) |
-| F-404 | [ ] <a id="f-404"></a>A toast replaces the prior timer and clears after 2.6 seconds. | `antiquota/ui/app.js:111` | None identified | [Pending](TEST_REPORT.md#f-404) |
-| F-405 | [ ] <a id="f-405"></a>Confirmation dialogs support Continue, Cancel, Escape and dangerous-action styling. | `antiquota/ui/app.js:24` | None identified | [Pending](TEST_REPORT.md#f-405) |
+| F-401 | [x] <a id="f-401"></a>Initial load selects the URL-fragment session when it exists. | `antiquota/ui/app.js:2511` | None identified | [Passed](TEST_REPORT.md#f-401) |
+| F-402 | [x] <a id="f-402"></a>Initial load otherwise opens the first session or the start screen. | `antiquota/ui/app.js:2511` | None identified | [Passed](TEST_REPORT.md#f-402) |
+| F-403 | [x] <a id="f-403"></a>A missing initial model list is retried after four seconds. | `antiquota/ui/app.js:2511` | None identified | [Passed](TEST_REPORT.md#f-403) |
+| F-404 | [x] <a id="f-404"></a>A toast replaces the prior timer and clears after 2.6 seconds. | `antiquota/ui/app.js:111` | None identified | [Passed](TEST_REPORT.md#f-404) |
+| F-405 | [x] <a id="f-405"></a>Confirmation dialogs support Continue, Cancel, Escape and dangerous-action styling. | `antiquota/ui/app.js:24` | None identified | [Passed](TEST_REPORT.md#f-405) |
 | F-406 | [ ] <a id="f-406"></a>Desktop export uses the native save dialog. | `antiquota/ui/app.js:39` | None identified | [Pending](TEST_REPORT.md#f-406) |
 | F-407 | [x] <a id="f-407"></a>Browser export creates a downloadable file. | `antiquota/ui/app.js:39` | None identified | [Passed](TEST_REPORT.md#f-407) |
 | F-408 | [ ] <a id="f-408"></a>External desktop links open in the system browser. | `antiquota/ui/app.js:18` | None identified | [Pending](TEST_REPORT.md#f-408) |
@@ -543,11 +543,11 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | F-454 | [x] <a id="f-454"></a>A stale open-session response does not overwrite a newer selection. | `antiquota/ui/app.js:968` | None identified | [Passed](TEST_REPORT.md#f-454) |
 | F-455 | [x] <a id="f-455"></a>Switching sessions clears unsent attachment chips. | `antiquota/ui/app.js:968` | None identified | [Passed](TEST_REPORT.md#f-455) |
 | F-456 | [x] <a id="f-456"></a>Deleting the current session opens the next recent session or start screen. | `antiquota/ui/app.js:996` | None identified | [Passed](TEST_REPORT.md#f-456) |
-| F-457 | [ ] <a id="f-457"></a>An empty session offers up to three earlier sessions from the same folder. | `antiquota/ui/app.js:606` | None identified | [Pending](TEST_REPORT.md#f-457) |
-| F-458 | [ ] <a id="f-458"></a>Selecting an earlier session inherits its handoff state for the next prompt. | `antiquota/ui/app.js:606` | None identified | [Pending](TEST_REPORT.md#f-458) |
-| F-459 | [ ] <a id="f-459"></a>Start and empty-session screens offer sign-in when no accounts exist. | `antiquota/ui/app.js:584` | None identified | [Pending](TEST_REPORT.md#f-459) |
-| F-460 | [ ] <a id="f-460"></a>The empty-session screen offers Set a goal and explains its working folder. | `antiquota/ui/app.js:590` | None identified | [Pending](TEST_REPORT.md#f-460) |
-| F-461 | [ ] <a id="f-461"></a>The no-session start screen offers New session. | `antiquota/ui/app.js:616` | None identified | [Pending](TEST_REPORT.md#f-461) |
+| F-457 | [x] <a id="f-457"></a>An empty session offers up to three earlier sessions from the same folder. | `antiquota/ui/app.js:606` | None identified | [Passed](TEST_REPORT.md#f-457) |
+| F-458 | [x] <a id="f-458"></a>Selecting an earlier session inherits its handoff state for the next prompt. | `antiquota/ui/app.js:606` | None identified | [Passed](TEST_REPORT.md#f-458) |
+| F-459 | [x] <a id="f-459"></a>Start and empty-session screens offer sign-in when no accounts exist. | `antiquota/ui/app.js:584` | None identified | [Passed](TEST_REPORT.md#f-459) |
+| F-460 | [x] <a id="f-460"></a>The empty-session screen offers Set a goal and explains its working folder. | `antiquota/ui/app.js:590` | None identified | [Passed](TEST_REPORT.md#f-460) |
+| F-461 | [x] <a id="f-461"></a>The no-session start screen offers New session. | `antiquota/ui/app.js:616` | None identified | [Passed](TEST_REPORT.md#f-461) |
 ### Composer, models and header
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
@@ -662,16 +662,16 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | F-561 | [x] <a id="f-561"></a>Goal Remove deletes its goal. | `antiquota/ui/app.js:462` | None identified | [Passed](TEST_REPORT.md#f-561) |
 | F-562 | [x] <a id="f-562"></a>A successful completed idle plan-mode turn exposes plan-ready controls. | `antiquota/ui/app.js:486` | None identified | [Passed](TEST_REPORT.md#f-562) |
 | F-563 | [x] <a id="f-563"></a>Execute plan switches to accept-edits before sending its execution instruction. | `antiquota/ui/app.js:486` | None identified | [Passed](TEST_REPORT.md#f-563) |
-| F-564 | [ ] <a id="f-564"></a>Execute with approvals switches to default before sending its execution instruction. | `antiquota/ui/app.js:486` | None identified | [Pending](TEST_REPORT.md#f-564) |
+| F-564 | [x] <a id="f-564"></a>Execute with approvals switches to default before sending its execution instruction. | `antiquota/ui/app.js:486` | None identified | [Passed](TEST_REPORT.md#f-564) |
 | F-565 | [x] <a id="f-565"></a>Revise focuses the composer with a revision placeholder. | `antiquota/ui/app.js:486` | None identified | [Passed](TEST_REPORT.md#f-565) |
 | F-566 | [x] <a id="f-566"></a>Running jobs show command, elapsed time, check-in and agent attribution. | `antiquota/ui/app.js:507` | None identified | [Passed](TEST_REPORT.md#f-566) |
 | F-567 | [x] <a id="f-567"></a>Job Log opens that job's output. | `antiquota/ui/app.js:507` | None identified | [Passed](TEST_REPORT.md#f-567) |
 | F-568 | [x] <a id="f-568"></a>Job Stop requests ending that job. | `antiquota/ui/app.js:507` | None identified | [Passed](TEST_REPORT.md#f-568) |
-| F-569 | [ ] <a id="f-569"></a>Job logs show no-output text when empty and scroll to the latest output. | `antiquota/ui/app.js:528` | None identified | [Pending](TEST_REPORT.md#f-569) |
+| F-569 | [x] <a id="f-569"></a>Job logs show no-output text when empty and scroll to the latest output. | `antiquota/ui/app.js:528` | None identified | [Passed](TEST_REPORT.md#f-569) |
 | F-570 | [x] <a id="f-570"></a>Job events distinguish started, stopped, success, failure and unknown exit code. | `antiquota/ui/app.js:565` | None identified | [Passed](TEST_REPORT.md#f-570) |
 | F-571 | [x] <a id="f-571"></a>Loop bars show prompt, interval and next run. | `antiquota/ui/app.js:507` | None identified | [Passed](TEST_REPORT.md#f-571) |
 | F-572 | [x] <a id="f-572"></a>Daily schedule bars show prompt, daily time and next run. | `antiquota/ui/app.js:507` | None identified | [Passed](TEST_REPORT.md#f-572) |
-| F-573 | [ ] <a id="f-573"></a>Loop Stop deletes the configured loop. | `antiquota/ui/app.js:507` | None identified | [Pending](TEST_REPORT.md#f-573) |
+| F-573 | [x] <a id="f-573"></a>Loop Stop deletes the configured loop. | `antiquota/ui/app.js:507` | None identified | [Passed](TEST_REPORT.md#f-573) |
 | F-574 | [x] <a id="f-574"></a>Schedule Remove deletes the configured schedule. | `antiquota/ui/app.js:507` | None identified | [Passed](TEST_REPORT.md#f-574) |
 | F-575 | [x] <a id="f-575"></a>Pending approval cards show command or edit target, preview and wait duration. | `antiquota/ui/app.js:537` | None identified | [Passed](TEST_REPORT.md#f-575) |
 | F-576 | [x] <a id="f-576"></a>Allow once answers without persisting a rule. | `antiquota/ui/app.js:537` | None identified | [Passed](TEST_REPORT.md#f-576) |
@@ -686,24 +686,24 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
 | F-583 | [x] <a id="f-583"></a>The Files tab lists the selected session's folders and files. | `antiquota/ui/app.js:1545` | None identified | [Passed](TEST_REPORT.md#f-583) |
-| F-584 | [ ] <a id="f-584"></a>Breadcrumbs navigate to earlier directories. | `antiquota/ui/app.js:1545` | None identified | [Pending](TEST_REPORT.md#f-584) |
+| F-584 | [x] <a id="f-584"></a>Breadcrumbs navigate to earlier directories. | `antiquota/ui/app.js:1545` | None identified | [Passed](TEST_REPORT.md#f-584) |
 | F-585 | [x] <a id="f-585"></a>The parent row navigates to the parent directory. | `antiquota/ui/app.js:1545` | None identified | [Passed](TEST_REPORT.md#f-585) |
-| F-586 | [ ] <a id="f-586"></a>File rows display size and dimmed entries. | `antiquota/ui/app.js:1545` | None identified | [Pending](TEST_REPORT.md#f-586) |
-| F-587 | [ ] <a id="f-587"></a>An empty directory shows Empty folder. | `antiquota/ui/app.js:1545` | None identified | [Pending](TEST_REPORT.md#f-587) |
+| F-586 | [x] <a id="f-586"></a>File rows display size and dimmed entries. | `antiquota/ui/app.js:1545` | None identified | [Passed](TEST_REPORT.md#f-586) |
+| F-587 | [x] <a id="f-587"></a>An empty directory shows Empty folder. | `antiquota/ui/app.js:1545` | None identified | [Passed](TEST_REPORT.md#f-587) |
 | F-588 | [x] <a id="f-588"></a>Mention inserts a file's @ path into the composer. | `antiquota/ui/app.js:1545` | None identified | [Passed](TEST_REPORT.md#f-588) |
 | F-589 | [ ] <a id="f-589"></a>Desktop Open launches a file's default application. | `antiquota/ui/app.js:1545` | None identified | [Pending](TEST_REPORT.md#f-589) |
 | F-590 | [ ] <a id="f-590"></a>Desktop Reveal opens Finder / Explorer for a file or directory. | `antiquota/ui/app.js:1545` | None identified | [Pending](TEST_REPORT.md#f-590) |
-| F-591 | [ ] <a id="f-591"></a>File links open the numbered file viewer. | `antiquota/ui/app.js:1219` | None identified | [Pending](TEST_REPORT.md#f-591) |
-| F-592 | [ ] <a id="f-592"></a>The viewer shows relative path and full-path tooltip. | `antiquota/ui/app.js:1224` | None identified | [Pending](TEST_REPORT.md#f-592) |
-| F-593 | [ ] <a id="f-593"></a>Line or line-range links highlight and center those lines. | `antiquota/ui/app.js:1224` | None identified | [Pending](TEST_REPORT.md#f-593) |
-| F-594 | [ ] <a id="f-594"></a>Viewer Copy copies complete contents. | `antiquota/ui/app.js:1224` | None identified | [Pending](TEST_REPORT.md#f-594) |
-| F-595 | [ ] <a id="f-595"></a>Viewer Close dismisses the viewer. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-595) |
+| F-591 | [x] <a id="f-591"></a>File links open the numbered file viewer. | `antiquota/ui/app.js:1219` | None identified | [Passed](TEST_REPORT.md#f-591) |
+| F-592 | [x] <a id="f-592"></a>The viewer shows relative path and full-path tooltip. | `antiquota/ui/app.js:1224` | None identified | [Passed](TEST_REPORT.md#f-592) |
+| F-593 | [x] <a id="f-593"></a>Line or line-range links highlight and center those lines. | `antiquota/ui/app.js:1224` | None identified | [Passed](TEST_REPORT.md#f-593) |
+| F-594 | [x] <a id="f-594"></a>Viewer Copy copies complete contents. | `antiquota/ui/app.js:1224` | None identified | [Passed](TEST_REPORT.md#f-594) |
+| F-595 | [x] <a id="f-595"></a>Viewer Close dismisses the viewer. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-595) |
 | F-596 | [x] <a id="f-596"></a>Clicking the viewer backdrop dismisses the viewer. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-596) |
-| F-597 | [ ] <a id="f-597"></a>Files and Terminal tabs explain that a session is required when none is open. | `antiquota/ui/app.js:1895` | None identified | [Pending](TEST_REPORT.md#f-597) |
+| F-597 | [x] <a id="f-597"></a>Files and Terminal tabs explain that a session is required when none is open. | `antiquota/ui/app.js:1895` | None identified | [Passed](TEST_REPORT.md#f-597) |
 | F-598 | [x] <a id="f-598"></a>Git review shows branch and repository or worktree base/ahead/merged state. | `antiquota/ui/app.js:1573` | None identified | [Passed](TEST_REPORT.md#f-598) |
 | F-599 | [x] <a id="f-599"></a>Uncommitted file rows show status, additions and deletions. | `antiquota/ui/app.js:1573` | None identified | [Passed](TEST_REPORT.md#f-599) |
 | F-600 | [x] <a id="f-600"></a>Expanding uncommitted files lazily requests their diff. | `antiquota/ui/app.js:1573` | None identified | [Passed](TEST_REPORT.md#f-600) |
-| F-601 | [ ] <a id="f-601"></a>Expanding worktree committed files lazily requests the base-relative diff. | `antiquota/ui/app.js:1573` | None identified | [Pending](TEST_REPORT.md#f-601) |
+| F-601 | [x] <a id="f-601"></a>Expanding worktree committed files lazily requests the base-relative diff. | `antiquota/ui/app.js:1573` | None identified | [Passed](TEST_REPORT.md#f-601) |
 | F-602 | [x] <a id="f-602"></a>Discard confirms deletion of a new file or loss of uncommitted edits. | `antiquota/ui/app.js:1573` | None identified | [Passed](TEST_REPORT.md#f-602) |
 | F-603 | [x] <a id="f-603"></a>Commit all sends the message and refreshes Git review. | `antiquota/ui/app.js:1573` | None identified | [Passed](TEST_REPORT.md#f-603) |
 | F-604 | [x] <a id="f-604"></a>The initial commit message uses the selected session title. | `antiquota/ui/app.js:1573` | None identified | [Passed](TEST_REPORT.md#f-604) |
@@ -711,8 +711,8 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | F-606 | [x] <a id="f-606"></a>Merge is enabled only for an unmerged worktree with commits ahead. | `antiquota/ui/app.js:1573` | None identified | [Passed](TEST_REPORT.md#f-606) |
 | F-607 | [x] <a id="f-607"></a>Remove worktree confirms removal, archives the session and keeps its branch. | `antiquota/ui/app.js:1573` | None identified | [Passed](TEST_REPORT.md#f-607) |
 | F-608 | [x] <a id="f-608"></a>Agent edit history groups recorded diffs by file, newest first. | `antiquota/ui/app.js:1895` | None identified | [Passed](TEST_REPORT.md#f-608) |
-| F-609 | [ ] <a id="f-609"></a>Expanding an edit-history file lazily displays all recorded diffs. | `antiquota/ui/app.js:1895` | None identified | [Pending](TEST_REPORT.md#f-609) |
-| F-610 | [ ] <a id="f-610"></a>Changes displays distinct no-session, no-edits and no-uncommitted messages. | `antiquota/ui/app.js:1895` | None identified | [Pending](TEST_REPORT.md#f-610) |
+| F-609 | [x] <a id="f-609"></a>Expanding an edit-history file lazily displays all recorded diffs. | `antiquota/ui/app.js:1895` | None identified | [Passed](TEST_REPORT.md#f-609) |
+| F-610 | [x] <a id="f-610"></a>Changes displays distinct no-session, no-edits and no-uncommitted messages. | `antiquota/ui/app.js:1895` | None identified | [Passed](TEST_REPORT.md#f-610) |
 ### Split, drawer and terminal
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
@@ -727,24 +727,24 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | F-618 | [x] <a id="f-618"></a>The embedded Close side by side action closes split view. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-618) |
 | F-619 | [x] <a id="f-619"></a>Cross-origin split control messages are ignored. | `antiquota/ui/app.js:1661` | None identified | [Passed](TEST_REPORT.md#f-619) |
 | F-620 | [x] <a id="f-620"></a>Embedded views omit sidebar, drawer and nested split controls. | `antiquota/ui/app.js:17` | None identified | [Passed](TEST_REPORT.md#f-620) |
-| F-621 | [ ] <a id="f-621"></a>Side-panel visibility persists per device. | `antiquota/ui/app.js:1671` | None identified | [Pending](TEST_REPORT.md#f-621) |
+| F-621 | [x] <a id="f-621"></a>Side-panel visibility persists per device. | `antiquota/ui/app.js:1671` | None identified | [Passed](TEST_REPORT.md#f-621) |
 | F-622 | [x] <a id="f-622"></a>The Changes, Files or Terminal tab selection persists per device. | `antiquota/ui/app.js:1671` | None identified | [Passed](TEST_REPORT.md#f-622) |
-| F-623 | [ ] <a id="f-623"></a>Open side-panel content follows session selection. | `antiquota/ui/app.js:968` | None identified | [Pending](TEST_REPORT.md#f-623) |
+| F-623 | [x] <a id="f-623"></a>Open side-panel content follows session selection. | `antiquota/ui/app.js:968` | None identified | [Passed](TEST_REPORT.md#f-623) |
 | F-624 | [x] <a id="f-624"></a>Terminal assets are loaded lazily once. | `antiquota/ui/app.js:1820` | None identified | [Passed](TEST_REPORT.md#f-624) |
-| F-625 | [ ] <a id="f-625"></a>A terminal asset failure displays a useful load error. | `antiquota/ui/app.js:1833` | None identified | [Pending](TEST_REPORT.md#f-625) |
+| F-625 | [x] <a id="f-625"></a>A terminal asset failure displays a useful load error. | `antiquota/ui/app.js:1833` | None identified | [Passed](TEST_REPORT.md#f-625) |
 | F-626 | [x] <a id="f-626"></a>Each session retains an independent xterm instance across tab/session switches. | `antiquota/ui/app.js:1833` | None identified | [Passed](TEST_REPORT.md#f-626) |
 | F-627 | [x] <a id="f-627"></a>Terminal starts a shell in the session folder and shows shell/folder in its title. | `antiquota/ui/app.js:1833` | None identified | [Passed](TEST_REPORT.md#f-627) |
 | F-628 | [x] <a id="f-628"></a>Terminal keyboard input is posted to the engine. | `antiquota/ui/app.js:1833` | None identified | [Passed](TEST_REPORT.md#f-628) |
 | F-629 | [x] <a id="f-629"></a>Streamed base64 bytes render as terminal output. | `antiquota/ui/app.js:1833` | None identified | [Passed](TEST_REPORT.md#f-629) |
-| F-630 | [ ] <a id="f-630"></a>First replayed output resets the terminal display. | `antiquota/ui/app.js:1833` | None identified | [Pending](TEST_REPORT.md#f-630) |
-| F-631 | [ ] <a id="f-631"></a>Resize fits xterm and posts dimensions after an 80 ms debounce. | `antiquota/ui/app.js:1833` | None identified | [Pending](TEST_REPORT.md#f-631) |
+| F-630 | [x] <a id="f-630"></a>First replayed output resets the terminal display. | `antiquota/ui/app.js:1833` | None identified | [Passed](TEST_REPORT.md#f-630) |
+| F-631 | [x] <a id="f-631"></a>Resize fits xterm and posts dimensions after an 80 ms debounce. | `antiquota/ui/app.js:1833` | None identified | [Passed](TEST_REPORT.md#f-631) |
 | F-632 | [x] <a id="f-632"></a>Clear clears the display without restarting the shell. | `antiquota/ui/app.js:1833` | None identified | [Passed](TEST_REPORT.md#f-632) |
 | F-633 | [x] <a id="f-633"></a>Restart requests a fresh shell and reconnects output. | `antiquota/ui/app.js:1833` | None identified | [Passed](TEST_REPORT.md#f-633) |
 | F-634 | [x] <a id="f-634"></a>Kill ends the shell. | `antiquota/ui/app.js:1833` | None identified | [Passed](TEST_REPORT.md#f-634) |
 | F-635 | [x] <a id="f-635"></a>Exit marks the title exited and closes the output stream. | `antiquota/ui/app.js:1833` | None identified | [Passed](TEST_REPORT.md#f-635) |
-| F-636 | [ ] <a id="f-636"></a>Terminal input and startup errors render in red inside xterm. | `antiquota/ui/app.js:1833` | None identified | [Pending](TEST_REPORT.md#f-636) |
-| F-637 | [ ] <a id="f-637"></a>Opening or revisiting the Terminal tab focuses it. | `antiquota/ui/app.js:1833` | None identified | [Pending](TEST_REPORT.md#f-637) |
-| F-638 | [ ] <a id="f-638"></a>Terminal scrollback retains 5000 lines. | `antiquota/ui/app.js:1833` | None identified | [Pending](TEST_REPORT.md#f-638) |
+| F-636 | [x] <a id="f-636"></a>Terminal input and startup errors render in red inside xterm. | `antiquota/ui/app.js:1833` | None identified | [Passed](TEST_REPORT.md#f-636) |
+| F-637 | [x] <a id="f-637"></a>Opening or revisiting the Terminal tab focuses it. | `antiquota/ui/app.js:1833` | None identified | [Passed](TEST_REPORT.md#f-637) |
+| F-638 | [x] <a id="f-638"></a>Terminal scrollback retains 5000 lines. | `antiquota/ui/app.js:1833` | None identified | [Passed](TEST_REPORT.md#f-638) |
 ### Attachments and dictation
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
@@ -822,7 +822,7 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | F-701 | [x] <a id="f-701"></a>Focused visible app windows suppress notifications unless their focused preference is on. | `antiquota/ui/app.js:1398` | None identified | [Passed](TEST_REPORT.md#f-701) |
 | F-702 | [ ] <a id="f-702"></a>Native notification permission is requested before sending an allowed notification. | `antiquota/ui/app.js:1398` | None identified | [Pending](TEST_REPORT.md#f-702) |
 | F-703 | [x] <a id="f-703"></a>Browser notifications require granted permission and tolerate notification failures. | `antiquota/ui/app.js:1398` | None identified | [Passed](TEST_REPORT.md#f-703) |
-| F-704 | [ ] <a id="f-704"></a>The first browser message requests notification permission when its state is default. | `antiquota/ui/app.js:1100` | None identified | [Pending](TEST_REPORT.md#f-704) |
+| F-704 | [x] <a id="f-704"></a>The first browser message requests notification permission when its state is default. | `antiquota/ui/app.js:1100` | None identified | [Passed](TEST_REPORT.md#f-704) |
 | F-705 | [ ] <a id="f-705"></a>Native Interface size offers 80, 90, 100, 110, 125 and 140 percent presets. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-705) |
 | F-706 | [x] <a id="f-706"></a>Browser Interface size explains the browser zoom controls instead of applying CSS scale. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-706) |
 | F-707 | [x] <a id="f-707"></a>Grouped steps saves grouped mode and rebuilds the selected transcript. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-707) |
@@ -840,8 +840,8 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | F-715 | [x] <a id="f-715"></a>Gemini and Claude/GPT quota windows appear separately. | `antiquota/ui/app.js:1773` | None identified | [Passed](TEST_REPORT.md#f-715) |
 | F-716 | [x] <a id="f-716"></a>Quota windows show their reset time or disabled-window explanation in a tooltip. | `antiquota/ui/app.js:1773` | None identified | [Passed](TEST_REPORT.md#f-716) |
 | F-717 | [x] <a id="f-717"></a>Account cards show walls, signed-out, cooldown and verification reasons. | `antiquota/ui/app.js:1773` | None identified | [Passed](TEST_REPORT.md#f-717) |
-| F-718 | [ ] <a id="f-718"></a>Pause keeps an account out of rotation. | `antiquota/ui/app.js:1773` | None identified | [Pending](TEST_REPORT.md#f-718) |
-| F-719 | [ ] <a id="f-719"></a>Resume puts a paused account back into rotation. | `antiquota/ui/app.js:1773` | None identified | [Pending](TEST_REPORT.md#f-719) |
+| F-718 | [x] <a id="f-718"></a>Pause keeps an account out of rotation. | `antiquota/ui/app.js:1773` | None identified | [Passed](TEST_REPORT.md#f-718) |
+| F-719 | [x] <a id="f-719"></a>Resume puts a paused account back into rotation. | `antiquota/ui/app.js:1773` | None identified | [Passed](TEST_REPORT.md#f-719) |
 | F-720 | [x] <a id="f-720"></a>Check refreshes quota and sign-in state. | `antiquota/ui/app.js:1773` | None identified | [Passed](TEST_REPORT.md#f-720) |
 | F-721 | [x] <a id="f-721"></a>Sign in again opens the account sign-in dialog. | `antiquota/ui/app.js:1773` | None identified | [Passed](TEST_REPORT.md#f-721) |
 | F-722 | [ ] <a id="f-722"></a>Remove requires confirmation and preserves separate CLI sign-in. | `antiquota/ui/app.js:1773` | None identified | [Pending](TEST_REPORT.md#f-722) |
@@ -898,7 +898,7 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | F-769 | [x] <a id="f-769"></a>New item names allow letters, digits, dot, underscore, colon, at, plus and minus. | `antiquota/ui/app.js:2210` | None identified | [Passed](TEST_REPORT.md#f-769) |
 | F-770 | [x] <a id="f-770"></a>New item names reject unsafe characters and a leading dot. | `antiquota/ui/app.js:2210` | None identified | [Passed](TEST_REPORT.md#f-770) |
 | F-771 | [x] <a id="f-771"></a>An empty stack section displays Nothing here yet. | `antiquota/ui/app.js:250` | None identified | [Passed](TEST_REPORT.md#f-771) |
-| F-772 | [ ] <a id="f-772"></a>Engine diagnostics shows version, URL/PID/ownership, data, stack, agy, hook and counts. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-772) |
+| F-772 | [x] <a id="f-772"></a>Engine diagnostics shows version, URL/PID/ownership, data, stack, agy, hook and counts. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-772) |
 | F-773 | [x] <a id="f-773"></a>Engine log opens engine output in the viewer. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-773) |
 | F-774 | [ ] <a id="f-774"></a>Show data folder reveals the private directory in desktop mode. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-774) |
 | F-775 | [ ] <a id="f-775"></a>Restart engine confirms before requesting shutdown and reports the expected app restart. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-775) |
@@ -991,29 +991,29 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | F-850 | [x] <a id="f-850"></a>Cmd/Ctrl+Shift+[ or { selects the previous visible session. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-850) |
 | F-851 | [x] <a id="f-851"></a>Cmd/Ctrl+Shift+] or } selects the next visible session. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-851) |
 | F-852 | [x] <a id="f-852"></a>Escape closes Settings when no modal dialog is open. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-852) |
-| F-853 | [ ] <a id="f-853"></a>Alt-clicking a session opens it on the right. | `antiquota/ui/app.js:224` | None identified | [Pending](TEST_REPORT.md#f-853) |
+| F-853 | [x] <a id="f-853"></a>Alt-clicking a session opens it on the right. | `antiquota/ui/app.js:224` | None identified | [Passed](TEST_REPORT.md#f-853) |
 | F-854 | [x] <a id="f-854"></a>Non-Mac reference labels use Ctrl and Shift rather than Cmd glyphs. | `antiquota/ui/app.js:1527` | None identified | [Passed](TEST_REPORT.md#f-854) |
 ### Layout, themes and accessibility
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-855 | [ ] <a id="f-855"></a>The default dark theme uses the dense warm palette and centralized CSS variables. | `antiquota/ui/app.css:5` | None identified | [Pending](TEST_REPORT.md#f-855) |
-| F-856 | [ ] <a id="f-856"></a>The light palette follows prefers-color-scheme and overrides centralized color variables. | `antiquota/ui/app.css:36` | None identified | [Pending](TEST_REPORT.md#f-856) |
-| F-857 | [ ] <a id="f-857"></a>The composer stays docked below an independently scrolling transcript. | `antiquota/ui/app.css:194` | None identified | [Pending](TEST_REPORT.md#f-857) |
+| F-855 | [x] <a id="f-855"></a>The default dark theme uses the dense warm palette and centralized CSS variables. | `antiquota/ui/app.css:5` | None identified | [Passed](TEST_REPORT.md#f-855) |
+| F-856 | [x] <a id="f-856"></a>The light palette follows prefers-color-scheme and overrides centralized color variables. | `antiquota/ui/app.css:36` | None identified | [Passed](TEST_REPORT.md#f-856) |
+| F-857 | [x] <a id="f-857"></a>The composer stays docked below an independently scrolling transcript. | `antiquota/ui/app.css:194` | None identified | [Passed](TEST_REPORT.md#f-857) |
 | F-858 | [x] <a id="f-858"></a>Below 860 pixels the sidebar becomes a slide-in overlay with Open and Close controls. | `antiquota/ui/app.css:544` | None identified | [Passed](TEST_REPORT.md#f-858) |
-| F-859 | [ ] <a id="f-859"></a>Below 860 pixels the side panel becomes an overlay. | `antiquota/ui/app.css:544` | None identified | [Pending](TEST_REPORT.md#f-859) |
-| F-860 | [ ] <a id="f-860"></a>Narrow headers omit working-folder and token totals. | `antiquota/ui/app.css:558` | None identified | [Pending](TEST_REPORT.md#f-860) |
-| F-861 | [ ] <a id="f-861"></a>Below 860 pixels Settings uses wrapped navigation above the body. | `antiquota/ui/app.css:627` | None identified | [Pending](TEST_REPORT.md#f-861) |
-| F-862 | [ ] <a id="f-862"></a>Below 680 pixels the shortcut reference uses one column. | `antiquota/ui/app.css:942` | None identified | [Pending](TEST_REPORT.md#f-862) |
-| F-863 | [ ] <a id="f-863"></a>Below 720 pixels usage statistics use two columns. | `antiquota/ui/app.css:993` | None identified | [Pending](TEST_REPORT.md#f-863) |
-| F-864 | [ ] <a id="f-864"></a>Token meter widths below 620 pixels hide session totals and context label. | `antiquota/ui/app.css:659` | None identified | [Pending](TEST_REPORT.md#f-864) |
-| F-865 | [ ] <a id="f-865"></a>Token meter widths below 440 pixels hide available-account count. | `antiquota/ui/app.css:660` | None identified | [Pending](TEST_REPORT.md#f-865) |
-| F-866 | [ ] <a id="f-866"></a>Reduced-motion preference disables animation and transitions. | `antiquota/ui/app.css:564` | None identified | [Pending](TEST_REPORT.md#f-866) |
+| F-859 | [x] <a id="f-859"></a>Below 860 pixels the side panel becomes an overlay. | `antiquota/ui/app.css:544` | None identified | [Passed](TEST_REPORT.md#f-859) |
+| F-860 | [x] <a id="f-860"></a>Narrow headers omit working-folder and token totals. | `antiquota/ui/app.css:558` | None identified | [Passed](TEST_REPORT.md#f-860) |
+| F-861 | [x] <a id="f-861"></a>Below 860 pixels Settings uses wrapped navigation above the body. | `antiquota/ui/app.css:627` | None identified | [Passed](TEST_REPORT.md#f-861) |
+| F-862 | [x] <a id="f-862"></a>Below 680 pixels the shortcut reference uses one column. | `antiquota/ui/app.css:942` | None identified | [Passed](TEST_REPORT.md#f-862) |
+| F-863 | [x] <a id="f-863"></a>Below 720 pixels usage statistics use two columns. | `antiquota/ui/app.css:993` | None identified | [Passed](TEST_REPORT.md#f-863) |
+| F-864 | [x] <a id="f-864"></a>Token meter widths below 620 pixels hide session totals and context label. | `antiquota/ui/app.css:659` | None identified | [Passed](TEST_REPORT.md#f-864) |
+| F-865 | [x] <a id="f-865"></a>Token meter widths below 440 pixels hide available-account count. | `antiquota/ui/app.css:660` | None identified | [Passed](TEST_REPORT.md#f-865) |
+| F-866 | [x] <a id="f-866"></a>Reduced-motion preference disables animation and transitions. | `antiquota/ui/app.css:564` | None identified | [Passed](TEST_REPORT.md#f-866) |
 | F-867 | [ ] <a id="f-867"></a>The macOS sidebar and narrow header reserve space for traffic lights independently of native zoom. | `antiquota/ui/app.css:798` | None identified | [Pending](TEST_REPORT.md#f-867) |
 | F-868 | [x] <a id="f-868"></a>Split view keeps two content columns below the sidebar-collapse breakpoint. | `antiquota/ui/app.css:1034` | None identified | [Passed](TEST_REPORT.md#f-868) |
-| F-869 | [ ] <a id="f-869"></a>Terminal occupies its pane and gives the drawer a wider terminal layout. | `antiquota/ui/app.css:1019` | None identified | [Pending](TEST_REPORT.md#f-869) |
-| F-870 | [ ] <a id="f-870"></a>Keyboard focus receives a visible accent outline. | `antiquota/ui/app.css:82` | None identified | [Pending](TEST_REPORT.md#f-870) |
-| F-871 | [ ] <a id="f-871"></a>Hidden controls do not occupy layout space. | `antiquota/ui/app.css:83` | None identified | [Pending](TEST_REPORT.md#f-871) |
+| F-869 | [x] <a id="f-869"></a>Terminal occupies its pane and gives the drawer a wider terminal layout. | `antiquota/ui/app.css:1019` | None identified | [Passed](TEST_REPORT.md#f-869) |
+| F-870 | [x] <a id="f-870"></a>Keyboard focus receives a visible accent outline. | `antiquota/ui/app.css:82` | None identified | [Passed](TEST_REPORT.md#f-870) |
+| F-871 | [x] <a id="f-871"></a>Hidden controls do not occupy layout space. | `antiquota/ui/app.css:83` | None identified | [Passed](TEST_REPORT.md#f-871) |
 ### Native scale behavior
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
@@ -1180,32 +1180,32 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-978 | [ ] <a id="f-978"></a>New-session defaults use the current model/mode and project folder, or configured defaults without a session. | `antiquota/ui/app.js:1948` | None identified | [Pending](TEST_REPORT.md#f-978) |
-| F-979 | [ ] <a id="f-979"></a>New sessions from a worktree default to the parent repository folder. | `antiquota/ui/app.js:1948` | None identified | [Pending](TEST_REPORT.md#f-979) |
-| F-980 | [ ] <a id="f-980"></a>The worktree checkbox follows the configured default unless an explicit project-menu choice overrides it. | `antiquota/ui/app.js:1948` | None identified | [Pending](TEST_REPORT.md#f-980) |
-| F-981 | [ ] <a id="f-981"></a>Working-folder browse shows up to four recent unique session folders before a path is typed. | `antiquota/ui/app.js:1934` | None identified | [Pending](TEST_REPORT.md#f-981) |
-| F-982 | [ ] <a id="f-982"></a>Folder browser entries navigate into a child folder or up to its parent. | `antiquota/ui/app.js:1934` | None identified | [Pending](TEST_REPORT.md#f-982) |
-| F-983 | [ ] <a id="f-983"></a>Selecting a browser folder updates the working-folder input. | `antiquota/ui/app.js:1934` | None identified | [Pending](TEST_REPORT.md#f-983) |
-| F-984 | [ ] <a id="f-984"></a>Typing a working folder debounces filesystem browsing by 200 ms. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-984) |
-| F-985 | [ ] <a id="f-985"></a>Create session posts folder, concrete effort/model, mode and worktree choice. | `antiquota/ui/app.js:1959` | None identified | [Pending](TEST_REPORT.md#f-985) |
+| F-978 | [x] <a id="f-978"></a>New-session defaults use the current model/mode and project folder, or configured defaults without a session. | `antiquota/ui/app.js:1948` | None identified | [Passed](TEST_REPORT.md#f-978) |
+| F-979 | [x] <a id="f-979"></a>New sessions from a worktree default to the parent repository folder. | `antiquota/ui/app.js:1948` | None identified | [Passed](TEST_REPORT.md#f-979) |
+| F-980 | [x] <a id="f-980"></a>The worktree checkbox follows the configured default unless an explicit project-menu choice overrides it. | `antiquota/ui/app.js:1948` | None identified | [Passed](TEST_REPORT.md#f-980) |
+| F-981 | [x] <a id="f-981"></a>Working-folder browse shows up to four recent unique session folders before a path is typed. | `antiquota/ui/app.js:1934` | None identified | [Passed](TEST_REPORT.md#f-981) |
+| F-982 | [x] <a id="f-982"></a>Folder browser entries navigate into a child folder or up to its parent. | `antiquota/ui/app.js:1934` | None identified | [Passed](TEST_REPORT.md#f-982) |
+| F-983 | [x] <a id="f-983"></a>Selecting a browser folder updates the working-folder input. | `antiquota/ui/app.js:1934` | None identified | [Passed](TEST_REPORT.md#f-983) |
+| F-984 | [x] <a id="f-984"></a>Typing a working folder debounces filesystem browsing by 200 ms. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-984) |
+| F-985 | [x] <a id="f-985"></a>Create session posts folder, concrete effort/model, mode and worktree choice. | `antiquota/ui/app.js:1959` | None identified | [Passed](TEST_REPORT.md#f-985) |
 | F-986 | [x] <a id="f-986"></a>Successful creation inserts the session into navigation and opens it. | `antiquota/ui/app.js:1959` | None identified | [Passed](TEST_REPORT.md#f-986) |
-| F-987 | [ ] <a id="f-987"></a>A creation error shows the API error without creating a fake local session. | `antiquota/ui/app.js:1959` | None identified | [Pending](TEST_REPORT.md#f-987) |
-| F-988 | [ ] <a id="f-988"></a>Canceling New session closes its dialog without sending a create request. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-988) |
-| F-989 | [ ] <a id="f-989"></a>Canceling Goal closes its dialog without sending a goal request. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-989) |
-| F-990 | [ ] <a id="f-990"></a>Goal verifier defaults to enabled unless the existing goal says otherwise. | `antiquota/ui/app.js:1970` | None identified | [Pending](TEST_REPORT.md#f-990) |
-| F-991 | [ ] <a id="f-991"></a>Goal rounds default to twenty unless the existing goal has a limit. | `antiquota/ui/app.js:1970` | None identified | [Pending](TEST_REPORT.md#f-991) |
-| F-992 | [ ] <a id="f-992"></a>Goal objective and working folder use required input validation before accepting their forms. | `antiquota/ui/index.html:148` | None identified | [Pending](TEST_REPORT.md#f-992) |
-| F-993 | [ ] <a id="f-993"></a>The sign-in code submits on Enter and automatically after paste. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-993) |
-| F-994 | [ ] <a id="f-994"></a>A raw text paste without files remains ordinary composer input. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-994) |
-| F-995 | [ ] <a id="f-995"></a>Live turn completion triggers turn notification except for quota endings. | `antiquota/ui/app.js:871` | None identified | [Pending](TEST_REPORT.md#f-995) |
-| F-996 | [ ] <a id="f-996"></a>Live job completion triggers the job-finished notification. | `antiquota/ui/app.js:871` | None identified | [Pending](TEST_REPORT.md#f-996) |
-| F-997 | [ ] <a id="f-997"></a>A live met-goal notice triggers the goal-met notification. | `antiquota/ui/app.js:871` | None identified | [Pending](TEST_REPORT.md#f-997) |
+| F-987 | [x] <a id="f-987"></a>A creation error shows the API error without creating a fake local session. | `antiquota/ui/app.js:1959` | None identified | [Passed](TEST_REPORT.md#f-987) |
+| F-988 | [x] <a id="f-988"></a>Canceling New session closes its dialog without sending a create request. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-988) |
+| F-989 | [x] <a id="f-989"></a>Canceling Goal closes its dialog without sending a goal request. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-989) |
+| F-990 | [x] <a id="f-990"></a>Goal verifier defaults to enabled unless the existing goal says otherwise. | `antiquota/ui/app.js:1970` | None identified | [Passed](TEST_REPORT.md#f-990) |
+| F-991 | [x] <a id="f-991"></a>Goal rounds default to twenty unless the existing goal has a limit. | `antiquota/ui/app.js:1970` | None identified | [Passed](TEST_REPORT.md#f-991) |
+| F-992 | [x] <a id="f-992"></a>Goal objective and working folder use required input validation before accepting their forms. | `antiquota/ui/index.html:148` | None identified | [Passed](TEST_REPORT.md#f-992) |
+| F-993 | [x] <a id="f-993"></a>The sign-in code submits on Enter and automatically after paste. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-993) |
+| F-994 | [x] <a id="f-994"></a>A raw text paste without files remains ordinary composer input. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-994) |
+| F-995 | [x] <a id="f-995"></a>Live turn completion triggers turn notification except for quota endings. | `antiquota/ui/app.js:871` | None identified | [Passed](TEST_REPORT.md#f-995) |
+| F-996 | [x] <a id="f-996"></a>Live job completion triggers the job-finished notification. | `antiquota/ui/app.js:871` | None identified | [Passed](TEST_REPORT.md#f-996) |
+| F-997 | [x] <a id="f-997"></a>A live met-goal notice triggers the goal-met notification. | `antiquota/ui/app.js:871` | None identified | [Passed](TEST_REPORT.md#f-997) |
 | F-998 | [ ] <a id="f-998"></a>A live exhausted-quota notice triggers the quota notification. | `antiquota/ui/app.js:871` | None identified | [Pending](TEST_REPORT.md#f-998) |
 | F-999 | [ ] <a id="f-999"></a>Desktop header and brand regions permit native window dragging. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-999) |
 | F-1000 | [ ] <a id="f-1000"></a>Desktop external-link handling preserves in-app file links and downloadable files. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-1000) |
-| F-1001 | [ ] <a id="f-1001"></a>Session relative-time labels refresh every minute. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-1001) |
-| F-1002 | [ ] <a id="f-1002"></a>An unknown slash command shows its unknown-command message. | `antiquota/ui/app.js:1430` | None identified | [Pending](TEST_REPORT.md#f-1002) |
-| F-1003 | [ ] <a id="f-1003"></a>Commands requiring a session report Open a session first when none is open. | `antiquota/ui/app.js:1430` | None identified | [Pending](TEST_REPORT.md#f-1003) |
+| F-1001 | [x] <a id="f-1001"></a>Session relative-time labels refresh every minute. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-1001) |
+| F-1002 | [x] <a id="f-1002"></a>An unknown slash command shows its unknown-command message. | `antiquota/ui/app.js:1430` | None identified | [Passed](TEST_REPORT.md#f-1002) |
+| F-1003 | [x] <a id="f-1003"></a>Commands requiring a session report Open a session first when none is open. | `antiquota/ui/app.js:1430` | None identified | [Passed](TEST_REPORT.md#f-1003) |
 ### Requested rewrite scale acceptance
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
@@ -1287,7 +1287,7 @@ The following acceptance items come from the authorized rewrite task, not from a
 | F-1050 | [x] <a id="f-1050"></a>Use generated API types rather than hand-written duplicate API request, response or event interfaces. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1050) |
 | F-1051 | [x] <a id="f-1051"></a>Use one typed API client at ui/src/lib/api.ts; UI components make no direct fetch calls. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1051) |
 | F-1052 | [x] <a id="f-1052"></a>Use one SSE event store; test event reduction, reconnect recovery and session selection with the same generated Event types. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1052) |
-| F-1053 | [ ] <a id="f-1053"></a>Use xterm.js and its fit addon directly for terminal interaction. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1053) |
+| F-1053 | [x] <a id="f-1053"></a>Use xterm.js and its fit addon directly for terminal interaction. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1053) |
 | F-1054 | [ ] <a id="f-1054"></a>Use the chart library directly for usage plots and tooltips. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1054) |
 | F-1055 | [x] <a id="f-1055"></a>Use MediaRecorder directly and upload its supported container with the correct audio type while accepting recorded WAV test input. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1055) |
 | F-1056 | [x] <a id="f-1056"></a>Define design tokens as CSS variables in one file and render both light and dark themes. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1056) |
@@ -1366,7 +1366,7 @@ The following acceptance items come from the authorized rewrite task, not from a
 | F-1109 | [ ] <a id="f-1109"></a>Playwright types into the terminal, resizes it and restarts its process. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1109) |
 | F-1110 | [x] <a id="f-1110"></a>Playwright uses recorded WAV audio and silence to verify dictation text and the silence guard. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1110) |
 | F-1111 | [x] <a id="f-1111"></a>Playwright verifies the usage chart and its tooltips. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1111) |
-| F-1112 | [ ] <a id="f-1112"></a>Playwright exercises project and session menus. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1112) |
+| F-1112 | [x] <a id="f-1112"></a>Playwright exercises project and session menus. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1112) |
 | F-1113 | [x] <a id="f-1113"></a>Playwright captures light and dark themes and narrow-window states. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1113) |
 
 ### Native desktop proof

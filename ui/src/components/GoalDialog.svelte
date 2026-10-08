@@ -67,6 +67,7 @@
       <label
         >Objective<textarea
           aria-label="Objective"
+          required
           rows="4"
           placeholder="What should be true when the work is done?"
           value={$goalDialog.objective}

@@ -9,7 +9,8 @@ import { projectHistory, reduceTranscript } from './transcript';
 import type { GoalRequest } from '../gen/GoalRequest';
 import { EXECUTE_PLAN } from './goals';
 import { acceptDraft, transferDraft } from './session-draft';
-import { jobLog } from './jobs';
+import { viewJobLog } from './jobs';
+import { dialogDefaults } from './session-start';
 
 import type { DialogState, WorkbenchState } from './workbench-state';
 export type { DialogState, WorkbenchState } from './workbench-state';
@@ -189,20 +190,7 @@ export function createWorkbench(
     state.update((current) => ({
       ...current,
       error: '',
-      dialog: {
-        id: kind === 'rename' ? value.selected?.id : undefined,
-        worktree: kind === 'create' && current.snapshot?.defaults.worktree_default === 'on',
-        kind,
-        title: kind === 'rename' ? (value.selected?.title ?? '') : '',
-        cwd:
-          kind === 'rename'
-            ? (value.selected?.cwd ?? '')
-            : value.selected?.cwd ||
-              value.snapshot?.defaults.default_cwd ||
-              value.snapshot?.defaults.cwd ||
-              '',
-        ...options,
-      },
+      dialog: dialogDefaults(value, kind, options),
     }));
   }
   return {
@@ -229,12 +217,16 @@ export function createWorkbench(
           'filter' | 'sidebarOpen' | 'showArchived' | 'dialog' | 'error' | 'feedback'
         >
       >,
-    ) => state.update((value) => ({ ...value, ...patch })),
+    ) => {
+      if (patch.feedback && get(state).feedback === patch.feedback)
+        state.update((value) => ({ ...value, feedback: '' }));
+      state.update((value) => ({ ...value, ...patch }));
+    },
     draft: (text: string, id = wanted) =>
       state.update((value) => ({ ...value, drafts: { ...value.drafts, [id]: text } })),
     run: mutate,
     openDialog,
-    dialogField: (field: 'title' | 'cwd', text: string) =>
+    dialogField: (field: 'title' | 'cwd' | 'model' | 'mode', text: string) =>
       state.update((value) => ({
         ...value,
         dialog: value.dialog ? { ...value.dialog, [field]: text } : null,
@@ -244,14 +236,15 @@ export function createWorkbench(
         const value = get(state);
         if (!value.dialog) return;
         const dialog = value.dialog;
-        const { kind, title, cwd, worktree, id, pendingText } = dialog;
+        const { kind, title, cwd, worktree, model, mode, id, pendingText } = dialog;
         if (kind === 'rename' && id) replaceSession(await api.update(id, { title }));
         else {
           const session = await api.create({
-            cwd,
+            cwd: cwd.trim(),
             title,
             worktree,
-            model: value.snapshot?.defaults.model || 'gemini-3.8-flash-high',
+            model,
+            mode,
           });
           if (pendingText) {
             state.update((current) => ({
@@ -349,17 +342,22 @@ export function createWorkbench(
         const separator = draft && !draft.endsWith(' ') ? ' ' : '';
         return { ...value, drafts: { ...value.drafts, [wanted]: `${draft}${separator}@${path} ` } };
       }),
-    removeWorktree: (deleteBranch: boolean) =>
+    removeWorktree: (deleteBranch: boolean, id = wanted) =>
       mutate(async () => {
-        if (wanted) replaceSession(await api.gitRemove(wanted, deleteBranch));
+        if (id) replaceSession(await api.gitRemove(id, deleteBranch));
       }),
     stopJob: (jid: string) =>
       mutate(async () => {
         if (wanted) await api.stopJob(wanted, jid);
       }),
     openJobLog: async (jid: string) => {
+      const id = wanted;
       try {
-        if (wanted) jobLog.set(await api.jobLog(wanted, jid));
+        if (id)
+          await viewJobLog(
+            () => api.jobLog(id, jid),
+            () => wanted === id,
+          );
       } catch (error) {
         fail(error);
       }

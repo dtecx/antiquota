@@ -49,7 +49,9 @@
     <div class="body" aria-label="File contents">
       {#each lines as line, index (index)}<div
           class="line"
-          class:highlight={$viewer.line === index + 1}
+          class:highlight={!!$viewer.line &&
+            index + 1 >= $viewer.line &&
+            index + 1 <= ($viewer.endLine ?? $viewer.line)}
         >
           <span class="number">{index + 1}</span><span class="text">{line}</span>
         </div>{/each}

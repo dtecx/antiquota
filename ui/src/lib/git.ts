@@ -34,6 +34,7 @@ export interface FileText {
   rel: string;
   text: string;
   line?: number;
+  endLine?: number;
 }
 
 /** A repository status, or null outside a repository (the engine answers `{}`). */

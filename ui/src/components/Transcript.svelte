@@ -7,6 +7,9 @@
   import type { Workbench } from '../lib/workbench';
   import { groupTranscript, nearBottom } from '../lib/transcript';
   import { createTranscriptActions, type Expansion } from '../lib/transcript-actions';
+  import { earlierSessions } from '../lib/session-start';
+  import { draftFor, goalDialog } from '../lib/goals';
+  import { get } from 'svelte/store';
   import { preferences } from '../lib/preferences';
   import TurnGroup from './TurnGroup.svelte';
   import { isBusy } from '../lib/format';
@@ -16,6 +19,15 @@
     sid = $derived($view.selected?.id ?? ''),
     loading = $derived($view.loading);
   const groups = $derived(groupTranscript(events));
+  const earlier = $derived(earlierSessions($view.selected, $view.snapshot?.sessions ?? []));
+  function inherit(from: string, title: string) {
+    const id = get(view).selected?.id;
+    if (id)
+      void workbench.run(async () => {
+        await api.inherit(id, from);
+        workbench.change({ feedback: `Picks up from ${title || 'that session'}` });
+      });
+  }
   const actions = untrack(() => createTranscriptActions(api, workbench));
   const prefs = preferences.state;
   let expand = $state<Expansion>({ version: 0, open: false });
@@ -97,7 +109,26 @@
           Ask a question, inspect a project, or describe a change.<br />Each turn stays with this
           session.
         </p>
-        <div class="folder">{$view.selected?.cwd}</div>
+        <div class="folder">Commands run in {$view.selected?.cwd}.</div>
+        <button
+          onclick={() =>
+            goalDialog.set(
+              draftFor(
+                $view.selected?.goal ?? null,
+                $view.drafts[sid] ?? '',
+                $view.snapshot?.defaults.verifier_model || 'gemini-3.8-flash-high',
+              ),
+            )}>Set a goal</button
+        >
+        {#if earlier.length}<div class="pickup" aria-label="Earlier sessions">
+            <p>Pick up from an earlier session here:</p>
+            {#each earlier as previous (previous.id)}<button
+                disabled={$view.mutating}
+                title="Its handoff state goes in front of your next message"
+                onclick={() => inherit(previous.id, previous.title)}
+                >{previous.title || 'Untitled'}</button
+              >{/each}
+          </div>{/if}
         {#if !$view.snapshot?.accounts.length}<button onclick={() => login.open()}
             >Add a Google account</button
           >{/if}
@@ -118,6 +149,14 @@
 </div>
 
 <style>
+  .pickup {
+    display: grid;
+    gap: var(--space-2);
+    margin-top: var(--space-4);
+  }
+  .pickup button {
+    text-align: left;
+  }
   .presentation {
     display: flex;
     gap: var(--space-2);

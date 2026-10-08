@@ -304,13 +304,14 @@
   .empty h3 {
     font-size: 13px;
   }
-  @media (max-width: 760px) {
+  @media (max-width: 859px) {
     .layout {
       grid-template-columns: 1fr;
     }
     nav {
       flex-direction: row;
-      max-height: 90px;
+      flex-wrap: wrap;
+      max-height: 180px;
       border-right: 0;
       border-bottom: 1px solid var(--rule);
     }

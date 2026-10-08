@@ -30,7 +30,12 @@ export function createTranscriptActions(api: Api, workbench: Workbench) {
         await viewFile(
           async () => {
             const result = await api.file(id, target.path);
-            return { ...result, ...(target.line ? { line: target.line } : {}) };
+            return {
+              ...result,
+              ...(target.line
+                ? { line: target.line, ...(target.endLine ? { endLine: target.endLine } : {}) }
+                : {}),
+            };
           },
           () => !disposed && get(workbench.state).selected?.id === id,
         );

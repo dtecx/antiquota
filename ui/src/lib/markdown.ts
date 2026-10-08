@@ -89,10 +89,10 @@ export function markdown(source: string): string {
   return output.join('');
 }
 
-export function fileTarget(text: string): { path: string; line?: number } {
+export function fileTarget(text: string): { path: string; line?: number; endLine?: number } {
   const split = text.lastIndexOf('#'),
     hash = split >= 0 ? text.slice(split + 1) : '';
-  const match = /^(?:L|line-)?([1-9]\d*)$/i.exec(hash);
+  const match = /^(?:L|line-)?([1-9]\d*)(?:-(?:L|line-)?([1-9]\d*))?$/i.exec(hash);
   let path = match ? text.slice(0, split) : text;
   try {
     path = decodeURIComponent(path);
@@ -100,5 +100,16 @@ export function fileTarget(text: string): { path: string; line?: number } {
     /* Preserve malformed paths for the engine's validation. */
   }
   const line = match ? Number(match[1]) : 0;
-  return { path, ...(Number.isSafeInteger(line) && line > 0 ? { line } : {}) };
+  const endLine = match?.[2] ? Number(match[2]) : line;
+  return {
+    path,
+    ...(Number.isSafeInteger(line) && line > 0
+      ? {
+          line,
+          ...(Number.isSafeInteger(endLine) && endLine >= line && endLine !== line
+            ? { endLine }
+            : {}),
+        }
+      : {}),
+  };
 }

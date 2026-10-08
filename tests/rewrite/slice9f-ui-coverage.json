@@ -1,0 +1,963 @@
+{
+  "format": 1,
+  "slice": "9f",
+  "scope": "Browser UI acceptance only; account fold and native/live proof are tracked separately.",
+  "status": "Complete acceptance mapping attached to fresh passing full gates.",
+  "passed_before": 631,
+  "added": 77,
+  "passed_after_ui_only": 708,
+  "passed_after_is_prospective": false,
+  "gate_status": "Final just check passed; just test passed 268 Rust, 391 Vitest and 108 Chromium scenarios with zero final failures, ignored, skipped or flaky tests.",
+  "feature_ids": [
+    "F-398",
+    "F-401",
+    "F-402",
+    "F-403",
+    "F-404",
+    "F-405",
+    "F-457",
+    "F-458",
+    "F-459",
+    "F-460",
+    "F-461",
+    "F-564",
+    "F-569",
+    "F-573",
+    "F-584",
+    "F-586",
+    "F-587",
+    "F-591",
+    "F-592",
+    "F-593",
+    "F-594",
+    "F-595",
+    "F-597",
+    "F-601",
+    "F-609",
+    "F-610",
+    "F-621",
+    "F-623",
+    "F-625",
+    "F-630",
+    "F-631",
+    "F-636",
+    "F-637",
+    "F-638",
+    "F-704",
+    "F-718",
+    "F-719",
+    "F-772",
+    "F-853",
+    "F-855",
+    "F-856",
+    "F-857",
+    "F-859",
+    "F-860",
+    "F-861",
+    "F-862",
+    "F-863",
+    "F-864",
+    "F-865",
+    "F-866",
+    "F-869",
+    "F-870",
+    "F-871",
+    "F-978",
+    "F-979",
+    "F-980",
+    "F-981",
+    "F-982",
+    "F-983",
+    "F-984",
+    "F-985",
+    "F-987",
+    "F-988",
+    "F-989",
+    "F-990",
+    "F-991",
+    "F-992",
+    "F-993",
+    "F-994",
+    "F-995",
+    "F-996",
+    "F-997",
+    "F-1001",
+    "F-1002",
+    "F-1003",
+    "F-1053",
+    "F-1112"
+  ],
+  "tests": {
+    "F-398": {
+      "acceptance": "Authenticated JSON calls send X-Antiquota-Token and display API errors as a toast.",
+      "path": "ui/e2e/layout.spec.ts",
+      "test": "dialog cancellation and validation send nothing and failed creation keeps the API error and no local session",
+      "references": [
+        "ui/e2e/layout.spec.ts::dialog cancellation and validation send nothing and failed creation keeps the API error and no local session",
+        "ui/src/lib/api.test.ts::sends the token and exact JSON request through the captured route",
+        "ui/src/lib/api.test.ts::surfaces every HTTP boundary failure to the optional toast callback without changing its status"
+      ],
+      "proof": "The API unit asserts the exact X-Antiquota-Token and JSON headers/body. Boundary failures preserve HTTP status and invoke the optional error callback for HTTP, missing-token and network failures. The browser provokes a real missing-directory creation error and asserts the API directory error appears in the toast.",
+      "source_references": [
+        "ui/src/lib/api.ts",
+        "ui/src/App.svelte"
+      ]
+    },
+    "F-401": {
+      "acceptance": "Initial load selects the URL-fragment session when it exists.",
+      "path": "ui/e2e/layout.spec.ts",
+      "test": "initial fragment fallback and delayed initial models recover without CSS root zoom",
+      "references": [
+        "ui/e2e/layout.spec.ts::initial fragment fallback and delayed initial models recover without CSS root zoom"
+      ],
+      "proof": "Existing First and Older fragment IDs each select their matching session heading on initial load."
+    },
+    "F-402": {
+      "acceptance": "Initial load otherwise opens the first session or the start screen.",
+      "path": "ui/e2e/layout.spec.ts",
+      "test": "initial fragment fallback and delayed initial models recover without CSS root zoom",
+      "references": [
+        "ui/e2e/layout.spec.ts::initial fragment fallback and delayed initial models recover without CSS root zoom",
+        "ui/e2e/layout.spec.ts::dialog cancellation and validation send nothing and failed creation keeps the API error and no local session"
+      ],
+      "proof": "Missing and malformed fragment IDs open the first current session. A separate empty-engine initial load asserts the start-screen heading and opens New session."
+    },
+    "F-403": {
+      "acceptance": "A missing initial model list is retried after four seconds.",
+      "path": "ui/e2e/layout.spec.ts",
+      "test": "initial fragment fallback and delayed initial models recover without CSS root zoom",
+      "references": [
+        "ui/e2e/layout.spec.ts::initial fragment fallback and delayed initial models recover without CSS root zoom",
+        "ui/src/lib/workbench-lifecycle.test.ts::retries a missing initial model list at four seconds and cancels on unmount",
+        "ui/src/lib/workbench-lifecycle.test.ts::does not retry populated models and surfaces new feedback and errors without clearing durable errors"
+      ],
+      "proof": "Fake timers require no retry at 3999 ms and one state refresh at 4000 ms, then populated models. Disposal cancels the retry and populated lists never schedule it. The browser suppresses initial models and observes a later state request after four seconds."
+    },
+    "F-404": {
+      "acceptance": "A toast replaces the prior timer and clears after 2.6 seconds.",
+      "path": "ui/src/lib/workbench-lifecycle.test.ts",
+      "test": "replaces the previous toast timer and clears only after 2.6 seconds from the last message",
+      "references": [
+        "ui/src/lib/workbench-lifecycle.test.ts::replaces the previous toast timer and clears only after 2.6 seconds from the last message"
+      ],
+      "proof": "A second toast replaces the first timer. The second remains through 2599 ms and clears at 2600 ms; disposal releases the timer."
+    },
+    "F-405": {
+      "acceptance": "Confirmation dialogs support Continue, Cancel, Escape and dangerous-action styling.",
+      "path": "ui/e2e/edges.spec.ts",
+      "test": "confirmation supports Cancel and Escape and approval execution patches mode before sending",
+      "references": [
+        "ui/e2e/edges.spec.ts::confirmation supports Cancel and Escape and approval execution patches mode before sending",
+        "ui/e2e/edges.spec.ts::stale git status and confirmation cannot discard into a replacement session",
+        "ui/src/lib/confirm.test.ts::offers Continue by default and resolves only its explicit answer",
+        "ui/src/lib/confirm.test.ts::cancels a superseded question rather than leaving its owner waiting"
+      ],
+      "proof": "The controller defaults to Continue and resolves only an explicit answer. Browser Cancel and Escape both preserve plan mode, and destructive discard confirmation has the danger class. Superseding a question resolves its previous owner as canceled."
+    },
+    "F-457": {
+      "acceptance": "An empty session offers up to three earlier sessions from the same folder.",
+      "path": "ui/e2e/edges.spec.ts",
+      "test": "empty-session earlier choices inherit the selected handoff into exactly the next prompt",
+      "references": [
+        "ui/e2e/edges.spec.ts::empty-session earlier choices inherit the selected handoff into exactly the next prompt",
+        "ui/src/lib/session-start.test.ts::offers at most three completed earlier sessions from exactly the same folder, newest first"
+      ],
+      "proof": "Four completed same-folder sessions yield three browser choices in descending order. The unit excludes the current session, empty sessions and different folders."
+    },
+    "F-458": {
+      "acceptance": "Selecting an earlier session inherits its handoff state for the next prompt.",
+      "path": "ui/e2e/edges.spec.ts",
+      "test": "empty-session earlier choices inherit the selected handoff into exactly the next prompt",
+      "references": [
+        "ui/e2e/edges.spec.ts::empty-session earlier choices inherit the selected handoff into exactly the next prompt"
+      ],
+      "proof": "After selecting Earlier 3, the next actual fake-provider prompt contains its original request, durable reply and the new submitted request."
+    },
+    "F-459": {
+      "acceptance": "Start and empty-session screens offer sign-in when no accounts exist.",
+      "path": "ui/e2e/login.spec.ts",
+      "test": "opens sign-in from an empty account pill welcome and empty session",
+      "references": [
+        "ui/e2e/login.spec.ts::opens sign-in from an empty account pill welcome and empty session"
+      ],
+      "proof": "With the only synthetic account removed, the start screen and a newly created empty session each expose Add a Google account and open the sign-in dialog."
+    },
+    "F-460": {
+      "acceptance": "The empty-session screen offers Set a goal and explains its working folder.",
+      "path": "ui/e2e/edges.spec.ts",
+      "test": "empty-session earlier choices inherit the selected handoff into exactly the next prompt",
+      "references": [
+        "ui/e2e/edges.spec.ts::empty-session earlier choices inherit the selected handoff into exactly the next prompt"
+      ],
+      "proof": "The empty-session screen asserts Set a goal and the exact Commands run in <session folder> explanation."
+    },
+    "F-461": {
+      "acceptance": "The no-session start screen offers New session.",
+      "path": "ui/e2e/layout.spec.ts",
+      "test": "dialog cancellation and validation send nothing and failed creation keeps the API error and no local session",
+      "references": [
+        "ui/e2e/layout.spec.ts::dialog cancellation and validation send nothing and failed creation keeps the API error and no local session"
+      ],
+      "proof": "An empty-engine start screen displays its welcome heading and New session opens the creation dialog."
+    },
+    "F-564": {
+      "acceptance": "Execute with approvals switches to default before sending its execution instruction.",
+      "path": "ui/e2e/edges.spec.ts",
+      "test": "confirmation supports Cancel and Escape and approval execution patches mode before sending",
+      "references": [
+        "ui/e2e/edges.spec.ts::confirmation supports Cancel and Escape and approval execution patches mode before sending"
+      ],
+      "proof": "The captured first request is a session PATCH with mode default. The next request is POST/send with the exact EXECUTE_PLAN text body."
+    },
+    "F-569": {
+      "acceptance": "Job logs show no-output text when empty and scroll to the latest output.",
+      "path": "ui/e2e/edges.spec.ts",
+      "test": "job logs explain no output scroll to the latest line and loop stop sends DELETE",
+      "references": [
+        "ui/e2e/edges.spec.ts::job logs explain no output scroll to the latest line and loop stop sends DELETE"
+      ],
+      "proof": "An actual sleep job exposes the no-output explanation. A 300-line synthetic job exposes line 299 and the log scroll distance from the bottom is under two pixels."
+    },
+    "F-573": {
+      "acceptance": "Loop Stop deletes the configured loop.",
+      "path": "ui/e2e/edges.spec.ts",
+      "test": "job logs explain no output scroll to the latest line and loop stop sends DELETE",
+      "references": [
+        "ui/e2e/edges.spec.ts::job logs explain no output scroll to the latest line and loop stop sends DELETE"
+      ],
+      "proof": "Clicking Stop loop observes the session loop DELETE request and removes the configured loop from the UI."
+    },
+    "F-584": {
+      "acceptance": "Breadcrumbs navigate to earlier directories.",
+      "path": "ui/e2e/edges.spec.ts",
+      "test": "files explain missing sessions and navigate breadcrumbs sizes dim files and empty folders",
+      "references": [
+        "ui/e2e/edges.spec.ts::files explain missing sessions and navigate breadcrumbs sizes dim files and empty folders"
+      ],
+      "proof": "After entering child/empty, the child and project breadcrumb buttons navigate back and restore the corresponding folder rows."
+    },
+    "F-586": {
+      "acceptance": "File rows display size and dimmed entries.",
+      "path": "ui/e2e/edges.spec.ts",
+      "test": "files explain missing sessions and navigate breadcrumbs sizes dim files and empty folders",
+      "references": [
+        "ui/e2e/edges.spec.ts::files explain missing sessions and navigate breadcrumbs sizes dim files and empty folders"
+      ],
+      "proof": "A 2048-byte file displays 2.0 KB; the hidden entry appears inside a dimmed list row."
+    },
+    "F-587": {
+      "acceptance": "An empty directory shows Empty folder.",
+      "path": "ui/e2e/edges.spec.ts",
+      "test": "files explain missing sessions and navigate breadcrumbs sizes dim files and empty folders",
+      "references": [
+        "ui/e2e/edges.spec.ts::files explain missing sessions and navigate breadcrumbs sizes dim files and empty folders"
+      ],
+      "proof": "Entering an actual empty child directory displays Empty folder."
+    },
+    "F-591": {
+      "acceptance": "File links open the numbered file viewer.",
+      "path": "ui/e2e/edges.spec.ts",
+      "test": "file viewer opens inclusive line ranges centers them copies complete text and closes",
+      "references": [
+        "ui/e2e/edges.spec.ts::file viewer opens inclusive line ranges centers them copies complete text and closes"
+      ],
+      "proof": "A Markdown file link opens the numbered range.txt viewer and asserts highlighted line numbers 100 through 103."
+    },
+    "F-592": {
+      "acceptance": "The viewer shows relative path and full-path tooltip.",
+      "path": "ui/e2e/edges.spec.ts",
+      "test": "file viewer opens inclusive line ranges centers them copies complete text and closes",
+      "references": [
+        "ui/e2e/edges.spec.ts::file viewer opens inclusive line ranges centers them copies complete text and closes"
+      ],
+      "proof": "The viewer heading identifies relative range.txt and its title attribute is the exact full project path."
+    },
+    "F-593": {
+      "acceptance": "Line or line-range links highlight and center those lines.",
+      "path": "ui/e2e/edges.spec.ts",
+      "test": "file viewer opens inclusive line ranges centers them copies complete text and closes",
+      "references": [
+        "ui/e2e/edges.spec.ts::file viewer opens inclusive line ranges centers them copies complete text and closes",
+        "ui/e2e/transcript.spec.ts::renders safe Markdown, external and file links, and copies exact code and completed replies"
+      ],
+      "proof": "The range link highlights exactly lines 100 through 103 and scrolls the first selected line within two line heights of the viewport center. The prior transcript scenario also asserts a single-line #L2 link highlights line 2 and its exact text."
+    },
+    "F-594": {
+      "acceptance": "Viewer Copy copies complete contents.",
+      "path": "ui/e2e/edges.spec.ts",
+      "test": "file viewer opens inclusive line ranges centers them copies complete text and closes",
+      "references": [
+        "ui/e2e/edges.spec.ts::file viewer opens inclusive line ranges centers them copies complete text and closes"
+      ],
+      "proof": "Copy yields all 180 lines and the final newline, exactly matching the original file bytes decoded as text."
+    },
+    "F-595": {
+      "acceptance": "Viewer Close dismisses the viewer.",
+      "path": "ui/e2e/edges.spec.ts",
+      "test": "file viewer opens inclusive line ranges centers them copies complete text and closes",
+      "references": [
+        "ui/e2e/edges.spec.ts::file viewer opens inclusive line ranges centers them copies complete text and closes"
+      ],
+      "proof": "Close file dismisses the viewer dialog."
+    },
+    "F-597": {
+      "acceptance": "Files and Terminal tabs explain that a session is required when none is open.",
+      "path": "ui/e2e/edges.spec.ts",
+      "test": "files explain missing sessions and navigate breadcrumbs sizes dim files and empty folders",
+      "references": [
+        "ui/e2e/edges.spec.ts::files explain missing sessions and navigate breadcrumbs sizes dim files and empty folders"
+      ],
+      "proof": "Without a session, the Files and Terminal tabs display their separate session-required explanations."
+    },
+    "F-601": {
+      "acceptance": "Expanding worktree committed files lazily requests the base-relative diff.",
+      "path": "ui/e2e/edges.spec.ts",
+      "test": "committed diffs load only when expanded and all git empty states remain explicit",
+      "references": [
+        "ui/e2e/edges.spec.ts::committed diffs load only when expanded and all git empty states remain explicit"
+      ],
+      "proof": "No committed diff request occurs before expansion. Expanding the committed file makes one request with committed=1 and displays the base-relative fixture diff."
+    },
+    "F-609": {
+      "acceptance": "Expanding an edit-history file lazily displays all recorded diffs.",
+      "path": "ui/e2e/edges.spec.ts",
+      "test": "edit history stays lazy until expanded and side-panel visibility and selection persist safely",
+      "references": [
+        "ui/e2e/edges.spec.ts::edit history stays lazy until expanded and side-panel visibility and selection persist safely"
+      ],
+      "proof": "Before expansion the edit-history file has no pre elements. Expansion renders both recorded diffs. Selecting another session resets expansion and renders only that session's diff after expanding again."
+    },
+    "F-610": {
+      "acceptance": "Changes displays distinct no-session, no-edits and no-uncommitted messages.",
+      "path": "ui/e2e/edges.spec.ts",
+      "test": "files explain missing sessions and navigate breadcrumbs sizes dim files and empty folders",
+      "references": [
+        "ui/e2e/edges.spec.ts::files explain missing sessions and navigate breadcrumbs sizes dim files and empty folders",
+        "ui/e2e/edges.spec.ts::committed diffs load only when expanded and all git empty states remain explicit"
+      ],
+      "proof": "The sessionless Changes tab asserts its distinct Open a session to review its changes explanation. The committed-diff scenario separately asserts no agent edits and no uncommitted changes messages."
+    },
+    "F-621": {
+      "acceptance": "Side-panel visibility persists per device.",
+      "path": "ui/e2e/edges.spec.ts",
+      "test": "edit history stays lazy until expanded and side-panel visibility and selection persist safely",
+      "references": [
+        "ui/e2e/edges.spec.ts::edit history stays lazy until expanded and side-panel visibility and selection persist safely"
+      ],
+      "proof": "An open side panel remains visible after reload; closing it and reloading leaves no side-panel element."
+    },
+    "F-623": {
+      "acceptance": "Open side-panel content follows session selection.",
+      "path": "ui/e2e/edges.spec.ts",
+      "test": "edit history stays lazy until expanded and side-panel visibility and selection persist safely",
+      "references": [
+        "ui/e2e/edges.spec.ts::edit history stays lazy until expanded and side-panel visibility and selection persist safely",
+        "ui/e2e/edges.spec.ts::stale git status and confirmation cannot discard into a replacement session"
+      ],
+      "proof": "An open Changes panel switches from two first-session recorded diffs to the selected session's single diff. A held old status response cannot replace the newly selected session's current status."
+    },
+    "F-625": {
+      "acceptance": "A terminal asset failure displays a useful load error.",
+      "path": "ui/e2e/edges.spec.ts",
+      "test": "terminal fills a wider drawer and reports an asset load failure",
+      "references": [
+        "ui/e2e/edges.spec.ts::terminal fills a wider drawer and reports an asset load failure"
+      ],
+      "proof": "Aborting the dynamically loaded xterm assets displays the terminal load error instead of an empty terminal panel."
+    },
+    "F-630": {
+      "acceptance": "First replayed output resets the terminal display.",
+      "path": "ui/src/lib/terminal-runtime.test.ts",
+      "test": "uses 5000-line scrollback and resets exactly once for each first output replay including restart",
+      "references": [
+        "ui/src/lib/terminal-runtime.test.ts::uses 5000-line scrollback and resets exactly once for each first output replay including restart"
+      ],
+      "proof": "The first replay frame resets the terminal once; a second frame does not reset again. Restart closes the old stream and the first restarted replay resets once more, preserving exact replay bytes."
+    },
+    "F-631": {
+      "acceptance": "Resize fits xterm and posts dimensions after an 80 ms debounce.",
+      "path": "ui/src/lib/terminal-runtime.test.ts",
+      "test": "fits immediately and posts only the last dimensions after 80ms",
+      "references": [
+        "ui/src/lib/terminal-runtime.test.ts::fits immediately and posts only the last dimensions after 80ms"
+      ],
+      "proof": "Fit runs immediately. Repeated resize calls cancel the earlier post; no dimensions are posted at 79 ms and the latest 120x35 dimensions are posted once at 80 ms."
+    },
+    "F-636": {
+      "acceptance": "Terminal input and startup errors render in red inside xterm.",
+      "path": "ui/src/lib/terminal-runtime.test.ts",
+      "test": "renders both startup and input failures in ANSI red without throwing",
+      "references": [
+        "ui/src/lib/terminal-runtime.test.ts::renders both startup and input failures in ANSI red without throwing"
+      ],
+      "proof": "Rejected startup and input requests write the exact error text wrapped in red ANSI codes into xterm without throwing."
+    },
+    "F-637": {
+      "acceptance": "Opening or revisiting the Terminal tab focuses it.",
+      "path": "ui/e2e/terminal.spec.ts",
+      "test": "runs a shell in the session folder",
+      "references": [
+        "ui/e2e/terminal.spec.ts::runs a shell in the session folder"
+      ],
+      "proof": "The real xterm helper textarea is focused when Terminal first opens and again after visiting Files and returning to Terminal; output survives the tab switch."
+    },
+    "F-638": {
+      "acceptance": "Terminal scrollback retains 5000 lines.",
+      "path": "ui/e2e/terminal.spec.ts",
+      "test": "real xterm retains exactly five thousand scrollback lines beyond its visible rows",
+      "references": [
+        "ui/e2e/terminal.spec.ts::real xterm retains exactly five thousand scrollback lines beyond its visible rows",
+        "ui/src/lib/terminal-runtime.test.ts::uses 5000-line scrollback and resets exactly once for each first output replay including restart"
+      ],
+      "proof": "The actual bundled xterm asset receives 6000 newline-terminated lines. Its real buffer reports baseY 5000, length 5024 and 24 visible rows, retaining line 978 as the oldest line and line 6000 as the last output line. A separate production-runtime unit asserts its configured scrollback is 5000."
+    },
+    "F-704": {
+      "acceptance": "The first browser message requests notification permission when its state is default.",
+      "path": "ui/e2e/edges.spec.ts",
+      "test": "raw text paste stays composer input and first actual send requests notification permission once",
+      "references": [
+        "ui/e2e/edges.spec.ts::raw text paste stays composer input and first actual send requests notification permission once",
+        "ui/src/lib/notifications.test.ts::suppresses focused, disabled and ungranted notices and tolerates browser errors"
+      ],
+      "proof": "Starting with default Notification permission, the first actual Send calls requestPermission exactly once. The notification controller requests only default permission and tolerates denial and request failures."
+    },
+    "F-718": {
+      "acceptance": "Pause keeps an account out of rotation.",
+      "path": "ui/e2e/accounts.spec.ts",
+      "test": "shows pool windows pauses resumes checks removes and refreshes accounts",
+      "references": [
+        "ui/e2e/accounts.spec.ts::shows pool windows pauses resumes checks removes and refreshes accounts",
+        "tests/rewrite/accounts_replay.rs::pause_defaults_to_on_rejects_unknown_accounts_and_broadcasts_the_response",
+        "crates/core/src/routing/tests.rs::paused_or_walled_accounts_never_rank"
+      ],
+      "proof": "Clicking Pause sets the browser account to paused and reduces its free-account count. The HTTP test persists and broadcasts paused=true, and the core property proves a paused account never appears in ranked rotation candidates."
+    },
+    "F-719": {
+      "acceptance": "Resume puts a paused account back into rotation.",
+      "path": "ui/e2e/accounts.spec.ts",
+      "test": "shows pool windows pauses resumes checks removes and refreshes accounts",
+      "references": [
+        "ui/e2e/accounts.spec.ts::shows pool windows pauses resumes checks removes and refreshes accounts",
+        "tests/rewrite/accounts_replay.rs::pause_defaults_to_on_rejects_unknown_accounts_and_broadcasts_the_response",
+        "crates/core/src/routing/tests.rs::paused_or_walled_accounts_never_rank"
+      ],
+      "proof": "Clicking Resume restores the browser Pause action and clears its paused display. The HTTP test removes the persisted pause marker and broadcasts paused=false; the core property proves an unpaused, unwalled account appears in ranked rotation candidates."
+    },
+    "F-772": {
+      "acceptance": "Engine diagnostics shows version, URL/PID/ownership, data, stack, agy, hook and counts.",
+      "path": "ui/e2e/edges.spec.ts",
+      "test": "engine diagnostics presents every identity path hook and count from the exact engine response",
+      "references": [
+        "ui/e2e/edges.spec.ts::engine diagnostics presents every identity path hook and count from the exact engine response"
+      ],
+      "proof": "The seven diagnostic values are compared exactly with GET /api/engine: version, URL/PID/owner, data path, stack path, agy path, hook state and session/account counts."
+    },
+    "F-853": {
+      "acceptance": "Alt-clicking a session opens it on the right.",
+      "path": "ui/e2e/edges.spec.ts",
+      "test": "Alt-click opens the other pane and session time labels update after one minute",
+      "references": [
+        "ui/e2e/edges.spec.ts::Alt-click opens the other pane and session time labels update after one minute"
+      ],
+      "proof": "Alt-click selects the second session in the right pane while the first session remains selected in the primary pane."
+    },
+    "F-855": {
+      "acceptance": "The default dark theme uses the dense warm palette and centralized CSS variables.",
+      "path": "ui/e2e/layout.spec.ts",
+      "test": "uses centralized warm dark and light palettes, visible keyboard focus, hidden controls and reduced motion",
+      "references": [
+        "ui/e2e/layout.spec.ts::uses centralized warm dark and light palettes, visible keyboard focus, hidden controls and reduced motion"
+      ],
+      "proof": "The default body background is rgb(14, 15, 17) and the centralized --baton variable is #e8a33d."
+    },
+    "F-856": {
+      "acceptance": "The light palette follows prefers-color-scheme and overrides centralized color variables.",
+      "path": "ui/e2e/layout.spec.ts",
+      "test": "uses centralized warm dark and light palettes, visible keyboard focus, hidden controls and reduced motion",
+      "references": [
+        "ui/e2e/layout.spec.ts::uses centralized warm dark and light palettes, visible keyboard focus, hidden controls and reduced motion"
+      ],
+      "proof": "Emulated prefers-color-scheme: light changes the body to rgb(246, 245, 241) and --baton to #b56d0a."
+    },
+    "F-857": {
+      "acceptance": "The composer stays docked below an independently scrolling transcript.",
+      "path": "ui/e2e/layout.spec.ts",
+      "test": "docks the composer below independent scrolling and uses pane-width token breakpoints",
+      "references": [
+        "ui/e2e/layout.spec.ts::docks the composer below independent scrolling and uses pane-width token breakpoints"
+      ],
+      "proof": "A 150-line transcript overflows independently; scrolling it to the top leaves the composer bounding box unchanged."
+    },
+    "F-859": {
+      "acceptance": "Below 860 pixels the side panel becomes an overlay.",
+      "path": "ui/e2e/layout.spec.ts",
+      "test": "uses responsive side-panel overlay, narrow metadata, wrapped Settings and single-column shortcuts",
+      "references": [
+        "ui/e2e/layout.spec.ts::uses responsive side-panel overlay, narrow metadata, wrapped Settings and single-column shortcuts"
+      ],
+      "proof": "At 900 pixels the side panel is static; at 820 pixels it is an absolute overlay."
+    },
+    "F-860": {
+      "acceptance": "Narrow headers omit working-folder and token totals.",
+      "path": "ui/e2e/layout.spec.ts",
+      "test": "uses responsive side-panel overlay, narrow metadata, wrapped Settings and single-column shortcuts",
+      "references": [
+        "ui/e2e/layout.spec.ts::uses responsive side-panel overlay, narrow metadata, wrapped Settings and single-column shortcuts"
+      ],
+      "proof": "At an 820-pixel viewport, working-folder and token metadata in the header are hidden."
+    },
+    "F-861": {
+      "acceptance": "Below 860 pixels Settings uses wrapped navigation above the body.",
+      "path": "ui/e2e/layout.spec.ts",
+      "test": "uses responsive side-panel overlay, narrow metadata, wrapped Settings and single-column shortcuts",
+      "references": [
+        "ui/e2e/layout.spec.ts::uses responsive side-panel overlay, narrow metadata, wrapped Settings and single-column shortcuts"
+      ],
+      "proof": "At 820 pixels, Settings navigation has row direction with wrapping and the body layout has one column."
+    },
+    "F-862": {
+      "acceptance": "Below 680 pixels the shortcut reference uses one column.",
+      "path": "ui/e2e/layout.spec.ts",
+      "test": "uses responsive side-panel overlay, narrow metadata, wrapped Settings and single-column shortcuts",
+      "references": [
+        "ui/e2e/layout.spec.ts::uses responsive side-panel overlay, narrow metadata, wrapped Settings and single-column shortcuts"
+      ],
+      "proof": "At 670 pixels, the shortcut dialog grid has exactly one computed column."
+    },
+    "F-863": {
+      "acceptance": "Below 720 pixels usage statistics use two columns.",
+      "path": "ui/e2e/layout.spec.ts",
+      "test": "uses responsive side-panel overlay, narrow metadata, wrapped Settings and single-column shortcuts",
+      "references": [
+        "ui/e2e/layout.spec.ts::uses responsive side-panel overlay, narrow metadata, wrapped Settings and single-column shortcuts"
+      ],
+      "proof": "At 710 pixels, Usage statistics have exactly two computed columns."
+    },
+    "F-864": {
+      "acceptance": "Token meter widths below 620 pixels hide session totals and context label.",
+      "path": "ui/e2e/layout.spec.ts",
+      "test": "docks the composer below independent scrolling and uses pane-width token breakpoints",
+      "references": [
+        "ui/e2e/layout.spec.ts::docks the composer below independent scrolling and uses pane-width token breakpoints"
+      ],
+      "proof": "At a meter width of 610 pixels, session tokens and context-label are hidden while the available-account count remains visible."
+    },
+    "F-865": {
+      "acceptance": "Token meter widths below 440 pixels hide available-account count.",
+      "path": "ui/e2e/layout.spec.ts",
+      "test": "docks the composer below independent scrolling and uses pane-width token breakpoints",
+      "references": [
+        "ui/e2e/layout.spec.ts::docks the composer below independent scrolling and uses pane-width token breakpoints"
+      ],
+      "proof": "At a meter width of 430 pixels the available-account count is hidden."
+    },
+    "F-866": {
+      "acceptance": "Reduced-motion preference disables animation and transitions.",
+      "path": "ui/e2e/layout.spec.ts",
+      "test": "uses centralized warm dark and light palettes, visible keyboard focus, hidden controls and reduced motion",
+      "references": [
+        "ui/e2e/layout.spec.ts::uses centralized warm dark and light palettes, visible keyboard focus, hidden controls and reduced motion"
+      ],
+      "proof": "Emulated reduced motion makes the New session transition duration 0s and disables an injected running animation."
+    },
+    "F-869": {
+      "acceptance": "Terminal occupies its pane and gives the drawer a wider terminal layout.",
+      "path": "ui/e2e/edges.spec.ts",
+      "test": "terminal fills a wider drawer and reports an asset load failure",
+      "references": [
+        "ui/e2e/edges.spec.ts::terminal fills a wider drawer and reports an asset load failure",
+        "ui/e2e/terminal.spec.ts::runs a shell in the session folder"
+      ],
+      "proof": "Opening Terminal makes the side drawer wider than Changes, provides more than 600 pixels of terminal height, and the real terminal accepts typed shell input and displays output."
+    },
+    "F-870": {
+      "acceptance": "Keyboard focus receives a visible accent outline.",
+      "path": "ui/e2e/layout.spec.ts",
+      "test": "uses centralized warm dark and light palettes, visible keyboard focus, hidden controls and reduced motion",
+      "references": [
+        "ui/e2e/layout.spec.ts::uses centralized warm dark and light palettes, visible keyboard focus, hidden controls and reduced motion"
+      ],
+      "proof": "Keyboard Tab focus has a solid two-pixel warm-accent outline."
+    },
+    "F-871": {
+      "acceptance": "Hidden controls do not occupy layout space.",
+      "path": "ui/e2e/layout.spec.ts",
+      "test": "uses centralized warm dark and light palettes, visible keyboard focus, hidden controls and reduced motion",
+      "references": [
+        "ui/e2e/layout.spec.ts::uses centralized warm dark and light palettes, visible keyboard focus, hidden controls and reduced motion"
+      ],
+      "proof": "A hidden button has computed display none and a zero-width, zero-height bounding box."
+    },
+    "F-978": {
+      "acceptance": "New-session defaults use the current model/mode and project folder, or configured defaults without a session.",
+      "path": "ui/e2e/layout.spec.ts",
+      "test": "new-session form preserves current model mode parent folder and explicit worktree defaults",
+      "references": [
+        "ui/e2e/layout.spec.ts::new-session form preserves current model mode parent folder and explicit worktree defaults",
+        "ui/src/lib/session-start.test.ts::uses current model/mode and the parent repository of a worktree",
+        "ui/src/lib/session-start.test.ts::uses configured defaults without a selection and honors explicit project-menu worktree choices"
+      ],
+      "proof": "Browser creation inherits current concrete model and plan mode. Units assert configured concrete model, accept-edits mode and folder when no session is selected."
+    },
+    "F-979": {
+      "acceptance": "New sessions from a worktree default to the parent repository folder.",
+      "path": "ui/e2e/layout.spec.ts",
+      "test": "new-session form preserves current model mode parent folder and explicit worktree defaults",
+      "references": [
+        "ui/e2e/layout.spec.ts::new-session form preserves current model mode parent folder and explicit worktree defaults",
+        "ui/src/lib/session-start.test.ts::uses current model/mode and the parent repository of a worktree"
+      ],
+      "proof": "Opening New session from a worktree uses its parent repository folder rather than the worktree folder."
+    },
+    "F-980": {
+      "acceptance": "The worktree checkbox follows the configured default unless an explicit project-menu choice overrides it.",
+      "path": "ui/e2e/layout.spec.ts",
+      "test": "new-session form preserves current model mode parent folder and explicit worktree defaults",
+      "references": [
+        "ui/e2e/layout.spec.ts::new-session form preserves current model mode parent folder and explicit worktree defaults",
+        "ui/src/lib/session-start.test.ts::uses configured defaults without a selection and honors explicit project-menu worktree choices"
+      ],
+      "proof": "Configured worktree_default=on checks the new-session checkbox; an explicit project-menu ordinary-session choice overrides it to false."
+    },
+    "F-981": {
+      "acceptance": "Working-folder browse shows up to four recent unique session folders before a path is typed.",
+      "path": "ui/e2e/layout.spec.ts",
+      "test": "folder browser offers four recent unique folders navigates child and parent and debounces typing",
+      "references": [
+        "ui/e2e/layout.spec.ts::folder browser offers four recent unique folders navigates child and parent and debounces typing",
+        "ui/src/lib/folders.test.ts::offers four unique recent folders sorted by latest session update"
+      ],
+      "proof": "Five real recent folders plus a duplicate yield four unique browse choices ordered by latest session update."
+    },
+    "F-982": {
+      "acceptance": "Folder browser entries navigate into a child folder or up to its parent.",
+      "path": "ui/e2e/layout.spec.ts",
+      "test": "folder browser offers four recent unique folders navigates child and parent and debounces typing",
+      "references": [
+        "ui/e2e/layout.spec.ts::folder browser offers four recent unique folders navigates child and parent and debounces typing"
+      ],
+      "proof": "Child and parent browse buttons change the working-folder path to their actual filesystem locations."
+    },
+    "F-983": {
+      "acceptance": "Selecting a browser folder updates the working-folder input.",
+      "path": "ui/e2e/layout.spec.ts",
+      "test": "folder browser offers four recent unique folders navigates child and parent and debounces typing",
+      "references": [
+        "ui/e2e/layout.spec.ts::folder browser offers four recent unique folders navigates child and parent and debounces typing"
+      ],
+      "proof": "Clicking a recent folder and then a child folder updates the Project folder input to the selected full path."
+    },
+    "F-984": {
+      "acceptance": "Typing a working folder debounces filesystem browsing by 200 ms.",
+      "path": "ui/e2e/layout.spec.ts",
+      "test": "folder browser offers four recent unique folders navigates child and parent and debounces typing",
+      "references": [
+        "ui/e2e/layout.spec.ts::folder browser offers four recent unique folders navigates child and parent and debounces typing",
+        "ui/src/lib/folders.test.ts::debounces typed paths for 200ms and invalidates previous reads immediately"
+      ],
+      "proof": "Rapid input changes make only the latest filesystem request in the browser. Fake timers assert no request at 199 ms, one latest-path request at 200 ms and rejection of an older response."
+    },
+    "F-985": {
+      "acceptance": "Create session posts folder, concrete effort/model, mode and worktree choice.",
+      "path": "ui/e2e/layout.spec.ts",
+      "test": "new-session form preserves current model mode parent folder and explicit worktree defaults",
+      "references": [
+        "ui/e2e/layout.spec.ts::new-session form preserves current model mode parent folder and explicit worktree defaults",
+        "ui/src/lib/session-start.test.ts::posts a concrete model, mode, trimmed folder and worktree choice and retains failures without a fake session"
+      ],
+      "proof": "The browser captures the exact authenticated creation request containing the parent folder, concrete low-effort model, plan mode and explicit false worktree choice; the unit also asserts folder whitespace trimming."
+    },
+    "F-987": {
+      "acceptance": "A creation error shows the API error without creating a fake local session.",
+      "path": "ui/e2e/layout.spec.ts",
+      "test": "dialog cancellation and validation send nothing and failed creation keeps the API error and no local session",
+      "references": [
+        "ui/e2e/layout.spec.ts::dialog cancellation and validation send nothing and failed creation keeps the API error and no local session",
+        "ui/src/lib/session-start.test.ts::posts a concrete model, mode, trimmed folder and worktree choice and retains failures without a fake session"
+      ],
+      "proof": "Missing-directory creation displays the engine error in the dialog and toast; GET /api/state remains empty. The unit preserves the failed draft and creates no selected or navigation session."
+    },
+    "F-988": {
+      "acceptance": "Canceling New session closes its dialog without sending a create request.",
+      "path": "ui/e2e/layout.spec.ts",
+      "test": "dialog cancellation and validation send nothing and failed creation keeps the API error and no local session",
+      "references": [
+        "ui/e2e/layout.spec.ts::dialog cancellation and validation send nothing and failed creation keeps the API error and no local session"
+      ],
+      "proof": "Cancel closes New session and the captured POST paths contain no creation request."
+    },
+    "F-989": {
+      "acceptance": "Canceling Goal closes its dialog without sending a goal request.",
+      "path": "ui/e2e/layout.spec.ts",
+      "test": "dialog cancellation and validation send nothing and failed creation keeps the API error and no local session",
+      "references": [
+        "ui/e2e/layout.spec.ts::dialog cancellation and validation send nothing and failed creation keeps the API error and no local session"
+      ],
+      "proof": "Cancel closes Goal and the captured POST paths contain no goal request."
+    },
+    "F-990": {
+      "acceptance": "Goal verifier defaults to enabled unless the existing goal says otherwise.",
+      "path": "ui/src/lib/goals.test.ts",
+      "test": "reuse the existing goal or the composer text",
+      "references": [
+        "ui/src/lib/goals.test.ts::reuse the existing goal or the composer text",
+        "ui/e2e/layout.spec.ts::dialog cancellation and validation send nothing and failed creation keeps the API error and no local session"
+      ],
+      "proof": "A fresh goal draft asserts verifier true, while an existing goal with verifier false preserves false. The browser also asserts the fresh Goal checkbox is checked."
+    },
+    "F-991": {
+      "acceptance": "Goal rounds default to twenty unless the existing goal has a limit.",
+      "path": "ui/src/lib/goals.test.ts",
+      "test": "reuse the existing goal or the composer text",
+      "references": [
+        "ui/src/lib/goals.test.ts::reuse the existing goal or the composer text",
+        "ui/e2e/layout.spec.ts::dialog cancellation and validation send nothing and failed creation keeps the API error and no local session"
+      ],
+      "proof": "A fresh goal draft asserts twenty rounds, while an existing goal with max_rounds 37 preserves the string value 37. The browser also asserts the fresh Goal rounds field is 20."
+    },
+    "F-992": {
+      "acceptance": "Goal objective and working folder use required input validation before accepting their forms.",
+      "path": "ui/e2e/layout.spec.ts",
+      "test": "dialog cancellation and validation send nothing and failed creation keeps the API error and no local session",
+      "references": [
+        "ui/e2e/layout.spec.ts::dialog cancellation and validation send nothing and failed creation keeps the API error and no local session",
+        "ui/src/lib/goals.test.ts::reuse the existing goal or the composer text"
+      ],
+      "proof": "An empty Project folder cannot submit creation. Objective is a required textarea; an empty goal cannot submit. The goal controller also rejects a whitespace-only objective."
+    },
+    "F-993": {
+      "acceptance": "The sign-in code submits on Enter and automatically after paste.",
+      "path": "ui/e2e/accounts.spec.ts",
+      "test": "signs in synthetically with Enter and removes the adopted account",
+      "references": [
+        "ui/e2e/accounts.spec.ts::signs in synthetically with Enter and removes the adopted account",
+        "ui/e2e/accounts.spec.ts::cancels old links and handles rejected sign-in followed by automatic pasted-code success"
+      ],
+      "proof": "Enter submits a valid synthetic sign-in code and adopts its account. Dispatching a valid pasted code submits automatically, displays success and adopts the second synthetic account."
+    },
+    "F-994": {
+      "acceptance": "A raw text paste without files remains ordinary composer input.",
+      "path": "ui/e2e/edges.spec.ts",
+      "test": "raw text paste stays composer input and first actual send requests notification permission once",
+      "references": [
+        "ui/e2e/edges.spec.ts::raw text paste stays composer input and first actual send requests notification permission once"
+      ],
+      "proof": "A raw text paste without files follows the browser default-input path, leaves the exact ordinary text in the composer and creates no attachment tray."
+    },
+    "F-995": {
+      "acceptance": "Live turn completion triggers turn notification except for quota endings.",
+      "path": "ui/e2e/edges.spec.ts",
+      "test": "raw text paste stays composer input and first actual send requests notification permission once",
+      "references": [
+        "ui/e2e/edges.spec.ts::raw text paste stays composer input and first actual send requests notification permission once",
+        "ui/src/lib/notifications.test.ts::suppresses quota turn endings and false or malformed goal verdicts while allowing exhausted-quota notices"
+      ],
+      "proof": "An actual streamed turn completion creates the turn 1 SUCCESS notification. The event-handler unit suppresses a quota turn ending."
+    },
+    "F-996": {
+      "acceptance": "Live job completion triggers the job-finished notification.",
+      "path": "ui/e2e/edges.spec.ts",
+      "test": "raw text paste stays composer input and first actual send requests notification permission once",
+      "references": [
+        "ui/e2e/edges.spec.ts::raw text paste stays composer input and first actual send requests notification permission once"
+      ],
+      "proof": "An actual synthetic background-job completion reaches the browser event handler and creates Job finished."
+    },
+    "F-997": {
+      "acceptance": "A live met-goal notice triggers the goal-met notification.",
+      "path": "ui/e2e/edges.spec.ts",
+      "test": "raw text paste stays composer input and first actual send requests notification permission once",
+      "references": [
+        "ui/e2e/edges.spec.ts::raw text paste stays composer input and first actual send requests notification permission once",
+        "ui/src/lib/notifications.test.ts::suppresses quota turn endings and false or malformed goal verdicts while allowing exhausted-quota notices"
+      ],
+      "proof": "An actual goal with done_after=1 produces Goal met; unit tests reject false, string false, numeric and null met verdicts."
+    },
+    "F-1001": {
+      "acceptance": "Session relative-time labels refresh every minute.",
+      "path": "ui/e2e/edges.spec.ts",
+      "test": "Alt-click opens the other pane and session time labels update after one minute",
+      "references": [
+        "ui/e2e/edges.spec.ts::Alt-click opens the other pane and session time labels update after one minute",
+        "ui/src/lib/workbench-lifecycle.test.ts::refreshes relative-time input every minute and releases its only timer after last subscriber"
+      ],
+      "proof": "The browser clock advances 60000 ms and changes the session label from now to 1m. The clock unit asserts the exact 59999/60000-ms boundary and releases its timer after the last unsubscribe."
+    },
+    "F-1002": {
+      "acceptance": "An unknown slash command shows its unknown-command message.",
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "slash reference and panel commands dispatch all settings targets without sending prompts",
+      "references": [
+        "ui/e2e/composer.spec.ts::slash reference and panel commands dispatch all settings targets without sending prompts"
+      ],
+      "proof": "Submitting /not-a-command displays Unknown command /not-a-command, preserves the draft and produces no provider turn prompts."
+    },
+    "F-1003": {
+      "acceptance": "Commands requiring a session report Open a session first when none is open.",
+      "path": "ui/e2e/layout.spec.ts",
+      "test": "dialog cancellation and validation send nothing and failed creation keeps the API error and no local session",
+      "references": [
+        "ui/e2e/layout.spec.ts::dialog cancellation and validation send nothing and failed creation keeps the API error and no local session"
+      ],
+      "proof": "Submitting the session-required /clear command with no session displays the exact Open a session first toast and sends no POST. Production session-required command branches use the same need() guard.",
+      "source_references": [
+        "ui/src/lib/composer-actions.ts:64"
+      ]
+    },
+    "F-1053": {
+      "acceptance": "Use xterm.js and its fit addon directly for terminal interaction.",
+      "path": "ui/e2e/terminal.spec.ts",
+      "test": "runs a shell in the session folder",
+      "references": [
+        "ui/e2e/terminal.spec.ts::runs a shell in the session folder",
+        "ui/src/lib/terminal-runtime.test.ts::fits immediately and posts only the last dimensions after 80ms"
+      ],
+      "proof": "The production terminal module directly imports xterm and its fit addon. Real browser shell interaction, tab retention, clear, kill and restart pass through that runtime; units exercise the direct FitAddon debounce.",
+      "source_references": [
+        "ui/src/lib/terminal.ts:15",
+        "ui/src/lib/terminal.ts:16"
+      ]
+    },
+    "F-1112": {
+      "acceptance": "Playwright exercises project and session menus.",
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "session menus rename pin fork archive and confirm deletion without touching project files",
+      "references": [
+        "ui/e2e/navigation.spec.ts::session menus rename pin fork archive and confirm deletion without touching project files",
+        "ui/e2e/navigation.spec.ts::project menus persist collapse prefill creation copy paths and confirm bulk deletion"
+      ],
+      "proof": "Existing Chromium scenarios exercise session rename, pin/unpin, fork, archive/unarchive and confirmed delete, plus project creation choices, collapse, copied paths and confirmed bulk deletion. The tests preserve project file bytes."
+    }
+  },
+  "remaining": {
+    "F-581": {
+      "acceptance": "Missing approval answers display the expired-request explanation.",
+      "status": "Pending",
+      "remaining": "The production expired-request explanation exists, but no focused browser or unit assertion found for a missing approval answer.",
+      "references": []
+    },
+    "F-669": {
+      "acceptance": "General settings exposes new-session defaults, keep-awake, autostart and notification controls.",
+      "status": "Pending",
+      "remaining": "Browser defaults, keep-awake and notification controls are covered; native autostart remains Slice 10.",
+      "references": [
+        "ui/e2e/settings.spec.ts::persists defaults, goals and device controls without replacing focused drafts"
+      ]
+    },
+    "F-670": {
+      "acceptance": "Appearance settings exposes desktop size and transcript presentation controls.",
+      "status": "Pending",
+      "remaining": "Browser transcript presentation is covered; native desktop-size behavior remains Slice 10.",
+      "references": [
+        "ui/e2e/settings.spec.ts::persists defaults, goals and device controls without replacing focused drafts"
+      ]
+    },
+    "F-681": {
+      "acceptance": "Engine settings exposes diagnostics, log, data directory, restart and private-stack replacement.",
+      "status": "Pending",
+      "remaining": "Exact diagnostics are covered here; native log/data-directory actions and restart/private-stack replacement require the remaining complete action proof.",
+      "references": [
+        "ui/e2e/edges.spec.ts::engine diagnostics presents every identity path hook and count from the exact engine response"
+      ]
+    },
+    "F-684": {
+      "acceptance": "Navigation shows installed item counts, account attention and private stack path.",
+      "status": "Pending",
+      "remaining": "Existing Settings tests assert thirteen navigation buttons but do not assert every installed count, account attention state and private-stack path.",
+      "references": []
+    },
+    "F-722": {
+      "acceptance": "Remove requires confirmation and preserves separate CLI sign-in.",
+      "status": "Pending",
+      "remaining": "The browser proves cancel/confirm removal. Separate CLI sign-in preservation requires the separate account-route preservation proof.",
+      "references": [
+        "ui/e2e/accounts.spec.ts::shows pool windows pauses resumes checks removes and refreshes accounts"
+      ]
+    },
+    "F-775": {
+      "acceptance": "Restart engine confirms before requesting shutdown and reports the expected app restart.",
+      "status": "Pending",
+      "remaining": "Native restart confirmation, shutdown and expected application-restart feedback remain Slice 10.",
+      "references": []
+    },
+    "F-867": {
+      "acceptance": "The macOS sidebar and narrow header reserve space for traffic lights independently of native zoom.",
+      "status": "Pending",
+      "remaining": "macOS traffic-light clearance requires a background native-webview screenshot in Slice 10.",
+      "references": []
+    },
+    "F-998": {
+      "acceptance": "A live exhausted-quota notice triggers the quota notification.",
+      "status": "Pending",
+      "remaining": "The notification unit maps a wall notice to Out of quota with the exact body. No browser scenario yet observes a live exhausted-quota notice through SSE.",
+      "references": [
+        "ui/src/lib/notifications.test.ts::suppresses quota turn endings and false or malformed goal verdicts while allowing exhausted-quota notices"
+      ]
+    },
+    "F-999": {
+      "acceptance": "Desktop header and brand regions permit native window dragging.",
+      "status": "Pending",
+      "remaining": "Native draggable header and brand regions require Slice 10 webview proof.",
+      "references": []
+    },
+    "F-1000": {
+      "acceptance": "Desktop external-link handling preserves in-app file links and downloadable files.",
+      "status": "Pending",
+      "remaining": "Native external-link interception while preserving file links and downloads requires Slice 10 proof.",
+      "references": []
+    },
+    "F-1054": {
+      "acceptance": "Use the chart library directly for usage plots and tooltips.",
+      "status": "Pending",
+      "remaining": "UsagePanel directly constructs Chart.js for plots, with a custom DOM contribution tooltip. Existing browser hover/focus proof is complete for that design, but does not prove use of the chart library for tooltips as the literal acceptance requests.",
+      "references": [
+        "ui/e2e/settings.spec.ts::renders exact usage with bounded hover and keyboard tooltips in both themes"
+      ]
+    },
+    "F-1058": {
+      "acceptance": "Run the same UI build in the Tauri webview and the browser served by antiquota serve.",
+      "status": "Pending",
+      "remaining": "Browser UI runs against antiquota serve; the same UI build in the Tauri webview remains Slice 10.",
+      "references": []
+    },
+    "F-1104": {
+      "acceptance": "Playwright in Chromium drives antiquota serve backed by fake-agy through every UI view and settings section.",
+      "status": "Pending",
+      "remaining": "The suite covers many views and settings sections; complete every-view proof includes unresolved native action and remaining UI clauses. No broad closure claimed.",
+      "references": []
+    },
+    "F-1105": {
+      "acceptance": "Playwright exercises every shortcut and context menu action in the feature inventory.",
+      "status": "Pending",
+      "remaining": "Browser shortcut and context-menu coverage exists; native actions and complete inventory coverage remain unresolved.",
+      "references": []
+    },
+    "F-1106": {
+      "acceptance": "Playwright exercises approval cards and their allow, deny, expiry and resolved states.",
+      "status": "Pending",
+      "remaining": "Approval allow/deny/resolved browser scenarios exist. Missing-answer expiry UI remains unproved.",
+      "references": []
+    },
+    "F-1108": {
+      "acceptance": "Playwright verifies both split panes at 80, 100, 125 and 150 percent zoom.",
+      "status": "Pending",
+      "remaining": "No CSS-root zoom and ordinary split behavior are covered. Both split panes at all four requested zoom percentages remain unproved.",
+      "references": []
+    },
+    "F-1109": {
+      "acceptance": "Playwright types into the terminal, resizes it and restarts its process.",
+      "status": "Pending",
+      "remaining": "The real terminal test types and restarts, and the unit proves resize timing. Playwright does not yet resize the terminal and assert resulting PTY dimensions.",
+      "references": [
+        "ui/e2e/terminal.spec.ts::runs a shell in the session folder",
+        "ui/src/lib/terminal-runtime.test.ts::fits immediately and posts only the last dimensions after 80ms"
+      ]
+    }
+  },
+  "notes": [
+    "All referenced test names were checked against their current source. This audit ran no browser, native application, full gate or provider call.",
+    "The full-candidate set excludes already Passed rows and every row whose acceptance has an unproved clause. Newly strengthened assertions are source-audited candidates; the parent must attach their passing runs and final gates before promotion.",
+    "Real xterm retention is proved by a separate test of the actual bundled library plus a production-runtime configuration assertion, rather than inferred from the configured value alone.",
+    "Prospective UI-only counts must not be substituted for the final combined Slice 9f count, which also includes a separately audited account fold."
+  ]
+}

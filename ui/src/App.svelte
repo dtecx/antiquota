@@ -31,10 +31,13 @@
   import { get } from 'svelte/store';
   import { notifications } from './lib/notifications';
   import { preferences } from './lib/preferences';
+  import { createToast, watchWorkbench } from './lib/workbench-lifecycle';
   import { createSettings } from './lib/settings';
   const token =
     document.querySelector<HTMLMetaElement>('meta[name="antiquota-token"]')?.content ?? '';
-  const api = createApi(token);
+  const toast = createToast(),
+    toastText = toast.state;
+  const api = createApi(token, fetch, (error) => toast.show(error.message));
   const workbench = createWorkbench(api, (id) =>
     history.replaceState(null, '', `#${encodeURIComponent(id)}`),
   );
@@ -92,10 +95,21 @@
         accounts.acceptSnapshot(value.snapshot);
       }
     });
-    void workbench.refresh(decodeURIComponent(location.hash.slice(1))).then(() => panes.restore());
+    const stopEffects = watchWorkbench(workbench, toast),
+      stopRightEffects = watchWorkbench(panes.right, toast);
+    let preferred = '';
+    try {
+      preferred = decodeURIComponent(location.hash.slice(1));
+    } catch {
+      /* An invalid fragment uses normal selection. */
+    }
+    void workbench.refresh(preferred).then(() => panes.restore());
     if (token && token !== '__ANTIQUOTA_TOKEN__') stream.open();
     return () => {
       unsubscribe();
+      stopEffects();
+      stopRightEffects();
+      toast.dispose();
       stream.close();
       login.dispose();
       settings.dispose();
@@ -214,8 +228,8 @@
       />{/if}
   </main>
   <Drawer workbench={activeWorkbench} {api} />
-  <SessionDialog {workbench} />
-  <SessionDialog workbench={panes.right} />
+  <SessionDialog {workbench} {api} />
+  <SessionDialog workbench={panes.right} {api} />
   <GoalDialog workbench={activeWorkbench} />
   <JobLog />
   <FileViewer />
@@ -235,7 +249,23 @@
   <ConfirmRemoval {accounts} />
 </div>
 
+{#if $toastText}<div class="toast" role="status">{$toastText}</div>{/if}
+
 <style>
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    max-width: calc(100vw - 32px);
+    padding: var(--space-3) var(--space-4);
+    background: var(--night-2);
+    border: 1px solid var(--rule-3);
+    border-radius: var(--r-md);
+    box-shadow: 0 8px 32px rgb(0 0 0 / 30%);
+    pointer-events: none;
+  }
   .workbench {
     display: flex;
     height: 100%;

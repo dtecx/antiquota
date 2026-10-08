@@ -107,3 +107,36 @@ it('routes each live notice to its independent preference and skips resolved app
   );
   expect(send).toHaveBeenCalledTimes(5);
 });
+it('suppresses quota turn endings and false or malformed goal verdicts while allowing exhausted-quota notices', () => {
+  const send = vi.fn(),
+    notices = createNotifications({
+      visible: () => false,
+      focused: () => false,
+      permission: () => 'granted',
+      request: async () => 'granted',
+      send,
+    }),
+    prefs = get(createPreferences().state);
+  notices.event(
+    {
+      t: 'turn_end',
+      ts: 1,
+      turn: 1,
+      slot: 'test',
+      status: 'quota',
+      secs: 1,
+      usage: { input_tokens: 0, output_tokens: 0, thinking_tokens: 0, total_tokens: 0, context: 0 },
+    },
+    'Test',
+    prefs,
+  );
+  for (const met of [false, 'false', 1, null])
+    notices.event({ t: 'notice', ts: 1, kind: 'goal', text: '', data: { met } }, 'Test', prefs);
+  expect(send).not.toHaveBeenCalled();
+  notices.event(
+    { t: 'notice', ts: 1, kind: 'wall', text: 'All accounts exhausted.', data: {} },
+    'Test',
+    prefs,
+  );
+  expect(send).toHaveBeenCalledWith('Out of quota', 'All accounts exhausted.');
+});

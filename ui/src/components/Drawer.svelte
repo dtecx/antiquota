@@ -16,7 +16,7 @@
 </script>
 
 {#if $drawer.open}
-  <aside class="drawer" aria-label="Side panel">
+  <aside class="drawer" class:terminal={$drawer.tab === 'terminal'} aria-label="Side panel">
     <div class="tabs" role="tablist">
       {#each tabs as tab (tab.id)}<button
           role="tab"
@@ -82,8 +82,15 @@
     overflow: auto;
     padding: var(--space-4);
   }
-  @media (max-width: 1100px) {
-    .drawer {
+  .drawer.terminal {
+    width: min(720px, 48vw);
+  }
+  .terminal .panel {
+    overflow: hidden;
+  }
+  @media (max-width: 859px) {
+    .drawer,
+    .drawer.terminal {
       position: absolute;
       inset: 0 0 0 auto;
       width: min(380px, 100vw);

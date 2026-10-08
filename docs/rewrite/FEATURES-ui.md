@@ -1,6 +1,6 @@
 # UI and desktop feature inventory
 
-This inventory records legacy UI and shell behavior at commit `17ec296`. This subsidiary inventory contains 612 acceptance rows, F-398 through F-1009, also copied in full into [FEATURES.md](FEATURES.md). Each acceptance row needs rewrite proof. Existing test references identify legacy tests only; no rewrite pass is claimed. Source locations refer to legacy files.
+This inventory records legacy UI and shell behavior at commit `17ec296`. This subsidiary inventory contains 612 acceptance rows, F-398 through F-1009, also copied in full into [FEATURES.md](FEATURES.md). Each acceptance row needs rewrite proof. Existing test references identify legacy tests only. Rewrite-proof links mirror the canonical report and its passing tests. Source locations refer to legacy files.
 
 The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken behavior must be repaired rather than preserved.
 
@@ -8,14 +8,14 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 
 | ID | Acceptance behavior | Legacy source | Existing legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-398 | [ ] Authenticated JSON calls send X-Antiquota-Token and display API errors as a toast. | `antiquota/ui/app.js:98` | None identified | [Pending](TEST_REPORT.md#f-398) |
-| F-399 | [ ] The session event stream uses a token-authenticated EventSource. | `antiquota/ui/app.js:1029` | None identified | [Pending](TEST_REPORT.md#f-399) |
-| F-400 | [ ] A reconnected event stream reloads authoritative state after a disconnect. | `antiquota/ui/app.js:1029` | None identified | [Pending](TEST_REPORT.md#f-400) |
-| F-401 | [ ] Initial load selects the URL-fragment session when it exists. | `antiquota/ui/app.js:2511` | None identified | [Pending](TEST_REPORT.md#f-401) |
-| F-402 | [ ] Initial load otherwise opens the first session or the start screen. | `antiquota/ui/app.js:2511` | None identified | [Pending](TEST_REPORT.md#f-402) |
-| F-403 | [ ] A missing initial model list is retried after four seconds. | `antiquota/ui/app.js:2511` | None identified | [Pending](TEST_REPORT.md#f-403) |
-| F-404 | [ ] A toast replaces the prior timer and clears after 2.6 seconds. | `antiquota/ui/app.js:111` | None identified | [Pending](TEST_REPORT.md#f-404) |
-| F-405 | [ ] Confirmation dialogs support Continue, Cancel, Escape and dangerous-action styling. | `antiquota/ui/app.js:24` | None identified | [Pending](TEST_REPORT.md#f-405) |
+| F-398 | [x] Authenticated JSON calls send X-Antiquota-Token and display API errors as a toast. | `antiquota/ui/app.js:98` | None identified | [Passed](TEST_REPORT.md#f-398) |
+| F-399 | [x] The session event stream uses a token-authenticated EventSource. | `antiquota/ui/app.js:1029` | None identified | [Passed](TEST_REPORT.md#f-399) |
+| F-400 | [x] A reconnected event stream reloads authoritative state after a disconnect. | `antiquota/ui/app.js:1029` | None identified | [Passed](TEST_REPORT.md#f-400) |
+| F-401 | [x] Initial load selects the URL-fragment session when it exists. | `antiquota/ui/app.js:2511` | None identified | [Passed](TEST_REPORT.md#f-401) |
+| F-402 | [x] Initial load otherwise opens the first session or the start screen. | `antiquota/ui/app.js:2511` | None identified | [Passed](TEST_REPORT.md#f-402) |
+| F-403 | [x] A missing initial model list is retried after four seconds. | `antiquota/ui/app.js:2511` | None identified | [Passed](TEST_REPORT.md#f-403) |
+| F-404 | [x] A toast replaces the prior timer and clears after 2.6 seconds. | `antiquota/ui/app.js:111` | None identified | [Passed](TEST_REPORT.md#f-404) |
+| F-405 | [x] Confirmation dialogs support Continue, Cancel, Escape and dangerous-action styling. | `antiquota/ui/app.js:24` | None identified | [Passed](TEST_REPORT.md#f-405) |
 | F-406 | [ ] Desktop export uses the native save dialog. | `antiquota/ui/app.js:39` | None identified | [Pending](TEST_REPORT.md#f-406) |
 | F-407 | [x] Browser export creates a downloadable file. | `antiquota/ui/app.js:39` | None identified | [Passed](TEST_REPORT.md#f-407) |
 | F-408 | [ ] External desktop links open in the system browser. | `antiquota/ui/app.js:18` | None identified | [Pending](TEST_REPORT.md#f-408) |
@@ -31,7 +31,7 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 | F-413 | [x] Session rows display title, relative update time and status. | `antiquota/ui/app.js:224` | None identified | [Passed](TEST_REPORT.md#f-413) |
 | F-414 | [x] Session rows identify pinned sessions and worktree sessions. | `antiquota/ui/app.js:224` | None identified | [Passed](TEST_REPORT.md#f-414) |
 | F-415 | [x] Sleeping sessions show the wake time. | `antiquota/ui/app.js:224` | None identified | [Passed](TEST_REPORT.md#f-415) |
-| F-416 | [ ] Sessions awaiting approval display an attention message. | `antiquota/ui/app.js:224` | None identified | [Pending](TEST_REPORT.md#f-416) |
+| F-416 | [x] Sessions awaiting approval display an attention message. | `antiquota/ui/app.js:224` | None identified | [Passed](TEST_REPORT.md#f-416) |
 | F-417 | [x] Goal sessions show the current round and limit or final goal state. | `antiquota/ui/app.js:224` | None identified | [Passed](TEST_REPORT.md#f-417) |
 | F-418 | [x] Sessions sort by most recent update within project groups. | `antiquota/ui/app.js:246` | None identified | [Passed](TEST_REPORT.md#f-418) |
 | F-419 | [x] Pinned sessions appear in a separate Pinned group. | `antiquota/ui/app.js:246` | None identified | [Passed](TEST_REPORT.md#f-419) |
@@ -40,7 +40,7 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 | F-422 | [x] The current session's project remains expanded despite a collapsed preference. | `antiquota/ui/app.js:246` | None identified | [Passed](TEST_REPORT.md#f-422) |
 | F-423 | [x] Collapsed projects show session count and working-session indicator. | `antiquota/ui/app.js:246` | None identified | [Passed](TEST_REPORT.md#f-423) |
 | F-424 | [x] Search temporarily expands matching project groups. | `antiquota/ui/app.js:246` | None identified | [Passed](TEST_REPORT.md#f-424) |
-| F-425 | [ ] Session filtering matches title and working folder without case sensitivity. | `antiquota/ui/app.js:246` | None identified | [Pending](TEST_REPORT.md#f-425) |
+| F-425 | [x] Session filtering matches title and working folder without case sensitivity. | `antiquota/ui/app.js:246` | None identified | [Passed](TEST_REPORT.md#f-425) |
 | F-426 | [x] No sessions and no title matches have distinct empty messages. | `antiquota/ui/app.js:246` | None identified | [Passed](TEST_REPORT.md#f-426) |
 | F-427 | [x] Searches of two or more characters query message contents after 220 ms. | `antiquota/ui/app.js:292` | None identified | [Passed](TEST_REPORT.md#f-427) |
 | F-428 | [x] Older message-search responses cannot replace newer results. | `antiquota/ui/app.js:292` | None identified | [Passed](TEST_REPORT.md#f-428) |
@@ -69,14 +69,14 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 | F-451 | [x] Clicking outside a context menu closes it. | `antiquota/ui/app.js:367` | None identified | [Passed](TEST_REPORT.md#f-451) |
 | F-452 | [x] Opening a session replaces its transcript and focuses the composer. | `antiquota/ui/app.js:968` | None identified | [Passed](TEST_REPORT.md#f-452) |
 | F-453 | [x] Opening a session restores that session's user-prompt history. | `antiquota/ui/app.js:968` | None identified | [Passed](TEST_REPORT.md#f-453) |
-| F-454 | [ ] A stale open-session response does not overwrite a newer selection. | `antiquota/ui/app.js:968` | None identified | [Pending](TEST_REPORT.md#f-454) |
-| F-455 | [ ] Switching sessions clears unsent attachment chips. | `antiquota/ui/app.js:968` | None identified | [Pending](TEST_REPORT.md#f-455) |
+| F-454 | [x] A stale open-session response does not overwrite a newer selection. | `antiquota/ui/app.js:968` | None identified | [Passed](TEST_REPORT.md#f-454) |
+| F-455 | [x] Switching sessions clears unsent attachment chips. | `antiquota/ui/app.js:968` | None identified | [Passed](TEST_REPORT.md#f-455) |
 | F-456 | [x] Deleting the current session opens the next recent session or start screen. | `antiquota/ui/app.js:996` | None identified | [Passed](TEST_REPORT.md#f-456) |
-| F-457 | [ ] An empty session offers up to three earlier sessions from the same folder. | `antiquota/ui/app.js:606` | None identified | [Pending](TEST_REPORT.md#f-457) |
-| F-458 | [ ] Selecting an earlier session inherits its handoff state for the next prompt. | `antiquota/ui/app.js:606` | None identified | [Pending](TEST_REPORT.md#f-458) |
-| F-459 | [ ] Start and empty-session screens offer sign-in when no accounts exist. | `antiquota/ui/app.js:584` | None identified | [Pending](TEST_REPORT.md#f-459) |
-| F-460 | [ ] The empty-session screen offers Set a goal and explains its working folder. | `antiquota/ui/app.js:590` | None identified | [Pending](TEST_REPORT.md#f-460) |
-| F-461 | [ ] The no-session start screen offers New session. | `antiquota/ui/app.js:616` | None identified | [Pending](TEST_REPORT.md#f-461) |
+| F-457 | [x] An empty session offers up to three earlier sessions from the same folder. | `antiquota/ui/app.js:606` | None identified | [Passed](TEST_REPORT.md#f-457) |
+| F-458 | [x] Selecting an earlier session inherits its handoff state for the next prompt. | `antiquota/ui/app.js:606` | None identified | [Passed](TEST_REPORT.md#f-458) |
+| F-459 | [x] Start and empty-session screens offer sign-in when no accounts exist. | `antiquota/ui/app.js:584` | None identified | [Passed](TEST_REPORT.md#f-459) |
+| F-460 | [x] The empty-session screen offers Set a goal and explains its working folder. | `antiquota/ui/app.js:590` | None identified | [Passed](TEST_REPORT.md#f-460) |
+| F-461 | [x] The no-session start screen offers New session. | `antiquota/ui/app.js:616` | None identified | [Passed](TEST_REPORT.md#f-461) |
 
 ## Composer, models and header
 
@@ -88,16 +88,16 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 | F-465 | [x] The header shows cumulative input/output tokens and queued-message count. | `antiquota/ui/app.js:416` | None identified | [Passed](TEST_REPORT.md#f-465) |
 | F-466 | [x] The page title marks working state and includes the session title. | `antiquota/ui/app.js:416` | None identified | [Passed](TEST_REPORT.md#f-466) |
 | F-467 | [x] An idle empty composer disables Send. | `antiquota/ui/app.js:445` | None identified | [Passed](TEST_REPORT.md#f-467) |
-| F-468 | [ ] A busy empty composer exposes Stop. | `antiquota/ui/app.js:445` | None identified | [Pending](TEST_REPORT.md#f-468) |
-| F-469 | [ ] A busy nonempty composer exposes Queue. | `antiquota/ui/app.js:445` | None identified | [Pending](TEST_REPORT.md#f-469) |
+| F-468 | [x] A busy empty composer exposes Stop. | `antiquota/ui/app.js:445` | None identified | [Passed](TEST_REPORT.md#f-468) |
+| F-469 | [x] A busy nonempty composer exposes Queue. | `antiquota/ui/app.js:445` | None identified | [Passed](TEST_REPORT.md#f-469) |
 | F-470 | [x] The composer grows to fit text up to 40 percent of window height. | `antiquota/ui/app.js:1095` | None identified | [Passed](TEST_REPORT.md#f-470) |
-| F-471 | [ ] Sending posts text and completed attachment paths to the current session. | `antiquota/ui/app.js:1100` | None identified | [Pending](TEST_REPORT.md#f-471) |
-| F-472 | [ ] Sending is blocked while an attachment is uploading. | `antiquota/ui/app.js:1100` | None identified | [Pending](TEST_REPORT.md#f-472) |
-| F-473 | [ ] A failed send restores message text for retry. | `antiquota/ui/app.js:1100` | None identified | [Pending](TEST_REPORT.md#f-473) |
+| F-471 | [x] Sending posts text and completed attachment paths to the current session. | `antiquota/ui/app.js:1100` | None identified | [Passed](TEST_REPORT.md#f-471) |
+| F-472 | [x] Sending is blocked while an attachment is uploading. | `antiquota/ui/app.js:1100` | None identified | [Passed](TEST_REPORT.md#f-472) |
+| F-473 | [x] A failed send restores message text for retry. | `antiquota/ui/app.js:1100` | None identified | [Passed](TEST_REPORT.md#f-473) |
 | F-474 | [x] Text entered without a session is sent after creating a session. | `antiquota/ui/app.js:1100` | None identified | [Passed](TEST_REPORT.md#f-474) |
-| F-475 | [ ] Attachment-only messages can be sent without text. | `antiquota/ui/app.js:1100` | None identified | [Pending](TEST_REPORT.md#f-475) |
+| F-475 | [x] Attachment-only messages can be sent without text. | `antiquota/ui/app.js:1100` | None identified | [Passed](TEST_REPORT.md#f-475) |
 | F-476 | [x] Queued text explains mid-turn delivery at the next step. | `antiquota/ui/app.js:1100` | None identified | [Passed](TEST_REPORT.md#f-476) |
-| F-477 | [ ] Queued attachments explain that delivery follows the current turn. | `antiquota/ui/app.js:1100` | None identified | [Pending](TEST_REPORT.md#f-477) |
+| F-477 | [x] Queued attachments explain that delivery follows the current turn. | `antiquota/ui/app.js:1100` | None identified | [Passed](TEST_REPORT.md#f-477) |
 | F-478 | [x] A ! command runs in the project folder and supplies output to the next prompt. | `antiquota/ui/app.js:1123` | None identified | [Passed](TEST_REPORT.md#f-478) |
 | F-479 | [x] A # note appends to project GEMINI.md and reports the saved file. | `antiquota/ui/app.js:1123` | None identified | [Passed](TEST_REPORT.md#f-479) |
 | F-480 | [x] Shell prefixes change styling, hints and the action label to Run. | `antiquota/ui/app.js:445` | None identified | [Passed](TEST_REPORT.md#f-480) |
@@ -140,7 +140,7 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 | F-512 | [x] Visible goal prompts omit repeated standing instructions but retain full tooltip text. | `antiquota/ui/app.js:626` | None identified | [Passed](TEST_REPORT.md#f-512) |
 | F-513 | [x] Steered messages are marked as arriving while the agent worked. | `antiquota/ui/app.js:626` | None identified | [Passed](TEST_REPORT.md#f-513) |
 | F-514 | [x] Turn markers show number, account, model, clock time and rewind. | `antiquota/ui/app.js:871` | None identified | [Passed](TEST_REPORT.md#f-514) |
-| F-515 | [ ] Streaming deltas update one assistant node until its completed reply replaces them. | `antiquota/ui/app.js:871` | None identified | [Pending](TEST_REPORT.md#f-515) |
+| F-515 | [x] Streaming deltas update one assistant node until its completed reply replaces them. | `antiquota/ui/app.js:871` | None identified | [Passed](TEST_REPORT.md#f-515) |
 | F-516 | [x] Completed tool rows replace running rows without losing expanded state. | `antiquota/ui/app.js:871` | None identified | [Passed](TEST_REPORT.md#f-516) |
 | F-517 | [x] Tool rows identify run, read, list, search, find, edit, web and MCP actions. | `antiquota/ui/app.js:636` | None identified | [Passed](TEST_REPORT.md#f-517) |
 | F-518 | [x] Unknown tool rows display a readable name and short string argument. | `antiquota/ui/app.js:636` | None identified | [Passed](TEST_REPORT.md#f-518) |
@@ -183,34 +183,34 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 
 | ID | Acceptance behavior | Legacy source | Existing legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-553 | [ ] The goal dialog reuses an existing goal or composer objective. | `antiquota/ui/app.js:1970` | None identified | [Pending](TEST_REPORT.md#f-553) |
-| F-554 | [ ] Goal controls expose objective, optional check, verifier, model and round limit. | `antiquota/ui/app.js:1970` | None identified | [Pending](TEST_REPORT.md#f-554) |
-| F-555 | [ ] Start goal posts all selected controls. | `antiquota/ui/app.js:1981` | None identified | [Pending](TEST_REPORT.md#f-555) |
-| F-556 | [ ] Starting an identical composer objective clears that composer text. | `antiquota/ui/app.js:1981` | None identified | [Pending](TEST_REPORT.md#f-556) |
-| F-557 | [ ] Goal bars show objective, state/rounds, check and verifier model. | `antiquota/ui/app.js:462` | None identified | [Pending](TEST_REPORT.md#f-557) |
-| F-558 | [ ] Goal Pause stops an active session. | `antiquota/ui/app.js:462` | None identified | [Pending](TEST_REPORT.md#f-558) |
-| F-559 | [ ] Goal Resume restarts an unmet inactive goal. | `antiquota/ui/app.js:462` | None identified | [Pending](TEST_REPORT.md#f-559) |
-| F-560 | [ ] Goal Edit opens the existing goal dialog. | `antiquota/ui/app.js:462` | None identified | [Pending](TEST_REPORT.md#f-560) |
-| F-561 | [ ] Goal Remove deletes its goal. | `antiquota/ui/app.js:462` | None identified | [Pending](TEST_REPORT.md#f-561) |
-| F-562 | [ ] A successful completed idle plan-mode turn exposes plan-ready controls. | `antiquota/ui/app.js:486` | None identified | [Pending](TEST_REPORT.md#f-562) |
-| F-563 | [ ] Execute plan switches to accept-edits before sending its execution instruction. | `antiquota/ui/app.js:486` | None identified | [Pending](TEST_REPORT.md#f-563) |
-| F-564 | [ ] Execute with approvals switches to default before sending its execution instruction. | `antiquota/ui/app.js:486` | None identified | [Pending](TEST_REPORT.md#f-564) |
-| F-565 | [ ] Revise focuses the composer with a revision placeholder. | `antiquota/ui/app.js:486` | None identified | [Pending](TEST_REPORT.md#f-565) |
-| F-566 | [ ] Running jobs show command, elapsed time, check-in and agent attribution. | `antiquota/ui/app.js:507` | None identified | [Pending](TEST_REPORT.md#f-566) |
-| F-567 | [ ] Job Log opens that job's output. | `antiquota/ui/app.js:507` | None identified | [Pending](TEST_REPORT.md#f-567) |
-| F-568 | [ ] Job Stop requests ending that job. | `antiquota/ui/app.js:507` | None identified | [Pending](TEST_REPORT.md#f-568) |
-| F-569 | [ ] Job logs show no-output text when empty and scroll to the latest output. | `antiquota/ui/app.js:528` | None identified | [Pending](TEST_REPORT.md#f-569) |
-| F-570 | [ ] Job events distinguish started, stopped, success, failure and unknown exit code. | `antiquota/ui/app.js:565` | None identified | [Pending](TEST_REPORT.md#f-570) |
-| F-571 | [ ] Loop bars show prompt, interval and next run. | `antiquota/ui/app.js:507` | None identified | [Pending](TEST_REPORT.md#f-571) |
-| F-572 | [ ] Daily schedule bars show prompt, daily time and next run. | `antiquota/ui/app.js:507` | None identified | [Pending](TEST_REPORT.md#f-572) |
-| F-573 | [ ] Loop Stop deletes the configured loop. | `antiquota/ui/app.js:507` | None identified | [Pending](TEST_REPORT.md#f-573) |
-| F-574 | [ ] Schedule Remove deletes the configured schedule. | `antiquota/ui/app.js:507` | None identified | [Pending](TEST_REPORT.md#f-574) |
-| F-575 | [ ] Pending approval cards show command or edit target, preview and wait duration. | `antiquota/ui/app.js:537` | None identified | [Pending](TEST_REPORT.md#f-575) |
-| F-576 | [ ] Allow once answers without persisting a rule. | `antiquota/ui/app.js:537` | None identified | [Pending](TEST_REPORT.md#f-576) |
-| F-577 | [ ] Always allow answers with the suggested permanent command rule. | `antiquota/ui/app.js:537` | None identified | [Pending](TEST_REPORT.md#f-577) |
-| F-578 | [ ] Allow all edits switches the session's edit permission behavior. | `antiquota/ui/app.js:537` | None identified | [Pending](TEST_REPORT.md#f-578) |
-| F-579 | [ ] Decline sends a denial. | `antiquota/ui/app.js:537` | None identified | [Pending](TEST_REPORT.md#f-579) |
-| F-580 | [ ] Answered cards show allow/decline, once/permanent state and reason. | `antiquota/ui/app.js:537` | None identified | [Pending](TEST_REPORT.md#f-580) |
+| F-553 | [x] The goal dialog reuses an existing goal or composer objective. | `antiquota/ui/app.js:1970` | None identified | [Passed](TEST_REPORT.md#f-553) |
+| F-554 | [x] Goal controls expose objective, optional check, verifier, model and round limit. | `antiquota/ui/app.js:1970` | None identified | [Passed](TEST_REPORT.md#f-554) |
+| F-555 | [x] Start goal posts all selected controls. | `antiquota/ui/app.js:1981` | None identified | [Passed](TEST_REPORT.md#f-555) |
+| F-556 | [x] Starting an identical composer objective clears that composer text. | `antiquota/ui/app.js:1981` | None identified | [Passed](TEST_REPORT.md#f-556) |
+| F-557 | [x] Goal bars show objective, state/rounds, check and verifier model. | `antiquota/ui/app.js:462` | None identified | [Passed](TEST_REPORT.md#f-557) |
+| F-558 | [x] Goal Pause stops an active session. | `antiquota/ui/app.js:462` | None identified | [Passed](TEST_REPORT.md#f-558) |
+| F-559 | [x] Goal Resume restarts an unmet inactive goal. | `antiquota/ui/app.js:462` | None identified | [Passed](TEST_REPORT.md#f-559) |
+| F-560 | [x] Goal Edit opens the existing goal dialog. | `antiquota/ui/app.js:462` | None identified | [Passed](TEST_REPORT.md#f-560) |
+| F-561 | [x] Goal Remove deletes its goal. | `antiquota/ui/app.js:462` | None identified | [Passed](TEST_REPORT.md#f-561) |
+| F-562 | [x] A successful completed idle plan-mode turn exposes plan-ready controls. | `antiquota/ui/app.js:486` | None identified | [Passed](TEST_REPORT.md#f-562) |
+| F-563 | [x] Execute plan switches to accept-edits before sending its execution instruction. | `antiquota/ui/app.js:486` | None identified | [Passed](TEST_REPORT.md#f-563) |
+| F-564 | [x] Execute with approvals switches to default before sending its execution instruction. | `antiquota/ui/app.js:486` | None identified | [Passed](TEST_REPORT.md#f-564) |
+| F-565 | [x] Revise focuses the composer with a revision placeholder. | `antiquota/ui/app.js:486` | None identified | [Passed](TEST_REPORT.md#f-565) |
+| F-566 | [x] Running jobs show command, elapsed time, check-in and agent attribution. | `antiquota/ui/app.js:507` | None identified | [Passed](TEST_REPORT.md#f-566) |
+| F-567 | [x] Job Log opens that job's output. | `antiquota/ui/app.js:507` | None identified | [Passed](TEST_REPORT.md#f-567) |
+| F-568 | [x] Job Stop requests ending that job. | `antiquota/ui/app.js:507` | None identified | [Passed](TEST_REPORT.md#f-568) |
+| F-569 | [x] Job logs show no-output text when empty and scroll to the latest output. | `antiquota/ui/app.js:528` | None identified | [Passed](TEST_REPORT.md#f-569) |
+| F-570 | [x] Job events distinguish started, stopped, success, failure and unknown exit code. | `antiquota/ui/app.js:565` | None identified | [Passed](TEST_REPORT.md#f-570) |
+| F-571 | [x] Loop bars show prompt, interval and next run. | `antiquota/ui/app.js:507` | None identified | [Passed](TEST_REPORT.md#f-571) |
+| F-572 | [x] Daily schedule bars show prompt, daily time and next run. | `antiquota/ui/app.js:507` | None identified | [Passed](TEST_REPORT.md#f-572) |
+| F-573 | [x] Loop Stop deletes the configured loop. | `antiquota/ui/app.js:507` | None identified | [Passed](TEST_REPORT.md#f-573) |
+| F-574 | [x] Schedule Remove deletes the configured schedule. | `antiquota/ui/app.js:507` | None identified | [Passed](TEST_REPORT.md#f-574) |
+| F-575 | [x] Pending approval cards show command or edit target, preview and wait duration. | `antiquota/ui/app.js:537` | None identified | [Passed](TEST_REPORT.md#f-575) |
+| F-576 | [x] Allow once answers without persisting a rule. | `antiquota/ui/app.js:537` | None identified | [Passed](TEST_REPORT.md#f-576) |
+| F-577 | [x] Always allow answers with the suggested permanent command rule. | `antiquota/ui/app.js:537` | None identified | [Passed](TEST_REPORT.md#f-577) |
+| F-578 | [x] Allow all edits switches the session's edit permission behavior. | `antiquota/ui/app.js:537` | None identified | [Passed](TEST_REPORT.md#f-578) |
+| F-579 | [x] Decline sends a denial. | `antiquota/ui/app.js:537` | None identified | [Passed](TEST_REPORT.md#f-579) |
+| F-580 | [x] Answered cards show allow/decline, once/permanent state and reason. | `antiquota/ui/app.js:537` | None identified | [Passed](TEST_REPORT.md#f-580) |
 | F-581 | [ ] Missing approval answers display the expired-request explanation. | `antiquota/ui/app.js:537` | None identified | [Pending](TEST_REPORT.md#f-581) |
 | F-582 | [ ] A new pending approval requests native attention and an approval notification. | `antiquota/ui/app.js:871` | None identified | [Pending](TEST_REPORT.md#f-582) |
 
@@ -218,34 +218,34 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 
 | ID | Acceptance behavior | Legacy source | Existing legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-583 | [ ] The Files tab lists the selected session's folders and files. | `antiquota/ui/app.js:1545` | None identified | [Pending](TEST_REPORT.md#f-583) |
-| F-584 | [ ] Breadcrumbs navigate to earlier directories. | `antiquota/ui/app.js:1545` | None identified | [Pending](TEST_REPORT.md#f-584) |
-| F-585 | [ ] The parent row navigates to the parent directory. | `antiquota/ui/app.js:1545` | None identified | [Pending](TEST_REPORT.md#f-585) |
-| F-586 | [ ] File rows display size and dimmed entries. | `antiquota/ui/app.js:1545` | None identified | [Pending](TEST_REPORT.md#f-586) |
-| F-587 | [ ] An empty directory shows Empty folder. | `antiquota/ui/app.js:1545` | None identified | [Pending](TEST_REPORT.md#f-587) |
-| F-588 | [ ] Mention inserts a file's @ path into the composer. | `antiquota/ui/app.js:1545` | None identified | [Pending](TEST_REPORT.md#f-588) |
+| F-583 | [x] The Files tab lists the selected session's folders and files. | `antiquota/ui/app.js:1545` | None identified | [Passed](TEST_REPORT.md#f-583) |
+| F-584 | [x] Breadcrumbs navigate to earlier directories. | `antiquota/ui/app.js:1545` | None identified | [Passed](TEST_REPORT.md#f-584) |
+| F-585 | [x] The parent row navigates to the parent directory. | `antiquota/ui/app.js:1545` | None identified | [Passed](TEST_REPORT.md#f-585) |
+| F-586 | [x] File rows display size and dimmed entries. | `antiquota/ui/app.js:1545` | None identified | [Passed](TEST_REPORT.md#f-586) |
+| F-587 | [x] An empty directory shows Empty folder. | `antiquota/ui/app.js:1545` | None identified | [Passed](TEST_REPORT.md#f-587) |
+| F-588 | [x] Mention inserts a file's @ path into the composer. | `antiquota/ui/app.js:1545` | None identified | [Passed](TEST_REPORT.md#f-588) |
 | F-589 | [ ] Desktop Open launches a file's default application. | `antiquota/ui/app.js:1545` | None identified | [Pending](TEST_REPORT.md#f-589) |
 | F-590 | [ ] Desktop Reveal opens Finder / Explorer for a file or directory. | `antiquota/ui/app.js:1545` | None identified | [Pending](TEST_REPORT.md#f-590) |
-| F-591 | [ ] File links open the numbered file viewer. | `antiquota/ui/app.js:1219` | None identified | [Pending](TEST_REPORT.md#f-591) |
-| F-592 | [ ] The viewer shows relative path and full-path tooltip. | `antiquota/ui/app.js:1224` | None identified | [Pending](TEST_REPORT.md#f-592) |
-| F-593 | [ ] Line or line-range links highlight and center those lines. | `antiquota/ui/app.js:1224` | None identified | [Pending](TEST_REPORT.md#f-593) |
-| F-594 | [ ] Viewer Copy copies complete contents. | `antiquota/ui/app.js:1224` | None identified | [Pending](TEST_REPORT.md#f-594) |
-| F-595 | [ ] Viewer Close dismisses the viewer. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-595) |
-| F-596 | [ ] Clicking the viewer backdrop dismisses the viewer. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-596) |
-| F-597 | [ ] Files and Terminal tabs explain that a session is required when none is open. | `antiquota/ui/app.js:1895` | None identified | [Pending](TEST_REPORT.md#f-597) |
-| F-598 | [ ] Git review shows branch and repository or worktree base/ahead/merged state. | `antiquota/ui/app.js:1573` | None identified | [Pending](TEST_REPORT.md#f-598) |
-| F-599 | [ ] Uncommitted file rows show status, additions and deletions. | `antiquota/ui/app.js:1573` | None identified | [Pending](TEST_REPORT.md#f-599) |
-| F-600 | [ ] Expanding uncommitted files lazily requests their diff. | `antiquota/ui/app.js:1573` | None identified | [Pending](TEST_REPORT.md#f-600) |
-| F-601 | [ ] Expanding worktree committed files lazily requests the base-relative diff. | `antiquota/ui/app.js:1573` | None identified | [Pending](TEST_REPORT.md#f-601) |
-| F-602 | [ ] Discard confirms deletion of a new file or loss of uncommitted edits. | `antiquota/ui/app.js:1573` | None identified | [Pending](TEST_REPORT.md#f-602) |
-| F-603 | [ ] Commit all sends the message and refreshes Git review. | `antiquota/ui/app.js:1573` | None identified | [Pending](TEST_REPORT.md#f-603) |
-| F-604 | [ ] The initial commit message uses the selected session title. | `antiquota/ui/app.js:1573` | None identified | [Pending](TEST_REPORT.md#f-604) |
-| F-605 | [ ] Worktree review lists files committed relative to its base. | `antiquota/ui/app.js:1573` | None identified | [Pending](TEST_REPORT.md#f-605) |
-| F-606 | [ ] Merge is enabled only for an unmerged worktree with commits ahead. | `antiquota/ui/app.js:1573` | None identified | [Pending](TEST_REPORT.md#f-606) |
-| F-607 | [ ] Remove worktree confirms removal, archives the session and keeps its branch. | `antiquota/ui/app.js:1573` | None identified | [Pending](TEST_REPORT.md#f-607) |
-| F-608 | [ ] Agent edit history groups recorded diffs by file, newest first. | `antiquota/ui/app.js:1895` | None identified | [Pending](TEST_REPORT.md#f-608) |
-| F-609 | [ ] Expanding an edit-history file lazily displays all recorded diffs. | `antiquota/ui/app.js:1895` | None identified | [Pending](TEST_REPORT.md#f-609) |
-| F-610 | [ ] Changes displays distinct no-session, no-edits and no-uncommitted messages. | `antiquota/ui/app.js:1895` | None identified | [Pending](TEST_REPORT.md#f-610) |
+| F-591 | [x] File links open the numbered file viewer. | `antiquota/ui/app.js:1219` | None identified | [Passed](TEST_REPORT.md#f-591) |
+| F-592 | [x] The viewer shows relative path and full-path tooltip. | `antiquota/ui/app.js:1224` | None identified | [Passed](TEST_REPORT.md#f-592) |
+| F-593 | [x] Line or line-range links highlight and center those lines. | `antiquota/ui/app.js:1224` | None identified | [Passed](TEST_REPORT.md#f-593) |
+| F-594 | [x] Viewer Copy copies complete contents. | `antiquota/ui/app.js:1224` | None identified | [Passed](TEST_REPORT.md#f-594) |
+| F-595 | [x] Viewer Close dismisses the viewer. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-595) |
+| F-596 | [x] Clicking the viewer backdrop dismisses the viewer. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-596) |
+| F-597 | [x] Files and Terminal tabs explain that a session is required when none is open. | `antiquota/ui/app.js:1895` | None identified | [Passed](TEST_REPORT.md#f-597) |
+| F-598 | [x] Git review shows branch and repository or worktree base/ahead/merged state. | `antiquota/ui/app.js:1573` | None identified | [Passed](TEST_REPORT.md#f-598) |
+| F-599 | [x] Uncommitted file rows show status, additions and deletions. | `antiquota/ui/app.js:1573` | None identified | [Passed](TEST_REPORT.md#f-599) |
+| F-600 | [x] Expanding uncommitted files lazily requests their diff. | `antiquota/ui/app.js:1573` | None identified | [Passed](TEST_REPORT.md#f-600) |
+| F-601 | [x] Expanding worktree committed files lazily requests the base-relative diff. | `antiquota/ui/app.js:1573` | None identified | [Passed](TEST_REPORT.md#f-601) |
+| F-602 | [x] Discard confirms deletion of a new file or loss of uncommitted edits. | `antiquota/ui/app.js:1573` | None identified | [Passed](TEST_REPORT.md#f-602) |
+| F-603 | [x] Commit all sends the message and refreshes Git review. | `antiquota/ui/app.js:1573` | None identified | [Passed](TEST_REPORT.md#f-603) |
+| F-604 | [x] The initial commit message uses the selected session title. | `antiquota/ui/app.js:1573` | None identified | [Passed](TEST_REPORT.md#f-604) |
+| F-605 | [x] Worktree review lists files committed relative to its base. | `antiquota/ui/app.js:1573` | None identified | [Passed](TEST_REPORT.md#f-605) |
+| F-606 | [x] Merge is enabled only for an unmerged worktree with commits ahead. | `antiquota/ui/app.js:1573` | None identified | [Passed](TEST_REPORT.md#f-606) |
+| F-607 | [x] Remove worktree confirms removal, archives the session and keeps its branch. | `antiquota/ui/app.js:1573` | None identified | [Passed](TEST_REPORT.md#f-607) |
+| F-608 | [x] Agent edit history groups recorded diffs by file, newest first. | `antiquota/ui/app.js:1895` | None identified | [Passed](TEST_REPORT.md#f-608) |
+| F-609 | [x] Expanding an edit-history file lazily displays all recorded diffs. | `antiquota/ui/app.js:1895` | None identified | [Passed](TEST_REPORT.md#f-609) |
+| F-610 | [x] Changes displays distinct no-session, no-edits and no-uncommitted messages. | `antiquota/ui/app.js:1895` | None identified | [Passed](TEST_REPORT.md#f-610) |
 
 ## Split, drawer and terminal
 
@@ -261,59 +261,59 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 | F-618 | [x] The embedded Close side by side action closes split view. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-618) |
 | F-619 | [x] Cross-origin split control messages are ignored. | `antiquota/ui/app.js:1661` | None identified | [Passed](TEST_REPORT.md#f-619) |
 | F-620 | [x] Embedded views omit sidebar, drawer and nested split controls. | `antiquota/ui/app.js:17` | None identified | [Passed](TEST_REPORT.md#f-620) |
-| F-621 | [ ] Side-panel visibility persists per device. | `antiquota/ui/app.js:1671` | None identified | [Pending](TEST_REPORT.md#f-621) |
-| F-622 | [ ] The Changes, Files or Terminal tab selection persists per device. | `antiquota/ui/app.js:1671` | None identified | [Pending](TEST_REPORT.md#f-622) |
-| F-623 | [ ] Open side-panel content follows session selection. | `antiquota/ui/app.js:968` | None identified | [Pending](TEST_REPORT.md#f-623) |
-| F-624 | [ ] Terminal assets are loaded lazily once. | `antiquota/ui/app.js:1820` | None identified | [Pending](TEST_REPORT.md#f-624) |
-| F-625 | [ ] A terminal asset failure displays a useful load error. | `antiquota/ui/app.js:1833` | None identified | [Pending](TEST_REPORT.md#f-625) |
-| F-626 | [ ] Each session retains an independent xterm instance across tab/session switches. | `antiquota/ui/app.js:1833` | None identified | [Pending](TEST_REPORT.md#f-626) |
-| F-627 | [ ] Terminal starts a shell in the session folder and shows shell/folder in its title. | `antiquota/ui/app.js:1833` | None identified | [Pending](TEST_REPORT.md#f-627) |
-| F-628 | [ ] Terminal keyboard input is posted to the engine. | `antiquota/ui/app.js:1833` | None identified | [Pending](TEST_REPORT.md#f-628) |
-| F-629 | [ ] Streamed base64 bytes render as terminal output. | `antiquota/ui/app.js:1833` | None identified | [Pending](TEST_REPORT.md#f-629) |
-| F-630 | [ ] First replayed output resets the terminal display. | `antiquota/ui/app.js:1833` | None identified | [Pending](TEST_REPORT.md#f-630) |
-| F-631 | [ ] Resize fits xterm and posts dimensions after an 80 ms debounce. | `antiquota/ui/app.js:1833` | None identified | [Pending](TEST_REPORT.md#f-631) |
-| F-632 | [ ] Clear clears the display without restarting the shell. | `antiquota/ui/app.js:1833` | None identified | [Pending](TEST_REPORT.md#f-632) |
-| F-633 | [ ] Restart requests a fresh shell and reconnects output. | `antiquota/ui/app.js:1833` | None identified | [Pending](TEST_REPORT.md#f-633) |
-| F-634 | [ ] Kill ends the shell. | `antiquota/ui/app.js:1833` | None identified | [Pending](TEST_REPORT.md#f-634) |
-| F-635 | [ ] Exit marks the title exited and closes the output stream. | `antiquota/ui/app.js:1833` | None identified | [Pending](TEST_REPORT.md#f-635) |
-| F-636 | [ ] Terminal input and startup errors render in red inside xterm. | `antiquota/ui/app.js:1833` | None identified | [Pending](TEST_REPORT.md#f-636) |
-| F-637 | [ ] Opening or revisiting the Terminal tab focuses it. | `antiquota/ui/app.js:1833` | None identified | [Pending](TEST_REPORT.md#f-637) |
-| F-638 | [ ] Terminal scrollback retains 5000 lines. | `antiquota/ui/app.js:1833` | None identified | [Pending](TEST_REPORT.md#f-638) |
+| F-621 | [x] Side-panel visibility persists per device. | `antiquota/ui/app.js:1671` | None identified | [Passed](TEST_REPORT.md#f-621) |
+| F-622 | [x] The Changes, Files or Terminal tab selection persists per device. | `antiquota/ui/app.js:1671` | None identified | [Passed](TEST_REPORT.md#f-622) |
+| F-623 | [x] Open side-panel content follows session selection. | `antiquota/ui/app.js:968` | None identified | [Passed](TEST_REPORT.md#f-623) |
+| F-624 | [x] Terminal assets are loaded lazily once. | `antiquota/ui/app.js:1820` | None identified | [Passed](TEST_REPORT.md#f-624) |
+| F-625 | [x] A terminal asset failure displays a useful load error. | `antiquota/ui/app.js:1833` | None identified | [Passed](TEST_REPORT.md#f-625) |
+| F-626 | [x] Each session retains an independent xterm instance across tab/session switches. | `antiquota/ui/app.js:1833` | None identified | [Passed](TEST_REPORT.md#f-626) |
+| F-627 | [x] Terminal starts a shell in the session folder and shows shell/folder in its title. | `antiquota/ui/app.js:1833` | None identified | [Passed](TEST_REPORT.md#f-627) |
+| F-628 | [x] Terminal keyboard input is posted to the engine. | `antiquota/ui/app.js:1833` | None identified | [Passed](TEST_REPORT.md#f-628) |
+| F-629 | [x] Streamed base64 bytes render as terminal output. | `antiquota/ui/app.js:1833` | None identified | [Passed](TEST_REPORT.md#f-629) |
+| F-630 | [x] First replayed output resets the terminal display. | `antiquota/ui/app.js:1833` | None identified | [Passed](TEST_REPORT.md#f-630) |
+| F-631 | [x] Resize fits xterm and posts dimensions after an 80 ms debounce. | `antiquota/ui/app.js:1833` | None identified | [Passed](TEST_REPORT.md#f-631) |
+| F-632 | [x] Clear clears the display without restarting the shell. | `antiquota/ui/app.js:1833` | None identified | [Passed](TEST_REPORT.md#f-632) |
+| F-633 | [x] Restart requests a fresh shell and reconnects output. | `antiquota/ui/app.js:1833` | None identified | [Passed](TEST_REPORT.md#f-633) |
+| F-634 | [x] Kill ends the shell. | `antiquota/ui/app.js:1833` | None identified | [Passed](TEST_REPORT.md#f-634) |
+| F-635 | [x] Exit marks the title exited and closes the output stream. | `antiquota/ui/app.js:1833` | None identified | [Passed](TEST_REPORT.md#f-635) |
+| F-636 | [x] Terminal input and startup errors render in red inside xterm. | `antiquota/ui/app.js:1833` | None identified | [Passed](TEST_REPORT.md#f-636) |
+| F-637 | [x] Opening or revisiting the Terminal tab focuses it. | `antiquota/ui/app.js:1833` | None identified | [Passed](TEST_REPORT.md#f-637) |
+| F-638 | [x] Terminal scrollback retains 5000 lines. | `antiquota/ui/app.js:1833` | None identified | [Passed](TEST_REPORT.md#f-638) |
 
 ## Attachments and dictation
 
 | ID | Acceptance behavior | Legacy source | Existing legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-639 | [ ] The picker uploads multiple files for the selected session. | `antiquota/ui/app.js:1351` | None identified | [Pending](TEST_REPORT.md#f-639) |
-| F-640 | [ ] Pasted screenshot files upload with generic image.png renamed by timestamp. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-640) |
-| F-641 | [ ] Dragging files into the window displays the drop overlay. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-641) |
-| F-642 | [ ] Dropping files hides the overlay and attaches those files. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-642) |
-| F-643 | [ ] Nested drag tracking keeps the overlay until every file drag leaves. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-643) |
-| F-644 | [ ] Attaching without a session requests opening or creating one. | `antiquota/ui/app.js:1351` | None identified | [Pending](TEST_REPORT.md#f-644) |
-| F-645 | [ ] Files over 25 MB are rejected by filename. | `antiquota/ui/app.js:1351` | None identified | [Pending](TEST_REPORT.md#f-645) |
-| F-646 | [ ] Chips display thumbnail or type, filename, size and upload state. | `antiquota/ui/app.js:1341` | None identified | [Pending](TEST_REPORT.md#f-646) |
-| F-647 | [ ] Remove excludes an unsent attachment from the next message. | `antiquota/ui/app.js:1341` | None identified | [Pending](TEST_REPORT.md#f-647) |
-| F-648 | [ ] Failed uploads remove their chip and display the error. | `antiquota/ui/app.js:1351` | None identified | [Pending](TEST_REPORT.md#f-648) |
-| F-649 | [ ] Sent image attachments render as authenticated clickable thumbnails. | `antiquota/ui/app.js:1377` | None identified | [Pending](TEST_REPORT.md#f-649) |
-| F-650 | [ ] Sent non-image attachments render as filename/type chips. | `antiquota/ui/app.js:1377` | None identified | [Pending](TEST_REPORT.md#f-650) |
-| F-651 | [ ] Dictation starts from idle and stops from listening or recording. | `antiquota/ui/app.js:1266` | None identified | [Pending](TEST_REPORT.md#f-651) |
-| F-652 | [ ] Dictation cannot restart while transcription is running. | `antiquota/ui/app.js:1266` | None identified | [Pending](TEST_REPORT.md#f-652) |
-| F-653 | [ ] The mic and status label indicate listening, recording and transcribing. | `antiquota/ui/app.js:1245` | None identified | [Pending](TEST_REPORT.md#f-653) |
-| F-654 | [ ] Recording status shows elapsed time and an Escape-cancel hint. | `antiquota/ui/app.js:1245` | None identified | [Pending](TEST_REPORT.md#f-654) |
-| F-655 | [ ] Browser recognition uses continuous interim results in navigator language. | `antiquota/ui/app.js:1272` | None identified | [Pending](TEST_REPORT.md#f-655) |
-| F-656 | [ ] Recognition appends recognized text after current composer content. | `antiquota/ui/app.js:1272` | None identified | [Pending](TEST_REPORT.md#f-656) |
-| F-657 | [ ] Permission, service and network errors fall back to audio recording. | `antiquota/ui/app.js:1272` | None identified | [Pending](TEST_REPORT.md#f-657) |
-| F-658 | [ ] Aborted or no-speech recognition ends without an error toast. | `antiquota/ui/app.js:1272` | None identified | [Pending](TEST_REPORT.md#f-658) |
-| F-659 | [ ] Capture requests mono microphone input with echo cancellation and noise suppression. | `antiquota/ui/app.js:1286` | None identified | [Pending](TEST_REPORT.md#f-659) |
-| F-660 | [ ] Microphone access failure displays its error. | `antiquota/ui/app.js:1286` | None identified | [Pending](TEST_REPORT.md#f-660) |
-| F-661 | [ ] Stopping or canceling disconnects audio nodes and stops microphone tracks. | `antiquota/ui/app.js:1297` | None identified | [Pending](TEST_REPORT.md#f-661) |
-| F-662 | [ ] Captures shorter than half a second are rejected before upload. | `antiquota/ui/app.js:1297` | None identified | [Pending](TEST_REPORT.md#f-662) |
-| F-663 | [ ] Peak amplitude below 0.01 is rejected as silence before upload. | `antiquota/ui/app.js:1297` | None identified | [Pending](TEST_REPORT.md#f-663) |
-| F-664 | [ ] Legacy recording uploads 16000 Hz mono PCM WAV. Authorized replacement: use MediaRecorder directly and upload a supported recorded container with the correct X-Audio-Type; preserve recorded-WAV input tests and the client/server silence guard. | `antiquota/ui/app.js:1319` | None identified | [Pending](TEST_REPORT.md#f-664) |
-| F-665 | [ ] Empty transcription reports Nothing heard without inserting text. | `antiquota/ui/app.js:1297` | None identified | [Pending](TEST_REPORT.md#f-665) |
-| F-666 | [ ] Transcription inserts at the selection and restores composer focus. | `antiquota/ui/app.js:1258` | None identified | [Pending](TEST_REPORT.md#f-666) |
-| F-667 | [ ] Escape cancels recording. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-667) |
-| F-668 | [ ] Escape aborts live speech recognition. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-668) |
+| F-639 | [x] The picker uploads multiple files for the selected session. | `antiquota/ui/app.js:1351` | None identified | [Passed](TEST_REPORT.md#f-639) |
+| F-640 | [x] Pasted screenshot files upload with generic image.png renamed by timestamp. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-640) |
+| F-641 | [x] Dragging files into the window displays the drop overlay. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-641) |
+| F-642 | [x] Dropping files hides the overlay and attaches those files. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-642) |
+| F-643 | [x] Nested drag tracking keeps the overlay until every file drag leaves. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-643) |
+| F-644 | [x] Attaching without a session requests opening or creating one. | `antiquota/ui/app.js:1351` | None identified | [Passed](TEST_REPORT.md#f-644) |
+| F-645 | [x] Files over 25 MB are rejected by filename. | `antiquota/ui/app.js:1351` | None identified | [Passed](TEST_REPORT.md#f-645) |
+| F-646 | [x] Chips display thumbnail or type, filename, size and upload state. | `antiquota/ui/app.js:1341` | None identified | [Passed](TEST_REPORT.md#f-646) |
+| F-647 | [x] Remove excludes an unsent attachment from the next message. | `antiquota/ui/app.js:1341` | None identified | [Passed](TEST_REPORT.md#f-647) |
+| F-648 | [x] Failed uploads remove their chip and display the error. | `antiquota/ui/app.js:1351` | None identified | [Passed](TEST_REPORT.md#f-648) |
+| F-649 | [x] Sent image attachments render as authenticated clickable thumbnails. | `antiquota/ui/app.js:1377` | None identified | [Passed](TEST_REPORT.md#f-649) |
+| F-650 | [x] Sent non-image attachments render as filename/type chips. | `antiquota/ui/app.js:1377` | None identified | [Passed](TEST_REPORT.md#f-650) |
+| F-651 | [x] Dictation starts from idle and stops from listening or recording. | `antiquota/ui/app.js:1266` | None identified | [Passed](TEST_REPORT.md#f-651) |
+| F-652 | [x] Dictation cannot restart while transcription is running. | `antiquota/ui/app.js:1266` | None identified | [Passed](TEST_REPORT.md#f-652) |
+| F-653 | [x] The mic and status label indicate listening, recording and transcribing. | `antiquota/ui/app.js:1245` | None identified | [Passed](TEST_REPORT.md#f-653) |
+| F-654 | [x] Recording status shows elapsed time and an Escape-cancel hint. | `antiquota/ui/app.js:1245` | None identified | [Passed](TEST_REPORT.md#f-654) |
+| F-655 | [x] Browser recognition uses continuous interim results in navigator language. | `antiquota/ui/app.js:1272` | None identified | [Passed](TEST_REPORT.md#f-655) |
+| F-656 | [x] Recognition appends recognized text after current composer content. | `antiquota/ui/app.js:1272` | None identified | [Passed](TEST_REPORT.md#f-656) |
+| F-657 | [x] Permission, service and network errors fall back to audio recording. | `antiquota/ui/app.js:1272` | None identified | [Passed](TEST_REPORT.md#f-657) |
+| F-658 | [x] Aborted or no-speech recognition ends without an error toast. | `antiquota/ui/app.js:1272` | None identified | [Passed](TEST_REPORT.md#f-658) |
+| F-659 | [x] Capture requests mono microphone input with echo cancellation and noise suppression. | `antiquota/ui/app.js:1286` | None identified | [Passed](TEST_REPORT.md#f-659) |
+| F-660 | [x] Microphone access failure displays its error. | `antiquota/ui/app.js:1286` | None identified | [Passed](TEST_REPORT.md#f-660) |
+| F-661 | [x] Stopping or canceling disconnects audio nodes and stops microphone tracks. | `antiquota/ui/app.js:1297` | None identified | [Passed](TEST_REPORT.md#f-661) |
+| F-662 | [x] Captures shorter than half a second are rejected before upload. | `antiquota/ui/app.js:1297` | None identified | [Passed](TEST_REPORT.md#f-662) |
+| F-663 | [x] Peak amplitude below 0.01 is rejected as silence before upload. | `antiquota/ui/app.js:1297` | None identified | [Passed](TEST_REPORT.md#f-663) |
+| F-664 | [x] Legacy recording uploads 16000 Hz mono PCM WAV. Authorized replacement: use MediaRecorder directly and upload a supported recorded container with the correct X-Audio-Type; preserve recorded-WAV input tests and the client/server silence guard. | `antiquota/ui/app.js:1319` | None identified | [Passed](TEST_REPORT.md#f-664) |
+| F-665 | [x] Empty transcription reports Nothing heard without inserting text. | `antiquota/ui/app.js:1297` | None identified | [Passed](TEST_REPORT.md#f-665) |
+| F-666 | [x] Transcription inserts at the selection and restores composer focus. | `antiquota/ui/app.js:1258` | None identified | [Passed](TEST_REPORT.md#f-666) |
+| F-667 | [x] Escape cancels recording. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-667) |
+| F-668 | [x] Escape aborts live speech recognition. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-668) |
 
 ## Settings sections
 
@@ -325,7 +325,7 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 | F-672 | [x] Accounts settings exposes accounts, sign-in, rotation controls and routing history. | `antiquota/ui/app.js:2098` | None identified | [Passed](TEST_REPORT.md#f-672) |
 | F-673 | [x] Usage settings exposes period controls, statistics, chart and account/model breakdowns. | `antiquota/ui/app.js:2098` | None identified | [Passed](TEST_REPORT.md#f-673) |
 | F-674 | [x] Agents & goals settings exposes verifier, round, approval and denial controls. | `antiquota/ui/app.js:2098` | None identified | [Passed](TEST_REPORT.md#f-674) |
-| F-675 | [ ] Permissions settings exposes independent allow and deny rules. | `antiquota/ui/app.js:2098` | None identified | [Pending](TEST_REPORT.md#f-675) |
+| F-675 | [x] Permissions settings exposes independent allow and deny rules. | `antiquota/ui/app.js:2098` | None identified | [Passed](TEST_REPORT.md#f-675) |
 | F-676 | [x] Rules settings exposes private GEMINI.md and triggered rule files. | `antiquota/ui/app.js:2098` | None identified | [Passed](TEST_REPORT.md#f-676) |
 | F-677 | [x] Skills settings exposes installed and source skill comparisons and private editors. | `antiquota/ui/app.js:2098` | None identified | [Passed](TEST_REPORT.md#f-677) |
 | F-678 | [x] Hooks settings exposes event hook entries and enable/edit/copy/delete controls. | `antiquota/ui/app.js:2098` | None identified | [Passed](TEST_REPORT.md#f-678) |
@@ -359,7 +359,7 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 | F-701 | [x] Focused visible app windows suppress notifications unless their focused preference is on. | `antiquota/ui/app.js:1398` | None identified | [Passed](TEST_REPORT.md#f-701) |
 | F-702 | [ ] Native notification permission is requested before sending an allowed notification. | `antiquota/ui/app.js:1398` | None identified | [Pending](TEST_REPORT.md#f-702) |
 | F-703 | [x] Browser notifications require granted permission and tolerate notification failures. | `antiquota/ui/app.js:1398` | None identified | [Passed](TEST_REPORT.md#f-703) |
-| F-704 | [ ] The first browser message requests notification permission when its state is default. | `antiquota/ui/app.js:1100` | None identified | [Pending](TEST_REPORT.md#f-704) |
+| F-704 | [x] The first browser message requests notification permission when its state is default. | `antiquota/ui/app.js:1100` | None identified | [Passed](TEST_REPORT.md#f-704) |
 | F-705 | [ ] Native Interface size offers 80, 90, 100, 110, 125 and 140 percent presets. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-705) |
 | F-706 | [x] Browser Interface size explains the browser zoom controls instead of applying CSS scale. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-706) |
 | F-707 | [x] Grouped steps saves grouped mode and rebuilds the selected transcript. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-707) |
@@ -378,8 +378,8 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 | F-715 | [x] Gemini and Claude/GPT quota windows appear separately. | `antiquota/ui/app.js:1773` | None identified | [Passed](TEST_REPORT.md#f-715) |
 | F-716 | [x] Quota windows show their reset time or disabled-window explanation in a tooltip. | `antiquota/ui/app.js:1773` | None identified | [Passed](TEST_REPORT.md#f-716) |
 | F-717 | [x] Account cards show walls, signed-out, cooldown and verification reasons. | `antiquota/ui/app.js:1773` | None identified | [Passed](TEST_REPORT.md#f-717) |
-| F-718 | [ ] Pause keeps an account out of rotation. | `antiquota/ui/app.js:1773` | None identified | [Pending](TEST_REPORT.md#f-718) |
-| F-719 | [ ] Resume puts a paused account back into rotation. | `antiquota/ui/app.js:1773` | None identified | [Pending](TEST_REPORT.md#f-719) |
+| F-718 | [x] Pause keeps an account out of rotation. | `antiquota/ui/app.js:1773` | None identified | [Passed](TEST_REPORT.md#f-718) |
+| F-719 | [x] Resume puts a paused account back into rotation. | `antiquota/ui/app.js:1773` | None identified | [Passed](TEST_REPORT.md#f-719) |
 | F-720 | [x] Check refreshes quota and sign-in state. | `antiquota/ui/app.js:1773` | None identified | [Passed](TEST_REPORT.md#f-720) |
 | F-721 | [x] Sign in again opens the account sign-in dialog. | `antiquota/ui/app.js:1773` | None identified | [Passed](TEST_REPORT.md#f-721) |
 | F-722 | [ ] Remove requires confirmation and preserves separate CLI sign-in. | `antiquota/ui/app.js:1773` | None identified | [Pending](TEST_REPORT.md#f-722) |
@@ -412,11 +412,11 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 | --- | --- | --- | --- | --- |
 | F-745 | [x] Verifier model saves a concrete verifier model ID. | `antiquota/ui/app.js:2286` | None identified | [Passed](TEST_REPORT.md#f-745) |
 | F-746 | [x] Rounds accepts and saves 1–500 rounds. | `antiquota/ui/app.js:2286` | None identified | [Passed](TEST_REPORT.md#f-746) |
-| F-747 | [ ] Approval wait accepts and saves 1–240 minutes. | `antiquota/ui/app.js:2286` | None identified | [Pending](TEST_REPORT.md#f-747) |
+| F-747 | [x] Approval wait accepts and saves 1–240 minutes. | `antiquota/ui/app.js:2286` | None identified | [Passed](TEST_REPORT.md#f-747) |
 | F-748 | [x] Retries after a denial accepts and saves 0–10 retries. | `antiquota/ui/app.js:2286` | None identified | [Passed](TEST_REPORT.md#f-748) |
 | F-749 | [x] Plan mode explains its read-only planning and execution workflow. | `antiquota/ui/app.js:2286` | None identified | [Passed](TEST_REPORT.md#f-749) |
-| F-750 | [ ] Allow rules can be listed, added and individually removed. | `antiquota/ui/app.js:2307` | None identified | [Pending](TEST_REPORT.md#f-750) |
-| F-751 | [ ] Deny rules can be listed, added and individually removed. | `antiquota/ui/app.js:2307` | None identified | [Pending](TEST_REPORT.md#f-751) |
+| F-750 | [x] Allow rules can be listed, added and individually removed. | `antiquota/ui/app.js:2307` | None identified | [Passed](TEST_REPORT.md#f-750) |
+| F-751 | [x] Deny rules can be listed, added and individually removed. | `antiquota/ui/app.js:2307` | None identified | [Passed](TEST_REPORT.md#f-751) |
 | F-752 | [x] Copy from agy CLI replaces differing private permission rules. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-752) |
 | F-753 | [x] Rules edits private GEMINI.md with Save and Cancel. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-753) |
 | F-754 | [x] New rule creates an always_on template and adds .md when absent. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-754) |
@@ -437,7 +437,7 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 | F-769 | [x] New item names allow letters, digits, dot, underscore, colon, at, plus and minus. | `antiquota/ui/app.js:2210` | None identified | [Passed](TEST_REPORT.md#f-769) |
 | F-770 | [x] New item names reject unsafe characters and a leading dot. | `antiquota/ui/app.js:2210` | None identified | [Passed](TEST_REPORT.md#f-770) |
 | F-771 | [x] An empty stack section displays Nothing here yet. | `antiquota/ui/app.js:250` | None identified | [Passed](TEST_REPORT.md#f-771) |
-| F-772 | [ ] Engine diagnostics shows version, URL/PID/ownership, data, stack, agy, hook and counts. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-772) |
+| F-772 | [x] Engine diagnostics shows version, URL/PID/ownership, data, stack, agy, hook and counts. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-772) |
 | F-773 | [x] Engine log opens engine output in the viewer. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-773) |
 | F-774 | [ ] Show data folder reveals the private directory in desktop mode. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-774) |
 | F-775 | [ ] Restart engine confirms before requesting shutdown and reports the expected app restart. | `antiquota/ui/app.js:2318` | None identified | [Pending](TEST_REPORT.md#f-775) |
@@ -533,30 +533,30 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 | F-850 | [x] Cmd/Ctrl+Shift+[ or { selects the previous visible session. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-850) |
 | F-851 | [x] Cmd/Ctrl+Shift+] or } selects the next visible session. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-851) |
 | F-852 | [x] Escape closes Settings when no modal dialog is open. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-852) |
-| F-853 | [ ] Alt-clicking a session opens it on the right. | `antiquota/ui/app.js:224` | None identified | [Pending](TEST_REPORT.md#f-853) |
+| F-853 | [x] Alt-clicking a session opens it on the right. | `antiquota/ui/app.js:224` | None identified | [Passed](TEST_REPORT.md#f-853) |
 | F-854 | [x] Non-Mac reference labels use Ctrl and Shift rather than Cmd glyphs. | `antiquota/ui/app.js:1527` | None identified | [Passed](TEST_REPORT.md#f-854) |
 
 ## Layout, themes and accessibility
 
 | ID | Acceptance behavior | Legacy source | Existing legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-855 | [ ] The default dark theme uses the dense warm palette and centralized CSS variables. | `antiquota/ui/app.css:5` | None identified | [Pending](TEST_REPORT.md#f-855) |
-| F-856 | [ ] The light palette follows prefers-color-scheme and overrides centralized color variables. | `antiquota/ui/app.css:36` | None identified | [Pending](TEST_REPORT.md#f-856) |
-| F-857 | [ ] The composer stays docked below an independently scrolling transcript. | `antiquota/ui/app.css:194` | None identified | [Pending](TEST_REPORT.md#f-857) |
+| F-855 | [x] The default dark theme uses the dense warm palette and centralized CSS variables. | `antiquota/ui/app.css:5` | None identified | [Passed](TEST_REPORT.md#f-855) |
+| F-856 | [x] The light palette follows prefers-color-scheme and overrides centralized color variables. | `antiquota/ui/app.css:36` | None identified | [Passed](TEST_REPORT.md#f-856) |
+| F-857 | [x] The composer stays docked below an independently scrolling transcript. | `antiquota/ui/app.css:194` | None identified | [Passed](TEST_REPORT.md#f-857) |
 | F-858 | [x] Below 860 pixels the sidebar becomes a slide-in overlay with Open and Close controls. | `antiquota/ui/app.css:544` | None identified | [Passed](TEST_REPORT.md#f-858) |
-| F-859 | [ ] Below 860 pixels the side panel becomes an overlay. | `antiquota/ui/app.css:544` | None identified | [Pending](TEST_REPORT.md#f-859) |
-| F-860 | [ ] Narrow headers omit working-folder and token totals. | `antiquota/ui/app.css:558` | None identified | [Pending](TEST_REPORT.md#f-860) |
-| F-861 | [ ] Below 860 pixels Settings uses wrapped navigation above the body. | `antiquota/ui/app.css:627` | None identified | [Pending](TEST_REPORT.md#f-861) |
-| F-862 | [ ] Below 680 pixels the shortcut reference uses one column. | `antiquota/ui/app.css:942` | None identified | [Pending](TEST_REPORT.md#f-862) |
-| F-863 | [ ] Below 720 pixels usage statistics use two columns. | `antiquota/ui/app.css:993` | None identified | [Pending](TEST_REPORT.md#f-863) |
-| F-864 | [ ] Token meter widths below 620 pixels hide session totals and context label. | `antiquota/ui/app.css:659` | None identified | [Pending](TEST_REPORT.md#f-864) |
-| F-865 | [ ] Token meter widths below 440 pixels hide available-account count. | `antiquota/ui/app.css:660` | None identified | [Pending](TEST_REPORT.md#f-865) |
-| F-866 | [ ] Reduced-motion preference disables animation and transitions. | `antiquota/ui/app.css:564` | None identified | [Pending](TEST_REPORT.md#f-866) |
+| F-859 | [x] Below 860 pixels the side panel becomes an overlay. | `antiquota/ui/app.css:544` | None identified | [Passed](TEST_REPORT.md#f-859) |
+| F-860 | [x] Narrow headers omit working-folder and token totals. | `antiquota/ui/app.css:558` | None identified | [Passed](TEST_REPORT.md#f-860) |
+| F-861 | [x] Below 860 pixels Settings uses wrapped navigation above the body. | `antiquota/ui/app.css:627` | None identified | [Passed](TEST_REPORT.md#f-861) |
+| F-862 | [x] Below 680 pixels the shortcut reference uses one column. | `antiquota/ui/app.css:942` | None identified | [Passed](TEST_REPORT.md#f-862) |
+| F-863 | [x] Below 720 pixels usage statistics use two columns. | `antiquota/ui/app.css:993` | None identified | [Passed](TEST_REPORT.md#f-863) |
+| F-864 | [x] Token meter widths below 620 pixels hide session totals and context label. | `antiquota/ui/app.css:659` | None identified | [Passed](TEST_REPORT.md#f-864) |
+| F-865 | [x] Token meter widths below 440 pixels hide available-account count. | `antiquota/ui/app.css:660` | None identified | [Passed](TEST_REPORT.md#f-865) |
+| F-866 | [x] Reduced-motion preference disables animation and transitions. | `antiquota/ui/app.css:564` | None identified | [Passed](TEST_REPORT.md#f-866) |
 | F-867 | [ ] The macOS sidebar and narrow header reserve space for traffic lights independently of native zoom. | `antiquota/ui/app.css:798` | None identified | [Pending](TEST_REPORT.md#f-867) |
 | F-868 | [x] Split view keeps two content columns below the sidebar-collapse breakpoint. | `antiquota/ui/app.css:1034` | None identified | [Passed](TEST_REPORT.md#f-868) |
-| F-869 | [ ] Terminal occupies its pane and gives the drawer a wider terminal layout. | `antiquota/ui/app.css:1019` | None identified | [Pending](TEST_REPORT.md#f-869) |
-| F-870 | [ ] Keyboard focus receives a visible accent outline. | `antiquota/ui/app.css:82` | None identified | [Pending](TEST_REPORT.md#f-870) |
-| F-871 | [ ] Hidden controls do not occupy layout space. | `antiquota/ui/app.css:83` | None identified | [Pending](TEST_REPORT.md#f-871) |
+| F-869 | [x] Terminal occupies its pane and gives the drawer a wider terminal layout. | `antiquota/ui/app.css:1019` | None identified | [Passed](TEST_REPORT.md#f-869) |
+| F-870 | [x] Keyboard focus receives a visible accent outline. | `antiquota/ui/app.css:82` | None identified | [Passed](TEST_REPORT.md#f-870) |
+| F-871 | [x] Hidden controls do not occupy layout space. | `antiquota/ui/app.css:83` | None identified | [Passed](TEST_REPORT.md#f-871) |
 
 ## Native scale behavior
 
@@ -738,32 +738,32 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 
 | ID | Acceptance behavior | Legacy source | Existing legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-978 | [ ] New-session defaults use the current model/mode and project folder, or configured defaults without a session. | `antiquota/ui/app.js:1948` | None identified | [Pending](TEST_REPORT.md#f-978) |
-| F-979 | [ ] New sessions from a worktree default to the parent repository folder. | `antiquota/ui/app.js:1948` | None identified | [Pending](TEST_REPORT.md#f-979) |
-| F-980 | [ ] The worktree checkbox follows the configured default unless an explicit project-menu choice overrides it. | `antiquota/ui/app.js:1948` | None identified | [Pending](TEST_REPORT.md#f-980) |
-| F-981 | [ ] Working-folder browse shows up to four recent unique session folders before a path is typed. | `antiquota/ui/app.js:1934` | None identified | [Pending](TEST_REPORT.md#f-981) |
-| F-982 | [ ] Folder browser entries navigate into a child folder or up to its parent. | `antiquota/ui/app.js:1934` | None identified | [Pending](TEST_REPORT.md#f-982) |
-| F-983 | [ ] Selecting a browser folder updates the working-folder input. | `antiquota/ui/app.js:1934` | None identified | [Pending](TEST_REPORT.md#f-983) |
-| F-984 | [ ] Typing a working folder debounces filesystem browsing by 200 ms. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-984) |
-| F-985 | [ ] Create session posts folder, concrete effort/model, mode and worktree choice. | `antiquota/ui/app.js:1959` | None identified | [Pending](TEST_REPORT.md#f-985) |
-| F-986 | [ ] Successful creation inserts the session into navigation and opens it. | `antiquota/ui/app.js:1959` | None identified | [Pending](TEST_REPORT.md#f-986) |
-| F-987 | [ ] A creation error shows the API error without creating a fake local session. | `antiquota/ui/app.js:1959` | None identified | [Pending](TEST_REPORT.md#f-987) |
-| F-988 | [ ] Canceling New session closes its dialog without sending a create request. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-988) |
-| F-989 | [ ] Canceling Goal closes its dialog without sending a goal request. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-989) |
-| F-990 | [ ] Goal verifier defaults to enabled unless the existing goal says otherwise. | `antiquota/ui/app.js:1970` | None identified | [Pending](TEST_REPORT.md#f-990) |
-| F-991 | [ ] Goal rounds default to twenty unless the existing goal has a limit. | `antiquota/ui/app.js:1970` | None identified | [Pending](TEST_REPORT.md#f-991) |
-| F-992 | [ ] Goal objective and working folder use required input validation before accepting their forms. | `antiquota/ui/index.html:148` | None identified | [Pending](TEST_REPORT.md#f-992) |
-| F-993 | [ ] The sign-in code submits on Enter and automatically after paste. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-993) |
-| F-994 | [ ] A raw text paste without files remains ordinary composer input. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-994) |
-| F-995 | [ ] Live turn completion triggers turn notification except for quota endings. | `antiquota/ui/app.js:871` | None identified | [Pending](TEST_REPORT.md#f-995) |
-| F-996 | [ ] Live job completion triggers the job-finished notification. | `antiquota/ui/app.js:871` | None identified | [Pending](TEST_REPORT.md#f-996) |
-| F-997 | [ ] A live met-goal notice triggers the goal-met notification. | `antiquota/ui/app.js:871` | None identified | [Pending](TEST_REPORT.md#f-997) |
+| F-978 | [x] New-session defaults use the current model/mode and project folder, or configured defaults without a session. | `antiquota/ui/app.js:1948` | None identified | [Passed](TEST_REPORT.md#f-978) |
+| F-979 | [x] New sessions from a worktree default to the parent repository folder. | `antiquota/ui/app.js:1948` | None identified | [Passed](TEST_REPORT.md#f-979) |
+| F-980 | [x] The worktree checkbox follows the configured default unless an explicit project-menu choice overrides it. | `antiquota/ui/app.js:1948` | None identified | [Passed](TEST_REPORT.md#f-980) |
+| F-981 | [x] Working-folder browse shows up to four recent unique session folders before a path is typed. | `antiquota/ui/app.js:1934` | None identified | [Passed](TEST_REPORT.md#f-981) |
+| F-982 | [x] Folder browser entries navigate into a child folder or up to its parent. | `antiquota/ui/app.js:1934` | None identified | [Passed](TEST_REPORT.md#f-982) |
+| F-983 | [x] Selecting a browser folder updates the working-folder input. | `antiquota/ui/app.js:1934` | None identified | [Passed](TEST_REPORT.md#f-983) |
+| F-984 | [x] Typing a working folder debounces filesystem browsing by 200 ms. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-984) |
+| F-985 | [x] Create session posts folder, concrete effort/model, mode and worktree choice. | `antiquota/ui/app.js:1959` | None identified | [Passed](TEST_REPORT.md#f-985) |
+| F-986 | [x] Successful creation inserts the session into navigation and opens it. | `antiquota/ui/app.js:1959` | None identified | [Passed](TEST_REPORT.md#f-986) |
+| F-987 | [x] A creation error shows the API error without creating a fake local session. | `antiquota/ui/app.js:1959` | None identified | [Passed](TEST_REPORT.md#f-987) |
+| F-988 | [x] Canceling New session closes its dialog without sending a create request. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-988) |
+| F-989 | [x] Canceling Goal closes its dialog without sending a goal request. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-989) |
+| F-990 | [x] Goal verifier defaults to enabled unless the existing goal says otherwise. | `antiquota/ui/app.js:1970` | None identified | [Passed](TEST_REPORT.md#f-990) |
+| F-991 | [x] Goal rounds default to twenty unless the existing goal has a limit. | `antiquota/ui/app.js:1970` | None identified | [Passed](TEST_REPORT.md#f-991) |
+| F-992 | [x] Goal objective and working folder use required input validation before accepting their forms. | `antiquota/ui/index.html:148` | None identified | [Passed](TEST_REPORT.md#f-992) |
+| F-993 | [x] The sign-in code submits on Enter and automatically after paste. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-993) |
+| F-994 | [x] A raw text paste without files remains ordinary composer input. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-994) |
+| F-995 | [x] Live turn completion triggers turn notification except for quota endings. | `antiquota/ui/app.js:871` | None identified | [Passed](TEST_REPORT.md#f-995) |
+| F-996 | [x] Live job completion triggers the job-finished notification. | `antiquota/ui/app.js:871` | None identified | [Passed](TEST_REPORT.md#f-996) |
+| F-997 | [x] A live met-goal notice triggers the goal-met notification. | `antiquota/ui/app.js:871` | None identified | [Passed](TEST_REPORT.md#f-997) |
 | F-998 | [ ] A live exhausted-quota notice triggers the quota notification. | `antiquota/ui/app.js:871` | None identified | [Pending](TEST_REPORT.md#f-998) |
 | F-999 | [ ] Desktop header and brand regions permit native window dragging. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-999) |
 | F-1000 | [ ] Desktop external-link handling preserves in-app file links and downloadable files. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-1000) |
-| F-1001 | [ ] Session relative-time labels refresh every minute. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-1001) |
-| F-1002 | [ ] An unknown slash command shows its unknown-command message. | `antiquota/ui/app.js:1430` | None identified | [Pending](TEST_REPORT.md#f-1002) |
-| F-1003 | [ ] Commands requiring a session report Open a session first when none is open. | `antiquota/ui/app.js:1430` | None identified | [Pending](TEST_REPORT.md#f-1003) |
+| F-1001 | [x] Session relative-time labels refresh every minute. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-1001) |
+| F-1002 | [x] An unknown slash command shows its unknown-command message. | `antiquota/ui/app.js:1430` | None identified | [Passed](TEST_REPORT.md#f-1002) |
+| F-1003 | [x] Commands requiring a session report Open a session first when none is open. | `antiquota/ui/app.js:1430` | None identified | [Passed](TEST_REPORT.md#f-1003) |
 
 ## Requested rewrite scale acceptance
 

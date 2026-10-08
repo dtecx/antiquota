@@ -9,6 +9,8 @@ export interface DialogState {
   title: string;
   cwd: string;
   worktree: boolean;
+  model: string;
+  mode: Session['mode'];
 }
 export interface WorkbenchState {
   snapshot: StateResponse | null;

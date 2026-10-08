@@ -1,6 +1,7 @@
 <!-- Owns git review for the selected session: uncommitted files, commit, worktree merge and
      removal, and the agent's recorded edits. Diffs load when a file is expanded. -->
 <script lang="ts">
+  import { onDestroy, untrack } from 'svelte';
   import type { Api } from '../lib/api';
   import type { Workbench } from '../lib/workbench';
   import {
@@ -23,66 +24,114 @@
   let message = $state('');
   let busy = $state(false);
   let diffs = $state<Record<string, string>>({});
+  let historyOpened = $state.raw(new Set<string>());
+  let diffRequests: Record<string, number> = {};
+  let active = true,
+    shown = '',
+    statusGeneration = 0,
+    diffGeneration = 0,
+    diffRequest = 0,
+    actionGeneration = 0;
+  onDestroy(() => {
+    active = false;
+    statusGeneration++;
+    diffGeneration++;
+    actionGeneration++;
+  });
+  const current = (id: string) => active && session?.id === id;
   async function refresh(id: string) {
+    const own = ++statusGeneration;
     try {
-      status = asStatus(await api.gitStatus(id));
-      error = '';
+      const result = asStatus(await api.gitStatus(id));
+      if (current(id) && own === statusGeneration) {
+        status = result;
+        error = '';
+      }
     } catch (failure) {
-      error = failure instanceof Error ? failure.message : 'Git review failed.';
+      if (current(id) && own === statusGeneration)
+        error = failure instanceof Error ? failure.message : 'Git review failed.';
     } finally {
-      loaded = true;
+      if (current(id) && own === statusGeneration) loaded = true;
     }
   }
   $effect(() => {
-    const id = session?.id;
+    const id = session?.id ?? '';
     void ends;
+    if (shown !== id) {
+      shown = id;
+      statusGeneration++;
+      diffGeneration++;
+      actionGeneration++;
+      status = null;
+      loaded = false;
+      error = '';
+      busy = false;
+      diffs = {};
+      historyOpened = new Set();
+      diffRequests = {};
+      message = untrack(() => session?.title ?? '');
+    }
     if (id) void refresh(id);
-  });
-  $effect(() => {
-    void session?.id;
-    message = session?.title ?? '';
-    diffs = {};
   });
   async function toggle(key: string, path: string, committed: boolean, open: boolean) {
     if (!open || key in diffs || !session) return;
+    const id = session.id,
+      own = diffGeneration,
+      request = ++diffRequest;
+    diffRequests[key] = request;
+    const latest = () => current(id) && own === diffGeneration && diffRequests[key] === request;
     try {
-      diffs = { ...diffs, [key]: (await api.gitDiff(session.id, path, committed)).diff };
+      const result = await api.gitDiff(id, path, committed);
+      if (latest()) diffs = { ...diffs, [key]: result.diff };
     } catch (failure) {
-      diffs = { ...diffs, [key]: failure instanceof Error ? failure.message : 'No diff.' };
+      if (latest())
+        diffs = { ...diffs, [key]: failure instanceof Error ? failure.message : 'No diff.' };
     }
   }
-  async function act(action: () => Promise<unknown>) {
-    if (!session) return;
+  function expandHistory(id: string, file: string, open: boolean) {
+    if (open && current(id) && !historyOpened.has(file))
+      historyOpened = new Set([...historyOpened, file]);
+  }
+  async function act(id: string, action: () => Promise<unknown>) {
+    if (!current(id) || busy) return;
+    const own = ++actionGeneration;
     busy = true;
     try {
       await action();
-      error = '';
+      if (current(id) && own === actionGeneration) error = '';
     } catch (failure) {
-      error = failure instanceof Error ? failure.message : 'The action failed.';
+      if (current(id) && own === actionGeneration)
+        error = failure instanceof Error ? failure.message : 'The action failed.';
     } finally {
-      busy = false;
-      diffs = {};
-      await refresh(session.id);
+      if (current(id) && own === actionGeneration) {
+        busy = false;
+        diffGeneration++;
+        diffs = {};
+        await refresh(id);
+      }
     }
   }
   async function discard(path: string, code: string) {
-    const lost = code === '??' ? 'The new file is deleted.' : 'Its uncommitted changes are lost.';
-    if (!session || !(await ask(`Discard ${path}?`, lost, { ok: 'Discard', danger: true }))) return;
+    if (!session || busy) return;
     const id = session.id;
-    await act(() => api.gitDiscard(id, path));
+    const lost = code === '??' ? 'The new file is deleted.' : 'Its uncommitted changes are lost.';
+    if (!(await ask(`Discard ${path}?`, lost, { ok: 'Discard', danger: true })) || !current(id))
+      return;
+    await act(id, () => api.gitDiscard(id, path));
   }
   async function remove() {
+    if (!session || busy) return;
+    const id = session.id;
     if (
-      !session ||
       !(await ask(
         'Remove the worktree?',
         'The worktree folder is deleted, the session moves to the main checkout and is archived. The branch stays.',
         { ok: 'Remove worktree', danger: true },
-      ))
+      )) ||
+      !current(id)
     )
       return;
-    await workbench.removeWorktree(false);
-    await refresh(session.id);
+    await act(id, () => workbench.removeWorktree(false, id));
   }
 </script>
 
@@ -101,7 +150,7 @@
     <h3>Uncommitted</h3>
     {#if status.files.length}
       <ul aria-label="Uncommitted files">
-        {#each status.files as file (file.path)}
+        {#each status.files as file (`${session.id}:${file.path}`)}
           <li>
             <details
               ontoggle={(e) => toggle(`u:${file.path}`, file.path, false, e.currentTarget.open)}
@@ -124,7 +173,8 @@
         onsubmit={(event) => {
           event.preventDefault();
           const id = session.id;
-          void act(() => api.gitCommit(id, message));
+          const text = message;
+          void act(id, () => api.gitCommit(id, text));
         }}
       >
         <input aria-label="Commit message" bind:value={message} placeholder="Commit message" />
@@ -137,7 +187,7 @@
       <h3>Committed on this branch</h3>
       {#if status.committed?.length}
         <ul aria-label="Committed files">
-          {#each status.committed as file (file.path)}
+          {#each status.committed as file (`${session.id}:${file.path}`)}
             <li>
               <details
                 ontoggle={(e) => toggle(`c:${file.path}`, file.path, true, e.currentTarget.open)}
@@ -161,7 +211,7 @@
           title={`Merge into ${status.worktree.base} in the main checkout`}
           onclick={() => {
             const id = session.id;
-            void act(() => api.gitMerge(id));
+            void act(id, () => api.gitMerge(id));
           }}>Merge into {status.worktree.base}</button
         ><button class="small" disabled={busy} onclick={remove}>Remove worktree</button>
       </div>
@@ -171,15 +221,18 @@
     <h3>Agent edits</h3>
     {#if history.length}
       <ul aria-label="Agent edits">
-        {#each history as entry (entry.file)}
+        {#each history as entry (`${session.id}:${entry.file}`)}
+          {@const id = session.id}
           <li>
-            <details>
+            <details ontoggle={(event) => expandHistory(id, entry.file, event.currentTarget.open)}>
               <summary
                 ><code>{entry.file}</code><span class="quiet"
                   >{entry.diffs.length} {entry.diffs.length === 1 ? 'edit' : 'edits'}</span
                 ></summary
               >
-              {#each entry.diffs as diff, index (index)}<pre class="diff">{diff}</pre>{/each}
+              {#if historyOpened.has(entry.file)}
+                {#each entry.diffs as diff, index (index)}<pre class="diff">{diff}</pre>{/each}
+              {/if}
             </details>
           </li>
         {/each}

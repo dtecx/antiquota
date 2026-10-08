@@ -1,10 +1,273 @@
 //! Replays immutable account, login, routing, and defaults captures exactly.
 use crate::{
     setup,
-    support::{Server, replay::Replay},
+    support::{Server, http::Events, replay::Replay},
 };
-use serde_json::json;
-use std::fs;
+use serde_json::{Value, json};
+use std::{
+    fs,
+    time::{Duration, Instant},
+};
+
+#[test]
+fn pause_defaults_to_on_rejects_unknown_accounts_and_broadcasts_the_response() {
+    let mut server = Server::new_stopped("pause-route-edges", true);
+    setup::start(&mut server);
+    let mut events = Events::open(server.port, &server.token);
+    for (body, paused) in [(json!({}), true), (json!({"on": false}), false)] {
+        let response = server.call("POST", "/api/accounts/one@example.com/pause", Some(body));
+        assert_eq!(response.status, 200);
+        let accounts = response.json();
+        assert_eq!(accounts[0]["paused"], paused);
+        assert_eq!(
+            server.data.join("state/paused").join(setup::ONE).is_file(),
+            paused
+        );
+        let deadline = Instant::now() + Duration::from_secs(3);
+        loop {
+            let event = events.next();
+            if event["t"] == "accounts" && event["accounts"] == accounts {
+                assert_eq!(event["sid"], Value::Null);
+                break;
+            }
+            assert!(
+                Instant::now() < deadline,
+                "account response was not broadcast: {event}"
+            );
+        }
+    }
+    let missing = server.call(
+        "POST",
+        "/api/accounts/missing@example.com/pause",
+        Some(json!({})),
+    );
+    assert_eq!(missing.status, 404);
+    assert!(missing.json()["error"].is_string());
+    assert!(
+        !server
+            .data
+            .join("state/paused/missing@example.com")
+            .exists()
+    );
+    server.stop();
+}
+
+#[test]
+fn routing_reads_requested_tails_in_stored_order_and_skips_malformed_lines() {
+    let mut server = Server::new_stopped("routing-route-edges", true);
+    setup::start(&mut server);
+    let rows: Vec<_> = (0..4).map(|index| json!({
+        "ts": 1800000000.0 + f64::from(index), "slot": setup::ONE, "event": "pick", "future": {"index": index}
+    })).collect();
+    let mut lines = "not JSON\n{\"truncated\":\n".to_owned();
+    for row in &rows {
+        lines.push_str(&format!("{row}\n"));
+    }
+    setup::write(&server.data.join("state/routing.jsonl"), &lines);
+    for (path, expected) in [
+        ("/api/routing", json!(rows)),
+        ("/api/routing?n=60", json!(rows)),
+        ("/api/routing?n=0", json!(rows)),
+        ("/api/routing?n=2", json!(&rows[2..])),
+        ("/api/routing?n=1", json!(&rows[3..])),
+    ] {
+        let response = server.call("GET", path, None);
+        assert_eq!(response.status, 200);
+        assert_eq!(response.json(), expected, "{path}");
+    }
+    assert_eq!(
+        fs::read_to_string(server.data.join("state/routing.jsonl")).unwrap(),
+        lines
+    );
+    server.stop();
+}
+
+#[test]
+fn slow_probes_and_post_delete_refresh_return_before_the_metadata_finishes() {
+    let mut server = Server::new_stopped("async-account-route-edges", true);
+    setup::start(&mut server);
+    setup::script(
+        &server,
+        json!({"metadata_by_slot": {
+            setup::ONE: {"quota_delay_ms": 1500, "quota": setup::healthy_quota(0.6)},
+            setup::TWO: {"quota_delay_ms": 1500, "quota": setup::healthy_quota(0.7)}
+        }}),
+    );
+    let before = setup::calls(&server).len();
+    let started = Instant::now();
+    let response = server.call("POST", "/api/accounts/probe", Some(json!({})));
+    assert_eq!(response.status, 200);
+    assert_eq!(response.json(), json!({"ok": true}));
+    assert!(
+        started.elapsed() < Duration::from_secs(1),
+        "probe blocked on metadata"
+    );
+    setup::wait(&server, "slow probe leases the first account", |rows| {
+        rows[0]["busy"] == true
+    });
+    let probed = setup::wait(&server, "both slow probes complete", |rows| {
+        rows[0]["quota"]["gemini"]["5h"][0] == 0.6
+            && rows[1]["quota"]["gemini"]["5h"][0] == 0.7
+            && rows
+                .as_array()
+                .unwrap()
+                .iter()
+                .all(|row| row["busy"] == false)
+    });
+    assert_eq!(probed.as_array().unwrap().len(), 2);
+    let calls = setup::calls(&server);
+    for slot in [setup::ONE, setup::TWO] {
+        assert!(
+            calls[before..]
+                .iter()
+                .any(|row| row["slot"] == slot && setup::argument(row, "-p") == Some("/quota"))
+        );
+    }
+    setup::script(
+        &server,
+        json!({"metadata_by_slot": {
+            setup::ONE: {"quota_delay_ms": 1500, "quota": setup::healthy_quota(0.5)}
+        }}),
+    );
+    let before_delete = calls.len();
+    let started = Instant::now();
+    let deleted = server.call("DELETE", "/api/accounts/two@example.com", None);
+    assert_eq!(deleted.status, 200);
+    assert_eq!(deleted.json(), json!({"ok": true}));
+    assert!(
+        started.elapsed() < Duration::from_secs(1),
+        "delete blocked on remaining metadata"
+    );
+    assert!(!server.data.join("slots").join(setup::TWO).exists());
+    setup::wait(&server, "delete starts a remaining-account probe", |rows| {
+        rows[0]["busy"] == true
+    });
+    let refreshed = setup::wait(&server, "remaining-account probe completes", |rows| {
+        rows[0]["busy"] == false && rows[0]["quota"]["gemini"]["5h"][0] == 0.5
+    });
+    assert_eq!(refreshed.as_array().unwrap().len(), 1);
+    let calls = setup::calls(&server);
+    let probes: Vec<_> = calls[before_delete..]
+        .iter()
+        .filter(|row| setup::argument(row, "-p") == Some("/quota"))
+        .collect();
+    assert_eq!(probes.len(), 1);
+    assert_eq!(probes[0]["slot"], setup::ONE);
+    assert!(
+        setup::turn_calls(&server).is_empty(),
+        "metadata uses no model turns"
+    );
+    server.stop();
+}
+
+#[cfg(unix)]
+#[test]
+fn login_uses_an_empty_temporary_home_and_rejects_failed_start_and_unknown_links() {
+    use std::{os::unix::fs::PermissionsExt, thread};
+    let mut server = Server::new_stopped("login-route-edges", true);
+    setup::captured_home(&server);
+    setup::script(&server, json!({"login": {"email": "three@example.com"}}));
+    let original = fs::read(server.home.join(".gemini/antigravity-cli/settings.json")).unwrap();
+    let real = server.root.join("fake-agy-real");
+    fs::rename(&server.agy, &real).unwrap();
+    // Observe the fresh HOME before fake agy can create login files, then preserve its argv/TTY.
+    setup::write(
+        &server.agy,
+        "#!/usr/bin/env python3\nimport json, os, sys\nfrom pathlib import Path\nhome = Path(os.environ['HOME'])\nif home.name.startswith('.login-'):\n    with open(os.environ['ANTIQUOTA_LOGIN_HOME_RECORD'], 'a') as record:\n        record.write(json.dumps({'home': str(home), 'userprofile': os.environ.get('USERPROFILE'), 'ssh': os.environ.get('SSH_CONNECTION'), 'entries': sorted(p.name for p in home.iterdir())}) + '\\n')\nreal = os.environ['ANTIQUOTA_FAKE_REAL']\nos.execv(real, [real, *sys.argv[1:]])\n",
+    );
+    fs::set_permissions(&server.agy, fs::Permissions::from_mode(0o700)).unwrap();
+    let record = server.root.join("login-homes.jsonl");
+    server.env.extend([
+        (
+            "ANTIQUOTA_LOGIN_HOME_RECORD".into(),
+            record.to_string_lossy().into_owned(),
+        ),
+        (
+            "ANTIQUOTA_FAKE_REAL".into(),
+            real.to_string_lossy().into_owned(),
+        ),
+    ]);
+    setup::start(&mut server);
+    let unknown = server.call("GET", "/api/accounts/login/unknown", None);
+    assert_eq!(unknown.status, 200);
+    assert_eq!(
+        unknown.json(),
+        json!({"state": "failed", "error": "replaced by a newer sign-in link (only the newest one works)"})
+    );
+    let link = server.call("POST", "/api/accounts/login", Some(json!({})));
+    assert_eq!(link.status, 200);
+    let link = link.json();
+    assert_eq!(link["seconds"], 60);
+    assert!(
+        link["url"]
+            .as_str()
+            .unwrap()
+            .starts_with("https://accounts.google.com/")
+    );
+    let id = link["id"].as_str().unwrap();
+    let observed: Value =
+        serde_json::from_str(fs::read_to_string(&record).unwrap().lines().next().unwrap()).unwrap();
+    let temporary = server.data.join("slots").join(format!(".login-{id}"));
+    assert_eq!(observed["home"], temporary.to_string_lossy().as_ref());
+    assert_eq!(observed["userprofile"], observed["home"]);
+    assert_eq!(observed["ssh"], antiquota_accounts::FILE_TOKENS);
+    assert_eq!(observed["entries"], json!([]));
+    let rejected = server.call(
+        "POST",
+        &format!("/api/accounts/login/{id}"),
+        Some(json!({"code": "wrong-code"})),
+    );
+    assert_eq!(rejected.status, 200);
+    assert_eq!(rejected.json()["state"], "failed");
+    let deadline = Instant::now() + Duration::from_secs(3);
+    while temporary.exists() {
+        assert!(
+            Instant::now() < deadline,
+            "rejected login HOME was retained"
+        );
+        thread::sleep(Duration::from_millis(10));
+    }
+    assert!(!server.data.join("slots/three@example.com").exists());
+    setup::script(
+        &server,
+        json!({"login": {"email": "three@example.com", "url": "https://example.invalid/not-a-google-url", "auto_complete_ms": 0, "error": "fixture authentication failed"}}),
+    );
+    let failed = server.call("POST", "/api/accounts/login", Some(json!({})));
+    assert_eq!(failed.status, 400);
+    assert!(failed.json()["error"].is_string());
+    let homes: Vec<Value> = fs::read_to_string(&record)
+        .unwrap()
+        .lines()
+        .map(|line| serde_json::from_str(line).unwrap())
+        .collect();
+    assert_eq!(homes.len(), 2);
+    assert_eq!(homes[1]["entries"], json!([]));
+    let failed_home = std::path::Path::new(homes[1]["home"].as_str().unwrap());
+    assert_eq!(
+        failed_home.parent(),
+        Some(server.data.join("slots").as_path())
+    );
+    let deadline = Instant::now() + Duration::from_secs(3);
+    while failed_home.exists() {
+        assert!(Instant::now() < deadline, "failed login HOME was retained");
+        thread::sleep(Duration::from_millis(10));
+    }
+    assert!(!server.data.join("slots/three@example.com").exists());
+    assert_eq!(
+        server
+            .call("GET", "/api/accounts", None)
+            .json()
+            .as_array()
+            .unwrap()
+            .len(),
+        2
+    );
+    assert_eq!(
+        fs::read(server.home.join(".gemini/antigravity-cli/settings.json")).unwrap(),
+        original
+    );
+    server.stop();
+}
 
 #[test]
 fn captured_account_routes_preserve_exact_overviews_and_routing_records() {

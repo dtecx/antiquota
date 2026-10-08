@@ -64,10 +64,10 @@
   {#if meter}<div class="meter" class:warm={meter.heat === 'warm'} class:hot={meter.heat === 'hot'}>
       <span class="context" title={`${session.context} / ${session.model} context capacity`}
         ><span class="bar"><i style:width={`${meter.fraction * 100}%`}></i></span
-        >{meter.context}</span
+        >{meter.context.split(' ')[0]}<span class="context-label">&nbsp;context</span></span
       >
-      <span>{meter.tokens}</span><span class="account">{meter.account}</span><span
-        >{meter.available} accounts free</span
+      <span class="tokens">{meter.tokens}</span><span class="account">{meter.account}</span><span
+        class="free">{meter.available} accounts free</span
       >
     </div>{/if}
 {/if}
@@ -87,6 +87,7 @@
     background: var(--night-1);
   }
   .meter {
+    container-type: inline-size;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -122,6 +123,17 @@
   }
   .hot .bar i {
     background: var(--bad);
+  }
+  @container (max-width: 619px) {
+    .tokens,
+    .context-label {
+      display: none;
+    }
+  }
+  @container (max-width: 439px) {
+    .free {
+      display: none;
+    }
   }
   .account {
     margin-left: auto;

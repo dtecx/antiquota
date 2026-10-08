@@ -59,6 +59,10 @@ describe('plan bar', () => {
 describe('goal drafts', () => {
   it('reuse the existing goal or the composer text', () => {
     expect(draftFor(goal, 'typed', 'v').objective).toBe('Ship it');
+    expect(draftFor({ ...goal, verifier: false, max_rounds: 37 }, 'typed', 'v')).toMatchObject({
+      verifier: false,
+      max_rounds: '37',
+    });
     const fresh = draftFor(null, '  Write docs  ', 'gemini-3.8-flash-high');
     expect(fresh).toMatchObject({
       objective: 'Write docs',

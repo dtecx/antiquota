@@ -155,8 +155,8 @@ fn auth_failure_parks_both_baskets_then_hands_off_without_token_changes() {
     }
     assert_eq!(completed["meta"]["last_slot"], setup::TWO);
     assert_eq!(fs::read(auth).unwrap(), token);
-    let calls = setup::turn_calls(&server);
-    assert_eq!(calls.len(), 2);
+    let calls =
+        crate::handoff::assert_handoff_continuation(&server, &completed, "Authentication handoff.");
     assert!(
         calls
             .iter()
@@ -164,7 +164,7 @@ fn auth_failure_parks_both_baskets_then_hands_off_without_token_changes() {
     );
     setup::evidence(
         "auth-handoff",
-        json!({"bothBucketsParked":true,"tokenPreserved":true,"nextAccount":setup::TWO,"privateHomes":calls.iter().map(|row|row["home"].clone()).collect::<Vec<_>>()}),
+        json!({"bothBucketsParked":true,"tokenPreserved":true,"nextAccount":setup::TWO,"sameStoredConversation":true,"continuationNudges":1,"originalUserEvents":1,"privateHomes":calls.iter().map(|row|row["home"].clone()).collect::<Vec<_>>()}),
     );
     server.stop();
 }

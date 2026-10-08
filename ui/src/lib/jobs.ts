@@ -1,5 +1,5 @@
 /** Owns how background jobs, loops and schedules read, and the job log view's state. */
-import { writable } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 import type { Job } from '../gen/Job';
 import type { JobLogResponse } from '../gen/JobLogResponse';
 import type { Session } from '../gen/Session';
@@ -81,3 +81,17 @@ export function loopDetail(loop: LoopConfig): string {
 
 /** The job whose log is open, with its text. */
 export const jobLog = writable<JobLogResponse | null>(null);
+
+let logGeneration = 0;
+/** Publishes only the newest log read while its initiating session and dialog are unchanged. */
+export async function viewJobLog(load: () => Promise<JobLogResponse>, current: () => boolean) {
+  const own = ++logGeneration,
+    previous = get(jobLog);
+  const latest = () => own === logGeneration && current() && get(jobLog) === previous;
+  try {
+    const log = await load();
+    if (latest()) jobLog.set(log);
+  } catch (error) {
+    if (latest()) throw error;
+  }
+}

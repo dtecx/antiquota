@@ -1,4 +1,7 @@
 /* Owns native controls and shared layout primitives for every focused view. */
+[hidden] {
+  display: none !important;
+}
 * {
   box-sizing: border-box;
 }

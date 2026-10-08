@@ -205,3 +205,24 @@ it('sends typed job and loop requests through the captured routes', async () => 
     ['/api/sessions/a%2Fb/loop', 'POST', '{"at":"03:00","prompt":"check"}'],
   ]);
 });
+it('surfaces every HTTP boundary failure to the optional toast callback without changing its status', async () => {
+  const report = vi.fn(),
+    request = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ error: 'account refused' }), { status: 400 }),
+      );
+  await expect(createApi('fixture', request, report).accounts()).rejects.toMatchObject({
+    message: 'account refused',
+    status: 400,
+  });
+  expect(report).toHaveBeenCalledWith(
+    expect.objectContaining({ message: 'account refused', status: 400 }),
+  );
+  report.mockImplementation(() => {
+    throw new Error('toast unavailable');
+  });
+  await expect(createApi('', request, report).state()).rejects.toMatchObject({ status: 401 });
+  request.mockRejectedValueOnce(new Error('network down'));
+  await expect(createApi('fixture', request, report).state()).rejects.toMatchObject({ status: 0 });
+});

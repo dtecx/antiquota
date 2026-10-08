@@ -1,0 +1,844 @@
+{
+  "format": 1,
+  "slice": "9f",
+  "scope": "Account acceptance folded from Slice 2 with strengthened synthetic edge and handoff proof.",
+  "status": "Complete acceptance mapping attached to fresh passing full gates.",
+  "added": 33,
+  "feature_ids": [
+    "F-028",
+    "F-030",
+    "F-032",
+    "F-036",
+    "F-039",
+    "F-041",
+    "F-042",
+    "F-045",
+    "F-046",
+    "F-049",
+    "F-050",
+    "F-051",
+    "F-057",
+    "F-062",
+    "F-063",
+    "F-176",
+    "F-182",
+    "F-183",
+    "F-184",
+    "F-186",
+    "F-295",
+    "F-335",
+    "F-375",
+    "F-376",
+    "F-377",
+    "F-378",
+    "F-379",
+    "F-380",
+    "F-381",
+    "F-382",
+    "F-383",
+    "F-384",
+    "F-385"
+  ],
+  "tests": {
+    "F-028": {
+      "acceptance": "Start sign-in in a temporary empty HOME under slots and create no final account on failure.",
+      "path": "tests/rewrite/accounts_replay.rs",
+      "test": "replay::login_preserves_long_urls_and_rejects_codes_without_partial_accounts",
+      "references": [
+        "tests/rewrite/accounts_replay.rs::replay::login_preserves_long_urls_and_rejects_codes_without_partial_accounts",
+        "tests/rewrite/accounts_replay.rs::replay::login_uses_an_empty_temporary_home_and_rejects_failed_start_and_unknown_links"
+      ],
+      "proof": "A wrapper records the login HOME before fake agy executes: it is empty, under slots/.login-<id>, and matches USERPROFILE. Wrong-code and process-before-URL failures create no final account and remove temporary homes while the original CLI settings remain unchanged."
+    },
+    "F-030": {
+      "acceptance": "Capture only agy's Google sign-in URL and allow wait_url to return when the URL appears or the process ends.",
+      "path": "tests/rewrite/accounts_replay.rs",
+      "test": "replay::login_preserves_long_urls_and_rejects_codes_without_partial_accounts",
+      "references": [
+        "tests/rewrite/accounts_replay.rs::replay::login_preserves_long_urls_and_rejects_codes_without_partial_accounts",
+        "tests/rewrite/accounts_replay.rs::replay::login_uses_an_empty_temporary_home_and_rejects_failed_start_and_unknown_links"
+      ],
+      "proof": "The Google URL is returned while the sign-in process is still awaiting a code, including an exact URL with a 600-character state. A non-Google URL followed by immediate process failure produces a validation error. The shared HTTP transport has a five-second read timeout, below the adapter twenty-second URL timeout, so the successful error response also proves return when the process ends without a Google URL."
+    },
+    "F-032": {
+      "acceptance": "Support sign-in states waiting, done, failed and verify; report error, adopted account name and verification URL.",
+      "path": "tests/rewrite/accounts_replay.rs",
+      "test": "replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser",
+      "references": [
+        "tests/rewrite/accounts_replay.rs::replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser",
+        "tests/rewrite/accounts_replay.rs::replay::verified_login_keeps_the_account_parked_until_successful_probe",
+        "tests/rewrite/accounts_replay.rs::replay::login_preserves_long_urls_and_rejects_codes_without_partial_accounts"
+      ],
+      "proof": "Captured waiting and done responses match all fields exactly. Rejected authorization reports failed with a null account name, and retained verification reports verify with the adopted email and exact continue URL. Together the tests cover waiting, done, failed and verify and the response error/name/verify_url fields."
+    },
+    "F-036": {
+      "acceptance": "Permit only one active web sign-in link; a replaced link reports failed on GET and is rejected on POST.",
+      "path": "tests/rewrite/accounts_replay.rs",
+      "test": "replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser",
+      "references": [
+        "tests/rewrite/accounts_replay.rs::replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser"
+      ],
+      "proof": "Starting a second web login yields a different link ID. Immutable captures verify the replaced first link reports failed on GET and rejects code submission on POST; cancellation removes the remaining pending temporary home.",
+      "captured_cases": [
+        "tests/fixtures/api/cases/login-start.json",
+        "tests/fixtures/api/cases/login-poll-replaced.json",
+        "tests/fixtures/api/cases/login-submit-replaced.json",
+        "tests/fixtures/api/cases/login-delete.json"
+      ]
+    },
+    "F-039": {
+      "acceptance": "Expose account busy/probed/quota/walls/reasons/paused/verify/today fields without exposing credentials.",
+      "path": "tests/rewrite/accounts_replay.rs",
+      "test": "replay::captured_account_routes_preserve_exact_overviews_and_routing_records",
+      "references": [
+        "tests/rewrite/accounts_replay.rs::replay::captured_account_routes_preserve_exact_overviews_and_routing_records",
+        "tests/rewrite/accounts_handoff.rs::handoff::quota_wall_hands_off_same_conversation_and_counts_current_steps_once"
+      ],
+      "proof": "Immutable account-overview captures compare exact keys and values for busy, probed, quota, walls, why, paused, verify and today without credentials. A completed handoff asserts all four today totals and preserves them across engine restart.",
+      "captured_cases": [
+        "tests/fixtures/api/cases/accounts-initial.json",
+        "tests/fixtures/api/cases/account-check.json",
+        "tests/fixtures/api/cases/account-pause.json",
+        "tests/fixtures/api/cases/account-resume.json"
+      ]
+    },
+    "F-041": {
+      "acceptance": "Parse real quota groups into gemini/cg windows of remaining fraction and reset epoch.",
+      "path": "tests/rewrite/accounts_replay.rs",
+      "test": "replay::captured_account_routes_preserve_exact_overviews_and_routing_records",
+      "references": [
+        "tests/rewrite/accounts_replay.rs::replay::captured_account_routes_preserve_exact_overviews_and_routing_records",
+        "tests/rewrite/accounts_lifecycle.rs::lifecycle::quota_cache_preserves_unknown_fields_and_disabled_window_uses_weekly_reset"
+      ],
+      "proof": "The captured real quota-envelope account responses assert both gemini and cg windows, remaining fractions and reset epochs. The disabled-window scenario separately checks weekly reset parsing and its exact wall timestamp.",
+      "captured_cases": [
+        "tests/fixtures/api/cases/accounts-initial.json",
+        "tests/fixtures/api/cases/account-check-idle.json"
+      ]
+    },
+    "F-042": {
+      "acceptance": "Treat a disabled quota window with no fraction/reset as empty, using another window's reset for its wall.",
+      "path": "tests/rewrite/accounts_lifecycle.rs",
+      "test": "lifecycle::quota_cache_preserves_unknown_fields_and_disabled_window_uses_weekly_reset",
+      "references": [
+        "tests/rewrite/accounts_lifecycle.rs::lifecycle::quota_cache_preserves_unknown_fields_and_disabled_window_uses_weekly_reset"
+      ],
+      "proof": "A quota envelope with a disabled 5h window lacking fraction and reset is returned as [0.0, null]. Its spent weekly window supplies the reset, producing the exact weekly reset plus 120-second wall while the other basket stays unwalled."
+    },
+    "F-045": {
+      "acceptance": "Use the 5 hour 10 minute fallback wall when quota cannot be read after a quota error.",
+      "path": "tests/rewrite/accounts_handoff.rs",
+      "test": "handoff::unreadable_quota_after_wall_uses_fallback_and_preserves_other_basket",
+      "references": [
+        "tests/rewrite/accounts_handoff.rs::handoff::unreadable_quota_after_wall_uses_fallback_and_preserves_other_basket"
+      ],
+      "proof": "A genuine quota error followed by unreadable metadata persists the fallback wall. The test bounds its timestamp between the failed turn end plus 18600 seconds and the routing timestamp plus 18600 seconds, checks the reason, preserves the other basket and completes on the next account."
+    },
+    "F-046": {
+      "acceptance": "Clear a bucket wall and verification marker after a healthy quota reading.",
+      "path": "tests/rewrite/accounts_lifecycle.rs",
+      "test": "lifecycle::verification_probe_parks_and_then_restores_the_signed_in_account",
+      "references": [
+        "tests/rewrite/accounts_lifecycle.rs::lifecycle::verification_probe_parks_and_then_restores_the_signed_in_account"
+      ],
+      "proof": "A verification probe first parks both baskets and stores its continue URL. A subsequent healthy panel clears both wall values to zero and removes the verification marker."
+    },
+    "F-049": {
+      "acceptance": "Acquire an exclusive account lease across processes; skip busy accounts and release every lease after the call.",
+      "path": "tests/rewrite/accounts_concurrency.rs",
+      "test": "concurrency::concurrent_sessions_use_different_account_homes_and_skip_busy_probe",
+      "references": [
+        "tests/rewrite/accounts_concurrency.rs::concurrency::concurrent_sessions_use_different_account_homes_and_skip_busy_probe",
+        "tests/rewrite/accounts_concurrency.rs::concurrency::python_account_lock_excludes_rust_probe_and_rust_lock_excludes_python"
+      ],
+      "proof": "Concurrent actual fixture turns select distinct account homes and skip a busy account probe; completed calls release both leases. A separate process test proves Python locks exclude Rust and Rust locks exclude Python, with successful probing after release."
+    },
+    "F-050": {
+      "acceptance": "Wait up to 10 seconds for a session's preferred busy account before considering another live account; continue polling leases until stopped.",
+      "path": "tests/rewrite/accounts_deterministic.rs",
+      "test": "deterministic::warm_account_affinity_waits_ten_fake_seconds_before_another_lease",
+      "references": [
+        "tests/rewrite/accounts_deterministic.rs::deterministic::warm_account_affinity_waits_ten_fake_seconds_before_another_lease",
+        "tests/rewrite/accounts_lifecycle.rs::lifecycle::stop_cancels_an_account_lease_wait_and_releases_admission"
+      ],
+      "proof": "A controlled clock records exactly ten one-second waits for the preferred busy account before the second account runs the unchanged conversation. When the only eligible account stays leased, the waiting session remains cancellable and Stop returns it to idle without launching the runner."
+    },
+    "F-051": {
+      "acceptance": "Stop acquisition promptly when the supplied cancellation event is set; return no account when all candidates are walled.",
+      "path": "tests/rewrite/accounts_lifecycle.rs",
+      "test": "lifecycle::stop_cancels_an_account_lease_wait_and_releases_admission",
+      "references": [
+        "tests/rewrite/accounts_lifecycle.rs::lifecycle::stop_cancels_an_account_lease_wait_and_releases_admission",
+        "tests/rewrite/accounts_deterministic.rs::deterministic::repeated_transient_failures_stop_after_bounded_account_attempts"
+      ],
+      "proof": "Stop cancels a blocked lease-acquisition wait within two seconds, launches no runner and permits a later request after lease release. Repeated failures wall every candidate and finish idle with no queued request or extra account attempt."
+    },
+    "F-057": {
+      "acceptance": "Across every routing strategy, put accounts strictly below the reserve last and retain the preferred account first while above it.",
+      "path": "tests/rewrite/accounts_rotation.rs",
+      "test": "rotation::every_rotation_puts_an_account_below_reserve_after_healthy_accounts",
+      "references": [
+        "tests/rewrite/accounts_rotation.rs::rotation::every_rotation_puts_an_account_below_reserve_after_healthy_accounts",
+        "tests/rewrite/accounts_rotation.rs::rotation::perishable_uses_earliest_weekly_reset_and_round_robin_uses_last_pick",
+        "tests/rewrite/accounts_rotation.rs::rotation::every_rotation_keeps_affinity_at_and_above_the_exact_reserve"
+      ],
+      "proof": "All three strategies put an account below the reserve after a healthy account without hard walling it. Pure ranking cases check fractions 0.029, 0.030 and 0.031 against a 0.03 reserve for sticky, perishable and round-robin, preserving preferred affinity at equality and above despite opposing strategy order."
+    },
+    "F-062": {
+      "acceptance": "Probe after a quota-looking error; distinguish exhausted allowance from a rate limit with remaining quota.",
+      "path": "tests/rewrite/accounts_handoff.rs",
+      "test": "handoff::quota_wall_hands_off_same_conversation_and_counts_current_steps_once",
+      "references": [
+        "tests/rewrite/accounts_handoff.rs::handoff::quota_wall_hands_off_same_conversation_and_counts_current_steps_once",
+        "tests/rewrite/accounts_rotation.rs::rotation::rate_limit_with_quota_left_uses_escalating_short_cooldowns"
+      ],
+      "proof": "A quota-looking provider error triggers a real fixture quota probe. Exhausted allowance produces a quota-panel wall and handoff; remaining allowance of 0.9 produces a short cooldown with the rate-limit reason rather than an exhausted-quota wall."
+    },
+    "F-063": {
+      "acceptance": "Escalate repeated rate limits to 60, 300 and 900 second cooldowns, counting the previous hour's matching cooldown entries.",
+      "path": "tests/rewrite/accounts_rotation.rs",
+      "test": "rotation::rate_limit_with_quota_left_uses_escalating_short_cooldowns",
+      "references": [
+        "tests/rewrite/accounts_rotation.rs::rotation::rate_limit_with_quota_left_uses_escalating_short_cooldowns"
+      ],
+      "proof": "Zero, one and two matching recent cooldowns produce exact 60, 300 and 900-second records and strike reasons. Seeded old matching records, another slot, another bucket and a retry event do not increase those counts."
+    },
+    "F-176": {
+      "acceptance": "A completed final response wins over stale quota/error fields in a resumed result; otherwise use genuine process/result error classification.",
+      "path": "tests/rewrite/accounts_handoff.rs",
+      "test": "handoff::quota_wall_hands_off_same_conversation_and_counts_current_steps_once",
+      "references": [
+        "tests/rewrite/accounts_handoff.rs::handoff::quota_wall_hands_off_same_conversation_and_counts_current_steps_once",
+        "tests/rewrite/accounts_cli_lifecycle.rs::cli_lifecycle::raw_current_success_ignores_historical_quota_error_without_walling_account",
+        "tests/rewrite/accounts_lifecycle.rs::lifecycle::auth_failure_parks_both_baskets_then_hands_off_without_token_changes"
+      ],
+      "proof": "A completed final response overrides stale quota/error result fields in both a resumed engine handoff and raw CLI call. Current token totals remain 100/10, raw output is preserved, exit is zero and no false wall/failure log is created. Genuine quota and auth failure scenarios still classify and hand off."
+    },
+    "F-182": {
+      "acceptance": "Handoff on exhausted quota or short rate limit in the same conversation using a continuation nudge because the original prompt is already stored.",
+      "path": "tests/rewrite/accounts_handoff.rs",
+      "test": "handoff::quota_wall_hands_off_same_conversation_and_counts_current_steps_once",
+      "references": [
+        "tests/rewrite/accounts_handoff.rs::handoff::quota_wall_hands_off_same_conversation_and_counts_current_steps_once",
+        "tests/rewrite/accounts_handoff.rs::handoff::quota_without_initialization_retries_original_prompt_without_resume_flag",
+        "tests/rewrite/accounts_rotation.rs::rotation::rate_limit_with_quota_left_uses_escalating_short_cooldowns",
+        "tests/rewrite/accounts_handoff.rs::handoff::short_rate_limit_hands_off_the_stored_conversation_with_one_continuation"
+      ],
+      "proof": "Separate exhausted-quota and short-rate-limit scenarios each make exactly two runner calls. The second call uses the first durable initialized conversation ID and the exact legacy continuation nudge; every later metadata record retains that ID. Exactly one original user event and one handoff notice remain, and the second turn succeeds. Without initialization, the original prompt is retried without a resume flag."
+    },
+    "F-183": {
+      "acceptance": "Handoff on rejected auth while parking the failed account; retain conversation/nudge behavior.",
+      "path": "tests/rewrite/accounts_lifecycle.rs",
+      "test": "lifecycle::auth_failure_parks_both_baskets_then_hands_off_without_token_changes",
+      "references": [
+        "tests/rewrite/accounts_lifecycle.rs::lifecycle::auth_failure_parks_both_baskets_then_hands_off_without_token_changes"
+      ],
+      "proof": "A genuine authentication rejection parks both baskets of the failed account and preserves its token bytes. Exactly two calls switch to the next account; the second passes the first durable conversation ID and the exact legacy continuation nudge. No metadata clears or changes the ID, and only one original user event and one handoff notice are recorded."
+    },
+    "F-184": {
+      "acceptance": "Retry temporary errors on the same account after 10 then 30 seconds; after retries cool it for 300 seconds and hand off.",
+      "path": "tests/rewrite/accounts_deterministic.rs",
+      "test": "deterministic::transient_retries_use_fake_time_then_park_and_resume_on_next_account",
+      "references": [
+        "tests/rewrite/accounts_deterministic.rs::deterministic::transient_retries_use_fake_time_then_park_and_resume_on_next_account"
+      ],
+      "proof": "Actual fake provider subprocesses retry the same account three times with controlled waits of 10 then 30 seconds. The failed basket is parked for exactly 300 seconds after those waits, and the next account resumes the conversation without duplicating the durable user request."
+    },
+    "F-186": {
+      "acceptance": "If resume fails specifically because conversation is lost, clear conversation id and start anew with deterministic handoff state plus current request.",
+      "path": "tests/rewrite/accounts_handoff.rs",
+      "test": "handoff::lost_conversation_recovers_with_summary_and_a_fresh_id",
+      "references": [
+        "tests/rewrite/accounts_handoff.rs::handoff::lost_conversation_recovers_with_summary_and_a_fresh_id"
+      ],
+      "proof": "A specifically lost-conversation resume first uses the existing ID. Recovery removes the resume flag, sends handoff context containing both the previous and current requests, creates a fresh ID and retains exactly the two original durable user events."
+    },
+    "F-295": {
+      "acceptance": "stack prints the own-stack folder; stack reseed recopies source configuration while retaining conversations.",
+      "path": "tests/rewrite/accounts_cli.rs",
+      "test": "cli::default_accounts_probe_stack_and_unwall_use_only_owned_state",
+      "references": [
+        "tests/rewrite/accounts_cli.rs::cli::default_accounts_probe_stack_and_unwall_use_only_owned_state",
+        "tests/rewrite/accounts_cli_metadata.rs::cli_metadata::cli_stack_reseed_replaces_configuration_and_preserves_shared_conversations"
+      ],
+      "proof": "The CLI stack command prints the exact own-stack folder. stack reseed recopies changed source GEMINI.md content while preserving the exact shared conversation bytes and prints the expected reseed result."
+    },
+    "F-335": {
+      "acceptance": "`POST /api/accounts/{name}/pause` accepts on default true, rejects unknown account, broadcasts and returns updated account list.",
+      "path": "tests/rewrite/accounts_replay.rs",
+      "test": "replay::captured_account_routes_preserve_exact_overviews_and_routing_records",
+      "references": [
+        "tests/rewrite/accounts_replay.rs::replay::captured_account_routes_preserve_exact_overviews_and_routing_records",
+        "tests/rewrite/accounts_replay.rs::replay::pause_defaults_to_on_rejects_unknown_accounts_and_broadcasts_the_response"
+      ],
+      "proof": "The captured pause/resume responses match immutable account lists. Additional HTTP proof sends an empty object to establish on=true, checks persisted pause/unpause markers, receives the exact returned list in global account broadcasts and rejects an unknown account with 404 without creating a marker.",
+      "captured_cases": [
+        "tests/fixtures/api/cases/account-pause.json",
+        "tests/fixtures/api/cases/account-resume.json"
+      ]
+    },
+    "F-375": {
+      "acceptance": "`GET /api/routing?n=60` returns newest requested routing records in stored order, skipping malformed lines.",
+      "path": "tests/rewrite/accounts_replay.rs",
+      "test": "replay::captured_account_routes_preserve_exact_overviews_and_routing_records",
+      "references": [
+        "tests/rewrite/accounts_replay.rs::replay::captured_account_routes_preserve_exact_overviews_and_routing_records",
+        "tests/rewrite/accounts_replay.rs::replay::routing_reads_requested_tails_in_stored_order_and_skips_malformed_lines"
+      ],
+      "proof": "The immutable routing capture verifies its exact stored order. Additional HTTP proof seeds malformed lines and four valid records, checks default, n=60, n=0, n=2 and n=1 tails in stored order with opaque fields preserved, and asserts the backing JSONL bytes remain unchanged.",
+      "captured_cases": [
+        "tests/fixtures/api/cases/routing.json"
+      ]
+    },
+    "F-376": {
+      "acceptance": "`GET /api/accounts` returns account overview rows without credentials.",
+      "path": "tests/rewrite/accounts_replay.rs",
+      "test": "replay::captured_account_routes_preserve_exact_overviews_and_routing_records",
+      "references": [
+        "tests/rewrite/accounts_replay.rs::replay::captured_account_routes_preserve_exact_overviews_and_routing_records"
+      ],
+      "proof": "The accounts-initial immutable response matches the exact credential-free overview schema, field values, arrays and nullable values. Later captures cover refreshed, paused and resumed account rows.",
+      "captured_cases": [
+        "tests/fixtures/api/cases/accounts-initial.json",
+        "tests/fixtures/api/cases/accounts-probe.json",
+        "tests/fixtures/api/cases/account-check.json",
+        "tests/fixtures/api/cases/account-check-idle.json",
+        "tests/fixtures/api/cases/account-pause.json",
+        "tests/fixtures/api/cases/account-resume.json"
+      ]
+    },
+    "F-377": {
+      "acceptance": "`POST /api/accounts/probe` triggers async account probing and returns ok true immediately.",
+      "path": "tests/rewrite/accounts_replay.rs",
+      "test": "replay::captured_account_routes_preserve_exact_overviews_and_routing_records",
+      "references": [
+        "tests/rewrite/accounts_replay.rs::replay::captured_account_routes_preserve_exact_overviews_and_routing_records",
+        "tests/rewrite/accounts_replay.rs::replay::slow_probes_and_post_delete_refresh_return_before_the_metadata_finishes"
+      ],
+      "proof": "With 1500-millisecond quota delays on both slots, POST /api/accounts/probe returns 200 and exactly ok=true in less than one second. Later observation proves both actual quota subprocesses run and both cache fractions update after their busy states end.",
+      "captured_cases": [
+        "tests/fixtures/api/cases/accounts-probe.json"
+      ]
+    },
+    "F-378": {
+      "acceptance": "`POST /api/accounts/login` starts/replaces agy's sign-in, returns id/url/seconds 60 or a validation error.",
+      "path": "tests/rewrite/accounts_replay.rs",
+      "test": "replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser",
+      "references": [
+        "tests/rewrite/accounts_replay.rs::replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser",
+        "tests/rewrite/accounts_replay.rs::replay::login_uses_an_empty_temporary_home_and_rejects_failed_start_and_unknown_links"
+      ],
+      "proof": "Immutable captures verify the id/url/seconds=60 response and replacement behavior. The additional empty-home scenario verifies a Google URL and seconds=60, while an immediate failed process with a non-Google URL returns 400 with a validation error and no partial account.",
+      "captured_cases": [
+        "tests/fixtures/api/cases/login-start.json"
+      ]
+    },
+    "F-379": {
+      "acceptance": "`GET /api/accounts/login/{lid}` returns state/error/name/verify_url or failed/replaced explanation for unknown/replaced links.",
+      "path": "tests/rewrite/accounts_replay.rs",
+      "test": "replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser",
+      "references": [
+        "tests/rewrite/accounts_replay.rs::replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser",
+        "tests/rewrite/accounts_replay.rs::replay::login_uses_an_empty_temporary_home_and_rejects_failed_start_and_unknown_links",
+        "tests/rewrite/accounts_replay.rs::replay::verified_login_keeps_the_account_parked_until_successful_probe",
+        "tests/rewrite/accounts_replay.rs::replay::login_preserves_long_urls_and_rejects_codes_without_partial_accounts"
+      ],
+      "proof": "Immutable captures verify normal waiting and replaced-link state responses. Verification and provider-failure scenarios cover adopted names, nullable fields and the exact verification URL. An unknown ID returns 200 with the exact failed/replaced explanation.",
+      "captured_cases": [
+        "tests/fixtures/api/cases/login-poll.json",
+        "tests/fixtures/api/cases/login-poll-replaced.json"
+      ]
+    },
+    "F-380": {
+      "acceptance": "`POST /api/accounts/login/{lid}` accepts code and returns state/error/name/verify_url; replaced link or invalid code 400.",
+      "path": "tests/rewrite/accounts_replay.rs",
+      "test": "replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser",
+      "references": [
+        "tests/rewrite/accounts_replay.rs::replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser",
+        "tests/rewrite/accounts_replay.rs::replay::verified_login_keeps_the_account_parked_until_successful_probe",
+        "tests/rewrite/accounts_replay.rs::replay::login_preserves_long_urls_and_rejects_codes_without_partial_accounts"
+      ],
+      "proof": "Immutable login-submit responses verify the accepted code returns done/error/name/verify_url fields exactly. The captured LF-containing code and replaced-link POST return the exact 400 errors; verification and failed provider submissions cover their distinct state payloads.",
+      "captured_cases": [
+        "tests/fixtures/api/cases/login-submit.json",
+        "tests/fixtures/api/cases/login-code-invalid.json",
+        "tests/fixtures/api/cases/login-submit-replaced.json"
+      ]
+    },
+    "F-381": {
+      "acceptance": "`DELETE /api/accounts/login/{lid}` cancels/removes a pending link and returns ok true even when absent.",
+      "path": "tests/rewrite/accounts_replay.rs",
+      "test": "replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser",
+      "references": [
+        "tests/rewrite/accounts_replay.rs::replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser"
+      ],
+      "proof": "Immutable login-delete captures and an explicit pending-link DELETE return exactly ok=true. Deleting an already absent/replaced link remains successful, and the final pending temporary home is removed without adoption.",
+      "captured_cases": [
+        "tests/fixtures/api/cases/login-delete.json"
+      ]
+    },
+    "F-382": {
+      "acceptance": "`POST /api/accounts/{name}/check` synchronously probes a known idle account and returns updated account list; busy 400 or unknown 404.",
+      "path": "tests/rewrite/accounts_replay.rs",
+      "test": "replay::captured_account_routes_preserve_exact_overviews_and_routing_records",
+      "references": [
+        "tests/rewrite/accounts_replay.rs::replay::captured_account_routes_preserve_exact_overviews_and_routing_records",
+        "tests/rewrite/accounts_concurrency.rs::concurrency::python_account_lock_excludes_rust_probe_and_rust_lock_excludes_python"
+      ],
+      "proof": "Immutable account-check and account-check-idle cases compare updated known-account lists exactly, and the missing check returns 404. A real held account lease causes a synchronous check to return 400 with the exact busy explanation; after release the check succeeds.",
+      "captured_cases": [
+        "tests/fixtures/api/cases/account-check.json",
+        "tests/fixtures/api/cases/account-check-idle.json",
+        "tests/fixtures/api/cases/account-missing-check.json"
+      ]
+    },
+    "F-383": {
+      "acceptance": "`DELETE /api/accounts/{name}` removes an idle valid account and returns ok true, then probes remaining accounts asynchronously.",
+      "path": "tests/rewrite/accounts_replay.rs",
+      "test": "replay::captured_account_routes_preserve_exact_overviews_and_routing_records",
+      "references": [
+        "tests/rewrite/accounts_replay.rs::replay::captured_account_routes_preserve_exact_overviews_and_routing_records",
+        "tests/rewrite/accounts_replay.rs::replay::slow_probes_and_post_delete_refresh_return_before_the_metadata_finishes"
+      ],
+      "proof": "The immutable delete case removes an existing valid account and returns exactly ok=true; invalid and busy removal cases reject unsafe deletion. With a delayed remaining-account probe, DELETE returns in less than one second and removes the selected account before metadata finishes. Later observation proves only the remaining account is probed and its fraction updates.",
+      "captured_cases": [
+        "tests/fixtures/api/cases/account-delete.json",
+        "tests/fixtures/api/cases/account-delete-invalid.json"
+      ]
+    },
+    "F-384": {
+      "acceptance": "`GET /api/settings` returns stack overview plus persisted defaults.",
+      "path": "tests/rewrite/accounts_replay.rs",
+      "test": "replay::captured_settings_and_defaults_preserve_unknown_fields_and_validation",
+      "references": [
+        "tests/rewrite/accounts_replay.rs::replay::captured_settings_and_defaults_preserve_unknown_fields_and_validation"
+      ],
+      "proof": "The immutable settings response compares the full stack overview and persisted defaults exactly. The test seeds an opaque large-number extension and confirms persisted defaults preserve it.",
+      "captured_cases": [
+        "tests/fixtures/api/cases/settings.json"
+      ]
+    },
+    "F-385": {
+      "acceptance": "`PUT /api/settings/defaults` updates recognized defaults, validates them and returns the merged setting map.",
+      "path": "tests/rewrite/accounts_replay.rs",
+      "test": "replay::captured_settings_and_defaults_preserve_unknown_fields_and_validation",
+      "references": [
+        "tests/rewrite/accounts_replay.rs::replay::captured_settings_and_defaults_preserve_unknown_fields_and_validation"
+      ],
+      "proof": "Immutable defaults and defaults-error cases compare recognized setting updates, the returned merged map and validation error exactly. The persisted recognized reserve changes to the expected string value while an opaque large-number extension remains byte-value accurate.",
+      "captured_cases": [
+        "tests/fixtures/api/cases/defaults.json",
+        "tests/fixtures/api/cases/defaults-error.json"
+      ]
+    }
+  },
+  "pending_count": 32,
+  "pending": {
+    "F-006": {
+      "acceptance": "Keep one private file token and jetski_state.pbtxt per account; preserve all five existing signed-in slots.",
+      "path": "tests/rewrite/accounts_lifecycle.rs",
+      "test": "lifecycle::auth_failure_parks_both_baskets_then_hands_off_without_token_changes",
+      "references": [
+        "tests/rewrite/accounts_lifecycle.rs::lifecycle::auth_failure_parks_both_baskets_then_hands_off_without_token_changes",
+        "tests/rewrite/accounts_replay.rs::replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser"
+      ],
+      "proof": "Synthetic auth handoff leaves the existing slot token unchanged, and synthetic login adopts a new private regular credential file by email.",
+      "status": "Pending",
+      "missing": "All five real signed-in slots and their account-state files still need private live-account proof. The linked tests use synthetic credentials only."
+    },
+    "F-018": {
+      "acceptance": "Every agy call supplies per-account HOME and USERPROFILE plus SSH_CONNECTION to select file-token storage.",
+      "path": "tests/rewrite/accounts_concurrency.rs",
+      "test": "concurrency::concurrent_sessions_use_different_account_homes_and_skip_busy_probe",
+      "references": [
+        "tests/rewrite/accounts_concurrency.rs::concurrency::concurrent_sessions_use_different_account_homes_and_skip_busy_probe",
+        "tests/rewrite/accounts_lifecycle.rs::lifecycle::auth_failure_parks_both_baskets_then_hands_off_without_token_changes",
+        "tests/rewrite/accounts_replay.rs::replay::login_uses_an_empty_temporary_home_and_rejects_failed_start_and_unknown_links"
+      ],
+      "proof": "Concurrent model calls record distinct slot HOME values and SSH_CONNECTION presence. The new login observer additionally checks exact HOME, USERPROFILE and SSH_CONNECTION before the provider starts.",
+      "status": "Pending",
+      "missing": "USERPROFILE is asserted for temporary login only. Every metadata/model/raw/ask environment still needs combined HOME, USERPROFILE and exact SSH_CONNECTION proof."
+    },
+    "F-025": {
+      "acceptance": "Report unshared entries and identity mismatch in doctor without changing the real CLI token.",
+      "path": "tests/rewrite/accounts_cli_metadata.rs",
+      "test": "cli_metadata::doctor_reports_loaded_metadata_and_identity_mismatch_without_changing_tokens",
+      "references": [
+        "tests/rewrite/accounts_cli_metadata.rs::cli_metadata::doctor_reports_loaded_metadata_and_identity_mismatch_without_changing_tokens"
+      ],
+      "proof": "Doctor obtains skills/hooks and identity through slot calls, reports an identity mismatch, returns exit 1 and preserves the synthetic slot token.",
+      "status": "Pending",
+      "missing": "Doctor identity mismatch and unchanged synthetic token bytes are covered; unshared-entry diagnostics remain unasserted."
+    },
+    "F-029": {
+      "acceptance": "Use a POSIX PTY or Windows ConPTY for agy's authorization-code input; Windows without the optional console implementation supports browser-only completion.",
+      "path": "tests/rewrite/accounts_replay.rs",
+      "test": "replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser",
+      "references": [
+        "tests/rewrite/accounts_replay.rs::replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser"
+      ],
+      "proof": "Captured synthetic sign-in starts through the native PTY and accepts an authorization code on macOS.",
+      "status": "Pending",
+      "missing": "macOS native PTY login is covered. Windows ConPTY and the documented platform fallback require Windows execution."
+    },
+    "F-031": {
+      "acceptance": "Accept only a trimmed, nonempty, single-line authorization code of at most 2000 characters with no CR/LF/NUL; reject submission after completion.",
+      "path": "tests/rewrite/accounts_replay.rs",
+      "test": "replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser",
+      "references": [
+        "tests/rewrite/accounts_replay.rs::replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser"
+      ],
+      "proof": "The immutable LF-containing code case returns the exact validation error, and the replaced-link POST rejects submission.",
+      "status": "Pending",
+      "missing": "The immutable invalid-code case covers LF. Trimming, whitespace-only input, 2000/2001-character boundaries, CR/NUL and submission after completion remain unasserted."
+    },
+    "F-033": {
+      "acceptance": "Adopt a successful account using the email in agy's auth log, move only account files, retain other sign-in artifacts in .antiquota-login and clear old walls/verification.",
+      "path": "tests/rewrite/accounts_replay.rs",
+      "test": "replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser",
+      "references": [
+        "tests/rewrite/accounts_replay.rs::replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser"
+      ],
+      "proof": "Captured successful sign-in adopts the email reported by the fixture auth log and creates a private regular token with mode 0600 on Unix.",
+      "status": "Pending",
+      "missing": "Email adoption and a private regular token are covered. Moving only account files, retaining other .antiquota-login artifacts and clearing old walls/verification on adoption remain unasserted."
+    },
+    "F-034": {
+      "acceptance": "Preserve a valid signed-in token when Google requires verification, store the continue URL and park both quota buckets for 30 days until a successful probe.",
+      "path": "tests/rewrite/accounts_replay.rs",
+      "test": "replay::verified_login_keeps_the_account_parked_until_successful_probe",
+      "references": [
+        "tests/rewrite/accounts_replay.rs::replay::verified_login_keeps_the_account_parked_until_successful_probe"
+      ],
+      "proof": "The verification state retains the token, exposes the exact continue URL, parks both baskets and clears verification and both walls after a healthy probe.",
+      "status": "Pending",
+      "missing": "Verification URL, token retention, both parked baskets and successful probe repair are covered; the exact 30-day verification parking duration remains unasserted."
+    },
+    "F-035": {
+      "acceptance": "Cancel or replace a pending sign-in, kill its process, clean temporary data and retain redacted failure evidence.",
+      "path": "tests/rewrite/accounts_replay.rs",
+      "test": "replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser",
+      "references": [
+        "tests/rewrite/accounts_replay.rs::replay::captured_login_routes_adopt_cancel_and_replace_without_opening_browser"
+      ],
+      "proof": "A newer link replaces the previous pending sign-in; old-link GET and POST responses match captures. Cancelling the remaining link removes temporary login homes and creates no partial account.",
+      "status": "Pending",
+      "missing": "Pending link replacement/cancellation and temporary-home removal are covered. Process termination and retained redacted failure evidence content remain unasserted."
+    },
+    "F-037": {
+      "acceptance": "Remove a valid existing account only after acquiring its lease; reject removal while busy and clear both bucket walls.",
+      "path": "tests/rewrite/accounts_replay.rs",
+      "test": "replay::captured_account_routes_preserve_exact_overviews_and_routing_records",
+      "references": [
+        "tests/rewrite/accounts_replay.rs::replay::captured_account_routes_preserve_exact_overviews_and_routing_records"
+      ],
+      "proof": "Captured deletion rejects an invalid name, removes an existing third account and rejects deletion while a real lease is held without removing credentials.",
+      "status": "Pending",
+      "missing": "Invalid/busy deletion rejection and successful account removal are covered. Removal of both seeded bucket walls remains unasserted."
+    },
+    "F-038": {
+      "acceptance": "Pause/unpause an account out of automatic rotation, retain named/pinned access, persist the marker and record routing history.",
+      "path": "tests/rewrite/accounts_replay.rs",
+      "test": "replay::captured_account_routes_preserve_exact_overviews_and_routing_records",
+      "references": [
+        "tests/rewrite/accounts_replay.rs::replay::captured_account_routes_preserve_exact_overviews_and_routing_records",
+        "tests/rewrite/accounts_cli.rs::cli::raw_run_preserves_argv_pin_output_and_quota_exit_75"
+      ],
+      "proof": "Captured pause/resume account lists and routing entries match. The pause edge test checks actual persisted marker changes, and the adapter lease test establishes automatic exclusion of paused slots.",
+      "status": "Pending",
+      "missing": "Automatic exclusion and persisted pause/resume markers are covered. Explicit named or pinned access while the account is paused remains unasserted."
+    },
+    "F-043": {
+      "acceptance": "Probe /quota without model tokens, with a 90 second timeout; cache timestamp and parsed windows.",
+      "path": "tests/rewrite/accounts_replay.rs",
+      "test": "replay::captured_account_routes_preserve_exact_overviews_and_routing_records",
+      "references": [
+        "tests/rewrite/accounts_replay.rs::replay::captured_account_routes_preserve_exact_overviews_and_routing_records",
+        "tests/rewrite/accounts_metadata_limits.rs::metadata_limits::huge_metadata_fails_promptly_preserves_cache_and_releases_lease"
+      ],
+      "proof": "Captured quota probing returns parsed timestamps and windows without model turns. Oversized metadata returns promptly, preserves the previous cache and releases the lease.",
+      "status": "Pending",
+      "missing": "No-model-token metadata, cache fields/windows and bounded output are covered. The exact 90-second timeout boundary remains unasserted."
+    },
+    "F-044": {
+      "acceptance": "Wall a bucket when any window has at most 2% left; choose latest applicable reset plus 120 seconds, or fallback reset when absent.",
+      "path": "tests/rewrite/accounts_handoff.rs",
+      "test": "handoff::quota_wall_hands_off_same_conversation_and_counts_current_steps_once",
+      "references": [
+        "tests/rewrite/accounts_handoff.rs::handoff::quota_wall_hands_off_same_conversation_and_counts_current_steps_once",
+        "tests/rewrite/accounts_lifecycle.rs::lifecycle::quota_cache_preserves_unknown_fields_and_disabled_window_uses_weekly_reset"
+      ],
+      "proof": "Exhausted quota walls only the relevant basket. A disabled window uses the weekly reset plus 120 seconds, and the core reset-padding example checks one spent-window reset.",
+      "status": "Pending",
+      "missing": "A spent window and reset padding are covered. The exact 2% threshold, latest applicable reset and missing-reset quota-wall fallback remain unasserted."
+    },
+    "F-047": {
+      "acceptance": "Park a signed-out account for 30 days in both buckets until sign-in/probe repairs it.",
+      "path": "tests/rewrite/accounts_lifecycle.rs",
+      "test": "lifecycle::auth_failure_parks_both_baskets_then_hands_off_without_token_changes",
+      "references": [
+        "tests/rewrite/accounts_lifecycle.rs::lifecycle::auth_failure_parks_both_baskets_then_hands_off_without_token_changes"
+      ],
+      "proof": "A genuine auth rejection parks both baskets for more than 29 days, reports the signed-out reason and hands off without changing token bytes.",
+      "status": "Pending",
+      "missing": "Auth parking beyond 29 days is covered. Exact 30-day duration and subsequent repair of the signed-out state remain unasserted."
+    },
+    "F-048": {
+      "acceptance": "Keep gemini and cg walls independent, ignore expired walls and allow explicit unwall of both buckets.",
+      "path": "tests/rewrite/accounts_handoff.rs",
+      "test": "handoff::quota_wall_hands_off_same_conversation_and_counts_current_steps_once",
+      "references": [
+        "tests/rewrite/accounts_handoff.rs::handoff::quota_wall_hands_off_same_conversation_and_counts_current_steps_once",
+        "tests/rewrite/accounts_cli.rs::cli::raw_run_preserves_argv_pin_output_and_quota_exit_75",
+        "tests/rewrite/accounts_cli.rs::cli::default_accounts_probe_stack_and_unwall_use_only_owned_state",
+        "crates/core/src/routing/tests.rs::routing::tests::paused_or_walled_accounts_never_rank"
+      ],
+      "proof": "Quota handoff preserves the other basket, the core property ranks accounts whose wall is expired, and CLI unwall all removes a seeded gemini wall.",
+      "status": "Pending",
+      "missing": "The core property already covers expired-wall ranking. Explicit unwall of both seeded bucket walls remains unasserted; the CLI all-target test seeds only gemini."
+    },
+    "F-052": {
+      "acceptance": "Refresh only idle accounts with a quota snapshot older than max_age, returning whether a valid update occurred.",
+      "path": "tests/rewrite/accounts_cli_lifecycle.rs",
+      "test": "cli_lifecycle::account_cli_probe_and_raw_quota_do_not_reconcile_active_engine_sessions",
+      "references": [
+        "tests/rewrite/accounts_cli_lifecycle.rs::cli_lifecycle::account_cli_probe_and_raw_quota_do_not_reconcile_active_engine_sessions",
+        "tests/rewrite/accounts_replay.rs::replay::captured_account_routes_preserve_exact_overviews_and_routing_records"
+      ],
+      "proof": "Probing skips an actively leased account and preserves accepted session files and engine usage bytes.",
+      "status": "Pending",
+      "missing": "Busy-account skipping is covered. max_age boundaries and valid-update return semantics remain unasserted. AccountService.refresh_accounts currently returns Result<(), AppError>, unlike the legacy per-account boolean result."
+    },
+    "F-055": {
+      "acceptance": "Default perishable routing spends the allowance that resets soonest first, then prefers more headroom, with unknown expiry last.",
+      "path": "tests/rewrite/accounts_rotation.rs",
+      "test": "rotation::perishable_uses_earliest_weekly_reset_and_round_robin_uses_last_pick",
+      "references": [
+        "tests/rewrite/accounts_rotation.rs::rotation::perishable_uses_earliest_weekly_reset_and_round_robin_uses_last_pick"
+      ],
+      "proof": "Perishable routing selects the earlier weekly reset and retains a warm account for its next turn.",
+      "status": "Pending",
+      "missing": "Earlier weekly reset and warm affinity are covered. Equal-reset headroom and unknown-expiry ordering remain unasserted."
+    },
+    "F-056": {
+      "acceptance": "Sticky routing follows sorted account order; round-robin follows least-recent pick in routing history.",
+      "path": "tests/rewrite/accounts_rotation.rs",
+      "test": "rotation::perishable_uses_earliest_weekly_reset_and_round_robin_uses_last_pick",
+      "references": [
+        "tests/rewrite/accounts_rotation.rs::rotation::perishable_uses_earliest_weekly_reset_and_round_robin_uses_last_pick",
+        "tests/rewrite/accounts_rotation.rs::rotation::every_rotation_puts_an_account_below_reserve_after_healthy_accounts"
+      ],
+      "proof": "Round-robin selects the least-recently picked account, including subsequent alternation, and all strategies honor reserve ordering.",
+      "status": "Pending",
+      "missing": "Round-robin least-recent ordering is covered. Alphabetical sticky ordering among equally eligible accounts remains unasserted."
+    },
+    "F-060": {
+      "acceptance": "Classify only genuine agy error channels, excluding successful model response text and successful stderr chatter.",
+      "path": "tests/rewrite/accounts_cli_lifecycle.rs",
+      "test": "cli_lifecycle::raw_current_success_ignores_historical_quota_error_without_walling_account",
+      "references": [
+        "tests/rewrite/accounts_cli_lifecycle.rs::cli_lifecycle::raw_current_success_ignores_historical_quota_error_without_walling_account",
+        "crates/adapters/agy/src/parser.rs::parser::tests::duplicate_done_and_stale_result_do_not_double_count_or_fail_success"
+      ],
+      "proof": "A completed final step wins over a stale quota result in the decoder and raw CLI. Raw output remains unchanged, exit is zero and no false wall is written.",
+      "status": "Pending",
+      "missing": "Completed-response precedence over stale errors is covered. Successful response prose containing error words and successful stderr chatter remain unasserted."
+    },
+    "F-064": {
+      "acceptance": "Record timestamped pick/wall/cooldown/retry/paused/resumed/signed-out decisions in routing.jsonl; skip malformed lines on reading.",
+      "path": "tests/rewrite/accounts_replay.rs",
+      "test": "replay::captured_account_routes_preserve_exact_overviews_and_routing_records",
+      "references": [
+        "tests/rewrite/accounts_replay.rs::replay::captured_account_routes_preserve_exact_overviews_and_routing_records",
+        "tests/rewrite/accounts_deterministic.rs::deterministic::transient_retries_use_fake_time_then_park_and_resume_on_next_account",
+        "tests/rewrite/accounts_lifecycle.rs::lifecycle::auth_failure_parks_both_baskets_then_hands_off_without_token_changes",
+        "tests/rewrite/accounts_replay.rs::replay::routing_reads_requested_tails_in_stored_order_and_skips_malformed_lines"
+      ],
+      "proof": "Captured paused/resumed entries have validated nonnegative timestamps. The new routing edge test skips malformed JSON and returns requested stored-order tails without changing JSONL bytes. Actual retry/auth/wall scenarios exercise their producers.",
+      "status": "Pending",
+      "missing": "Malformed routing reads, requested tails and captured timestamped pause/resume are covered. Actual timestamped pick/retry/signed-out ledger entries still lack explicit assertions."
+    },
+    "F-066": {
+      "acceptance": "Aggregate today's input/output/thinking/turn count by account using local midnight and tolerate malformed ledger lines.",
+      "path": "tests/rewrite/accounts_handoff.rs",
+      "test": "handoff::quota_wall_hands_off_same_conversation_and_counts_current_steps_once",
+      "references": [
+        "tests/rewrite/accounts_handoff.rs::handoff::quota_wall_hands_off_same_conversation_and_counts_current_steps_once",
+        "crates/adapters/accounts/src/tests.rs::tests::local_day_usage_skips_malformed_rows_and_keeps_all_four_fields"
+      ],
+      "proof": "The adapter usage test skips malformed typed records and returns input, output, thinking and turn totals. A completed handoff verifies account today totals survive restart.",
+      "status": "Pending",
+      "missing": "Malformed record tolerance and all four usage totals are already covered. Local-midnight inclusion/exclusion boundaries remain unasserted."
+    },
+    "F-185": {
+      "acceptance": "Bound turn handoffs to twice the signed-in account count plus one attempt allowance.",
+      "path": "tests/rewrite/accounts_deterministic.rs",
+      "test": "deterministic::repeated_transient_failures_stop_after_bounded_account_attempts",
+      "references": [
+        "tests/rewrite/accounts_deterministic.rs::deterministic::repeated_transient_failures_stop_after_bounded_account_attempts"
+      ],
+      "proof": "Two accounts that repeatedly fail transiently stop after six total calls and four controlled waits, returning the session to idle with an empty queue.",
+      "status": "Pending",
+      "missing": "Repeated transient failure stops after six calls on two accounts. The exact handoff cap with repeated conversation loss still lacks its own boundary scenario."
+    },
+    "F-197": {
+      "acceptance": "Keep raw failure logs and calls.jsonl records for direct CLI calls; do not confuse that ledger with session usage.",
+      "path": "tests/rewrite/accounts_cli.rs",
+      "test": "cli::raw_run_preserves_argv_pin_output_and_quota_exit_75",
+      "references": [
+        "tests/rewrite/accounts_cli.rs::cli::raw_run_preserves_argv_pin_output_and_quota_exit_75",
+        "tests/rewrite/accounts_cli_lifecycle.rs::cli_lifecycle::raw_current_success_ignores_historical_quota_error_without_walling_account",
+        "tests/rewrite/accounts_cli_lifecycle.rs::cli_lifecycle::account_cli_probe_and_raw_quota_do_not_reconcile_active_engine_sessions"
+      ],
+      "proof": "A raw completed-success call writes a call record whose walled field is false and creates no failure log. Separate raw quota/probe commands preserve active session events, metadata and usage bytes.",
+      "status": "Pending",
+      "missing": "Raw success records and session-usage separation are covered. Actual failed-call log existence/content remains unasserted. Redaction and rotation are not additional requirements of this canonical row."
+    },
+    "F-290": {
+      "acceptance": "No command defaults to accounts; unknown commands or invalid positional forms print usage to stderr and exit 2.",
+      "path": "tests/rewrite/accounts_cli.rs",
+      "test": "cli::default_accounts_probe_stack_and_unwall_use_only_owned_state",
+      "references": [
+        "tests/rewrite/accounts_cli.rs::cli::default_accounts_probe_stack_and_unwall_use_only_owned_state"
+      ],
+      "proof": "The default command produces the exact same output as explicit accounts.",
+      "status": "Pending",
+      "missing": "Default accounts equivalence is covered. Unknown commands and invalid positional forms printing usage to stderr with exit 2 remain unasserted."
+    },
+    "F-291": {
+      "acceptance": "accounts prints signed-in account quota/walls and lease state, or an add-account hint when empty.",
+      "path": "tests/rewrite/accounts_cli.rs",
+      "test": "cli::default_accounts_probe_stack_and_unwall_use_only_owned_state",
+      "references": [
+        "tests/rewrite/accounts_cli.rs::cli::default_accounts_probe_stack_and_unwall_use_only_owned_state"
+      ],
+      "proof": "Account output contains both fixture identities and the ACCOUNT, GEMINI, CLAUDE/GPT and LEASE headings.",
+      "status": "Pending",
+      "missing": "Account identities and quota/lease headings are covered. Empty-account hint and actual quota, wall and busy-lease display remain unasserted."
+    },
+    "F-292": {
+      "acceptance": "login opens agy's own URL, reads authorization codes from terminal without changing real CLI config and reports adopted account or failure.",
+      "path": "tests/rewrite/accounts_cli_metadata.rs",
+      "test": "cli_metadata::cli_login_adopts_email_and_rejects_bad_codes_without_partial_slots",
+      "references": [
+        "tests/rewrite/accounts_cli_metadata.rs::cli_metadata::cli_login_adopts_email_and_rejects_bad_codes_without_partial_slots"
+      ],
+      "proof": "Synthetic CLI login rejects a bad provider code with exit 1, adopts a good code under the exact reported email and prints the expected own-stack result.",
+      "status": "Pending",
+      "missing": "Synthetic CLI login identity and provider-code failure are covered. Real OAuth/browser authorization remains live-account proof; fixture login suppresses browser opening."
+    },
+    "F-293": {
+      "acceptance": "probe refreshes every idle account without model tokens, skips busy accounts and prints unreadable/ok results.",
+      "path": "tests/rewrite/accounts_cli.rs",
+      "test": "cli::default_accounts_probe_stack_and_unwall_use_only_owned_state",
+      "references": [
+        "tests/rewrite/accounts_cli.rs::cli::default_accounts_probe_stack_and_unwall_use_only_owned_state",
+        "tests/rewrite/accounts_cli_lifecycle.rs::cli_lifecycle::account_cli_probe_and_raw_quota_do_not_reconcile_active_engine_sessions"
+      ],
+      "proof": "CLI probe reports ok for idle probing and busy, skipped for a leased account, preserving active session files.",
+      "status": "Pending",
+      "missing": "Idle probing, busy skipping and ok output are covered. Unreadable CLI probe output remains unasserted."
+    },
+    "F-294": {
+      "acceptance": "doctor reports own stack skills/hooks/MCP, file-token isolation, conversation store link, shared-entry parity and actual account identity; exit 1 if problems.",
+      "path": "tests/rewrite/accounts_cli_metadata.rs",
+      "test": "cli_metadata::doctor_reports_loaded_metadata_and_identity_mismatch_without_changing_tokens",
+      "references": [
+        "tests/rewrite/accounts_cli_metadata.rs::cli_metadata::doctor_reports_loaded_metadata_and_identity_mismatch_without_changing_tokens"
+      ],
+      "proof": "Doctor queries actual fixture skills/hooks and identity logs, prints loaded metadata, returns exit 1 on identity mismatch and preserves synthetic token bytes.",
+      "status": "Pending",
+      "missing": "Actual identity, loaded skills/hooks, exit 1 on mismatch and token preservation are covered. MCP, file-token diagnostics, conversation link and shared-entry parity remain unasserted."
+    },
+    "F-296": {
+      "acceptance": "unwall <name\\|all> clears both quota walls and prints the target.",
+      "path": "tests/rewrite/accounts_cli.rs",
+      "test": "cli::default_accounts_probe_stack_and_unwall_use_only_owned_state",
+      "references": [
+        "tests/rewrite/accounts_cli.rs::cli::default_accounts_probe_stack_and_unwall_use_only_owned_state"
+      ],
+      "proof": "CLI unwall all prints the exact all-target result and removes a seeded gemini wall.",
+      "status": "Pending",
+      "missing": "The all target and its output are covered for a gemini wall. Explicit named target and both seeded bucket walls remain unasserted."
+    },
+    "F-297": {
+      "acceptance": "run accepts leading --slot S and optional -- before forwarding all remaining agy arguments, rejecting absent accounts or unknown slot.",
+      "path": "tests/rewrite/accounts_cli.rs",
+      "test": "cli::raw_run_preserves_argv_pin_output_and_quota_exit_75",
+      "references": [
+        "tests/rewrite/accounts_cli.rs::cli::raw_run_preserves_argv_pin_output_and_quota_exit_75",
+        "tests/rewrite/runtime.rs::runtime::raw_cli_without_accounts_exits_without_creating_a_session_or_launching_agy"
+      ],
+      "proof": "Raw run preserves literal shell characters and every agy argument after leading --slot and --. A separate runtime test rejects absent accounts without creating a session or invoking agy.",
+      "status": "Pending",
+      "missing": "Leading --slot, -- and exact argument forwarding are covered, and the no-account runtime test covers absent accounts. Unknown slot and forwarding without optional -- remain unasserted."
+    },
+    "F-298": {
+      "acceptance": "run uses the selected account's isolated environment and returns its exit code; quota errors/all-walled return 75, leaving a failure/call audit record.",
+      "path": "tests/rewrite/accounts_cli.rs",
+      "test": "cli::raw_run_preserves_argv_pin_output_and_quota_exit_75",
+      "references": [
+        "tests/rewrite/accounts_cli.rs::cli::raw_run_preserves_argv_pin_output_and_quota_exit_75",
+        "tests/rewrite/accounts_cli_lifecycle.rs::cli_lifecycle::raw_current_success_ignores_historical_quota_error_without_walling_account"
+      ],
+      "proof": "Raw success returns zero, and genuine quota and already-walled paths return 75 without launching an additional provider call. The successful current-result scenario records walled=false.",
+      "status": "Pending",
+      "missing": "Quota/all-walled exit 75 and raw success are covered. Exact nonquota provider exit code and the failed audit record remain unasserted."
+    },
+    "F-299": {
+      "acceptance": "Interactive run inherits the user's terminal and temporarily ignores SIGINT in the parent; noninteractive run tees stdout/stderr while keeping last 64 KiB each.",
+      "path": "tests/rewrite/accounts_cli.rs",
+      "test": "cli::interactive_raw_run_preserves_native_tty_without_foreground_control",
+      "references": [
+        "tests/rewrite/accounts_cli.rs::cli::interactive_raw_run_preserves_native_tty_without_foreground_control",
+        "tests/rewrite/accounts_cli_lifecycle.rs::cli_lifecycle::closed_raw_stdout_fails_promptly_and_kills_process_tree",
+        "tests/rewrite/accounts_cli_lifecycle.rs::cli_lifecycle::raw_completed_parent_kills_descendants_and_closes_inherited_output_pipes"
+      ],
+      "proof": "Interactive raw calls keep stdin/stdout/stderr as native terminal streams. Noninteractive inherited-pipe and broken-output tests stop promptly and prevent delayed descendant writes.",
+      "status": "Pending",
+      "missing": "Native terminal streams and inherited-pipe cleanup are covered. Actual SIGINT behavior and exact retained 64 KiB stdout/stderr tails remain unasserted."
+    },
+    "F-321": {
+      "acceptance": "Cache model id/label list from agy models in models.json, serve it immediately on restart, refresh through a signed-in slot and retain old cache on failure.",
+      "path": "tests/rewrite/accounts_models.rs",
+      "test": "models::model_cache_is_used_while_first_account_busy_then_refreshes_from_that_account",
+      "references": [
+        "tests/rewrite/accounts_models.rs::models::model_cache_is_used_while_first_account_busy_then_refreshes_from_that_account",
+        "tests/rewrite/accounts_models.rs::models::empty_model_probe_keeps_cached_models_and_exact_file_bytes"
+      ],
+      "proof": "State immediately serves cached model IDs and labels while the first slot is busy, later refreshes through that slot and retains exact cache bytes for an empty model list.",
+      "status": "Pending",
+      "missing": "Immediate model cache, signed-in-slot refresh and empty-result retention are covered. Crashed/unreadable model-process cache retention remains unasserted."
+    }
+  },
+  "already_passed": {
+    "F-021": {
+      "status": "Passed in the canonical ledger before this slice; unchanged and excluded from added and pending counts.",
+      "references": [
+        "tests/rewrite/accounts_cli_metadata.rs::cli_metadata::cli_stack_reseed_replaces_configuration_and_preserves_shared_conversations",
+        "crates/adapters/accounts/src/tests.rs::tests::clone_and_sync_preserve_private_identity_history_and_unknown_config"
+      ]
+    }
+  },
+  "provenance": {
+    "canonical": "docs/rewrite/FEATURES.md",
+    "prior_proposal": "tests/rewrite/slice2-coverage-proposal.json",
+    "http_test_registration": "crates/server/tests/accounts_contract.rs",
+    "focused_logs": [
+      ".handoff/evidence/slice9f-accounts-focused.log",
+      ".handoff/evidence/slice9f-handoff-focused.log"
+    ],
+    "mapping_work": "This mapping was read and checked without running tests, gates, provider calls or browser automation. Focused logs are existing evidence; no running whole-gate outcome is asserted here.",
+    "known_focused_failures": [
+      "The first strengthened routing test expected integer timestamps; the decoded timestamps were floating-point values. The expected representation was corrected and the replay filter passed on rerun. The focused log retains the failed run."
+    ],
+    "additional_http_test_registration": "crates/server/tests/rewrite_contract.rs"
+  },
+  "limitations": [
+    "All model and account activity named here uses synthetic fake agy in Desktop/test sandboxes.",
+    "Real-account authorization, Windows ConPTY and native desktop acceptance are not established by these tests.",
+    "Pending rows remain partial even where some older proposal notes were stale."
+  ],
+  "passed_after_is_prospective": false,
+  "gate_status": "Final just check passed; just test passed 268 Rust, 391 Vitest and 108 Chromium scenarios with zero final failures, ignored, skipped or flaky tests."
+}

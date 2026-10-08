@@ -60,3 +60,83 @@ describe('jobs', () => {
     expect(loopDetail({ ...loop, every: 86400, at: '03:00' })).toMatch(/^daily at 03:00 · next /);
   });
 });
+it('admits only the newest job log and refuses stale session or changed-dialog reads', async () => {
+  const { jobLog, viewJobLog } = await import('./jobs');
+  const { get } = await import('svelte/store');
+  type Log = import('../gen/JobLogResponse').JobLogResponse;
+  const log = (cmd: string): Log => ({
+    text: cmd,
+    cmd,
+    log: '/test/log',
+    id: 'job',
+    pid: null,
+    started: 1,
+    ended: null,
+    code: null,
+    every: 0,
+    notify: false,
+    by: 'user',
+    stopped: false,
+  });
+  jobLog.set(null);
+  let finish: (value: Log) => void = () => {};
+  const older = viewJobLog(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+    () => true,
+  );
+  await viewJobLog(
+    async () => log('newer'),
+    () => true,
+  );
+  finish(log('older'));
+  await older;
+  expect(get(jobLog)?.cmd).toBe('newer');
+  await viewJobLog(
+    async () => log('wrong session'),
+    () => false,
+  );
+  expect(get(jobLog)?.cmd).toBe('newer');
+  const pending = viewJobLog(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+    () => true,
+  );
+  jobLog.set(null);
+  finish(log('closed'));
+  await pending;
+  expect(get(jobLog)).toBeNull();
+});
+it('ignores obsolete job-log failures but propagates the newest current failure', async () => {
+  const { jobLog, viewJobLog } = await import('./jobs');
+  jobLog.set(null);
+  let reject: (error: Error) => void = () => {};
+  const older = viewJobLog(
+    () =>
+      new Promise((_, fail) => {
+        reject = fail;
+      }),
+    () => true,
+  );
+  const pending = viewJobLog(
+    async () => {
+      throw new Error('latest failure');
+    },
+    () => true,
+  );
+  await expect(pending).rejects.toThrow('latest failure');
+  reject(new Error('old failure'));
+  await expect(older).resolves.toBeUndefined();
+  await expect(
+    viewJobLog(
+      async () => {
+        throw new Error('wrong session');
+      },
+      () => false,
+    ),
+  ).resolves.toBeUndefined();
+});

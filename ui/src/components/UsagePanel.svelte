@@ -295,12 +295,14 @@
     text-align: right;
     font-family: var(--mono);
   }
+  @media (max-width: 719px) {
+    .stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
   @media (max-width: 760px) {
     .tables {
       grid-template-columns: 1fr;
-    }
-    .stats {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 </style>

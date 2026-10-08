@@ -139,7 +139,7 @@
   }
   async function submit() {
     if (tray.some((file) => file.uploading)) return say('Still uploading…');
-    void notifications.request();
+    if ((text.trim() || ready.length) && !/^[\s]*[/!#]/.test(text)) void notifications.request();
     const id = sid;
     const paths = ready;
     revising.set(false);
@@ -228,8 +228,8 @@
 
 <svelte:window onresize={autosize} />
 <div class="composer-wrap">
-  {#if $mediaNotice || $view.feedback}<p class="feedback" role="status">
-      {$mediaNotice || $view.feedback}
+  {#if $mediaNotice}<p class="feedback" role="status">
+      {$mediaNotice}
     </p>{/if}
   <form
     class="composer"

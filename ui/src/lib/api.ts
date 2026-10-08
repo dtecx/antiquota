@@ -58,7 +58,20 @@ export interface Transcript {
   slot: string;
 }
 
-export function createApi(token: string, request: typeof fetch = fetch) {
+export function createApi(
+  token: string,
+  request: typeof fetch = fetch,
+  onError: (error: RequestError) => void = () => {},
+) {
+  function refuse(message: string, status: number): never {
+    const error = new RequestError(message, status);
+    try {
+      onError(error);
+    } catch {
+      /* Feedback cannot change the HTTP failure. */
+    }
+    throw error;
+  }
   async function call<T>(
     method: string,
     path: string,
@@ -79,10 +92,10 @@ export function createApi(token: string, request: typeof fetch = fetch) {
           route.method === method && route.path === catalogPath && route.status === 'implemented',
       )
     ) {
-      throw new RequestError('This action is not available yet.', 501);
+      refuse('This action is not available yet.', 501);
     }
     if (!token || token === '__ANTIQUOTA_TOKEN__') {
-      throw new RequestError(
+      refuse(
         'The engine did not provide a connection token. Open this UI from antiquota serve.',
         401,
       );
@@ -99,7 +112,7 @@ export function createApi(token: string, request: typeof fetch = fetch) {
         ...(raw ? { body: raw.data } : body === undefined ? {} : { body: JSON.stringify(body) }),
       });
     } catch {
-      throw new RequestError('Cannot reach the engine. Your draft is kept here.', 0);
+      refuse('Cannot reach the engine. Your draft is kept here.', 0);
     }
     const value: unknown = await response.json().catch(() => null);
     if (!response.ok) {
@@ -107,10 +120,9 @@ export function createApi(token: string, request: typeof fetch = fetch) {
         value && typeof value === 'object' && 'error' in value && typeof value.error === 'string'
           ? (value as ApiError).error
           : `Request failed (${response.status}).`;
-      throw new RequestError(error, response.status);
+      refuse(error, response.status);
     }
-    if (value === null)
-      throw new RequestError('The engine returned an empty response.', response.status);
+    if (value === null) refuse('The engine returned an empty response.', response.status);
     return value as T;
   }
   const sessionPath = (id: string) => `/api/sessions/${encodeURIComponent(id)}`;

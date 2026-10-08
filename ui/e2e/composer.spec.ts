@@ -157,7 +157,7 @@ test('shell output feeds the next prompt while notes memory fallback and state r
   expect((await turnPrompts(engine)).at(-1)).toContain('shell-marker');
   expect((await session(engine, one.id)).meta.pending_note).toBe('');
   await submit(primary(page), '/memory');
-  await expect(primary(page)).toContainText('No GEMINI.md yet');
+  await expect(page.locator('.toast')).toContainText('No GEMINI.md yet');
   await prompt(primary(page)).fill('# Keep this synthetic convention.');
   await expect(primary(page).locator('form')).toHaveClass(/note/);
   await expect(primary(page).getByRole('button', { name: 'Save', exact: true })).toBeVisible();
@@ -168,7 +168,7 @@ test('shell output feeds the next prompt while notes memory fallback and state r
     .poll(() => readFile(join(engine.sandbox.project, 'GEMINI.md'), 'utf8'))
     .toContain('Keep this synthetic convention.');
   await submit(primary(page), '# Keep this second note.');
-  await expect(primary(page)).toContainText(
+  await expect(page.locator('.toast')).toContainText(
     `Saved to ${join(engine.sandbox.project, 'GEMINI.md')}`,
   );
   const notes = await readFile(join(engine.sandbox.project, 'GEMINI.md'), 'utf8');
@@ -352,7 +352,7 @@ test('background commands expose their log and stop while loops and daily schedu
   const one = await create(engine, 'Scheduled commands');
   await open(page, engine, one.id);
   await submit(primary(page), '/bg');
-  await expect(primary(page)).toContainText('/bg <command>');
+  await expect(page.locator('.toast')).toContainText('/bg <command>');
   const command = "printf 'line one\\nline two\\n'; sleep 30";
   await submit(primary(page), `/bg ${command}`);
   const job = primary(page).getByRole('region', { name: `Background job ${command}` });
@@ -460,7 +460,7 @@ test('model families preserve effort expose pools and unknown models and require
   await submit(primary(page), '/effort high');
   await expect(effort).toHaveValue('gemini-pro-high');
   await submit(primary(page), '/effort impossible');
-  await expect(primary(page)).toContainText('has no effort "impossible"');
+  await expect(page.locator('.toast')).toContainText('has no effort "impossible"');
   await family.selectOption('Claude Opus');
   await expect(effort).toBeDisabled();
   await submit(primary(page), '/model provider-future-model');

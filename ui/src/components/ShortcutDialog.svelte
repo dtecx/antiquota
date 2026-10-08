@@ -77,7 +77,7 @@
     float: right;
     margin-top: var(--space-4);
   }
-  @media (max-width: 650px) {
+  @media (max-width: 679px) {
     .grid {
       grid-template-columns: 1fr;
     }

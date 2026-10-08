@@ -37,7 +37,7 @@ export function createNotifications(browser: BrowserNotifications) {
       event.data &&
       typeof event.data === 'object' &&
       !Array.isArray(event.data) &&
-      event.data.met
+      event.data.met === true
     )
       send('Goal met', title, 'goal', prefs);
     else if (event.t === 'notice' && event.kind === 'wall')
