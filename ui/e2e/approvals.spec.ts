@@ -41,7 +41,12 @@ test('answers approval cards and keeps rules in settings', async ({ page, engine
   await expect(card).toContainText('agy wants to run a command');
   await expect(card).toContainText('touch approved-file');
   await expect(card).toContainText('waits 15 min');
-  await expect(page.getByText('needs your approval')).toBeVisible();
+  await expect(
+    page
+      .getByRole('region', { name: 'Primary session', exact: true })
+      .locator('header')
+      .getByText('needs your approval', { exact: true }),
+  ).toBeVisible();
   await expect(
     page
       .locator('button.session')

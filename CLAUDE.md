@@ -26,7 +26,7 @@ The legacy implementation is in this branch for reference: `antiquota/*.py` (eng
 - `tests/fake-agy`: the fake agent used by every test. It reads `FAKE_AGY_SCRIPT` (JSON, such as `{"scenario":"delay","delay_ms":300}`) and writes each argv to `fake-calls.jsonl`.
 - `tests/rewrite/*.rs`: HTTP integration tests. Each is included by a `crates/server/tests/*_contract.rs` file through `#[path]`. `tests/rewrite/support` provides `Server` (an isolated engine under `~/Desktop/test`), `Replay` (replays captured cases from `tests/fixtures/api/cases/*.json`) and raw HTTP helpers.
 - `ui/`: Svelte 5, strict TypeScript and Vite. `src/gen/` holds types generated from Rust by ts-rs. `src/lib/*.ts` holds the logic, with Vitest tests next to it. `src/components/*.svelte` holds the components. `e2e/*.spec.ts` holds the Playwright tests; `e2e/fixtures.ts` starts a sandbox engine per test.
-- `docs/ARCHITECTURE.md`, `docs/adr/` (ADR 0001 to 0018), and `docs/rewrite/`:
+- `docs/ARCHITECTURE.md`, `docs/adr/` (ADR 0001 to 0019), and `docs/rewrite/`:
   - `FEATURES.md` is the canonical checklist: 1144 rows, each with acceptance text and a `[ ]`/`[x]` box.
   - `TEST_REPORT.md` holds one row per feature (tests, status, evidence) and a section per slice.
   - `known-bugs.md` lists B- (legacy defects), R- (risks) and W- (defects found during the rewrite) entries.
@@ -34,7 +34,7 @@ The legacy implementation is in this branch for reference: `antiquota/*.py` (eng
 
 ## Status
 
-Slices 1, 3 to 8, 9a, 9b and 9c are done and committed: sessions, permissions and approvals, goals, jobs, worktrees, terminal, attachments and dictation. Slice 2 (accounts and handoff) has code and tests; its backend evidence is in `tests/rewrite/slice2-coverage-proposal.json` and is not yet folded into the report rows. Its account UI evidence is folded in Slice 9b. 493 of 1144 rows are Passed.
+Slices 1, 3 to 8, 9a, 9b, 9c and 9d are done and committed: sessions, permissions and approvals, goals, jobs, worktrees, terminal, attachments and dictation. Slice 2 (accounts and handoff) has code and tests; its backend evidence is in `tests/rewrite/slice2-coverage-proposal.json` and is not yet folded into the report rows. Its account UI evidence is folded in Slice 9b. 582 of 1144 rows are Passed.
 
 Next work, in order:
 
@@ -42,8 +42,8 @@ Next work, in order:
    - 9a (done): the remaining routes in the route catalog. These are fork, rewind, clear, compact, inherit, `state`, `shell` (`!cmd`), `note` (`# note`), `files`, search, `engine` and `engine/log`, `usage`, `fs`, the settings file, settings `{kind}/{name}` read, write, delete and enable, settings copy, and stack read and reseed.
    - 9b (done): Settings sections (general, appearance, agent, permissions, stack), account cards, rotation and the usage chart (use Chart.js directly), and the sign-in states.
    - 9c (done): the sessions and projects sidebar, context menus with keyboard support, search (⌘K) and split view. Split view uses two session components on one event connection, with no iframe and no second root zoom.
-   - 9d: the composer. This covers every slash command entry point, autocomplete (`@` mentions and `/` commands), prompt history with ↑/↓, shortcuts, models and the header.
-   - 9e: transcript rendering (52 pending rows).
+   - 9d (done): the composer. This covers every slash command entry point, autocomplete (`@` mentions and `/` commands), prompt history with ↑/↓, shortcuts, models and the header.
+   - 9e: transcript rendering (49 pending rows).
    - 9f: layout, themes, accessibility, dialog defaults and the remaining edges. Also verify and fold the Slice 2 account evidence into the rows.
 2. Slice 10, the native Tauri shell: engine sidecar, native webview zoom instead of CSS zoom (B-001), window size and position saved with tauri-plugin-window-state (B-003), tray, menus and splash. Write the code and the Linux build where possible. Rows that need macOS or Windows stay Pending with a clear note.
 

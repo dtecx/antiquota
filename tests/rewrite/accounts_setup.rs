@@ -81,6 +81,36 @@ pub fn wait(server: &Server, label: &str, predicate: impl Fn(&Value) -> bool) ->
         thread::sleep(Duration::from_millis(10));
     }
 }
+/// Acquire the fixture lease itself; an idle HTTP snapshot is not a lock guarantee.
+pub fn lease(server: &Server, slot: &str) -> antiquota_store::FileLease {
+    let path = server.data.join(format!("state/leases/{slot}.lock"));
+    let deadline = Instant::now() + Duration::from_secs(8);
+    loop {
+        if let Some(lease) = antiquota_store::lock_file(&path).unwrap() {
+            return lease;
+        }
+        assert!(
+            Instant::now() < deadline,
+            "fixture lease remained busy: {slot}"
+        );
+        thread::sleep(Duration::from_millis(10));
+    }
+}
+#[test]
+fn fixture_lease_waits_for_a_real_contending_lock() {
+    let server = Server::new_stopped("fixture-lease", true);
+    let path = server.data.join(format!("state/leases/{ONE}.lock"));
+    let held = antiquota_store::lock_file(&path).unwrap().unwrap();
+    let release = thread::spawn(move || {
+        thread::sleep(Duration::from_millis(100));
+        drop(held);
+    });
+    let acquired = lease(&server, ONE);
+    assert!(antiquota_store::lock_file(&path).unwrap().is_none());
+    release.join().unwrap();
+    drop(acquired);
+    assert!(antiquota_store::lock_file(&path).unwrap().is_some());
+}
 pub fn calls(server: &Server) -> Vec<Value> {
     let text = fs::read_to_string(server.root.join("fake-calls.jsonl")).unwrap_or_default();
     let complete = text.rfind('\n').map_or("", |end| &text[..end]);

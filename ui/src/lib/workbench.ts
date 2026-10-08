@@ -1,6 +1,5 @@
 /** Owns session selection, drafts, mutations, and snapshot/stream reconciliation. */
 import { get, writable } from 'svelte/store';
-import type { EventRecord } from '../gen/EventRecord';
 import type { PatchSessionRequest } from '../gen/PatchSessionRequest';
 import type { Session } from '../gen/Session';
 import type { StateResponse } from '../gen/StateResponse';
@@ -9,29 +8,11 @@ import type { Api } from './api';
 import { projectHistory, reduceTranscript } from './transcript';
 import type { GoalRequest } from '../gen/GoalRequest';
 import { EXECUTE_PLAN } from './goals';
+import { acceptDraft, transferDraft } from './session-draft';
 import { jobLog } from './jobs';
 
-export interface DialogState {
-  id?: string | undefined;
-  kind: 'create' | 'rename';
-  title: string;
-  cwd: string;
-  worktree: boolean;
-}
-export interface WorkbenchState {
-  snapshot: StateResponse | null;
-  selected: Session | null;
-  events: EventRecord[];
-  drafts: Record<string, string>;
-  filter: string;
-  sidebarOpen: boolean;
-  showArchived: boolean;
-  dialog: DialogState | null;
-  loading: boolean;
-  mutating: boolean;
-  error: string;
-  feedback: string;
-}
+import type { DialogState, WorkbenchState } from './workbench-state';
+export type { DialogState, WorkbenchState } from './workbench-state';
 const initial: WorkbenchState = {
   snapshot: null,
   selected: null,
@@ -156,8 +137,10 @@ export function createWorkbench(
     try {
       const snapshot = shared?.() ?? (await api.state());
       state.update((value) => ({ ...value, snapshot, error: '' }));
-      const id =
-        preferred || wanted || snapshot.sessions.find((session) => !session.archived)?.id || '';
+      const candidate = preferred || wanted;
+      const id = snapshot.sessions.some((s) => s.id === candidate)
+        ? candidate
+        : snapshot.sessions.find((s) => !s.archived)?.id || '';
       if (id && snapshot.sessions.some((session) => session.id === id)) {
         if (id !== wanted && own === generation) await select(id);
         else if (id === wanted) {
@@ -225,6 +208,7 @@ export function createWorkbench(
   return {
     state,
     onEvent,
+    acceptSession: replaceSession,
     select,
     refresh,
     acceptSnapshot: (snapshot: StateResponse) =>
@@ -240,11 +224,15 @@ export function createWorkbench(
     },
     change: (
       patch: Partial<
-        Pick<WorkbenchState, 'filter' | 'sidebarOpen' | 'showArchived' | 'dialog' | 'error'>
+        Pick<
+          WorkbenchState,
+          'filter' | 'sidebarOpen' | 'showArchived' | 'dialog' | 'error' | 'feedback'
+        >
       >,
     ) => state.update((value) => ({ ...value, ...patch })),
-    draft: (text: string) =>
-      state.update((value) => ({ ...value, drafts: { ...value.drafts, [wanted]: text } })),
+    draft: (text: string, id = wanted) =>
+      state.update((value) => ({ ...value, drafts: { ...value.drafts, [id]: text } })),
+    run: mutate,
     openDialog,
     dialogField: (field: 'title' | 'cwd', text: string) =>
       state.update((value) => ({
@@ -255,7 +243,8 @@ export function createWorkbench(
       mutate(async () => {
         const value = get(state);
         if (!value.dialog) return;
-        const { kind, title, cwd, worktree, id } = value.dialog;
+        const dialog = value.dialog;
+        const { kind, title, cwd, worktree, id, pendingText } = dialog;
         if (kind === 'rename' && id) replaceSession(await api.update(id, { title }));
         else {
           const session = await api.create({
@@ -264,13 +253,34 @@ export function createWorkbench(
             worktree,
             model: value.snapshot?.defaults.model || 'gemini-3.8-flash-high',
           });
+          if (pendingText) {
+            state.update((current) => ({
+              ...current,
+              drafts: transferDraft(current.drafts, session.id, pendingText),
+            }));
+          }
           await refresh(session.id);
+          // Creation succeeded; a failed first send must retry in this session.
+          state.update((current) => ({
+            ...current,
+            dialog: current.dialog === dialog ? null : current.dialog,
+          }));
+          if (pendingText) {
+            await api.send(session.id, { text: pendingText });
+            state.update((current) => ({
+              ...current,
+              drafts: acceptDraft(current.drafts, session.id, pendingText),
+            }));
+          }
         }
-        state.update((current) => ({ ...current, dialog: null }));
+        state.update((current) => ({
+          ...current,
+          dialog: current.dialog === dialog ? null : current.dialog,
+        }));
       }),
-    update: (patch: PatchSessionRequest) =>
+    update: (patch: PatchSessionRequest, id = wanted) =>
       mutate(async () => {
-        if (wanted) replaceSession(await api.update(wanted, patch));
+        if (id) replaceSession(await api.update(id, patch));
       }),
     /** Sends the draft with uploaded attachments; resolves true once the engine took it. */
     send: async (attachments: string[] = []) => {
@@ -283,16 +293,13 @@ export function createWorkbench(
         sent = true;
         state.update((value) => ({
           ...value,
-          drafts: {
-            ...value.drafts,
-            [id]: value.drafts[id] === text ? '' : (value.drafts[id] ?? ''),
-          },
+          drafts: acceptDraft(value.drafts, id, text),
           feedback:
             response.result !== 'queued'
               ? ''
               : attachments.length
                 ? 'Queued after the current turn.'
-                : 'Message queued for the next turn.',
+                : 'Message queued for the next turn. Text arrives at the next step.',
         }));
       });
       return sent;

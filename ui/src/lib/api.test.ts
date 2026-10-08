@@ -190,3 +190,18 @@ describe('typed API boundary', () => {
     expect(request).toHaveBeenCalledTimes(23);
   });
 });
+
+it('sends typed job and loop requests through the captured routes', async () => {
+  const request = vi.fn<typeof fetch>().mockImplementation(async () => Response.json({ ok: true }));
+  const api = createApi('synthetic', request);
+  await api.createJob('a/b', { cmd: 'printf hi' });
+  await api.setLoop('a/b', { every: '15m', prompt: 'check' });
+  await api.setLoop('a/b', { at: '03:00', prompt: 'check' });
+  expect(
+    request.mock.calls.map(([path, options]) => [path, options?.method, options?.body]),
+  ).toEqual([
+    ['/api/sessions/a%2Fb/jobs', 'POST', '{"cmd":"printf hi"}'],
+    ['/api/sessions/a%2Fb/loop', 'POST', '{"every":"15m","prompt":"check"}'],
+    ['/api/sessions/a%2Fb/loop', 'POST', '{"at":"03:00","prompt":"check"}'],
+  ]);
+});

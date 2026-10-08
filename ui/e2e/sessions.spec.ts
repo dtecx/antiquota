@@ -42,8 +42,8 @@ test('creates sends streams groups renames and reloads a session', async ({ page
   await page.getByText('Agent activity', { exact: true }).click();
   await expect(page.getByText('write_to_file', { exact: true })).not.toBeVisible();
   await page.getByRole('button', { name: 'Rename session' }).click();
-  await page.getByRole('textbox', { name: 'Session name' }).fill('Renamed browser fixture');
-  await page.getByRole('button', { name: 'Save name' }).click();
+  await page.getByRole('textbox', { name: 'Session title' }).fill('Renamed browser fixture');
+  await page.getByRole('textbox', { name: 'Session title' }).press('Enter');
   await expect(
     page.getByRole('heading', { name: 'Renamed browser fixture', exact: true }),
   ).toBeVisible();

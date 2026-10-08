@@ -80,9 +80,7 @@ fn quota_cache_preserves_unknown_fields_and_disabled_window_uses_weekly_reset() 
 fn stop_cancels_an_account_lease_wait_and_releases_admission() {
     let mut server = Server::new_stopped("lease-wait", true);
     setup::start(&mut server);
-    let lease = antiquota_store::lock_file(&server.data.join("state/leases/one@example.com.lock"))
-        .unwrap()
-        .unwrap();
+    let lease = setup::lease(&server, setup::ONE);
     let paused = server.call(
         "POST",
         "/api/accounts/two@example.com/pause",

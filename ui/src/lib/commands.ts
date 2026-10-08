@@ -1,4 +1,9 @@
 /** Shares the legacy command and keyboard reference with settings and the composer. */
+import { writable } from 'svelte/store';
+export const shortcutsOpen = writable(false);
+export function shortcutLabel(key: string, platform = globalThis.navigator?.platform ?? '') {
+  return /Mac/.test(platform) ? key : key.replaceAll('⌘', 'Ctrl+').replaceAll('⇧', 'Shift+');
+}
 export const commands = [
   ['/help', 'keyboard shortcuts and every command'],
   ['/goal', 'set a goal; empty opens the goal panel'],

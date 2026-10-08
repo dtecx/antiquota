@@ -33,7 +33,9 @@ describe('session workbench store', () => {
     expect(get(workbench.state).error).toBe('offline');
     await workbench.send();
     expect(get(workbench.state).drafts.fixture).toBe('');
-    expect(get(workbench.state).feedback).toBe('Message queued for the next turn.');
+    expect(get(workbench.state).feedback).toBe(
+      'Message queued for the next turn. Text arrives at the next step.',
+    );
   });
   it('sends attachment-only messages and reports whether the engine took them', async () => {
     const api = fixtureApi();
@@ -228,4 +230,55 @@ it('rename saves its original dialog target after changing sessions', async () =
   await workbench.saveDialog();
   expect(api.update).toHaveBeenCalledWith('fixture', { title: 'Original target' });
   expect(get(workbench.state).selected?.id).toBe('b');
+});
+
+it('sends an initial draft to its created session and retains it after a failed first send', async () => {
+  const api = fixtureApi();
+  api.state = async () => fixtureState([]);
+  const workbench = createWorkbench(api);
+  await workbench.refresh();
+  workbench.draft('First message');
+  workbench.openDialog('create', { pendingText: 'First message' });
+  api.state = async () => fixtureState([fixtureSession('new')]);
+  api.send = vi.fn(async () => {
+    throw new Error('offline');
+  });
+  await workbench.saveDialog();
+  expect(api.send).toHaveBeenCalledWith('new', { text: 'First message' });
+  expect(get(workbench.state).dialog).toBeNull();
+  expect(get(workbench.state).drafts.new).toBe('First message');
+  expect(get(workbench.state).error).toBe('offline');
+  api.send = vi.fn(async () => ({ result: 'started' }));
+  await workbench.send();
+  expect(get(workbench.state).drafts.new).toBe('');
+});
+
+it('selects a remaining unarchived session after the selected session is deleted', async () => {
+  const api = fixtureApi(),
+    workbench = createWorkbench(api);
+  await workbench.refresh();
+  api.state = async () => fixtureState([fixtureSession('next')]);
+  await workbench.refresh();
+  expect(get(workbench.state).selected?.id).toBe('next');
+});
+it('preserves a draft typed in the announced session before create returns', async () => {
+  const api = fixtureApi(),
+    workbench = createWorkbench(api);
+  api.state = async () => fixtureState([]);
+  await workbench.refresh();
+  workbench.draft('Original first prompt');
+  let finish: (value: ReturnType<typeof fixtureSession>) => void = () => {};
+  api.create = () =>
+    new Promise((resolve) => {
+      finish = resolve;
+    });
+  workbench.openDialog('create', { pendingText: 'Original first prompt' });
+  const saving = workbench.saveDialog();
+  await workbench.select('announced');
+  workbench.draft('Newer draft');
+  api.state = async () => fixtureState([fixtureSession('announced')]);
+  finish(fixtureSession('announced'));
+  await saving;
+  expect(api.send).toHaveBeenCalledWith('announced', { text: 'Original first prompt' });
+  expect(get(workbench.state).drafts.announced).toBe('Newer draft');
 });

@@ -217,6 +217,23 @@ pub struct GoalRequest {
     #[ts(optional)]
     pub max_rounds: Option<u64>,
 }
+/// Typed browser inputs; the transport keeps legacy loose-value compatibility.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, TS)]
+pub struct JobStartRequest {
+    pub cmd: String,
+    #[ts(optional)]
+    pub every: Option<String>,
+    #[ts(optional)]
+    pub notify: Option<bool>,
+}
+#[derive(Debug, Clone, Default, Serialize, Deserialize, TS)]
+pub struct LoopRequest {
+    pub prompt: String,
+    #[ts(optional)]
+    pub every: Option<String>,
+    #[ts(optional)]
+    pub at: Option<String>,
+}
 /// A job with the end of its log, for the log view.
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct JobLogResponse {

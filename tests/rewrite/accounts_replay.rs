@@ -44,9 +44,7 @@ fn captured_account_routes_preserve_exact_overviews_and_routing_records() {
             .iter()
             .all(|row| row["busy"] == false)
     });
-    let lease = antiquota_store::lock_file(&server.data.join("state/leases/one@example.com.lock"))
-        .unwrap()
-        .unwrap();
+    let lease = setup::lease(&server, setup::ONE);
     let busy_delete = server.call("DELETE", "/api/accounts/one@example.com", None);
     assert_eq!(busy_delete.status, 400);
     assert!(

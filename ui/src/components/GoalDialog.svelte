@@ -1,7 +1,10 @@
 <!-- Owns the goal form: objective, optional check, verifier and round limit. -->
 <script lang="ts">
+  import { get } from 'svelte/store';
   import type { Workbench } from '../lib/workbench';
   import { goalDialog, goalRequest } from '../lib/goals';
+  import { modelFamilies } from '../lib/models';
+  import { modelPool, pools } from '../lib/account-format';
   import Icon from './Icon.svelte';
   let { workbench }: { workbench: Workbench } = $props();
   const view = $derived(workbench.state);
@@ -17,17 +20,24 @@
   }
   async function start() {
     const draft = $goalDialog;
-    if (!draft) return;
+    if (!draft || draft.saving) return;
+    if ($view.mutating) {
+      goalDialog.set({ ...draft, error: 'Wait for the current action to finish.' });
+      return;
+    }
     const request = goalRequest(draft);
     if (typeof request === 'string') {
       goalDialog.set({ ...draft, error: request });
       return;
     }
-    goalDialog.set({ ...draft, saving: true, error: '' });
-    await workbench.setGoal(request);
-    const error = $view.error;
+    const owner = workbench;
+    const pending = { ...draft, saving: true, error: '' };
+    goalDialog.set(pending);
+    await owner.setGoal(request);
+    if (get(goalDialog) !== pending) return;
+    const error = get(owner.state).error;
     if (error) {
-      workbench.change({ error: '' });
+      owner.change({ error: '' });
       goalDialog.update((value) => (value ? { ...value, saving: false, error } : value));
     } else goalDialog.set(null);
   }
@@ -90,10 +100,13 @@
             value={$goalDialog.verifier_model}
             onchange={(event) => field('verifier_model', event.currentTarget.value)}
           >
-            {#each models as model (model.id)}<option value={model.id}>{model.label}</option>{/each}
-            {#if !models.some((model) => model.id === $goalDialog?.verifier_model)}<option
-                value={$goalDialog.verifier_model}>{$goalDialog.verifier_model}</option
-              >{/if}
+            {#each pools as pool (pool.key)}<optgroup label={pool.label}>
+                {#each modelFamilies(models, $goalDialog.verifier_model).filter((f) => modelPool(f.variants[0]?.id ?? '') === pool.key) as family (family.name)}
+                  {#each family.variants as variant (variant.id)}<option value={variant.id}
+                      >{family.name}{variant.effort ? ` · ${variant.effort}` : ''} · {variant.id}</option
+                    >{/each}
+                {/each}
+              </optgroup>{/each}
           </select></label
         >
         <label class="rounds"

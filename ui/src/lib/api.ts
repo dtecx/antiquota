@@ -21,6 +21,9 @@ import type { ApprovalAnswerRequest } from '../gen/ApprovalAnswerRequest';
 import type { ApprovalResponse } from '../gen/ApprovalResponse';
 import type { PermissionsRequest } from '../gen/PermissionsRequest';
 import type { GoalRequest } from '../gen/GoalRequest';
+import type { JobStartRequest } from '../gen/JobStartRequest';
+import type { LoopRequest } from '../gen/LoopRequest';
+import type { LoopResponse } from '../gen/LoopResponse';
 import type { Job } from '../gen/Job';
 import type { JobLogResponse } from '../gen/JobLogResponse';
 import type { FileText, Tree } from './git';
@@ -194,6 +197,10 @@ export function createApi(token: string, request: typeof fetch = fetch) {
       call<Session>('POST', `${sessionPath(id)}/goal`, body),
     resumeGoal: (id: string) => call<OkResponse>('POST', `${sessionPath(id)}/goal/resume`, {}),
     clearGoal: (id: string) => call<OkResponse>('DELETE', `${sessionPath(id)}/goal`),
+    createJob: (id: string, body: JobStartRequest) =>
+      call<Job>('POST', `${sessionPath(id)}/jobs`, body),
+    setLoop: (id: string, body: LoopRequest) =>
+      call<LoopResponse>('POST', `${sessionPath(id)}/loop`, body),
     stopJob: (id: string, jid: string) =>
       call<Job>('POST', `${sessionPath(id)}/jobs/${encodeURIComponent(jid)}/stop`, {}),
     jobLog: (id: string, jid: string) =>

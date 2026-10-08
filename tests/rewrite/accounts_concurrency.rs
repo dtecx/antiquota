@@ -74,14 +74,18 @@ fn python_account_lock_excludes_rust_probe_and_rust_lock_excludes_python() {
     let mut server = Server::new_stopped("python-lock", true);
     setup::start(&mut server);
     let lock = server.data.join("state/leases/one@example.com.lock");
-    let script = if cfg!(windows) {
-        "import os,sys,msvcrt\nf=os.open(sys.argv[1],os.O_RDWR|os.O_CREAT,0o600)\nmsvcrt.locking(f,msvcrt.LK_NBLCK,1)\nprint('locked',flush=True)\nsys.stdin.read()\n"
+    let lock_code = if cfg!(windows) {
+        "msvcrt.locking(f,msvcrt.LK_NBLCK,1)"
     } else {
-        "import os,sys,fcntl\nf=os.open(sys.argv[1],os.O_RDWR|os.O_CREAT,0o600)\nfcntl.flock(f,fcntl.LOCK_EX|fcntl.LOCK_NB)\nprint('locked',flush=True)\nsys.stdin.read()\n"
+        "fcntl.flock(f,fcntl.LOCK_EX|fcntl.LOCK_NB)"
     };
+    let module = if cfg!(windows) { "msvcrt" } else { "fcntl" };
+    let script = format!(
+        "import os,sys,time,{module}\nf=os.open(sys.argv[1],os.O_RDWR|os.O_CREAT,0o600)\ndeadline=time.monotonic()+8\nwhile True:\n try:\n  {lock_code}\n  break\n except OSError:\n  if len(sys.argv)<3 or time.monotonic()>=deadline: raise\n  time.sleep(0.01)\nprint('locked',flush=True)\nsys.stdin.read()\n"
+    );
     let python = if cfg!(windows) { "python" } else { "python3" };
     let mut child = Command::new(python)
-        .args(["-c", script, lock.to_str().unwrap()])
+        .args(["-c", &script, lock.to_str().unwrap(), "wait"])
         .current_dir(&server.project)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -110,9 +114,9 @@ fn python_account_lock_excludes_rust_probe_and_rust_lock_excludes_python() {
     );
     drop(child.stdin.take());
     assert!(child.wait().unwrap().success());
-    let rust = antiquota_store::lock_file(&lock).unwrap().unwrap();
+    let rust = setup::lease(&server, setup::ONE);
     let output = Command::new(python)
-        .args(["-c", script, lock.to_str().unwrap()])
+        .args(["-c", &script, lock.to_str().unwrap()])
         .current_dir(&server.project)
         .stdin(Stdio::null())
         .output()

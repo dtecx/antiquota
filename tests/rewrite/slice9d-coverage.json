@@ -1,0 +1,904 @@
+{
+  "slice": "9d",
+  "passed_before": 493,
+  "passed_after": 582,
+  "added": 89,
+  "feature_ids": [
+    "F-407",
+    "F-453",
+    "F-456",
+    "F-462",
+    "F-463",
+    "F-464",
+    "F-465",
+    "F-466",
+    "F-467",
+    "F-470",
+    "F-474",
+    "F-476",
+    "F-478",
+    "F-479",
+    "F-480",
+    "F-481",
+    "F-482",
+    "F-483",
+    "F-484",
+    "F-485",
+    "F-486",
+    "F-487",
+    "F-488",
+    "F-489",
+    "F-490",
+    "F-491",
+    "F-492",
+    "F-493",
+    "F-494",
+    "F-495",
+    "F-496",
+    "F-497",
+    "F-498",
+    "F-499",
+    "F-549",
+    "F-551",
+    "F-552",
+    "F-793",
+    "F-794",
+    "F-795",
+    "F-796",
+    "F-797",
+    "F-798",
+    "F-799",
+    "F-800",
+    "F-801",
+    "F-802",
+    "F-803",
+    "F-804",
+    "F-805",
+    "F-806",
+    "F-807",
+    "F-808",
+    "F-809",
+    "F-810",
+    "F-811",
+    "F-812",
+    "F-813",
+    "F-814",
+    "F-815",
+    "F-816",
+    "F-817",
+    "F-818",
+    "F-819",
+    "F-820",
+    "F-821",
+    "F-822",
+    "F-823",
+    "F-824",
+    "F-825",
+    "F-826",
+    "F-827",
+    "F-828",
+    "F-829",
+    "F-830",
+    "F-831",
+    "F-832",
+    "F-833",
+    "F-834",
+    "F-835",
+    "F-838",
+    "F-839",
+    "F-840",
+    "F-841",
+    "F-842",
+    "F-847",
+    "F-848",
+    "F-852",
+    "F-854"
+  ],
+  "tests": {
+    "F-407": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "export downloads full durable Markdown with roles thinking tools notices and a safe filename",
+      "references": [
+        "ui/e2e/composer.spec.ts::export downloads full durable Markdown with roles thinking tools notices and a safe filename",
+        "ui/src/lib/export.test.ts::downloads a Markdown Blob and releases the temporary anchor and object URL"
+      ],
+      "proof": "Playwright receives a browser download, reads its byte stream and checks Markdown content and a .md filename. The download unit also checks the Blob type, anchor click and resource cleanup."
+    },
+    "F-453": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "history recalls only explicit durable prompts clamps oldest restores drafts and isolates sessions",
+      "references": [
+        "ui/e2e/composer.spec.ts::history recalls only explicit durable prompts clamps oldest restores drafts and isolates sessions",
+        "ui/src/lib/prompt-history.test.ts::restores only explicit durable user and message prompts in their recorded order",
+        "ui/e2e/composer-races.spec.ts::live durable history refreshes without duplicating submitted prompts and same-session reopen restores it"
+      ],
+      "proof": "Opening A and B recalls only each session’s explicit user prompts; generated goal/job inputs are excluded, and reload restores A’s latest prompt. The race scenario also reopens the same session after external durable events."
+    },
+    "F-456": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "global modifier shortcuts target the active pane and draft creation and deletion require intent",
+      "references": [
+        "ui/e2e/composer.spec.ts::global modifier shortcuts target the active pane and draft creation and deletion require intent",
+        "ui/src/lib/workbench.test.ts::selects a remaining unarchived session after the selected session is deleted"
+      ],
+      "proof": "The browser creates an older peer plus left and right sessions. Confirmed deletion of the selected left opens the more recent right, deleting right opens the older peer, and deleting that final selected peer opens New session without page navigation. The empty engine session list is then asserted before explicit creation."
+    },
+    "F-462": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "inline title commits on Enter or blur cancels on Escape and leaves empty edits unchanged",
+      "references": [
+        "ui/e2e/composer.spec.ts::inline title commits on Enter or blur cancels on Escape and leaves empty edits unchanged",
+        "ui/e2e/composer.spec.ts::header and meter render status queue usage worktree paths pool quota and model capacities"
+      ],
+      "proof": "The browser checks the session heading and ~/Desktop/test path; the metadata scenario checks the worktree branch label instead of its full folder path."
+    },
+    "F-463": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "header and meter render status queue usage worktree paths pool quota and model capacities",
+      "references": [
+        "ui/e2e/composer.spec.ts::header and meter render status queue usage worktree paths pool quota and model capacities",
+        "ui/e2e/composer.spec.ts::inline title commits on Enter or blur cancels on Escape and leaves empty edits unchanged",
+        "ui/src/lib/header.test.ts::shows a worktree branch while retaining its full path, base and repository"
+      ],
+      "proof": "The worktree tooltip is asserted exactly as full worktree path, base main and origin repository. The rename scenario asserts the ordinary folder tooltip equals the complete sandbox project path."
+    },
+    "F-464": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "header and meter render status queue usage worktree paths pool quota and model capacities",
+      "references": [
+        "ui/e2e/composer.spec.ts::header and meter render status queue usage worktree paths pool quota and model capacities",
+        "ui/src/lib/header.test.ts::includes the sleeping deadline in local clock format and hides it for other states"
+      ],
+      "proof": "Synthetic session snapshots render working, needs your approval, waiting for an account, running check, verifier reviewing and sleeping until; idle removes the status label."
+    },
+    "F-465": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "header and meter render status queue usage worktree paths pool quota and model capacities",
+      "references": [
+        "ui/e2e/composer.spec.ts::header and meter render status queue usage worktree paths pool quota and model capacities"
+      ],
+      "proof": "The header must contain 1.2k in · 2.4k out and 2 queued from the supplied cumulative usage and two-message queue."
+    },
+    "F-466": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "header and meter render status queue usage worktree paths pool quota and model capacities",
+      "references": [
+        "ui/e2e/composer.spec.ts::header and meter render status queue usage worktree paths pool quota and model capacities"
+      ],
+      "proof": "The browser title is exactly ● Metadata fixture · antiquota while running and Metadata fixture · antiquota when idle."
+    },
+    "F-467": {
+      "path": "ui/e2e/media.spec.ts",
+      "test": "rejects oversized files and sends an attachment without text",
+      "references": [
+        "ui/e2e/media.spec.ts::rejects oversized files and sends an attachment without text"
+      ],
+      "proof": "The idle composer with no text or accepted attachment has disabled Send. A valid attachment enables it and can be sent without text."
+    },
+    "F-470": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "slash completion wraps accepts Tab and Enter respects Escape IME and multiline sizing",
+      "references": [
+        "ui/e2e/composer.spec.ts::slash completion wraps accepts Tab and Enter respects Escape IME and multiline sizing"
+      ],
+      "proof": "A 40-line draft grows above 150 px but no higher than 330 px; the configured 820 px viewport permits 328 px content (40 percent) plus its 2 px border. Replacing it with a short draft shrinks the control."
+    },
+    "F-474": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "global modifier shortcuts target the active pane and draft creation and deletion require intent",
+      "references": [
+        "ui/e2e/composer.spec.ts::global modifier shortcuts target the active pane and draft creation and deletion require intent",
+        "ui/src/lib/workbench.test.ts::sends an initial draft to its created session and retains it after a failed first send",
+        "ui/src/lib/workbench.test.ts::preserves a draft typed in the announced session before create returns"
+      ],
+      "proof": "Enter with an uncreated draft opens New session without creating durable state. Cancel keeps the draft; explicit dialog creation then renders that exact initial message and clears the accepted draft."
+    },
+    "F-476": {
+      "path": "ui/e2e/sessions.spec.ts",
+      "test": "queues a second message then stops the running turn",
+      "references": [
+        "ui/e2e/sessions.spec.ts::queues a second message then stops the running turn",
+        "ui/src/lib/workbench.test.ts::keeps a failed-send draft and clears it only after successful queue acceptance"
+      ],
+      "proof": "The running turn exposes Queue and browser feedback says Message queued for the next turn. The workbench unit asserts the complete feedback additionally says Text arrives at the next step."
+    },
+    "F-478": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "shell output feeds the next prompt while notes memory fallback and state remain local",
+      "references": [
+        "ui/e2e/composer.spec.ts::shell output feeds the next prompt while notes memory fallback and state remain local",
+        "ui/src/lib/composer-actions.test.ts::routes shell commands and notes locally and sends the exact init instruction with optional context"
+      ],
+      "proof": "The ! command executes printf shell-marker; pwd. Stored pending_note contains both the marker and the exact sandbox project folder printed by pwd; the next actual fake-agent prompt includes the marker, and accepted delivery clears pending_note."
+    },
+    "F-479": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "shell output feeds the next prompt while notes memory fallback and state remain local",
+      "references": [
+        "ui/e2e/composer.spec.ts::shell output feeds the next prompt while notes memory fallback and state remain local",
+        "ui/src/lib/composer-actions.test.ts::routes shell commands and notes locally and sends the exact init instruction with optional context"
+      ],
+      "proof": "A first # note creates project GEMINI.md; a second # note appends to that existing file. Its contents must retain both note texts, and browser feedback must report Saved to plus the exact absolute project GEMINI.md path."
+    },
+    "F-480": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "shell output feeds the next prompt while notes memory fallback and state remain local",
+      "references": [
+        "ui/e2e/composer.spec.ts::shell output feeds the next prompt while notes memory fallback and state remain local"
+      ],
+      "proof": "Entering !printf sets the shell form class and green border, shows the Run action and the output-goes-to-next-prompt hint."
+    },
+    "F-481": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "shell output feeds the next prompt while notes memory fallback and state remain local",
+      "references": [
+        "ui/e2e/composer.spec.ts::shell output feeds the next prompt while notes memory fallback and state remain local"
+      ],
+      "proof": "Entering # sets the note form class, shows Save and the Save a note to project GEMINI.md hint."
+    },
+    "F-482": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "history recalls only explicit durable prompts clamps oldest restores drafts and isolates sessions",
+      "references": [
+        "ui/e2e/composer.spec.ts::history recalls only explicit durable prompts clamps oldest restores drafts and isolates sessions",
+        "ui/src/lib/prompt-history.test.ts::clamps the oldest prompt and returns the original draft after the newest prompt",
+        "ui/src/lib/prompt-history.test.ts::adopts a prompt remembered before its durable event without duplicating it",
+        "ui/src/lib/prompt-history.test.ts::claims a durable event that arrives before API acceptance without adding a duplicate",
+        "ui/src/lib/prompt-history.test.ts::retains repeated identical durable prompts and separate legitimate repeated sends"
+      ],
+      "proof": "Up traverses the two explicit prompts, clamps the oldest and Down traverses newer prompts back to the original unsent draft. Editing exits recall. Cross-session selection retains independent drafts."
+    },
+    "F-483": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "model families preserve effort expose pools and unknown models and require bypass confirmation",
+      "references": [
+        "ui/e2e/composer.spec.ts::model families preserve effort expose pools and unknown models and require bypass confirmation"
+      ],
+      "proof": "The family selector exposes exactly Gemini and Claude / GPT optgroups; the supplied Flash and Pro effort variants are selectable through their families."
+    },
+    "F-484": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "model families preserve effort expose pools and unknown models and require bypass confirmation",
+      "references": [
+        "ui/e2e/composer.spec.ts::model families preserve effort expose pools and unknown models and require bypass confirmation",
+        "ui/src/lib/models.test.ts::preserves effort across families and retains unknown IDs"
+      ],
+      "proof": "After /model provider-future-model the family selector contains and selects the unknown ID; the real session metadata retains that exact ID."
+    },
+    "F-485": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "model families preserve effort expose pools and unknown models and require bypass confirmation",
+      "references": [
+        "ui/e2e/composer.spec.ts::model families preserve effort expose pools and unknown models and require bypass confirmation"
+      ],
+      "proof": "Selecting the single-variant Claude Opus family disables the effort selector."
+    },
+    "F-486": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "model families preserve effort expose pools and unknown models and require bypass confirmation",
+      "references": [
+        "ui/e2e/composer.spec.ts::model families preserve effort expose pools and unknown models and require bypass confirmation",
+        "ui/src/lib/models.test.ts::preserves effort across families and retains unknown IDs"
+      ],
+      "proof": "Choosing Flash low then Pro preserves low. The pure family unit additionally proves a family without a matching prior effort selects its high variant."
+    },
+    "F-487": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "model families preserve effort expose pools and unknown models and require bypass confirmation",
+      "references": [
+        "ui/e2e/composer.spec.ts::model families preserve effort expose pools and unknown models and require bypass confirmation"
+      ],
+      "proof": "The verifier selector includes every supplied concrete model ID. Its Flash-low option is asserted exactly as Gemini Flash · low · gemini-3.8-flash-low."
+    },
+    "F-488": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "model families preserve effort expose pools and unknown models and require bypass confirmation",
+      "references": [
+        "ui/e2e/composer.spec.ts::model families preserve effort expose pools and unknown models and require bypass confirmation"
+      ],
+      "proof": "Selecting Gemini Pro after Flash low updates the effort selector to the concrete gemini-pro-low session model; selecting Claude Opus updates its available effort state."
+    },
+    "F-489": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "model families preserve effort expose pools and unknown models and require bypass confirmation",
+      "references": [
+        "ui/e2e/composer.spec.ts::model families preserve effort expose pools and unknown models and require bypass confirmation",
+        "ui/src/lib/composer-actions.test.ts::/effort LOW dispatches its application action"
+      ],
+      "proof": "Changing the effort picker to Flash low precedes a family switch whose selected concrete variant is Pro low, proving the low model patch is reflected in session state; the scenario separately exercises /effort high."
+    },
+    "F-490": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "model families preserve effort expose pools and unknown models and require bypass confirmation",
+      "references": [
+        "ui/e2e/composer.spec.ts::model families preserve effort expose pools and unknown models and require bypass confirmation"
+      ],
+      "proof": "Selecting plan from the ordinary permission picker is polled in real session metadata as mode plan."
+    },
+    "F-491": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "model families preserve effort expose pools and unknown models and require bypass confirmation",
+      "references": [
+        "ui/e2e/composer.spec.ts::model families preserve effort expose pools and unknown models and require bypass confirmation",
+        "ui/src/lib/composer-actions.test.ts::captures the original session for a pending permission-picker confirmation"
+      ],
+      "proof": "The picker’s bypass option opens dangerous-action confirmation with an explicit rule-bypass warning; cancel restores default in the selector and real metadata. The ownership unit confirms acceptance patches the initiating session after selection changes."
+    },
+    "F-492": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "inline title commits on Enter or blur cancels on Escape and leaves empty edits unchanged",
+      "references": [
+        "ui/e2e/composer.spec.ts::inline title commits on Enter or blur cancels on Escape and leaves empty edits unchanged",
+        "ui/e2e/composer-races.spec.ts::busy inline rename retains edited text until its patch can run"
+      ],
+      "proof": "Enter saves a trimmed changed title and updates the heading; an empty edit leaves the stored title unchanged. The busy regression retains the edit until it can patch successfully."
+    },
+    "F-493": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "inline title commits on Enter or blur cancels on Escape and leaves empty edits unchanged",
+      "references": [
+        "ui/e2e/composer.spec.ts::inline title commits on Enter or blur cancels on Escape and leaves empty edits unchanged"
+      ],
+      "proof": "Blurring the changed nonempty title by clicking Message saves it and updates the session heading."
+    },
+    "F-494": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "inline title commits on Enter or blur cancels on Escape and leaves empty edits unchanged",
+      "references": [
+        "ui/e2e/composer.spec.ts::inline title commits on Enter or blur cancels on Escape and leaves empty edits unchanged"
+      ],
+      "proof": "Escape discards the edited title, removes the input and leaves the prior heading and stored title intact."
+    },
+    "F-495": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "header and meter render status queue usage worktree paths pool quota and model capacities",
+      "references": [
+        "ui/e2e/composer.spec.ts::header and meter render status queue usage worktree paths pool quota and model capacities",
+        "ui/src/lib/meter.test.ts::uses exact capacities and warm/hot context thresholds"
+      ],
+      "proof": "The browser shows 50% context with warm and 90% context with hot. The pure unit asserts the exact 50% warm and 80% hot boundaries plus saturation at 100%."
+    },
+    "F-496": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "header and meter render status queue usage worktree paths pool quota and model capacities",
+      "references": [
+        "ui/e2e/composer.spec.ts::header and meter render status queue usage worktree paths pool quota and model capacities"
+      ],
+      "proof": "The rendered meter contains 1.2k in / 2.4k out / 3.6k thinking from cumulative input, output and thinking usage."
+    },
+    "F-497": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "header and meter render status queue usage worktree paths pool quota and model capacities",
+      "references": [
+        "ui/e2e/composer.spec.ts::header and meter render status queue usage worktree paths pool quota and model capacities",
+        "ui/src/lib/meter.test.ts::uses serving account lowest window and excludes paused/walled/verify accounts"
+      ],
+      "proof": "The served Claude/GPT account is shown as one · Claude/GPT 50% when its windows contain 50% and 70%. The unit uses 70% and 20% and requires the lower 20% value."
+    },
+    "F-498": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "header and meter render status queue usage worktree paths pool quota and model capacities",
+      "references": [
+        "ui/e2e/composer.spec.ts::header and meter render status queue usage worktree paths pool quota and model capacities",
+        "ui/src/lib/meter.test.ts::uses serving account lowest window and excludes paused/walled/verify accounts"
+      ],
+      "proof": "The browser shows 1 accounts free in the selected Claude/GPT pool. The pure unit supplies ready, paused, walled and verification accounts and requires available: 1."
+    },
+    "F-499": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "header and meter render status queue usage worktree paths pool quota and model capacities",
+      "references": [
+        "ui/e2e/composer.spec.ts::header and meter render status queue usage worktree paths pool quota and model capacities",
+        "ui/src/lib/meter.test.ts::uses exact capacities and warm/hot context thresholds"
+      ],
+      "proof": "The browser reaches 50% at context 100000 for Claude, 65536 for GPT-OSS and 524288 for Gemini. The pure unit requires capacities 200000, 131072 and 1048576 exactly."
+    },
+    "F-549": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "rewind cancellation keeps files and confirmation restores checkpoints but refuses user edits",
+      "references": [
+        "ui/e2e/composer.spec.ts::rewind cancellation keeps files and confirmation restores checkpoints but refuses user edits",
+        "ui/src/lib/composer-actions.test.ts::/rewind 2 dispatches its application action",
+        "ui/src/lib/composer-actions.test.ts::/rewind 3 keeps its initiating session and newer drafts across confirmation",
+        "ui/src/lib/composer-actions.test.ts::canceling /rewind 1 keeps the command without executing it"
+      ],
+      "proof": "An argumentless rewind explains the required turn without confirmation. A specified turn opens confirmation; cancellation leaves files untouched, confirmation restores a captured file, and a later user edit is refused."
+    },
+    "F-551": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "export downloads full durable Markdown with roles thinking tools notices and a safe filename",
+      "references": [
+        "ui/e2e/composer.spec.ts::export downloads full durable Markdown with roles thinking tools notices and a safe filename",
+        "ui/src/lib/export.test.ts::exports durable prompts, replies, reasoning, tool calls, turn boundaries and notices",
+        "ui/src/lib/export.test.ts::retains generated prompt roles and repeated durable messages without duplicating step updates"
+      ],
+      "proof": "The downloaded Markdown asserts both repeated user prompts, goal role, turn start/end, full Thought text, assistant reply, relative tool path/error and a notice."
+    },
+    "F-552": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "export downloads full durable Markdown with roles thinking tools notices and a safe filename",
+      "references": [
+        "ui/e2e/composer.spec.ts::export downloads full durable Markdown with roles thinking tools notices and a safe filename",
+        "ui/src/lib/export.test.ts::sanitizes and limits filenames independently of the complete title in the Markdown"
+      ],
+      "proof": "The browser’s suggested filename excludes / and ends in .md. The pure unit uses an unsafe 100-character title and requires exactly 60 sanitized filename characters plus .md while retaining the full title in Markdown."
+    },
+    "F-793": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "slash reference and panel commands dispatch all settings targets without sending prompts",
+      "references": [
+        "ui/e2e/composer.spec.ts::slash reference and panel commands dispatch all settings targets without sending prompts",
+        "ui/src/lib/composer-actions.test.ts::/help opens its local entry point"
+      ],
+      "proof": "/help opens Keyboard shortcuts with all 31 command entries, including /help and /delete."
+    },
+    "F-794": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "goal and init commands use explicit objectives pause resume clear and preserve project guidance",
+      "references": [
+        "ui/e2e/composer.spec.ts::goal and init commands use explicit objectives pause resume clear and preserve project guidance",
+        "ui/src/lib/composer-actions.test.ts::opens the verified goal dialog or starts a verified goal with the configured model",
+        "ui/e2e/composer-races.spec.ts::late goal save preserves a newly opened objective"
+      ],
+      "proof": "/goal with no argument opens the Goal dialog without starting an agent turn; an objective argument creates a running goal. The command unit requires verifier true and the configured concrete verifier_model for both entry points."
+    },
+    "F-795": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "clear and compact preserve durable history and start fresh conversations with a handoff",
+      "references": [
+        "ui/e2e/composer.spec.ts::clear and compact preserve durable history and start fresh conversations with a handoff",
+        "ui/src/lib/composer-actions.test.ts::/clear dispatches its application action"
+      ],
+      "proof": "After an initial real fixture turn /clear resets conversation_id to null while keeping the durable user event unchanged and visible."
+    },
+    "F-796": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "clear and compact preserve durable history and start fresh conversations with a handoff",
+      "references": [
+        "ui/e2e/composer.spec.ts::clear and compact preserve durable history and start fresh conversations with a handoff",
+        "ui/src/lib/composer-actions.test.ts::/compact dispatches its application action"
+      ],
+      "proof": "/compact resets conversation_id and context, stores a handoff containing earlier requests, injects that handoff into the next actual fake-agent prompt, then consumes it; reload retains all three user prompts."
+    },
+    "F-797": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "rewind cancellation keeps files and confirmation restores checkpoints but refuses user edits",
+      "references": [
+        "ui/e2e/composer.spec.ts::rewind cancellation keeps files and confirmation restores checkpoints but refuses user edits",
+        "ui/src/lib/composer-actions.test.ts::/rewind 2 dispatches its application action",
+        "ui/src/lib/composer-actions.test.ts::/rewind 3 keeps its initiating session and newer drafts across confirmation",
+        "ui/src/lib/composer-actions.test.ts::canceling /rewind 1 keeps the command without executing it"
+      ],
+      "proof": "An argumentless rewind explains the required turn without confirmation. A specified turn opens confirmation; cancellation leaves files untouched, confirmation restores a captured file, and a later user edit is refused."
+    },
+    "F-798": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "export downloads full durable Markdown with roles thinking tools notices and a safe filename",
+      "references": [
+        "ui/e2e/composer.spec.ts::export downloads full durable Markdown with roles thinking tools notices and a safe filename",
+        "ui/src/lib/composer-actions.test.ts::exports durable events through the download boundary"
+      ],
+      "proof": "/export yields a real browser .md download containing the durable transcript; the command unit fetches the initiating session and passes its events to the download boundary without sending an agent prompt."
+    },
+    "F-799": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "goal and init commands use explicit objectives pause resume clear and preserve project guidance",
+      "references": [
+        "ui/e2e/composer.spec.ts::goal and init commands use explicit objectives pause resume clear and preserve project guidance",
+        "ui/src/lib/composer-actions.test.ts::routes shell commands and notes locally and sends the exact init instruction with optional context"
+      ],
+      "proof": "/init with extra context sends the instruction through the real fake-agent prompt. The unit asserts the complete exact prompt requires project layout/build/run/test conventions, improving existing GEMINI.md or AGENTS.md and staying under 80 lines."
+    },
+    "F-800": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "background commands expose their log and stop while loops and daily schedules persist and clear",
+      "references": [
+        "ui/e2e/composer.spec.ts::background commands expose their log and stop while loops and daily schedules persist and clear",
+        "ui/src/lib/composer-actions.test.ts::/bg npm test dispatches its application action",
+        "ui/src/lib/composer-actions.test.ts::explains empty background commands and unavailable effort instead of sending prompts"
+      ],
+      "proof": "An empty /bg explains /bg <command>; a supplied printf-and-sleep command creates a visible job with both output lines in its log and a working Stop control."
+    },
+    "F-801": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "background commands expose their log and stop while loops and daily schedules persist and clear",
+      "references": [
+        "ui/e2e/composer.spec.ts::background commands expose their log and stop while loops and daily schedules persist and clear",
+        "ui/src/lib/composer-actions.test.ts::/loop 15m check work dispatches its application action",
+        "ui/src/lib/composer-actions.test.ts::/loop removes the loop or schedule",
+        "ui/src/lib/composer-actions.test.ts::/loop off removes the loop or schedule",
+        "ui/src/lib/composer-actions.test.ts::/loop STOP removes the loop or schedule"
+      ],
+      "proof": "/loop 15m sets and immediately sends an interval prompt, survives reload, then /loop off removes it. The unit independently asserts the same deleteLoop call for empty, off and STOP variants."
+    },
+    "F-802": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "background commands expose their log and stop while loops and daily schedules persist and clear",
+      "references": [
+        "ui/e2e/composer.spec.ts::background commands expose their log and stop while loops and daily schedules persist and clear",
+        "ui/src/lib/composer-actions.test.ts::/schedule 03:00 check work dispatches its application action",
+        "ui/src/lib/composer-actions.test.ts::/schedule removes the loop or schedule",
+        "ui/src/lib/composer-actions.test.ts::/schedule off removes the loop or schedule",
+        "ui/src/lib/composer-actions.test.ts::/schedule stop removes the loop or schedule"
+      ],
+      "proof": "/schedule 03:00 shows and persists a daily prompt through reload, then /schedule off removes it. The unit independently asserts deletion for empty, off and stop variants."
+    },
+    "F-803": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "shell output feeds the next prompt while notes memory fallback and state remain local",
+      "references": [
+        "ui/e2e/composer.spec.ts::shell output feeds the next prompt while notes memory fallback and state remain local",
+        "ui/src/lib/composer-actions.test.ts::shows handoff state and falls back from GEMINI.md to AGENTS.md for memory"
+      ],
+      "proof": "/memory initially explains missing GEMINI.md; after a # note it opens that file, and after its removal it opens the existing AGENTS.md fallback with its exact guidance text."
+    },
+    "F-804": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "shell output feeds the next prompt while notes memory fallback and state remain local",
+      "references": [
+        "ui/e2e/composer.spec.ts::shell output feeds the next prompt while notes memory fallback and state remain local",
+        "ui/src/lib/composer-actions.test.ts::shows handoff state and falls back from GEMINI.md to AGENTS.md for memory"
+      ],
+      "proof": "/state opens the handoff state · Local prefixes dialog whose file contents include the stored session title."
+    },
+    "F-805": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "goal and init commands use explicit objectives pause resume clear and preserve project guidance",
+      "references": [
+        "ui/e2e/composer.spec.ts::goal and init commands use explicit objectives pause resume clear and preserve project guidance",
+        "ui/src/lib/composer-actions.test.ts::/stop dispatches its application action"
+      ],
+      "proof": "After a running objective /stop drives real session status to idle and its goal to paused."
+    },
+    "F-806": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "goal and init commands use explicit objectives pause resume clear and preserve project guidance",
+      "references": [
+        "ui/e2e/composer.spec.ts::goal and init commands use explicit objectives pause resume clear and preserve project guidance",
+        "ui/src/lib/composer-actions.test.ts::/resume dispatches its application action"
+      ],
+      "proof": "/resume changes the paused goal back to running before the scenario stops it again."
+    },
+    "F-807": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "goal and init commands use explicit objectives pause resume clear and preserve project guidance",
+      "references": [
+        "ui/e2e/composer.spec.ts::goal and init commands use explicit objectives pause resume clear and preserve project guidance",
+        "ui/src/lib/composer-actions.test.ts::/cleargoal dispatches its application action"
+      ],
+      "proof": "After pausing a goal /cleargoal removes its visible goal region."
+    },
+    "F-808": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "slash reference and panel commands dispatch all settings targets without sending prompts",
+      "references": [
+        "ui/e2e/composer.spec.ts::slash reference and panel commands dispatch all settings targets without sending prompts",
+        "ui/src/lib/composer-actions.test.ts::/new opens its local entry point"
+      ],
+      "proof": "/new opens New session, can be canceled, and does not send an agent prompt."
+    },
+    "F-809": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "model families preserve effort expose pools and unknown models and require bypass confirmation",
+      "references": [
+        "ui/e2e/composer.spec.ts::model families preserve effort expose pools and unknown models and require bypass confirmation",
+        "ui/src/lib/composer-actions.test.ts::/model custom-model dispatches its application action"
+      ],
+      "proof": "/model provider-future-model changes both the picker and real stored model to that exact otherwise unknown ID."
+    },
+    "F-810": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "model families preserve effort expose pools and unknown models and require bypass confirmation",
+      "references": [
+        "ui/e2e/composer.spec.ts::model families preserve effort expose pools and unknown models and require bypass confirmation",
+        "ui/src/lib/composer-actions.test.ts::/effort LOW dispatches its application action",
+        "ui/src/lib/composer-actions.test.ts::explains empty background commands and unavailable effort instead of sending prompts"
+      ],
+      "proof": "/effort high selects gemini-pro-high in the current family; /effort impossible explains that the family has no such effort instead of sending a prompt."
+    },
+    "F-811": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "model families preserve effort expose pools and unknown models and require bypass confirmation",
+      "references": [
+        "ui/e2e/composer.spec.ts::model families preserve effort expose pools and unknown models and require bypass confirmation",
+        "ui/src/lib/composer-actions.test.ts::/mode plan dispatches its application action",
+        "ui/src/lib/composer-actions.test.ts::/mode bypass keeps its initiating session and newer drafts across confirmation"
+      ],
+      "proof": "/mode accept-edits, plan and default update the mode selector; /mode bypass requires confirmation before selecting bypass."
+    },
+    "F-812": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "model families preserve effort expose pools and unknown models and require bypass confirmation",
+      "references": [
+        "ui/e2e/composer.spec.ts::model families preserve effort expose pools and unknown models and require bypass confirmation",
+        "ui/src/lib/composer-actions.test.ts::/rename Renamed session dispatches its application action"
+      ],
+      "proof": "/rename Renamed through command updates the displayed session heading."
+    },
+    "F-813": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "slash reference and panel commands dispatch all settings targets without sending prompts",
+      "references": [
+        "ui/e2e/composer.spec.ts::slash reference and panel commands dispatch all settings targets without sending prompts",
+        "ui/src/lib/composer-actions.test.ts::/quota dispatches its application action",
+        "ui/src/lib/api.test.ts::uses exact account, login, routing and defaults routes with encoded identities",
+        "tests/rewrite/accounts_replay.rs::captured_account_routes_preserve_exact_overviews_and_routing_records"
+      ],
+      "proof": "/quota causes another real synthetic /quota call. The command unit requires the global probeAccounts operation without a session or slot filter; the API unit requires POST /api/accounts/probe and captured account replay covers its multi-account overview and busy-slot handling."
+    },
+    "F-814": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "slash reference and panel commands dispatch all settings targets without sending prompts",
+      "references": [
+        "ui/e2e/composer.spec.ts::slash reference and panel commands dispatch all settings targets without sending prompts",
+        "ui/src/lib/composer-actions.test.ts::/usage opens its settings section without an agent prompt"
+      ],
+      "proof": "/usage opens Settings with Usage marked aria-current page; all panel commands leave the fake-agent turn list empty."
+    },
+    "F-815": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "slash reference and panel commands dispatch all settings targets without sending prompts",
+      "references": [
+        "ui/e2e/composer.spec.ts::slash reference and panel commands dispatch all settings targets without sending prompts",
+        "ui/src/lib/composer-actions.test.ts::/accounts opens its settings section without an agent prompt"
+      ],
+      "proof": "/accounts opens Settings with Accounts marked aria-current page; all panel commands leave the fake-agent turn list empty."
+    },
+    "F-816": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "slash reference and panel commands dispatch all settings targets without sending prompts",
+      "references": [
+        "ui/e2e/composer.spec.ts::slash reference and panel commands dispatch all settings targets without sending prompts",
+        "ui/src/lib/composer-actions.test.ts::/login opens its local entry point"
+      ],
+      "proof": "/login opens Add Google account and can be closed without an agent turn or real authorization."
+    },
+    "F-817": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "slash reference and panel commands dispatch all settings targets without sending prompts",
+      "references": [
+        "ui/e2e/composer.spec.ts::slash reference and panel commands dispatch all settings targets without sending prompts",
+        "ui/src/lib/composer-actions.test.ts::/settings opens its settings section without an agent prompt"
+      ],
+      "proof": "/settings opens Settings with General marked aria-current page; all panel commands leave the fake-agent turn list empty."
+    },
+    "F-818": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "slash reference and panel commands dispatch all settings targets without sending prompts",
+      "references": [
+        "ui/e2e/composer.spec.ts::slash reference and panel commands dispatch all settings targets without sending prompts",
+        "ui/src/lib/composer-actions.test.ts::/stack opens its settings section without an agent prompt"
+      ],
+      "proof": "/stack opens Settings with Skills marked aria-current page; all panel commands leave the fake-agent turn list empty. The broken legacy stack-drawer entry point is repaired by routing to the existing Skills settings pane."
+    },
+    "F-819": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "slash reference and panel commands dispatch all settings targets without sending prompts",
+      "references": [
+        "ui/e2e/composer.spec.ts::slash reference and panel commands dispatch all settings targets without sending prompts",
+        "ui/src/lib/composer-actions.test.ts::/permissions opens its settings section without an agent prompt"
+      ],
+      "proof": "/permissions opens Settings with Permissions marked aria-current page; all panel commands leave the fake-agent turn list empty."
+    },
+    "F-820": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "global modifier shortcuts target the active pane and draft creation and deletion require intent",
+      "references": [
+        "ui/e2e/composer.spec.ts::global modifier shortcuts target the active pane and draft creation and deletion require intent",
+        "ui/src/lib/composer-actions.test.ts::/delete keeps its initiating session and newer drafts across confirmation",
+        "ui/src/lib/composer-actions.test.ts::canceling /delete keeps the command without executing it"
+      ],
+      "proof": "/delete cancellation preserves the selected session; confirmation returns 404 for that session, selects the remaining session and preserves the project file. The unit keeps the original selected target and both newer drafts across a delayed confirmation."
+    },
+    "F-821": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "slash reference and panel commands dispatch all settings targets without sending prompts",
+      "references": [
+        "ui/e2e/composer.spec.ts::slash reference and panel commands dispatch all settings targets without sending prompts",
+        "ui/src/lib/composer-actions.test.ts::/skills opens its settings section without an agent prompt"
+      ],
+      "proof": "/skills opens Settings with Skills marked aria-current page; all panel commands leave the fake-agent turn list empty."
+    },
+    "F-822": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "slash reference and panel commands dispatch all settings targets without sending prompts",
+      "references": [
+        "ui/e2e/composer.spec.ts::slash reference and panel commands dispatch all settings targets without sending prompts",
+        "ui/src/lib/composer-actions.test.ts::/hooks opens its settings section without an agent prompt"
+      ],
+      "proof": "/hooks opens Settings with Hooks marked aria-current page; all panel commands leave the fake-agent turn list empty."
+    },
+    "F-823": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "slash reference and panel commands dispatch all settings targets without sending prompts",
+      "references": [
+        "ui/e2e/composer.spec.ts::slash reference and panel commands dispatch all settings targets without sending prompts",
+        "ui/src/lib/composer-actions.test.ts::/mcp opens its settings section without an agent prompt"
+      ],
+      "proof": "/mcp opens Settings with MCP servers marked aria-current page; all panel commands leave the fake-agent turn list empty."
+    },
+    "F-824": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "slash completion wraps accepts Tab and Enter respects Escape IME and multiline sizing",
+      "references": [
+        "ui/e2e/composer.spec.ts::slash completion wraps accepts Tab and Enter respects Escape IME and multiline sizing",
+        "ui/src/lib/autocomplete.test.ts::shares all 31 commands and filters slash prefixes without case sensitivity"
+      ],
+      "proof": "The browser shows all 31 slash suggestions; the pure controller filters /M without case sensitivity and filters /BG to /bg."
+    },
+    "F-825": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "file completions discard late queries insert at the caret and dismiss after the blur grace period",
+      "references": [
+        "ui/e2e/composer.spec.ts::file completions discard late queries insert at the caret and dismiss after the blur grace period",
+        "ui/src/lib/autocomplete.test.ts::queries a mention before the caret and preserves its @, prefix and suffix when applied"
+      ],
+      "proof": "The browser queries files before the caret; Tab inserts @new.txt and a clicked suggestion inserts into a prefix/suffix draft without removing @ or the suffix."
+    },
+    "F-826": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "file completions discard late queries insert at the caret and dismiss after the blur grace period",
+      "references": [
+        "ui/e2e/composer.spec.ts::file completions discard late queries insert at the caret and dismiss after the blur grace period",
+        "ui/src/lib/autocomplete.test.ts::ignores old query results and errors across text and session changes",
+        "ui/src/lib/autocomplete.test.ts::invalidates pending lookups when closed or cleared, including a session with no selection"
+      ],
+      "proof": "A held old-file query completes after the new-file results; old.txt must remain absent. The unit additionally rejects old text/session results and errors, closed lookups and disposed controllers."
+    },
+    "F-827": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "slash completion wraps accepts Tab and Enter respects Escape IME and multiline sizing",
+      "references": [
+        "ui/e2e/composer.spec.ts::slash completion wraps accepts Tab and Enter respects Escape IME and multiline sizing",
+        "ui/src/lib/autocomplete.test.ts::wraps selection in both directions and safely handles no matches or a failed lookup"
+      ],
+      "proof": "ArrowUp from the first slash item selects the last and ArrowDown wraps back to the first, checked by aria-selected."
+    },
+    "F-828": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "slash completion wraps accepts Tab and Enter respects Escape IME and multiline sizing",
+      "references": [
+        "ui/e2e/composer.spec.ts::slash completion wraps accepts Tab and Enter respects Escape IME and multiline sizing",
+        "ui/e2e/composer.spec.ts::file completions discard late queries insert at the caret and dismiss after the blur grace period"
+      ],
+      "proof": "Tab applies /help and Enter applies /memory without opening Help or creating agent prompts; the mention scenario also verifies Tab insertion at its caret."
+    },
+    "F-829": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "slash completion wraps accepts Tab and Enter respects Escape IME and multiline sizing",
+      "references": [
+        "ui/e2e/composer.spec.ts::slash completion wraps accepts Tab and Enter respects Escape IME and multiline sizing"
+      ],
+      "proof": "Escape removes the slash suggestion list while keeping the / draft untouched."
+    },
+    "F-830": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "file completions discard late queries insert at the caret and dismiss after the blur grace period",
+      "references": [
+        "ui/e2e/composer.spec.ts::file completions discard late queries insert at the caret and dismiss after the blur grace period",
+        "ui/src/lib/autocomplete.test.ts::dismisses after 100 ms of blur and cancels an old dismissal on a new query or apply"
+      ],
+      "proof": "With the browser clock installed, blur keeps suggestions visible after 99 ms and dismisses them after the additional 1 ms."
+    },
+    "F-831": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "slash completion wraps accepts Tab and Enter respects Escape IME and multiline sizing",
+      "references": [
+        "ui/e2e/composer.spec.ts::slash completion wraps accepts Tab and Enter respects Escape IME and multiline sizing",
+        "ui/e2e/composer.spec.ts::history recalls only explicit durable prompts clamps oldest restores drafts and isolates sessions"
+      ],
+      "proof": "An Enter keydown with isComposing true retains the draft and creates no user event; the history scenario uses ordinary Enter to send a durable explicit prompt."
+    },
+    "F-832": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "slash completion wraps accepts Tab and Enter respects Escape IME and multiline sizing",
+      "references": [
+        "ui/e2e/composer.spec.ts::slash completion wraps accepts Tab and Enter respects Escape IME and multiline sizing"
+      ],
+      "proof": "Shift+Enter produces the exact Composing text\\n draft without submitting it."
+    },
+    "F-833": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "history recalls only explicit durable prompts clamps oldest restores drafts and isolates sessions",
+      "references": [
+        "ui/e2e/composer.spec.ts::history recalls only explicit durable prompts clamps oldest restores drafts and isolates sessions",
+        "ui/src/lib/prompt-history.test.ts::clamps the oldest prompt and returns the original draft after the newest prompt"
+      ],
+      "proof": "ArrowUp from Home in a nonempty draft recalls the latest explicit prompt; ArrowUp from an empty draft recalls it too. Repeated Up traverses earlier prompts and clamps the oldest."
+    },
+    "F-834": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "history recalls only explicit durable prompts clamps oldest restores drafts and isolates sessions",
+      "references": [
+        "ui/e2e/composer.spec.ts::history recalls only explicit durable prompts clamps oldest restores drafts and isolates sessions",
+        "ui/src/lib/prompt-history.test.ts::clamps the oldest prompt and returns the original draft after the newest prompt"
+      ],
+      "proof": "ArrowDown returns from the oldest to the newer prompt and then restores Saved unsent draft.; after an edit Down retains Edited draft."
+    },
+    "F-835": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "global modifier shortcuts target the active pane and draft creation and deletion require intent",
+      "references": [
+        "ui/e2e/composer.spec.ts::global modifier shortcuts target the active pane and draft creation and deletion require intent",
+        "ui/e2e/composer.spec.ts::slash completion wraps accepts Tab and Enter respects Escape IME and multiline sizing"
+      ],
+      "proof": "With no suggestion list open, Escape in the active left composer stops that session; the completion scenario separately proves Escape dismisses an open list while retaining the draft."
+    },
+    "F-838": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "global modifier shortcuts target the active pane and draft creation and deletion require intent",
+      "references": [
+        "ui/e2e/composer.spec.ts::global modifier shortcuts target the active pane and draft creation and deletion require intent"
+      ],
+      "proof": "Meta+N opens New session in the running Mac browser scenario and can be canceled without creating a session."
+    },
+    "F-839": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "global modifier shortcuts target the active pane and draft creation and deletion require intent",
+      "references": [
+        "ui/e2e/composer.spec.ts::global modifier shortcuts target the active pane and draft creation and deletion require intent"
+      ],
+      "proof": "With both split sessions running, Meta+. stops the active right session while the left remains running."
+    },
+    "F-840": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "global modifier shortcuts target the active pane and draft creation and deletion require intent",
+      "references": [
+        "ui/e2e/composer.spec.ts::global modifier shortcuts target the active pane and draft creation and deletion require intent"
+      ],
+      "proof": "Meta+, opens General Settings."
+    },
+    "F-841": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "global modifier shortcuts target the active pane and draft creation and deletion require intent",
+      "references": [
+        "ui/e2e/composer.spec.ts::global modifier shortcuts target the active pane and draft creation and deletion require intent"
+      ],
+      "proof": "Meta+/ opens Keyboard shortcuts."
+    },
+    "F-842": {
+      "path": "ui/e2e/dictation.spec.ts",
+      "test": "Escape and the shortcut cancel or start a recording without transcribing",
+      "references": [
+        "ui/e2e/dictation.spec.ts::Escape and the shortcut cancel or start a recording without transcribing"
+      ],
+      "proof": "ControlOrMeta+Shift+M starts recording in the browser, displaying Esc cancels; Escape cancels it and preserves Keep this without a transcription call."
+    },
+    "F-847": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "global modifier shortcuts target the active pane and draft creation and deletion require intent",
+      "references": [
+        "ui/e2e/composer.spec.ts::global modifier shortcuts target the active pane and draft creation and deletion require intent"
+      ],
+      "proof": "After Meta+K focuses session search, Meta+J restores focus to the previously active right composer."
+    },
+    "F-848": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "global modifier shortcuts target the active pane and draft creation and deletion require intent",
+      "references": [
+        "ui/e2e/composer.spec.ts::global modifier shortcuts target the active pane and draft creation and deletion require intent"
+      ],
+      "proof": "Meta+B opens then closes the Side panel; Meta+Shift+B leaves it closed."
+    },
+    "F-852": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "global modifier shortcuts target the active pane and draft creation and deletion require intent",
+      "references": [
+        "ui/e2e/composer.spec.ts::global modifier shortcuts target the active pane and draft creation and deletion require intent"
+      ],
+      "proof": "Escape removes Close settings after the General Settings shortcut opens it, with no other modal open."
+    },
+    "F-854": {
+      "path": "ui/e2e/composer.spec.ts",
+      "test": "slash reference and panel commands dispatch all settings targets without sending prompts",
+      "references": [
+        "ui/e2e/composer.spec.ts::slash reference and panel commands dispatch all settings targets without sending prompts",
+        "ui/src/lib/commands.test.ts::preserves Mac glyphs and spells Ctrl/Shift elsewhere"
+      ],
+      "proof": "The visible reference checks its modifier label against navigator.platform. The pure formatter requires Mac glyphs for MacIntel, Ctrl+Shift+M for Win32 and Ctrl zoom labels for Linux."
+    }
+  },
+  "pending": {
+    "F-550": "Typed transcript rendering of external-edit rewind notices belongs to Slice 9e; the checkpoint refusal itself is tested here but does not prove notice rendering."
+  }
+}

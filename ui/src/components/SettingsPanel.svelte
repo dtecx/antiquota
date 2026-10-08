@@ -1,6 +1,6 @@
 <!-- Owns settings navigation; focused stores retain drafts and surface mutations. -->
 <script lang="ts">
-  import { commands, shortcuts } from '../lib/commands';
+  import { commands, shortcuts, shortcutLabel } from '../lib/commands';
   import type { Accounts } from '../lib/accounts';
   import type { Login } from '../lib/login';
   import type { Session } from '../gen/Session';
@@ -142,7 +142,7 @@
           <p>⌘ is Ctrl on Windows and Linux.</p>
           <h3>Keys</h3>
           <dl class="shortcuts">
-            {#each shortcuts as [key, description] (key)}<dt>{key}</dt>
+            {#each shortcuts as [key, description] (key)}<dt>{shortcutLabel(key ?? '')}</dt>
               <dd>{description}</dd>{/each}
           </dl>
           <h3>Commands</h3>

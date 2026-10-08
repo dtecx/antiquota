@@ -3,6 +3,7 @@
   import type { Workbench } from '../lib/workbench';
   import type { Api } from '../lib/api';
   import type { Login } from '../lib/login';
+  import type { ComposerActions } from '../lib/composer-actions';
   import type { Connection } from '../lib/stream';
   import SessionHeader from './SessionHeader.svelte';
   import Transcript from './Transcript.svelte';
@@ -18,6 +19,7 @@
     connection,
     active = true,
     onactivate,
+    actions,
     onsplit,
     onclose,
     onswap,
@@ -28,6 +30,7 @@
     connection: Connection;
     active?: boolean;
     onactivate: () => void;
+    actions: ComposerActions;
     onsplit?: (e: MouseEvent) => void;
     onclose?: () => void;
     onswap?: () => void;
@@ -59,12 +62,7 @@
         onactivate();
         revising.set(true);
       }}
-    /><JobBar {workbench} /><Composer
-      {workbench}
-      {api}
-      {active}
-      connected={connection === 'live'}
-    />
+    /><JobBar {workbench} />
   {:else}<div class="welcome">
       <span class="eyebrow">YOUR WORKBENCH</span>
       <h1>A place for the next idea.</h1>
@@ -81,6 +79,7 @@
         >{/if}
       {#if $view.loading}<small>Connecting to the engine…</small>{/if}
     </div>{/if}
+  <Composer {workbench} {api} {active} {actions} connected={connection === 'live'} />
 </section>
 
 <style>

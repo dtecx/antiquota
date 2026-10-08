@@ -14,6 +14,9 @@
   import JobLog from './components/JobLog.svelte';
   import Drawer from './components/Drawer.svelte';
   import FileViewer from './components/FileViewer.svelte';
+  import ShortcutDialog from './components/ShortcutDialog.svelte';
+  import { shortcutsOpen } from './lib/commands';
+  import { createComposerActions } from './lib/composer-actions';
   import ConfirmDialog from './components/ConfirmDialog.svelte';
   import { drawer } from './lib/git';
   import SessionPane from './components/SessionPane.svelte';
@@ -47,6 +50,17 @@
   const accounts = createAccounts(api, settings);
   const login = createLogin(api, () => accounts.refresh());
   const permissions = createPermissions(api);
+  const commandHost = {
+    settings: accounts.open,
+    login: () => login.open(),
+    help: () => shortcutsOpen.set(true),
+  };
+  const actions = createComposerActions(api, workbench, commandHost);
+  const rightActions = createComposerActions(api, panes.right, commandHost);
+  $effect(() => {
+    const session = $view.selected;
+    document.title = `${session && session.status !== 'idle' ? '● ' : ''}${session?.title || 'antiquota'} · antiquota`;
+  });
   const stream = createStream(
     api.streamUrl(),
     (event) => {
@@ -105,6 +119,22 @@
   function shortcut(event: KeyboardEvent) {
     if (event.defaultPrevented || document.querySelector('dialog[open]') || $contextMenu) return;
     const mod = event.metaKey || event.ctrlKey;
+    if (mod && event.key === '/') {
+      event.preventDefault();
+      shortcutsOpen.set(true);
+      return;
+    }
+    if (mod && event.key === '.') {
+      event.preventDefault();
+      void activeWorkbench.stop();
+      return;
+    }
+    if (mod && event.key.toLowerCase() === 'j') {
+      event.preventDefault();
+      const id = get(activeWorkbench.state).selected?.id ?? '';
+      document.getElementById(`prompt-${id}`)?.focus();
+      return;
+    }
     if (mod && event.key.toLowerCase() === 'k') {
       event.preventDefault();
       workbench.change({ sidebarOpen: true });
@@ -144,7 +174,7 @@
       accounts.open('general');
       return;
     }
-    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'b') {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'b' && !event.shiftKey) {
       event.preventDefault();
       drawer.update((d) => ({ ...d, open: !d.open }));
       return;
@@ -165,6 +195,7 @@
       {workbench}
       {api}
       {login}
+      {actions}
       connection={$connection}
       active={$pane.active === 'left'}
       onactivate={() => panes.focus('left')}
@@ -172,6 +203,7 @@
     />
     {#if $pane.sid}<SessionPane
         workbench={panes.right}
+        actions={rightActions}
         {api}
         {login}
         connection={$connection}
@@ -188,6 +220,7 @@
   <JobLog />
   <FileViewer />
   <ConfirmDialog />
+  <ShortcutDialog />
   {#if $contextMenu}{#key $contextMenu}<ContextMenu />{/key}{/if}
   <SettingsPanel
     {api}
