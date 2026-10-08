@@ -36,6 +36,8 @@ pub struct TurnResult {
     pub conversation_id: Option<String>,
     pub usage: StepUsage,
     pub error: String,
+    /// agy's final `result.response`, the reply when nothing was streamed.
+    pub response: String,
 }
 /// One read-only, fresh-conversation agy call, such as the goal verifier.
 #[derive(Debug, Clone)]

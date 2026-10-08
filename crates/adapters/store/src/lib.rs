@@ -130,6 +130,17 @@ impl SessionStore for FileStore {
         } else {
             std::env::current_dir().map_err(io_error)?.join(path)
         };
+        // Like os.path.abspath: drop `.` and fold `..` by text, without resolving links.
+        let path = path.components().fold(PathBuf::new(), |mut out, part| {
+            match part {
+                std::path::Component::CurDir => {}
+                std::path::Component::ParentDir => {
+                    out.pop();
+                }
+                other => out.push(other),
+            }
+            out
+        });
         if !path.is_dir() {
             return Err(PortError::Invalid(format!(
                 "not a directory: {}",

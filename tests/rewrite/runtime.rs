@@ -1,6 +1,6 @@
 //! Proves failed CLI admission and browser-launch flags using isolated fixtures.
 use crate::support::{Server, bounded_output};
-use serde_json::json;
+use serde_json::{Value, json};
 use std::fs;
 
 #[test]
@@ -68,6 +68,21 @@ fn http_without_accounts_preserves_accepted_prompt_and_returns_idle_without_runn
                 && event["text"] == "Accepted HTTP prompt without accounts.")
     );
     assert_eq!(completed["meta"]["turns"], 0);
+    let notices: Vec<&Value> = completed["events"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|event| event["t"] == "notice")
+        .collect();
+    assert_eq!(
+        notices.len(),
+        1,
+        "only the legacy noaccount notice: {notices:?}"
+    );
+    assert_eq!(
+        notices[0]["text"],
+        "No Google account is signed in to antiquota yet. Add one, then send again."
+    );
     assert!(!server.root.join("fake-calls.jsonl").exists());
     server.evidence("no-accounts-http",&json!({"acceptedPromptDurable":true,"noaccountNotice":true,"sessionIdle":true,"runnerCalls":0}));
     server.stop();

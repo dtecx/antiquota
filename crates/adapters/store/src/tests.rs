@@ -276,3 +276,61 @@ fn concurrent_atomic_writes_leave_one_whole_file_and_no_temporaries() {
         assert_eq!(mode & 0o777, 0o600);
     }
 }
+#[test]
+fn only_turns_with_tokens_reach_the_ledger_with_their_account_model_and_session() {
+    let sandbox = Sandbox::new();
+    let store = FileStore::open(sandbox.0.clone()).unwrap();
+    let session = Session {
+        id: "s".into(),
+        model: "gemini-pro-high".into(),
+        ..Default::default()
+    };
+    let end = |turn, input, total, thinking| Event::TurnEnd {
+        turn,
+        slot: "two@example.com".into(),
+        status: "SUCCESS".into(),
+        usage: StepUsage {
+            input_tokens: input,
+            output_tokens: 2,
+            total_tokens: total,
+            thinking_tokens: thinking,
+            ..Default::default()
+        },
+        secs: 1.0,
+    };
+    let records = vec![
+        EventRecord::new(
+            1.0,
+            Event::Meta {
+                meta: Box::new(session.clone()),
+            },
+        ),
+        EventRecord::new(
+            2.0,
+            Event::TurnStart {
+                turn: 1,
+                slot: "two@example.com".into(),
+                model: "gemini-3.8-flash-high".into(),
+            },
+        ),
+        EventRecord::new(3.0, end(1, 0, 0, 0)),
+        EventRecord::new(
+            4.0,
+            Event::TurnStart {
+                turn: 2,
+                slot: "two@example.com".into(),
+                model: "gemini-3.8-flash-high".into(),
+            },
+        ),
+        EventRecord::new(5.0, end(2, 3, 9, 4)),
+    ];
+    store.reconcile_usage("s", &records).unwrap();
+    let rows = read_values(&sandbox.0.join("state/usage.jsonl")).unwrap();
+    assert_eq!(
+        rows,
+        [
+            json!({"t":5.0,"slot":"two@example.com","model":"gemini-3.8-flash-high","session":"s","input":3,"output":2,"thinking":4})
+        ],
+        "a turn without tokens writes no row"
+    );
+}

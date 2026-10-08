@@ -155,6 +155,7 @@ impl AgentRunner for Runner {
                     ..Default::default()
                 },
                 error: String::new(),
+                response: String::new(),
             })
         })
     }
@@ -353,7 +354,18 @@ async fn accepted_prompt_is_durable_before_runner_poll_and_survives_no_account_r
             .count(),
         1
     );
-    assert!(history.iter().any(|r|matches!(&r.event,Event::Notice{kind,text,..} if kind=="error"&&text=="no available account")));
+    let notices: Vec<&str> = history
+        .iter()
+        .filter_map(|r| match &r.event {
+            Event::Notice { kind, .. } => Some(kind.as_str()),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(
+        notices,
+        ["noaccount"],
+        "the legacy notice alone, without an extra error"
+    );
 }
 #[tokio::test]
 async fn cancellation_before_runner_start_retains_one_user_event() {

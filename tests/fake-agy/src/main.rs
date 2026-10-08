@@ -94,6 +94,12 @@ fn run() -> Result<i32, FakeError> {
     }
     let stdout = std::io::stdout();
     let mut output = stdout.lock();
+    if script.noise_bytes > 0 {
+        // A runner that reads stderr only after stdout would block here on a full pipe.
+        writeln!(output, "agy: warming up\n{{\"partial\": ")?;
+        output.flush()?;
+        std::io::stderr().write_all(&vec![b'e'; script.noise_bytes])?;
+    }
     for frame in frames {
         if frame.delay_ms > 0 {
             thread::sleep(Duration::from_millis(frame.delay_ms));

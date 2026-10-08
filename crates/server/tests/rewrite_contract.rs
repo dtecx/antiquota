@@ -1,6 +1,8 @@
 //! End-to-end slice-one contract, transport security, streaming, and recovery.
 #[path = "../../../tests/rewrite/runtime.rs"]
 mod runtime;
+#[path = "../../../tests/rewrite/sessions.rs"]
+mod sessions;
 #[path = "../../../tests/rewrite/support/mod.rs"]
 mod support;
 use serde_json::json;

@@ -146,3 +146,64 @@ fn creation_store_io_does_not_block_existing_session_lookup() {
     assert_eq!(result.unwrap().unwrap().0.id, existing.id);
     assert_eq!(service.sessions().unwrap().len(), 2);
 }
+
+/// Accounts whose lease store is broken, so the turn worker fails inside the application.
+struct BrokenLeases;
+impl AccountStore for BrokenLeases {
+    fn accounts(&self) -> Result<Vec<antiquota_core::Account>, PortError> {
+        Accounts.accounts()
+    }
+    fn record_route(&self, _entry: &antiquota_core::RoutingEntry) -> Result<(), PortError> {
+        Ok(())
+    }
+    fn acquire(
+        &self,
+        _preferred: Option<&str>,
+    ) -> Result<Option<Box<dyn antiquota_core::AccountLease>>, PortError> {
+        Err(PortError::Unavailable("lease store is broken".into()))
+    }
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn an_internal_worker_error_leaves_a_notice_and_an_idle_session() {
+    let service = Service::open(
+        Arc::new(MemoryStore::default()),
+        Settings::default(),
+        Arc::new(BrokenLeases),
+        Arc::new(Runner {
+            calls: AtomicU64::new(0),
+        }),
+        Arc::new(FixedClock),
+    )
+    .unwrap();
+    let id = service
+        .create("memory", "", "model", antiquota_core::Mode::Default)
+        .unwrap()
+        .id;
+    assert_eq!(
+        service
+            .send(&id, "Work.".into(), vec![], "user".into())
+            .unwrap(),
+        "started"
+    );
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+    loop {
+        let (meta, records) = service.get(&id).unwrap();
+        let notice = records.iter().find_map(|r| match &r.event {
+            Event::Notice { kind, text, .. } if kind == "error" => Some(text.clone()),
+            _ => None,
+        });
+        if meta.status == "idle"
+            && let Some(text) = notice
+        {
+            assert!(text.contains("lease store is broken"), "{text}");
+            break;
+        }
+        assert!(
+            std::time::Instant::now() < deadline,
+            "session stuck: {}",
+            meta.status
+        );
+        tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+    }
+}

@@ -52,6 +52,22 @@ describe('event projection', () => {
     const events = reduceTranscript(reduceTranscript([], event), event);
     expect(events).toHaveLength(1);
     expect(reduceTranscript(events, { ...event, text: 'different' })).toHaveLength(2);
+    // The same record from a fetched history (sorted keys) and the live stream (field order).
+    const live = {
+      kind: 'check',
+      text: 'Check `x` exited 0.',
+      data: { rc: 0, passed: true },
+      t: 'notice',
+      ts: 2,
+    };
+    const stored = {
+      data: { passed: true, rc: 0 },
+      kind: 'check',
+      t: 'notice',
+      text: 'Check `x` exited 0.',
+      ts: 2,
+    };
+    expect(reduceTranscript([stored as EventRecord], live as EventRecord)).toHaveLength(1);
   });
   it('supports history before a user message and optional steering attachments', () => {
     const groups = groupTranscript([

@@ -134,6 +134,7 @@ impl Service {
         id: &str,
         turn: u64,
         ok: bool,
+        response: &str,
     ) -> Result<TurnOutcome, AppError> {
         let (_, records) = self.get(id)?;
         let mut outcome = TurnOutcome {
@@ -184,6 +185,9 @@ impl Service {
                 "agy denied a tool call that headless mode cannot ask about.",
                 json!({"actions": denied_actions, "commands": outcome.denied}),
             )?;
+        }
+        if outcome.reply.is_empty() {
+            outcome.reply = response.into();
         }
         Ok(outcome)
     }

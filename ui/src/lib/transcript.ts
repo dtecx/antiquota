@@ -68,9 +68,18 @@ export function reduceTranscript(events: EventRecord[], event: EventRecord): Eve
       });
     }
   }
-  if (events.some((item) => item.ts === event.ts && JSON.stringify(item) === JSON.stringify(event)))
+  // A fetched history and the live stream serialize the same record with different key orders.
+  if (events.some((item) => item.ts === event.ts && canonical(item) === canonical(event)))
     return events;
   return [...events, event];
+}
+
+function canonical(value: unknown): string {
+  return JSON.stringify(value, (_key, item: unknown) =>
+    item && typeof item === 'object' && !Array.isArray(item)
+      ? Object.fromEntries(Object.entries(item).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)))
+      : item,
+  );
 }
 
 export function projectHistory(events: EventRecord[]): EventRecord[] {

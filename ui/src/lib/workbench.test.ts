@@ -109,6 +109,37 @@ describe('session workbench store', () => {
       { ts: 4, t: 'delta', turn: 1, step: 2, text: 'live reply' },
     ]);
   });
+  it('shows a record once when it arrives live while a fetched history already has it', async () => {
+    const api = fixtureApi();
+    const workbench = createWorkbench(api);
+    await workbench.refresh();
+    let complete: (value: SessionResponse) => void = () => {};
+    api.session = () =>
+      new Promise((resolve) => {
+        complete = resolve;
+      });
+    const pending = workbench.refresh();
+    await Promise.resolve();
+    // The live stream keeps field order; a fetched history has sorted keys.
+    const live = {
+      kind: 'check',
+      text: 'Check `x` exited 0.',
+      data: { rc: 0, passed: true },
+      t: 'notice' as const,
+      ts: 7,
+    };
+    const stored = {
+      data: { passed: true, rc: 0 },
+      kind: 'check',
+      t: 'notice' as const,
+      text: 'Check `x` exited 0.',
+      ts: 7,
+    };
+    workbench.onEvent({ sid: 'fixture', ...live });
+    complete({ meta: fixtureSession(), events: [stored] });
+    await pending;
+    expect(get(workbench.state).events).toEqual([stored]);
+  });
   it('uses the runtime default folder and keeps validation failures in the dialog', async () => {
     const api = fixtureApi();
     api.create = vi.fn(async () => {

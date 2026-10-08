@@ -61,6 +61,8 @@ pub struct Script {
     pub write_notes: bool,
     pub output_inherited_pipe_ms: Option<u64>,
     pub output_descendant_marker: Option<String>,
+    /// Bytes of stderr written, after two non-JSON stdout lines, before the first frame.
+    pub noise_bytes: usize,
 }
 
 impl Default for Script {
@@ -90,6 +92,7 @@ impl Default for Script {
             write_notes: true,
             output_inherited_pipe_ms: None,
             output_descendant_marker: None,
+            noise_bytes: 0,
         }
     }
 }

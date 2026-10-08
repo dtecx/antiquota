@@ -151,6 +151,7 @@ impl Decoder {
         };
         TurnResult {
             status,
+            response: self.result["response"].as_str().unwrap_or_default().into(),
             conversation_id: self.conversation,
             usage: self.usage,
             error,

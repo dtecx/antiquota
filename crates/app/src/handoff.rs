@@ -33,7 +33,8 @@ impl Service {
                 "No Google account is signed in to antiquota yet. Add one, then send again.",
                 json!({}),
             )?;
-            return Err(AppError::Invalid("no available account".into()));
+            // The notice explains it; a turn that never started is not an error as well.
+            return Ok(Default::default());
         }
         let bucket = bucket_of_model(&model);
         let mut prompt = original.to_owned();
@@ -109,7 +110,12 @@ impl Service {
             let Some(Command::ContinueTurn { delay, fresh, .. }) = continuation else {
                 drop(lease);
                 self.announce_accounts()?;
-                return self.turn_outcome(id, meta.turns, result.status == "SUCCESS");
+                return self.turn_outcome(
+                    id,
+                    meta.turns,
+                    result.status == "SUCCESS",
+                    &result.response,
+                );
             };
             let again = if meta.conversation_id.is_some() {
                 CONTINUE.into()

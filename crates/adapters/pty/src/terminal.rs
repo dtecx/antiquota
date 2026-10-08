@@ -270,7 +270,8 @@ impl Terminals for Shells {
     }
 }
 
-#[cfg(test)]
+// Both shell tests need a POSIX shell, so the helpers are POSIX-only too.
+#[cfg(all(test, unix))]
 mod tests {
     use super::*;
     use std::time::{Duration, Instant};

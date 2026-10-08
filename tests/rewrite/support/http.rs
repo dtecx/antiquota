@@ -145,10 +145,14 @@ impl Events {
         }
     }
     pub fn next(&mut self) -> Value {
+        self.try_next().expect("SSE ended before expected event")
+    }
+    /// The next event, or None once the server has ended the stream.
+    pub fn try_next(&mut self) -> Option<Value> {
         loop {
-            let line = self.body.line().expect("SSE ended before expected event");
+            let line = self.body.line()?;
             if let Some(data) = line.strip_prefix("data: ") {
-                return serde_json::from_str(data.trim()).expect("SSE JSON");
+                return Some(serde_json::from_str(data.trim()).expect("SSE JSON"));
             }
         }
     }

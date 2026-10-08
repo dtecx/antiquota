@@ -112,7 +112,7 @@ fn a_failed_known_write_tool_emits_a_command_free_denial_notice() {
         error: Some(json!({"message":"permission check failed: user denied permission to edit file"})),
     }).unwrap();
     let mut receiver = service.subscribe();
-    let outcome = service.turn_outcome(&id, 1, true).unwrap();
+    let outcome = service.turn_outcome(&id, 1, true, "").unwrap();
     assert!(outcome.denied.is_empty());
     let event = receiver.try_recv().unwrap();
     let expected = json!({"commands":[],"actions":[{"action":"replace_file_content","display_name":"replace_file_content"}],"rules":[]});

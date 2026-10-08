@@ -213,3 +213,58 @@ fn rate_limit_with_quota_left_uses_escalating_short_cooldowns() {
         json!({"quotaRemains":0.9,"seconds":[60,300,900],"otherBasketUnwalled":true,"handoffAccount":setup::TWO}),
     );
 }
+
+#[test]
+fn a_healthy_turn_refreshes_its_accounts_stale_quota_and_announces_it() {
+    use crate::support::http::Events;
+    let mut server = Server::new_stopped("refresh-after-turn", true);
+    setup::script(
+        &server,
+        json!({"metadata": {"quota_after_turn": setup::healthy_quota(0.42)}}),
+    );
+    server.start();
+    let id = server.create();
+    // Age both stored readings so whichever account runs the turn is stale afterwards.
+    for slot in [setup::ONE, setup::TWO] {
+        let path = server.data.join(format!("state/quota/{slot}.json"));
+        let mut reading: Value = serde_json::from_str(&fs::read_to_string(&path).unwrap()).unwrap();
+        reading["at"] = json!(reading["at"].as_f64().unwrap() - 7200.0);
+        fs::write(&path, reading.to_string()).unwrap();
+    }
+    let mut events = Events::open(server.port, &server.token);
+    server.call(
+        "POST",
+        &format!("/api/sessions/{id}/send"),
+        Some(json!({"text": "Work."})),
+    );
+    let done = server.idle(&id);
+    let slot = done["events"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|e| e["t"] == "turn_start")
+        .unwrap()["slot"]
+        .as_str()
+        .unwrap()
+        .to_owned();
+    let fraction = |accounts: &Value| {
+        accounts
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|a| a["slot"] == slot.as_str())
+            .map(|a| a["quota"]["gemini"]["5h"][0].clone())
+    };
+    let announced = loop {
+        let event = events.next();
+        if event["t"] == "accounts" && fraction(&event["accounts"]) == Some(json!(0.42)) {
+            break event;
+        }
+    };
+    assert!(announced["sid"].is_null());
+    assert_eq!(
+        fraction(&server.call("GET", "/api/accounts", None).json()),
+        Some(json!(0.42))
+    );
+    server.stop();
+}
