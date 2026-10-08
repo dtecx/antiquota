@@ -35,7 +35,15 @@ impl Service {
             next.queue.remove(0);
         }
         if next.title.is_empty() && kind == "user" {
-            next.title = text.lines().next().unwrap_or("").chars().take(60).collect();
+            // As the legacy engine: skip leading blank lines; an attachment-only message is "(attachment)".
+            next.title = text
+                .trim()
+                .lines()
+                .next()
+                .unwrap_or("(attachment)")
+                .chars()
+                .take(60)
+                .collect();
         }
         let note = std::mem::take(&mut next.pending_note);
         self.append(

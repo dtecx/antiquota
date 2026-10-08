@@ -88,3 +88,54 @@ proptest! {
         prop_assert_eq!(unique.len(),rows.len());prop_assert_eq!(&ranked,&rank_accounts(&rows,"gemini",None,&Settings::default(),&[],now));
     }
 }
+#[test]
+fn defaults_match_legacy_and_bad_numbers_fall_back() {
+    let s = Settings::default();
+    assert_eq!(
+        [
+            &s.model,
+            &s.mode,
+            &s.verifier_model,
+            &s.rotation,
+            &s.keep_awake,
+            &s.reserve,
+            &s.quota_poll,
+            &s.approval_timeout,
+            &s.max_rounds,
+            &s.auto_continue,
+            &s.default_cwd,
+            &s.worktree_default,
+        ]
+        .map(String::as_str),
+        [
+            "gemini-3.8-flash-high",
+            "default",
+            "gemini-3.8-flash-high",
+            "perishable",
+            "on",
+            "3",
+            "10",
+            "15",
+            "20",
+            "2",
+            "",
+            "off",
+        ]
+    );
+    let with = |reserve: &str, quota_poll: &str| Settings {
+        reserve: reserve.into(),
+        quota_poll: quota_poll.into(),
+        ..Settings::default()
+    };
+    assert_eq!(quota_fresh(&with("3", "abc")), 600.0);
+    assert_eq!(quota_fresh(&with("3", "")), 600.0);
+    assert_eq!(quota_fresh(&with("3", "5")), 300.0);
+    // A 2% account sits under the default 3% reserve, so it ranks last with or without "abc".
+    let accounts = [account("low", 0.02, 10.0), account("high", 0.5, 20.0)];
+    for reserve in ["3", "abc"] {
+        assert_eq!(
+            rank_accounts(&accounts, "gemini", None, &with(reserve, "10"), &[], 0.0),
+            ["high", "low"]
+        );
+    }
+}

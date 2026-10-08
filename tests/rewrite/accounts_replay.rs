@@ -346,6 +346,14 @@ fn captured_login_routes_adopt_cancel_and_replace_without_opening_browser() {
             fs::metadata(&auth).unwrap().permissions().mode() & 0o777,
             0o600
         );
+        assert_eq!(
+            fs::metadata(server.data.join("slots"))
+                .unwrap()
+                .permissions()
+                .mode()
+                & 0o777,
+            0o700
+        );
     }
     replay.case(&server, "login-delete");
     setup::wait(&server, "adopted account refresh ends", |rows| {

@@ -257,6 +257,7 @@ version = "0.5.0"
 dependencies = [
  "antiquota-core",
  "chrono",
+ "nix 0.31.3",
  "serde",
  "serde_json",
  "thiserror 2.0.21",

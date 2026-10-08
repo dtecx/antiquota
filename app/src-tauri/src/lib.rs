@@ -332,11 +332,9 @@ pub fn run() {
                     let _ = window.show();
                 }
             }
-            RunEvent::ExitRequested { api, .. } => {
-                if !QUITTING.load(Ordering::SeqCst) {
-                    api.prevent_exit();
-                    request_quit(app.clone());
-                }
+            RunEvent::ExitRequested { api, .. } if !QUITTING.load(Ordering::SeqCst) => {
+                api.prevent_exit();
+                request_quit(app.clone());
             }
             #[cfg(target_os = "macos")]
             RunEvent::Reopen { .. } => show_main(app),

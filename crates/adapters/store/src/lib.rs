@@ -354,11 +354,39 @@ mod tests;
 
 pub fn read_settings(root: &Path) -> Result<antiquota_core::Settings, PortError> {
     match fs::read_to_string(root.join("settings.json")) {
-        Ok(text) => Ok(serde_json::from_str(&text).unwrap_or_else(|_| {
-            tracing::warn!("settings are unreadable; using defaults without changing the file");
-            Default::default()
-        })),
+        Ok(text) => Ok(settings_from(&text)),
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Default::default()),
         Err(e) => Err(io_error(e)),
     }
+}
+
+/// Keeps every readable known setting, as the legacy reader did: a number or boolean a user
+/// wrote by hand becomes its text, and one bad value never resets the others.
+fn settings_from(text: &str) -> antiquota_core::Settings {
+    use serde_json::Value;
+    let Ok(Value::Object(mut map)) = serde_json::from_str::<Value>(text) else {
+        tracing::warn!("settings are unreadable; using defaults without changing the file");
+        return Default::default();
+    };
+    let known = serde_json::to_value(antiquota_core::Settings::default()).unwrap_or_default();
+    for key in known.as_object().into_iter().flat_map(|k| k.keys()) {
+        match map.get(key) {
+            Some(Value::Number(n)) => {
+                let text = n.to_string();
+                map.insert(key.clone(), Value::String(text));
+            }
+            Some(Value::Bool(b)) => {
+                map.insert(
+                    key.clone(),
+                    Value::String(if *b { "True" } else { "False" }.into()),
+                );
+            }
+            Some(Value::String(_)) | None => {}
+            Some(_) => {
+                map.remove(key);
+            }
+        }
+    }
+    // from_value cannot rebuild flattened arbitrary-precision numbers; reparsing the text can.
+    serde_json::from_str(&Value::Object(map).to_string()).unwrap_or_default()
 }

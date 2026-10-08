@@ -302,3 +302,63 @@ fn queued_attachments_wait_for_the_turn_and_keep_their_metadata() {
     assert!(second.iter().any(|a| a == "--add-dir"));
     server.stop();
 }
+
+#[test]
+fn untitled_sessions_take_the_first_line_or_the_attachment_fallback() {
+    let mut server = Server::new("media-titles");
+    let create = || {
+        server
+            .call(
+                "POST",
+                "/api/sessions",
+                Some(json!({"cwd": server.project, "title": "", "model": "gemini-3.8-flash-high"})),
+            )
+            .json()["id"]
+            .as_str()
+            .unwrap()
+            .to_owned()
+    };
+    let titled = |id: &str, body: Value| {
+        assert_eq!(
+            server
+                .call("POST", &format!("/api/sessions/{id}/send"), Some(body))
+                .json()["result"],
+            "started"
+        );
+        server.idle(id)["meta"]["title"]
+            .as_str()
+            .unwrap()
+            .to_owned()
+    };
+    let first = create();
+    let long = "x".repeat(70);
+    assert_eq!(
+        titled(
+            &first,
+            json!({"text": format!("\n\n  {long}\nsecond line")})
+        ),
+        "x".repeat(60)
+    );
+    // A later message keeps the first title.
+    assert_eq!(
+        titled(&first, json!({"text": "Another request"})),
+        "x".repeat(60)
+    );
+    let second = create();
+    let upload = raw(
+        &server,
+        "POST",
+        &format!("/api/sessions/{second}/attach"),
+        &[("X-Filename", "only.png")],
+        b"\x89PNG",
+    )
+    .json();
+    assert_eq!(
+        titled(
+            &second,
+            json!({"text": "", "attachments": [upload["path"].clone()]})
+        ),
+        "(attachment)"
+    );
+    server.stop();
+}

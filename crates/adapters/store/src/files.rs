@@ -158,14 +158,98 @@ pub fn token(root: &Path) -> Result<String, PortError> {
     Ok(value)
 }
 pub fn data_root() -> Result<PathBuf, PortError> {
-    std::env::var_os("ANTIQUOTA_DIR")
-        .map(PathBuf::from)
-        .map(Ok)
-        .unwrap_or_else(|| user_home().map(|x| x.join(".antiquota")))
+    if let Some(dir) = std::env::var_os("ANTIQUOTA_DIR") {
+        return Ok(PathBuf::from(dir));
+    }
+    let home = user_home()?;
+    let root = home.join(".antiquota");
+    static MIGRATED: std::sync::Once = std::sync::Once::new();
+    MIGRATED.call_once(|| {
+        if let Err(e) = migrate_from_agyloop(&home.join(".agyloop"), &root, &home) {
+            tracing::warn!(error = %e, "could not finish moving ~/.agyloop");
+        }
+    });
+    Ok(root)
 }
 pub fn user_home() -> Result<PathBuf, PortError> {
-    std::env::var_os("ANTIQUOTA_HOME")
-        .or_else(|| std::env::var_os(if cfg!(windows) { "USERPROFILE" } else { "HOME" }))
+    if let Some(home) = std::env::var_os("ANTIQUOTA_HOME") {
+        return Ok(PathBuf::from(home));
+    }
+    // Not $HOME on POSIX: inside an account's agy process $HOME is that account's folder.
+    #[cfg(unix)]
+    if let Ok(Some(user)) = nix::unistd::User::from_uid(nix::unistd::getuid()) {
+        return Ok(user.dir);
+    }
+    std::env::var_os(if cfg!(windows) { "USERPROFILE" } else { "HOME" })
         .map(PathBuf::from)
         .ok_or_else(|| PortError::Unavailable("user home is unavailable".into()))
+}
+/// antiquota was called agy-loop and kept everything in ~/.agyloop. Moves it once, points links
+/// and own-stack config paths that name the old folder at the new one, and leaves a link behind
+/// so paths recorded in old transcripts still open.
+pub fn migrate_from_agyloop(old: &Path, new: &Path, home: &Path) -> Result<(), PortError> {
+    if fs::symlink_metadata(new).is_ok() || old.is_symlink() || !old.is_dir() {
+        return Ok(());
+    }
+    fs::rename(old, new).map_err(io_error)?;
+    let _ = relink(new, old);
+    let moved = |target: &Path| {
+        target
+            .strip_prefix(old)
+            .ok()
+            .filter(|rest| !rest.as_os_str().is_empty())
+            .map(|rest| new.join(rest))
+    };
+    let mut folders = vec![new.to_path_buf()];
+    while let Some(folder) = folders.pop() {
+        for entry in fs::read_dir(&folder).map_err(io_error)?.flatten() {
+            let path = entry.path();
+            match fs::read_link(&path) {
+                Ok(target) => {
+                    if let Some(target) = moved(&target) {
+                        fs::remove_file(&path).map_err(io_error)?;
+                        relink(&target, &path)?;
+                    }
+                }
+                Err(_) if path.is_dir() => folders.push(path),
+                Err(_) => {}
+            }
+        }
+    }
+    let (from, to) = (
+        format!("{}{}", old.display(), std::path::MAIN_SEPARATOR),
+        format!("{}{}", new.display(), std::path::MAIN_SEPARATOR),
+    );
+    for rel in [
+        ".gemini/config/hooks.json",
+        ".gemini/config/mcp_config.json",
+        ".gemini/settings.json",
+        ".gemini/antigravity-cli/settings.json",
+    ] {
+        let path = new.join("stack").join(rel);
+        if path.is_symlink() || !path.is_file() {
+            continue;
+        }
+        let text = fs::read_to_string(&path).map_err(io_error)?;
+        if text.contains(&from) {
+            write_atomic(&path, text.replace(&from, &to).as_bytes())?;
+        }
+    }
+    let usage = home.join(".config/antigravity");
+    if let Some(target) = fs::read_link(&usage).ok().and_then(|t| moved(&t)) {
+        fs::remove_file(&usage).map_err(io_error)?;
+        relink(&target, &usage)?;
+    }
+    Ok(())
+}
+fn relink(target: &Path, link: &Path) -> Result<(), PortError> {
+    #[cfg(unix)]
+    return std::os::unix::fs::symlink(target, link).map_err(io_error);
+    #[cfg(windows)]
+    return if target.is_dir() {
+        std::os::windows::fs::symlink_dir(target, link)
+    } else {
+        std::os::windows::fs::symlink_file(target, link)
+    }
+    .map_err(io_error);
 }

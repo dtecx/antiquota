@@ -7,6 +7,8 @@ mod cli_lifecycle;
 mod cli_metadata;
 #[path = "../../../tests/rewrite/accounts_concurrency.rs"]
 mod concurrency;
+#[path = "../../../tests/rewrite/accounts_defaults.rs"]
+mod defaults;
 #[path = "../../../tests/rewrite/accounts_deterministic.rs"]
 mod deterministic;
 #[path = "../../../tests/rewrite/accounts_handoff.rs"]
@@ -23,6 +25,8 @@ mod replay;
 mod rotation;
 #[path = "../../../tests/rewrite/accounts_setup.rs"]
 mod setup;
+#[path = "../../../tests/rewrite/storage.rs"]
+mod storage;
 #[allow(
     dead_code,
     reason = "Shared transport helpers serve multiple integration targets."

@@ -131,3 +131,148 @@ fn timestamp_collision_never_advances_to_infinity() {
             .is_err()
     );
 }
+#[test]
+fn settings_keep_each_readable_value_and_fall_back_per_key() {
+    let sandbox = Sandbox::new();
+    let read = |text: &str| {
+        fs::write(sandbox.0.join("settings.json"), text).unwrap();
+        read_settings(&sandbox.0).unwrap()
+    };
+    assert_eq!(read("not json"), antiquota_core::Settings::default());
+    assert_eq!(read("[1]"), antiquota_core::Settings::default());
+    let mixed = read(
+        r#"{"model":"gemini-pro-high","reserve":5,"max_rounds":7.5,"keep_awake":false,
+            "quota_poll":null,"auto_continue":[1],"notify":{"done":true},
+            "future":{"opaque":123456789012345678901234567890}}"#,
+    );
+    assert_eq!(mixed.model, "gemini-pro-high");
+    assert_eq!(
+        (
+            mixed.reserve.as_str(),
+            mixed.max_rounds.as_str(),
+            mixed.keep_awake.as_str()
+        ),
+        ("5", "7.5", "False")
+    );
+    assert_eq!(
+        (mixed.quota_poll.as_str(), mixed.auto_continue.as_str()),
+        ("10", "2")
+    );
+    assert_eq!(
+        mixed.extra["notify"],
+        json!({"done": true}),
+        "unknown keys are kept as they are"
+    );
+    assert_eq!(
+        mixed.extra["future"]["opaque"].to_string(),
+        "123456789012345678901234567890"
+    );
+    fs::remove_file(sandbox.0.join("settings.json")).unwrap();
+    assert_eq!(
+        read_settings(&sandbox.0).unwrap(),
+        antiquota_core::Settings::default()
+    );
+}
+#[test]
+#[cfg(unix)]
+fn the_old_agyloop_folder_moves_once_with_its_links_and_paths() {
+    use std::os::unix::fs::symlink;
+    let sandbox = Sandbox::new();
+    let home = sandbox.0.join("home");
+    let (old, new) = (home.join(".agyloop"), home.join(".antiquota"));
+    fs::create_dir_all(old.join("stack/.gemini/config")).unwrap();
+    fs::create_dir_all(old.join("slots/one/.gemini")).unwrap();
+    fs::create_dir_all(home.join(".config")).unwrap();
+    symlink(
+        old.join("stack/.gemini/config"),
+        old.join("slots/one/.gemini/config"),
+    )
+    .unwrap();
+    symlink("/elsewhere/kept", old.join("slots/one/foreign")).unwrap();
+    let hook = format!("{{\"command\":\"{}/stack/hook.cjs\"}}", old.display());
+    fs::write(old.join("stack/.gemini/config/hooks.json"), &hook).unwrap();
+    symlink(
+        old.join("stack/.gemini/antigravity-cli"),
+        home.join(".config/antigravity"),
+    )
+    .unwrap();
+    // An existing destination or a linked source means there is nothing to move.
+    fs::create_dir_all(&new).unwrap();
+    migrate_from_agyloop(&old, &new, &home).unwrap();
+    assert!(old.is_dir() && !old.is_symlink());
+    fs::remove_dir(&new).unwrap();
+
+    migrate_from_agyloop(&old, &new, &home).unwrap();
+    assert_eq!(
+        fs::read_link(&old).unwrap(),
+        new,
+        "a link keeps old recorded paths working"
+    );
+    assert_eq!(
+        fs::read_link(new.join("slots/one/.gemini/config")).unwrap(),
+        new.join("stack/.gemini/config")
+    );
+    assert_eq!(
+        fs::read_link(new.join("slots/one/foreign")).unwrap(),
+        PathBuf::from("/elsewhere/kept")
+    );
+    assert_eq!(
+        fs::read_to_string(new.join("stack/.gemini/config/hooks.json")).unwrap(),
+        format!("{{\"command\":\"{}/stack/hook.cjs\"}}", new.display())
+    );
+    assert_eq!(
+        fs::read_link(home.join(".config/antigravity")).unwrap(),
+        new.join("stack/.gemini/antigravity-cli")
+    );
+    // A retry changes nothing.
+    migrate_from_agyloop(&old, &new, &home).unwrap();
+    assert_eq!(fs::read_link(&old).unwrap(), new);
+}
+#[test]
+fn the_home_is_the_account_home_not_a_slot_home() {
+    // Tests never set ANTIQUOTA_HOME for this process, so the account database decides.
+    if std::env::var_os("ANTIQUOTA_HOME").is_some() {
+        return;
+    }
+    #[cfg(unix)]
+    let account = nix::unistd::User::from_uid(nix::unistd::getuid())
+        .unwrap()
+        .unwrap()
+        .dir;
+    #[cfg(windows)]
+    let account = PathBuf::from(std::env::var_os("USERPROFILE").unwrap());
+    assert_eq!(user_home().unwrap(), account);
+}
+#[test]
+fn concurrent_atomic_writes_leave_one_whole_file_and_no_temporaries() {
+    let sandbox = Sandbox::new();
+    let path = sandbox.0.join("state/quota.json");
+    std::thread::scope(|scope| {
+        for writer in 0..8 {
+            let path = &path;
+            scope.spawn(move || {
+                for round in 0..20 {
+                    write_json_atomic(path, &json!({"writer": writer, "round": round})).unwrap();
+                }
+            });
+        }
+    });
+    let value: serde_json::Value =
+        serde_json::from_str(&fs::read_to_string(&path).unwrap()).unwrap();
+    assert_eq!(value["round"], 19);
+    assert_eq!(fs::read_dir(path.parent().unwrap()).unwrap().count(), 1);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        assert_eq!(
+            fs::metadata(&path).unwrap().permissions().mode() & 0o777,
+            0o600
+        );
+        drop(lock_file(&sandbox.0.join("state/locks/one.lock")).unwrap());
+        let mode = fs::metadata(sandbox.0.join("state/locks/one.lock"))
+            .unwrap()
+            .permissions()
+            .mode();
+        assert_eq!(mode & 0o777, 0o600);
+    }
+}

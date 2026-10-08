@@ -53,6 +53,7 @@ impl AccountService {
             ("auto_continue", &mut defaults.auto_continue, 0.0, 10.0),
         ] {
             let number = value
+                .trim()
                 .parse::<f64>()
                 .map_err(|_| AppError::Invalid(format!("{key}: a number")))?;
             if !number.is_finite() || number < low || number > high {
