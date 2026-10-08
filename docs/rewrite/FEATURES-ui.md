@@ -28,46 +28,46 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 
 | ID | Acceptance behavior | Legacy source | Existing legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-413 | [ ] Session rows display title, relative update time and status. | `antiquota/ui/app.js:224` | None identified | [Pending](TEST_REPORT.md#f-413) |
-| F-414 | [ ] Session rows identify pinned sessions and worktree sessions. | `antiquota/ui/app.js:224` | None identified | [Pending](TEST_REPORT.md#f-414) |
-| F-415 | [ ] Sleeping sessions show the wake time. | `antiquota/ui/app.js:224` | None identified | [Pending](TEST_REPORT.md#f-415) |
+| F-413 | [x] Session rows display title, relative update time and status. | `antiquota/ui/app.js:224` | None identified | [Passed](TEST_REPORT.md#f-413) |
+| F-414 | [x] Session rows identify pinned sessions and worktree sessions. | `antiquota/ui/app.js:224` | None identified | [Passed](TEST_REPORT.md#f-414) |
+| F-415 | [x] Sleeping sessions show the wake time. | `antiquota/ui/app.js:224` | None identified | [Passed](TEST_REPORT.md#f-415) |
 | F-416 | [ ] Sessions awaiting approval display an attention message. | `antiquota/ui/app.js:224` | None identified | [Pending](TEST_REPORT.md#f-416) |
-| F-417 | [ ] Goal sessions show the current round and limit or final goal state. | `antiquota/ui/app.js:224` | None identified | [Pending](TEST_REPORT.md#f-417) |
-| F-418 | [ ] Sessions sort by most recent update within project groups. | `antiquota/ui/app.js:246` | None identified | [Pending](TEST_REPORT.md#f-418) |
-| F-419 | [ ] Pinned sessions appear in a separate Pinned group. | `antiquota/ui/app.js:246` | None identified | [Pending](TEST_REPORT.md#f-419) |
-| F-420 | [ ] Worktree sessions group by their parent repository. | `antiquota/ui/app.js:246` | None identified | [Pending](TEST_REPORT.md#f-420) |
-| F-421 | [ ] Project collapse state persists per device. | `antiquota/ui/app.js:246` | None identified | [Pending](TEST_REPORT.md#f-421) |
-| F-422 | [ ] The current session's project remains expanded despite a collapsed preference. | `antiquota/ui/app.js:246` | None identified | [Pending](TEST_REPORT.md#f-422) |
-| F-423 | [ ] Collapsed projects show session count and working-session indicator. | `antiquota/ui/app.js:246` | None identified | [Pending](TEST_REPORT.md#f-423) |
-| F-424 | [ ] Search temporarily expands matching project groups. | `antiquota/ui/app.js:246` | None identified | [Pending](TEST_REPORT.md#f-424) |
+| F-417 | [x] Goal sessions show the current round and limit or final goal state. | `antiquota/ui/app.js:224` | None identified | [Passed](TEST_REPORT.md#f-417) |
+| F-418 | [x] Sessions sort by most recent update within project groups. | `antiquota/ui/app.js:246` | None identified | [Passed](TEST_REPORT.md#f-418) |
+| F-419 | [x] Pinned sessions appear in a separate Pinned group. | `antiquota/ui/app.js:246` | None identified | [Passed](TEST_REPORT.md#f-419) |
+| F-420 | [x] Worktree sessions group by their parent repository. | `antiquota/ui/app.js:246` | None identified | [Passed](TEST_REPORT.md#f-420) |
+| F-421 | [x] Project collapse state persists per device. | `antiquota/ui/app.js:246` | None identified | [Passed](TEST_REPORT.md#f-421) |
+| F-422 | [x] The current session's project remains expanded despite a collapsed preference. | `antiquota/ui/app.js:246` | None identified | [Passed](TEST_REPORT.md#f-422) |
+| F-423 | [x] Collapsed projects show session count and working-session indicator. | `antiquota/ui/app.js:246` | None identified | [Passed](TEST_REPORT.md#f-423) |
+| F-424 | [x] Search temporarily expands matching project groups. | `antiquota/ui/app.js:246` | None identified | [Passed](TEST_REPORT.md#f-424) |
 | F-425 | [ ] Session filtering matches title and working folder without case sensitivity. | `antiquota/ui/app.js:246` | None identified | [Pending](TEST_REPORT.md#f-425) |
-| F-426 | [ ] No sessions and no title matches have distinct empty messages. | `antiquota/ui/app.js:246` | None identified | [Pending](TEST_REPORT.md#f-426) |
-| F-427 | [ ] Searches of two or more characters query message contents after 220 ms. | `antiquota/ui/app.js:292` | None identified | [Pending](TEST_REPORT.md#f-427) |
-| F-428 | [ ] Older message-search responses cannot replace newer results. | `antiquota/ui/app.js:292` | None identified | [Pending](TEST_REPORT.md#f-428) |
-| F-429 | [ ] Search hits show title, author, snippet, time and folder tooltip. | `antiquota/ui/app.js:292` | None identified | [Pending](TEST_REPORT.md#f-429) |
-| F-430 | [ ] Show archived exposes archived sessions and Hide archived conceals them. | `antiquota/ui/app.js:246` | None identified | [Pending](TEST_REPORT.md#f-430) |
-| F-431 | [ ] The current archived session stays visible while archives are hidden. | `antiquota/ui/app.js:246` | None identified | [Pending](TEST_REPORT.md#f-431) |
-| F-432 | [ ] Session Rename opens the session and its title editor. | `antiquota/ui/app.js:306` | None identified | [Pending](TEST_REPORT.md#f-432) |
-| F-433 | [ ] Session Pin to top persists the pinned state. | `antiquota/ui/app.js:306` | None identified | [Pending](TEST_REPORT.md#f-433) |
-| F-434 | [ ] Session Unpin clears the pinned state. | `antiquota/ui/app.js:306` | None identified | [Pending](TEST_REPORT.md#f-434) |
-| F-435 | [ ] Session Fork creates and opens a session from handoff state. | `antiquota/ui/app.js:306` | None identified | [Pending](TEST_REPORT.md#f-435) |
-| F-436 | [ ] Session Archive persists archived state. | `antiquota/ui/app.js:306` | None identified | [Pending](TEST_REPORT.md#f-436) |
-| F-437 | [ ] Session Unarchive clears archived state. | `antiquota/ui/app.js:306` | None identified | [Pending](TEST_REPORT.md#f-437) |
-| F-438 | [ ] Session Delete requires confirmation and preserves project files. | `antiquota/ui/app.js:306` | None identified | [Pending](TEST_REPORT.md#f-438) |
-| F-439 | [ ] Project New session here preselects its folder without a worktree. | `antiquota/ui/app.js:329` | None identified | [Pending](TEST_REPORT.md#f-439) |
-| F-440 | [ ] Project New session in a git worktree preselects its folder with a worktree. | `antiquota/ui/app.js:329` | None identified | [Pending](TEST_REPORT.md#f-440) |
-| F-441 | [ ] Collapse every other project persists the other project folders as collapsed. | `antiquota/ui/app.js:329` | None identified | [Pending](TEST_REPORT.md#f-441) |
-| F-442 | [ ] Expand every project clears project collapse preferences. | `antiquota/ui/app.js:329` | None identified | [Pending](TEST_REPORT.md#f-442) |
+| F-426 | [x] No sessions and no title matches have distinct empty messages. | `antiquota/ui/app.js:246` | None identified | [Passed](TEST_REPORT.md#f-426) |
+| F-427 | [x] Searches of two or more characters query message contents after 220 ms. | `antiquota/ui/app.js:292` | None identified | [Passed](TEST_REPORT.md#f-427) |
+| F-428 | [x] Older message-search responses cannot replace newer results. | `antiquota/ui/app.js:292` | None identified | [Passed](TEST_REPORT.md#f-428) |
+| F-429 | [x] Search hits show title, author, snippet, time and folder tooltip. | `antiquota/ui/app.js:292` | None identified | [Passed](TEST_REPORT.md#f-429) |
+| F-430 | [x] Show archived exposes archived sessions and Hide archived conceals them. | `antiquota/ui/app.js:246` | None identified | [Passed](TEST_REPORT.md#f-430) |
+| F-431 | [x] The current archived session stays visible while archives are hidden. | `antiquota/ui/app.js:246` | None identified | [Passed](TEST_REPORT.md#f-431) |
+| F-432 | [x] Session Rename opens the session and its title editor. | `antiquota/ui/app.js:306` | None identified | [Passed](TEST_REPORT.md#f-432) |
+| F-433 | [x] Session Pin to top persists the pinned state. | `antiquota/ui/app.js:306` | None identified | [Passed](TEST_REPORT.md#f-433) |
+| F-434 | [x] Session Unpin clears the pinned state. | `antiquota/ui/app.js:306` | None identified | [Passed](TEST_REPORT.md#f-434) |
+| F-435 | [x] Session Fork creates and opens a session from handoff state. | `antiquota/ui/app.js:306` | None identified | [Passed](TEST_REPORT.md#f-435) |
+| F-436 | [x] Session Archive persists archived state. | `antiquota/ui/app.js:306` | None identified | [Passed](TEST_REPORT.md#f-436) |
+| F-437 | [x] Session Unarchive clears archived state. | `antiquota/ui/app.js:306` | None identified | [Passed](TEST_REPORT.md#f-437) |
+| F-438 | [x] Session Delete requires confirmation and preserves project files. | `antiquota/ui/app.js:306` | None identified | [Passed](TEST_REPORT.md#f-438) |
+| F-439 | [x] Project New session here preselects its folder without a worktree. | `antiquota/ui/app.js:329` | None identified | [Passed](TEST_REPORT.md#f-439) |
+| F-440 | [x] Project New session in a git worktree preselects its folder with a worktree. | `antiquota/ui/app.js:329` | None identified | [Passed](TEST_REPORT.md#f-440) |
+| F-441 | [x] Collapse every other project persists the other project folders as collapsed. | `antiquota/ui/app.js:329` | None identified | [Passed](TEST_REPORT.md#f-441) |
+| F-442 | [x] Expand every project clears project collapse preferences. | `antiquota/ui/app.js:329` | None identified | [Passed](TEST_REPORT.md#f-442) |
 | F-443 | [ ] Show in Finder / Explorer reveals the project folder in desktop mode. | `antiquota/ui/app.js:329` | None identified | [Pending](TEST_REPORT.md#f-443) |
-| F-444 | [ ] Copy path copies the complete project-folder path. | `antiquota/ui/app.js:329` | None identified | [Pending](TEST_REPORT.md#f-444) |
-| F-445 | [ ] Archive its sessions archives every listed unarchived session. | `antiquota/ui/app.js:329` | None identified | [Pending](TEST_REPORT.md#f-445) |
-| F-446 | [ ] Delete archived sessions confirms before deleting listed archived transcripts. | `antiquota/ui/app.js:329` | None identified | [Pending](TEST_REPORT.md#f-446) |
-| F-447 | [ ] Delete all sessions confirms before deleting every listed transcript. | `antiquota/ui/app.js:329` | None identified | [Pending](TEST_REPORT.md#f-447) |
-| F-448 | [ ] Session actions open from right-click and the More button. | `antiquota/ui/app.js:306` | None identified | [Pending](TEST_REPORT.md#f-448) |
-| F-449 | [ ] Project actions open from right-click and the Project actions button. | `antiquota/ui/app.js:329` | None identified | [Pending](TEST_REPORT.md#f-449) |
-| F-450 | [ ] Context menus keep their right and bottom edges inside the viewport. | `antiquota/ui/app.js:306` | None identified | [Pending](TEST_REPORT.md#f-450) |
-| F-451 | [ ] Clicking outside a context menu closes it. | `antiquota/ui/app.js:367` | None identified | [Pending](TEST_REPORT.md#f-451) |
-| F-452 | [ ] Opening a session replaces its transcript and focuses the composer. | `antiquota/ui/app.js:968` | None identified | [Pending](TEST_REPORT.md#f-452) |
+| F-444 | [x] Copy path copies the complete project-folder path. | `antiquota/ui/app.js:329` | None identified | [Passed](TEST_REPORT.md#f-444) |
+| F-445 | [x] Archive its sessions archives every listed unarchived session. | `antiquota/ui/app.js:329` | None identified | [Passed](TEST_REPORT.md#f-445) |
+| F-446 | [x] Delete archived sessions confirms before deleting listed archived transcripts. | `antiquota/ui/app.js:329` | None identified | [Passed](TEST_REPORT.md#f-446) |
+| F-447 | [x] Delete all sessions confirms before deleting every listed transcript. | `antiquota/ui/app.js:329` | None identified | [Passed](TEST_REPORT.md#f-447) |
+| F-448 | [x] Session actions open from right-click and the More button. | `antiquota/ui/app.js:306` | None identified | [Passed](TEST_REPORT.md#f-448) |
+| F-449 | [x] Project actions open from right-click and the Project actions button. | `antiquota/ui/app.js:329` | None identified | [Passed](TEST_REPORT.md#f-449) |
+| F-450 | [x] Context menus keep their right and bottom edges inside the viewport. | `antiquota/ui/app.js:306` | None identified | [Passed](TEST_REPORT.md#f-450) |
+| F-451 | [x] Clicking outside a context menu closes it. | `antiquota/ui/app.js:367` | None identified | [Passed](TEST_REPORT.md#f-451) |
+| F-452 | [x] Opening a session replaces its transcript and focuses the composer. | `antiquota/ui/app.js:968` | None identified | [Passed](TEST_REPORT.md#f-452) |
 | F-453 | [ ] Opening a session restores that session's user-prompt history. | `antiquota/ui/app.js:968` | None identified | [Pending](TEST_REPORT.md#f-453) |
 | F-454 | [ ] A stale open-session response does not overwrite a newer selection. | `antiquota/ui/app.js:968` | None identified | [Pending](TEST_REPORT.md#f-454) |
 | F-455 | [ ] Switching sessions clears unsent attachment chips. | `antiquota/ui/app.js:968` | None identified | [Pending](TEST_REPORT.md#f-455) |
@@ -251,16 +251,16 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 
 | ID | Acceptance behavior | Legacy source | Existing legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-611 | [ ] Split opens a second independently selected session. | `antiquota/ui/app.js:1626` | None identified | [Pending](TEST_REPORT.md#f-611) |
-| F-612 | [ ] Split selection persists and restores on reload when still valid. | `antiquota/ui/app.js:1626` | None identified | [Pending](TEST_REPORT.md#f-612) |
-| F-613 | [ ] Opening split hides the side panel. | `antiquota/ui/app.js:1626` | None identified | [Pending](TEST_REPORT.md#f-613) |
-| F-614 | [ ] Split choices list up to fourteen recent unarchived other sessions. | `antiquota/ui/app.js:1644` | None identified | [Pending](TEST_REPORT.md#f-614) |
-| F-615 | [ ] Split choices identify busy sessions and no-other-session state. | `antiquota/ui/app.js:1644` | None identified | [Pending](TEST_REPORT.md#f-615) |
-| F-616 | [ ] Close split removes the second session and persisted selection. | `antiquota/ui/app.js:1637` | None identified | [Pending](TEST_REPORT.md#f-616) |
-| F-617 | [ ] Swap sides exchanges the left and right sessions. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-617) |
-| F-618 | [ ] The embedded Close side by side action closes split view. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-618) |
-| F-619 | [ ] Cross-origin split control messages are ignored. | `antiquota/ui/app.js:1661` | None identified | [Pending](TEST_REPORT.md#f-619) |
-| F-620 | [ ] Embedded views omit sidebar, drawer and nested split controls. | `antiquota/ui/app.js:17` | None identified | [Pending](TEST_REPORT.md#f-620) |
+| F-611 | [x] Split opens a second independently selected session. | `antiquota/ui/app.js:1626` | None identified | [Passed](TEST_REPORT.md#f-611) |
+| F-612 | [x] Split selection persists and restores on reload when still valid. | `antiquota/ui/app.js:1626` | None identified | [Passed](TEST_REPORT.md#f-612) |
+| F-613 | [x] Opening split hides the side panel. | `antiquota/ui/app.js:1626` | None identified | [Passed](TEST_REPORT.md#f-613) |
+| F-614 | [x] Split choices list up to fourteen recent unarchived other sessions. | `antiquota/ui/app.js:1644` | None identified | [Passed](TEST_REPORT.md#f-614) |
+| F-615 | [x] Split choices identify busy sessions and no-other-session state. | `antiquota/ui/app.js:1644` | None identified | [Passed](TEST_REPORT.md#f-615) |
+| F-616 | [x] Close split removes the second session and persisted selection. | `antiquota/ui/app.js:1637` | None identified | [Passed](TEST_REPORT.md#f-616) |
+| F-617 | [x] Swap sides exchanges the left and right sessions. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-617) |
+| F-618 | [x] The embedded Close side by side action closes split view. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-618) |
+| F-619 | [x] Cross-origin split control messages are ignored. | `antiquota/ui/app.js:1661` | None identified | [Passed](TEST_REPORT.md#f-619) |
+| F-620 | [x] Embedded views omit sidebar, drawer and nested split controls. | `antiquota/ui/app.js:17` | None identified | [Passed](TEST_REPORT.md#f-620) |
 | F-621 | [ ] Side-panel visibility persists per device. | `antiquota/ui/app.js:1671` | None identified | [Pending](TEST_REPORT.md#f-621) |
 | F-622 | [ ] The Changes, Files or Terminal tab selection persists per device. | `antiquota/ui/app.js:1671` | None identified | [Pending](TEST_REPORT.md#f-622) |
 | F-623 | [ ] Open side-panel content follows session selection. | `antiquota/ui/app.js:968` | None identified | [Pending](TEST_REPORT.md#f-623) |
@@ -516,8 +516,8 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 | F-833 | [ ] ArrowUp recalls earlier prompts when empty or at the start without Shift. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-833) |
 | F-834 | [ ] ArrowDown recalls newer prompts and the saved draft. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-834) |
 | F-835 | [ ] Escape stops the selected working session when no suggestion menu is open. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-835) |
-| F-836 | [ ] Escape closes the context menu. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-836) |
-| F-837 | [ ] ArrowUp and ArrowDown wrap focus among context-menu items. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-837) |
+| F-836 | [x] Escape closes the context menu. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-836) |
+| F-837 | [x] ArrowUp and ArrowDown wrap focus among context-menu items. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-837) |
 | F-838 | [ ] Cmd/Ctrl+N opens New session. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-838) |
 | F-839 | [ ] Cmd/Ctrl+. stops the turn. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-839) |
 | F-840 | [ ] Cmd/Ctrl+, opens Settings. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-840) |
@@ -526,12 +526,12 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 | F-843 | [ ] Desktop Cmd/Ctrl+= or Cmd/Ctrl++ increases zoom ten percentage points. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-843) |
 | F-844 | [ ] Desktop Cmd/Ctrl+- or Cmd/Ctrl+_ decreases zoom ten percentage points. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-844) |
 | F-845 | [ ] Desktop Cmd/Ctrl+0 resets zoom. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-845) |
-| F-846 | [ ] Cmd/Ctrl+K focuses and selects search. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-846) |
+| F-846 | [x] Cmd/Ctrl+K focuses and selects search. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-846) |
 | F-847 | [ ] Cmd/Ctrl+J focuses the composer. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-847) |
 | F-848 | [ ] Cmd/Ctrl+B toggles the side panel without Shift. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-848) |
-| F-849 | [ ] Cmd/Ctrl+Backslash toggles split view outside embedded sessions. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-849) |
-| F-850 | [ ] Cmd/Ctrl+Shift+[ or { selects the previous visible session. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-850) |
-| F-851 | [ ] Cmd/Ctrl+Shift+] or } selects the next visible session. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-851) |
+| F-849 | [x] Cmd/Ctrl+Backslash toggles split view outside embedded sessions. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-849) |
+| F-850 | [x] Cmd/Ctrl+Shift+[ or { selects the previous visible session. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-850) |
+| F-851 | [x] Cmd/Ctrl+Shift+] or } selects the next visible session. | `antiquota/ui/app.js:2526` | None identified | [Passed](TEST_REPORT.md#f-851) |
 | F-852 | [ ] Escape closes Settings when no modal dialog is open. | `antiquota/ui/app.js:2526` | None identified | [Pending](TEST_REPORT.md#f-852) |
 | F-853 | [ ] Alt-clicking a session opens it on the right. | `antiquota/ui/app.js:224` | None identified | [Pending](TEST_REPORT.md#f-853) |
 | F-854 | [ ] Non-Mac reference labels use Ctrl and Shift rather than Cmd glyphs. | `antiquota/ui/app.js:1527` | None identified | [Pending](TEST_REPORT.md#f-854) |
@@ -543,7 +543,7 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 | F-855 | [ ] The default dark theme uses the dense warm palette and centralized CSS variables. | `antiquota/ui/app.css:5` | None identified | [Pending](TEST_REPORT.md#f-855) |
 | F-856 | [ ] The light palette follows prefers-color-scheme and overrides centralized color variables. | `antiquota/ui/app.css:36` | None identified | [Pending](TEST_REPORT.md#f-856) |
 | F-857 | [ ] The composer stays docked below an independently scrolling transcript. | `antiquota/ui/app.css:194` | None identified | [Pending](TEST_REPORT.md#f-857) |
-| F-858 | [ ] Below 860 pixels the sidebar becomes a slide-in overlay with Open and Close controls. | `antiquota/ui/app.css:544` | None identified | [Pending](TEST_REPORT.md#f-858) |
+| F-858 | [x] Below 860 pixels the sidebar becomes a slide-in overlay with Open and Close controls. | `antiquota/ui/app.css:544` | None identified | [Passed](TEST_REPORT.md#f-858) |
 | F-859 | [ ] Below 860 pixels the side panel becomes an overlay. | `antiquota/ui/app.css:544` | None identified | [Pending](TEST_REPORT.md#f-859) |
 | F-860 | [ ] Narrow headers omit working-folder and token totals. | `antiquota/ui/app.css:558` | None identified | [Pending](TEST_REPORT.md#f-860) |
 | F-861 | [ ] Below 860 pixels Settings uses wrapped navigation above the body. | `antiquota/ui/app.css:627` | None identified | [Pending](TEST_REPORT.md#f-861) |
@@ -553,7 +553,7 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 | F-865 | [ ] Token meter widths below 440 pixels hide available-account count. | `antiquota/ui/app.css:660` | None identified | [Pending](TEST_REPORT.md#f-865) |
 | F-866 | [ ] Reduced-motion preference disables animation and transitions. | `antiquota/ui/app.css:564` | None identified | [Pending](TEST_REPORT.md#f-866) |
 | F-867 | [ ] The macOS sidebar and narrow header reserve space for traffic lights independently of native zoom. | `antiquota/ui/app.css:798` | None identified | [Pending](TEST_REPORT.md#f-867) |
-| F-868 | [ ] Split view keeps two content columns below the sidebar-collapse breakpoint. | `antiquota/ui/app.css:1034` | None identified | [Pending](TEST_REPORT.md#f-868) |
+| F-868 | [x] Split view keeps two content columns below the sidebar-collapse breakpoint. | `antiquota/ui/app.css:1034` | None identified | [Passed](TEST_REPORT.md#f-868) |
 | F-869 | [ ] Terminal occupies its pane and gives the drawer a wider terminal layout. | `antiquota/ui/app.css:1019` | None identified | [Pending](TEST_REPORT.md#f-869) |
 | F-870 | [ ] Keyboard focus receives a visible accent outline. | `antiquota/ui/app.css:82` | None identified | [Pending](TEST_REPORT.md#f-870) |
 | F-871 | [ ] Hidden controls do not occupy layout space. | `antiquota/ui/app.css:83` | None identified | [Pending](TEST_REPORT.md#f-871) |

@@ -58,12 +58,13 @@ export function removeSent(sid: string, paths: string[]) {
 }
 
 /** Opening another session clears unsent attachments everywhere else. */
-export function clearTrays(keep: string) {
+export function clearTrays(keep: string | string[]) {
+  const visible = typeof keep === 'string' ? [keep] : keep;
   trays.update((all) => {
     for (const [sid, files] of Object.entries(all))
-      if (sid !== keep)
+      if (!visible.includes(sid))
         for (const file of files) if (file.preview) URL.revokeObjectURL(file.preview);
-    return keep in all ? { [keep]: all[keep] ?? [] } : {};
+    return Object.fromEntries(Object.entries(all).filter(([sid]) => visible.includes(sid)));
   });
 }
 

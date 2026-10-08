@@ -1,28 +1,27 @@
 <!-- Owns the shared browser/webview shell and connects stores to focused views. -->
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import { createApi } from './lib/api';
   import { createWorkbench } from './lib/workbench';
   import { createStream } from './lib/stream';
   import Sidebar from './components/Sidebar.svelte';
-  import SessionHeader from './components/SessionHeader.svelte';
   import SessionDialog from './components/SessionDialog.svelte';
-  import Transcript from './components/Transcript.svelte';
-  import Composer from './components/Composer.svelte';
   import DropZone from './components/DropZone.svelte';
-  import Icon from './components/Icon.svelte';
   import SettingsPanel from './components/SettingsPanel.svelte';
   import LoginDialog from './components/LoginDialog.svelte';
   import ConfirmRemoval from './components/ConfirmRemoval.svelte';
-  import GoalBar from './components/GoalBar.svelte';
   import GoalDialog from './components/GoalDialog.svelte';
-  import JobBar from './components/JobBar.svelte';
   import JobLog from './components/JobLog.svelte';
   import Drawer from './components/Drawer.svelte';
   import FileViewer from './components/FileViewer.svelte';
   import ConfirmDialog from './components/ConfirmDialog.svelte';
   import { drawer } from './lib/git';
-  import { revising } from './lib/goals';
+  import SessionPane from './components/SessionPane.svelte';
+  import ContextMenu from './components/ContextMenu.svelte';
+  import { contextMenu, openMenu } from './lib/context-menu';
+  import { createPanes } from './lib/panes';
+  import { groupSessions, splitChoices, stepSession } from './lib/navigation';
+  import { clearTrays } from './lib/media';
   import { createAccounts } from './lib/accounts';
   import { createLogin } from './lib/login';
   import { createPermissions } from './lib/permissions';
@@ -37,6 +36,11 @@
     history.replaceState(null, '', `#${encodeURIComponent(id)}`),
   );
   const view = workbench.state;
+  const panes = createPanes(api, workbench),
+    pane = panes.state,
+    right = panes.right.state;
+  const activeWorkbench = $derived($pane.active === 'right' && $pane.sid ? panes.right : workbench);
+  $effect(() => clearTrays([$view.selected?.id ?? '', $right.selected?.id ?? '']));
   const settings = createSettings(api, () => {
     void workbench.refresh();
   });
@@ -47,18 +51,23 @@
     api.streamUrl(),
     (event) => {
       workbench.onEvent(event);
+      if (get(pane).sid) panes.right.onEvent(event);
       accounts.onEvent(event);
       const selected = get(view).selected;
       if (selected && event.sid === selected.id)
         notifications.event(event, selected.title || 'antiquota', get(preferences.state));
     },
-    () => workbench.refresh(),
+    async () => {
+      await workbench.refresh();
+      if (get(pane).sid) await panes.right.refresh();
+    },
   );
   const connection = stream.connection;
   onMount(() => {
     let previousAccounts: unknown;
     let previousDefaults: unknown;
     const unsubscribe = view.subscribe((value) => {
+      panes.reconcile();
       if (
         value.snapshot &&
         (previousAccounts !== value.snapshot.accounts ||
@@ -69,16 +78,67 @@
         accounts.acceptSnapshot(value.snapshot);
       }
     });
-    void workbench.refresh(decodeURIComponent(location.hash.slice(1)));
+    void workbench.refresh(decodeURIComponent(location.hash.slice(1))).then(() => panes.restore());
     if (token && token !== '__ANTIQUOTA_TOKEN__') stream.open();
     return () => {
       unsubscribe();
       stream.close();
       login.dispose();
       settings.dispose();
+      panes.dispose();
     };
   });
+  function splitMenu(e: MouseEvent) {
+    const choices = splitChoices($view.snapshot?.sessions ?? [], $view.selected?.id ?? '');
+    openMenu(
+      e,
+      [
+        ...choices.map((s) => ({
+          label: `${s.status !== 'idle' ? '● ' : ''}${s.title || 'New session'}`,
+          action: () => panes.open(s.id),
+        })),
+        ...($pane.sid ? [{ label: 'Close side by side', action: panes.close }] : []),
+      ],
+      'Show beside this one',
+    );
+  }
   function shortcut(event: KeyboardEvent) {
+    if (event.defaultPrevented || document.querySelector('dialog[open]') || $contextMenu) return;
+    const mod = event.metaKey || event.ctrlKey;
+    if (mod && event.key.toLowerCase() === 'k') {
+      event.preventDefault();
+      workbench.change({ sidebarOpen: true });
+      void tick().then(() => {
+        const input = document.querySelector<HTMLInputElement>('[aria-label="Filter sessions"]');
+        input?.focus();
+        input?.select();
+      });
+      return;
+    }
+    if (mod && event.key === '\\') {
+      event.preventDefault();
+      if ($pane.sid) panes.close();
+      else document.querySelector<HTMLButtonElement>('[aria-label="Split view"]')?.click();
+      return;
+    }
+    if (mod && event.shiftKey && ['[', ']', '{', '}'].includes(event.key)) {
+      event.preventDefault();
+      const groups = groupSessions($view.snapshot?.sessions ?? [], $view.filter, {
+        current: $view.selected?.id ?? '',
+        showArchived: $view.showArchived,
+      });
+      const id = stepSession(
+        groups,
+        $view.selected?.id ?? '',
+        [']', '}'].includes(event.key) ? 1 : -1,
+      );
+      if (id) {
+        panes.focus('left');
+        void panes.select(id);
+      }
+      return;
+    }
+
     if ((event.metaKey || event.ctrlKey) && event.key === ',') {
       event.preventDefault();
       accounts.open('general');
@@ -97,50 +157,38 @@
 </script>
 
 <svelte:window onkeydown={shortcut} />
-<DropZone {workbench} {api} />
+<DropZone workbench={activeWorkbench} {api} />
 <div class="workbench">
-  <Sidebar {workbench} {accounts} {login} connection={$connection} />
+  <Sidebar {workbench} {accounts} {login} {api} {panes} connection={$connection} />
   <main>
-    <SessionHeader {workbench} />
-    {#if $connection === 'reconnecting'}<div class="connection-banner" role="status">
-        Engine disconnected. Reconnecting; your draft is kept.
-      </div>{/if}
-    {#if $view.error && !$view.dialog}<div class="error-banner" role="alert">
-        <span>{$view.error}</span><button class="quiet" onclick={() => workbench.refresh()}
-          >Retry</button
-        ><button
-          class="icon quiet"
-          aria-label="Dismiss error"
-          onclick={() => workbench.change({ error: '' })}><Icon name="close" /></button
-        >
-      </div>{/if}
-    {#if $view.selected}<Transcript {workbench} {login} {api} /><GoalBar
-        {workbench}
-        onrevise={() => revising.set(true)}
-      /><JobBar {workbench} /><Composer {workbench} {api} connected={$connection === 'live'} />
-    {:else}<div class="welcome">
-        <span class="eyebrow">YOUR WORKBENCH</span>
-        <h1>A place for the next idea.</h1>
-        <p>
-          Create a session in a project folder.<br />The conversation and its tools stay together.
-        </p>
-        <button
-          class="primary"
-          onclick={() => workbench.openDialog('create')}
-          disabled={$view.loading}><Icon name="plus" />New session</button
-        >{#if !$view.snapshot?.accounts.length && !$view.loading}<button
-            class="quiet"
-            onclick={() => login.open()}>Add a Google account</button
-          >{/if}
-        {#if $view.loading}<small>Connecting to the engine…</small>{/if}
-      </div>{/if}
+    <SessionPane
+      {workbench}
+      {api}
+      {login}
+      connection={$connection}
+      active={$pane.active === 'left'}
+      onactivate={() => panes.focus('left')}
+      onsplit={splitMenu}
+    />
+    {#if $pane.sid}<SessionPane
+        workbench={panes.right}
+        {api}
+        {login}
+        connection={$connection}
+        active={$pane.active === 'right'}
+        onactivate={() => panes.focus('right')}
+        onclose={panes.close}
+        onswap={() => void panes.swap()}
+      />{/if}
   </main>
-  <Drawer {workbench} {api} />
+  <Drawer workbench={activeWorkbench} {api} />
   <SessionDialog {workbench} />
-  <GoalDialog {workbench} />
+  <SessionDialog workbench={panes.right} />
+  <GoalDialog workbench={activeWorkbench} />
   <JobLog />
   <FileViewer />
   <ConfirmDialog />
+  {#if $contextMenu}{#key $contextMenu}<ContextMenu />{/key}{/if}
   <SettingsPanel
     {api}
     {workbench}
@@ -164,69 +212,9 @@
     flex: 1;
     min-width: 0;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
   }
-  .connection-banner,
-  .error-banner {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    padding: var(--space-2) var(--space-5);
-    font-size: 12px;
-    flex-shrink: 0;
-  }
-  .connection-banner {
-    background: var(--baton-soft);
-    color: var(--baton);
-  }
-  .error-banner {
-    background: var(--bad-soft);
-    color: var(--bad);
-  }
-  .error-banner > span {
-    flex: 1;
-    overflow-wrap: anywhere;
-  }
-  .error-banner button {
-    font-size: 11px;
-    color: var(--bad);
-  }
-  .welcome {
-    margin: auto;
-    max-width: 560px;
-    padding: var(--space-6);
-    width: 100%;
-  }
-  .eyebrow {
-    color: var(--baton);
-    font: 10px var(--mono);
-    letter-spacing: 0.08em;
-  }
-  h1 {
-    font-size: 24px;
-    font-weight: 500;
-    letter-spacing: -0.5px;
-    margin: var(--space-3) 0;
-  }
-  p {
-    color: var(--ink-3);
-    line-height: 1.8;
-  }
-  .welcome button {
-    margin-top: var(--space-5);
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-  }
-  small {
-    display: block;
-    color: var(--ink-3);
-    margin-top: var(--space-3);
-  }
-  @media (max-width: 760px) {
-    .connection-banner,
-    .error-banner {
-      padding: var(--space-2) var(--space-3);
-    }
+  main > :global(.session-pane) + :global(.session-pane) {
+    border-left: 1px solid var(--rule);
   }
 </style>

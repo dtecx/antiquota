@@ -1,40 +1,66 @@
 <!-- Owns the prompt control, attachments, dictation and send/stop; drafts live in the store. -->
 <script lang="ts">
   import { notifications } from '../lib/notifications';
-  import { tick } from 'svelte';
+  import { caretPositions } from '../lib/session-view';
+  import { tick, onDestroy } from 'svelte';
+  import { get } from 'svelte/store';
+  import AttachmentTray from './AttachmentTray.svelte';
   import type { Api } from '../lib/api';
   import type { Workbench } from '../lib/workbench';
   import Icon from './Icon.svelte';
   import { formatTokens, isBusy, statusLabel } from '../lib/format';
   import { draftFor, goalDialog, revising } from '../lib/goals';
-  import { humanSize } from '../lib/git';
   import {
-    clearTrays,
-    extensionLabel,
     insertAt,
     mediaNotice,
     pastedName,
     readyPaths,
     recordingLabel,
-    removeFile,
     removeSent,
     say,
     trays,
     uploadFiles,
   } from '../lib/media';
   import { browserEnvironment, createDictation } from '../lib/dictation';
-  let { workbench, api, connected }: { workbench: Workbench; api: Api; connected: boolean } =
-    $props();
+  let {
+    workbench,
+    api,
+    connected,
+    active = true,
+  }: { workbench: Workbench; api: Api; connected: boolean; active?: boolean } = $props();
   const view = $derived(workbench.state);
   const running = $derived(isBusy($view.selected?.status));
   const attention = $derived($view.selected?.status === 'approval');
+  const loading = $derived($view.loading);
   const sid = $derived($view.selected?.id ?? '');
   const text = $derived($view.drafts[sid] ?? '');
   const tray = $derived($trays[sid] ?? []);
   const ready = $derived(readyPaths(tray));
   let prompt: HTMLTextAreaElement | undefined = $state();
   let picker: HTMLInputElement | undefined = $state();
-  $effect(() => clearTrays(sid));
+  $effect(() => {
+    const id = sid;
+    if (active && !loading)
+      void tick().then(() => {
+        if (!prompt || sid !== id || !active || loading) return;
+        const focused = document.activeElement;
+        if (
+          focused !== prompt &&
+          focused?.closest('.session-pane') === prompt.closest('.session-pane')
+        )
+          return;
+        const caret = caretPositions.get(id);
+        if (caret) {
+          prompt.selectionStart = caret.start;
+          prompt.selectionEnd = caret.end;
+        }
+        prompt.focus();
+      });
+  });
+  function rememberCaret() {
+    if (prompt && sid)
+      caretPositions.set(sid, { start: prompt.selectionStart, end: prompt.selectionEnd });
+  }
   function failed(error: unknown) {
     workbench.change({ error: error instanceof Error ? error.message : String(error) });
   }
@@ -62,11 +88,18 @@
     event.preventDefault();
     void attachFiles(files);
   }
+  let dictationSid = '';
   const dictation = createDictation(
     {
-      draft: () => text,
-      live: (value) => workbench.draft(value),
+      draft: () => {
+        dictationSid = sid;
+        return text;
+      },
+      live: (value) => {
+        if (sid === dictationSid) workbench.draft(value);
+      },
       insert: (words) => {
+        if (sid !== dictationSid) return;
         const start = prompt?.selectionStart ?? text.length;
         const next = insertAt(text, start, prompt?.selectionEnd ?? start, words);
         workbench.draft(next.value);
@@ -82,6 +115,17 @@
     },
     browserEnvironment(),
   );
+  async function toggleDictation() {
+    if (get(dictation.state) === 'idle') dictationSid = sid;
+    await dictation.toggle();
+  }
+  $effect(() => {
+    void sid;
+    void dictation.cancel();
+  });
+  onDestroy(() => {
+    void dictation.cancel();
+  });
   const mic = dictation.state;
   const since = dictation.since;
   let clock = $state(Date.now());
@@ -109,19 +153,25 @@
     }[$mic],
   );
   function keys(event: KeyboardEvent) {
+    if (!active && $mic === 'idle') return;
     if (event.key === 'Escape' && ($mic === 'recording' || $mic === 'listening')) {
       event.preventDefault();
       event.stopPropagation();
       void dictation.cancel();
       return;
     }
-    if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key.toLowerCase() === 'm') {
+    if (
+      active &&
+      (event.metaKey || event.ctrlKey) &&
+      event.shiftKey &&
+      event.key.toLowerCase() === 'm'
+    ) {
       event.preventDefault();
-      if (sid) void dictation.toggle();
+      if (sid) void toggleDictation();
     }
   }
   $effect(() => {
-    if ($revising) prompt?.focus();
+    if ($revising && active) prompt?.focus();
   });
   function openGoal() {
     const session = $view.selected;
@@ -150,27 +200,9 @@
       void submit();
     }}
   >
-    {#if tray.length}<div class="tray" aria-label="Attached files">
-        {#each tray as file (file.key)}<div
-            class="chip"
-            class:uploading={file.uploading}
-            title={file.name}
-          >
-            {#if file.image && (file.preview || file.path)}<img
-                src={file.preview ?? api.attachmentUrl(sid, file.name)}
-                alt=""
-              />{:else}<span class="kind">{extensionLabel(file.name)}</span>{/if}<span class="name"
-              >{file.name}</span
-            ><span class="size">{file.uploading ? 'uploading…' : humanSize(file.size)}</span><button
-              type="button"
-              class="remove"
-              aria-label={`Remove ${file.name}`}
-              onclick={() => removeFile(sid, file)}><Icon name="close" size={12} /></button
-            >
-          </div>{/each}
-      </div>{/if}
-    <label class="sr-only" for="prompt">Message</label><textarea
-      id="prompt"
+    <AttachmentTray {api} {sid} files={tray} />
+    <label class="sr-only" for={`prompt-${sid}`}>Message</label><textarea
+      id={`prompt-${sid}`}
       aria-label="Message"
       rows="3"
       bind:this={prompt}
@@ -183,6 +215,8 @@
       oninput={(event) => workbench.draft(event.currentTarget.value)}
       onkeydown={keydown}
       onpaste={paste}
+      onselect={rememberCaret}
+      onblur={rememberCaret}
       disabled={!$view.selected || $view.loading}></textarea>
     <div class="composer-tools">
       <input
@@ -212,7 +246,7 @@
         aria-label={micTitle}
         aria-pressed={$mic === 'listening' || $mic === 'recording'}
         disabled={!$view.selected}
-        onclick={() => void dictation.toggle()}><Icon name="mic" /></button
+        onclick={() => void toggleDictation()}><Icon name="mic" /></button
       >{#if micLabel}<span class="mic-state" role="status">{micLabel}</span>{:else}<span
           class="hint"><kbd>↵</kbd> send <span>·</span> <kbd>⇧ ↵</kbd> newline</span
         >{/if}
@@ -315,72 +349,6 @@
     font: 10px var(--mono);
     color: var(--bad);
     white-space: nowrap;
-  }
-  .tray {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2);
-    padding: var(--space-3) var(--space-3) 0;
-  }
-  .chip {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    max-width: 240px;
-    padding: var(--space-1) var(--space-1) var(--space-1) var(--space-1);
-    border: 1px solid var(--rule-2);
-    border-radius: var(--r-md);
-    background: var(--well);
-    font-size: 12px;
-  }
-  .chip.uploading {
-    opacity: 0.6;
-  }
-  .chip img,
-  .chip .kind {
-    flex-shrink: 0;
-    width: 36px;
-    height: 36px;
-    border-radius: var(--r-sm);
-  }
-  .chip img {
-    object-fit: cover;
-    outline: 1px solid var(--rule-2);
-    outline-offset: -1px;
-  }
-  .chip .kind {
-    display: grid;
-    place-items: center;
-    background: var(--rule);
-    color: var(--ink-3);
-    font: 500 10px var(--mono);
-    text-transform: uppercase;
-  }
-  .chip .name {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    color: var(--ink-2);
-  }
-  .chip .size {
-    font: 10px var(--mono);
-    color: var(--ink-4);
-    white-space: nowrap;
-  }
-  .chip .remove {
-    display: inline-grid;
-    place-items: center;
-    min-height: 24px;
-    width: 24px;
-    padding: 0;
-    border: 0;
-    background: none;
-    color: var(--ink-4);
-  }
-  .chip .remove:hover {
-    color: var(--bad);
-    background: var(--bad-soft);
   }
   .actions {
     display: flex;

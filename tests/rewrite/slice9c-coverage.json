@@ -1,0 +1,542 @@
+{
+  "slice": "9c",
+  "passed_before": 438,
+  "passed_after": 493,
+  "added": 55,
+  "feature_ids": [
+    "F-413",
+    "F-414",
+    "F-415",
+    "F-417",
+    "F-420",
+    "F-422",
+    "F-423",
+    "F-424",
+    "F-418",
+    "F-419",
+    "F-421",
+    "F-439",
+    "F-440",
+    "F-441",
+    "F-442",
+    "F-444",
+    "F-445",
+    "F-446",
+    "F-447",
+    "F-449",
+    "F-426",
+    "F-427",
+    "F-428",
+    "F-429",
+    "F-452",
+    "F-430",
+    "F-431",
+    "F-432",
+    "F-433",
+    "F-434",
+    "F-435",
+    "F-436",
+    "F-437",
+    "F-438",
+    "F-448",
+    "F-450",
+    "F-451",
+    "F-836",
+    "F-837",
+    "F-611",
+    "F-612",
+    "F-613",
+    "F-616",
+    "F-617",
+    "F-618",
+    "F-619",
+    "F-620",
+    "F-868",
+    "F-614",
+    "F-615",
+    "F-846",
+    "F-849",
+    "F-850",
+    "F-851",
+    "F-858"
+  ],
+  "tests": {
+    "F-413": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "sidebar shows status wake times goal rounds worktree parents and collapsed working counts",
+      "references": [
+        "ui/e2e/navigation.spec.ts::sidebar shows status wake times goal rounds worktree parents and collapsed working counts"
+      ],
+      "proof": "Session rows display title, relative update time and status. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-414": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "sidebar shows status wake times goal rounds worktree parents and collapsed working counts",
+      "references": [
+        "ui/e2e/navigation.spec.ts::sidebar shows status wake times goal rounds worktree parents and collapsed working counts"
+      ],
+      "proof": "Session rows identify pinned sessions and worktree sessions. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-415": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "sidebar shows status wake times goal rounds worktree parents and collapsed working counts",
+      "references": [
+        "ui/e2e/navigation.spec.ts::sidebar shows status wake times goal rounds worktree parents and collapsed working counts"
+      ],
+      "proof": "Sleeping sessions show the wake time. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-417": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "sidebar shows status wake times goal rounds worktree parents and collapsed working counts",
+      "references": [
+        "ui/e2e/navigation.spec.ts::sidebar shows status wake times goal rounds worktree parents and collapsed working counts"
+      ],
+      "proof": "Goal sessions show the current round and limit or final goal state. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-420": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "sidebar shows status wake times goal rounds worktree parents and collapsed working counts",
+      "references": [
+        "ui/e2e/navigation.spec.ts::sidebar shows status wake times goal rounds worktree parents and collapsed working counts",
+        "ui/src/lib/navigation.test.ts::puts a worktree session under its repository"
+      ],
+      "proof": "Worktree sessions group by their parent repository. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-422": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "sidebar shows status wake times goal rounds worktree parents and collapsed working counts",
+      "references": [
+        "ui/e2e/navigation.spec.ts::sidebar shows status wake times goal rounds worktree parents and collapsed working counts"
+      ],
+      "proof": "The current session's project remains expanded despite a collapsed preference. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-423": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "sidebar shows status wake times goal rounds worktree parents and collapsed working counts",
+      "references": [
+        "ui/e2e/navigation.spec.ts::sidebar shows status wake times goal rounds worktree parents and collapsed working counts"
+      ],
+      "proof": "Collapsed projects show session count and working-session indicator. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-424": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "sidebar shows status wake times goal rounds worktree parents and collapsed working counts",
+      "references": [
+        "ui/e2e/navigation.spec.ts::sidebar shows status wake times goal rounds worktree parents and collapsed working counts"
+      ],
+      "proof": "Search temporarily expands matching project groups. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-418": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "session menus rename pin fork archive and confirm deletion without touching project files",
+      "references": [
+        "ui/e2e/navigation.spec.ts::session menus rename pin fork archive and confirm deletion without touching project files",
+        "ui/src/lib/navigation.test.ts::separates pins, orders projects by recency, combines filter terms, and preserves input"
+      ],
+      "proof": "Sessions sort by most recent update within project groups. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-419": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "session menus rename pin fork archive and confirm deletion without touching project files",
+      "references": [
+        "ui/e2e/navigation.spec.ts::session menus rename pin fork archive and confirm deletion without touching project files",
+        "ui/src/lib/navigation.test.ts::separates pins, orders projects by recency, combines filter terms, and preserves input"
+      ],
+      "proof": "Pinned sessions appear in a separate Pinned group. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-421": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "project menus persist collapse prefill creation copy paths and confirm bulk deletion",
+      "references": [
+        "ui/e2e/navigation.spec.ts::project menus persist collapse prefill creation copy paths and confirm bulk deletion"
+      ],
+      "proof": "Project collapse state persists per device. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-439": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "project menus persist collapse prefill creation copy paths and confirm bulk deletion",
+      "references": [
+        "ui/e2e/navigation.spec.ts::project menus persist collapse prefill creation copy paths and confirm bulk deletion"
+      ],
+      "proof": "Project New session here preselects its folder without a worktree. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-440": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "project menus persist collapse prefill creation copy paths and confirm bulk deletion",
+      "references": [
+        "ui/e2e/navigation.spec.ts::project menus persist collapse prefill creation copy paths and confirm bulk deletion"
+      ],
+      "proof": "Project New session in a git worktree preselects its folder with a worktree. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-441": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "project menus persist collapse prefill creation copy paths and confirm bulk deletion",
+      "references": [
+        "ui/e2e/navigation.spec.ts::project menus persist collapse prefill creation copy paths and confirm bulk deletion",
+        "ui/src/lib/sidebar-actions.test.ts::collapses every other parent folder including pinned-only and archived projects"
+      ],
+      "proof": "Collapse every other project persists the other project folders as collapsed. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-442": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "project menus persist collapse prefill creation copy paths and confirm bulk deletion",
+      "references": [
+        "ui/e2e/navigation.spec.ts::project menus persist collapse prefill creation copy paths and confirm bulk deletion"
+      ],
+      "proof": "Expand every project clears project collapse preferences. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-444": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "project menus persist collapse prefill creation copy paths and confirm bulk deletion",
+      "references": [
+        "ui/e2e/navigation.spec.ts::project menus persist collapse prefill creation copy paths and confirm bulk deletion"
+      ],
+      "proof": "Copy path copies the complete project-folder path. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-445": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "project menus persist collapse prefill creation copy paths and confirm bulk deletion",
+      "references": [
+        "ui/e2e/navigation.spec.ts::project menus persist collapse prefill creation copy paths and confirm bulk deletion"
+      ],
+      "proof": "Archive its sessions archives every listed unarchived session. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-446": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "project menus persist collapse prefill creation copy paths and confirm bulk deletion",
+      "references": [
+        "ui/e2e/navigation.spec.ts::project menus persist collapse prefill creation copy paths and confirm bulk deletion"
+      ],
+      "proof": "Delete archived sessions confirms before deleting listed archived transcripts. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-447": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "project menus persist collapse prefill creation copy paths and confirm bulk deletion",
+      "references": [
+        "ui/e2e/navigation.spec.ts::project menus persist collapse prefill creation copy paths and confirm bulk deletion"
+      ],
+      "proof": "Delete all sessions confirms before deleting every listed transcript. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-449": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "project menus persist collapse prefill creation copy paths and confirm bulk deletion",
+      "references": [
+        "ui/e2e/navigation.spec.ts::project menus persist collapse prefill creation copy paths and confirm bulk deletion"
+      ],
+      "proof": "Project actions open from right-click and the Project actions button. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-426": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "empty sidebar has its own state and split choices mark busy sessions and cap at fourteen",
+      "references": [
+        "ui/e2e/navigation.spec.ts::empty sidebar has its own state and split choices mark busy sessions and cap at fourteen"
+      ],
+      "proof": "No sessions and no title matches have distinct empty messages. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-427": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "message search renders matching content and session selection replaces history and focuses prompt",
+      "references": [
+        "ui/e2e/navigation.spec.ts::message search renders matching content and session selection replaces history and focuses prompt",
+        "ui/src/lib/message-search.test.ts::debounces token changes and discards results after clearing or replacing the query"
+      ],
+      "proof": "Searches of two or more characters query message contents after 220 ms. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-428": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "message search renders matching content and session selection replaces history and focuses prompt",
+      "references": [
+        "ui/e2e/navigation.spec.ts::message search renders matching content and session selection replaces history and focuses prompt",
+        "ui/src/lib/message-search.test.ts::debounces token changes and discards results after clearing or replacing the query"
+      ],
+      "proof": "Older message-search responses cannot replace newer results. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-429": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "message search renders matching content and session selection replaces history and focuses prompt",
+      "references": [
+        "ui/e2e/navigation.spec.ts::message search renders matching content and session selection replaces history and focuses prompt"
+      ],
+      "proof": "Search hits show title, author, snippet, time and folder tooltip. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-452": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "message search renders matching content and session selection replaces history and focuses prompt",
+      "references": [
+        "ui/e2e/navigation.spec.ts::message search renders matching content and session selection replaces history and focuses prompt"
+      ],
+      "proof": "Opening a session replaces its transcript and focuses the composer. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-430": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "session menus rename pin fork archive and confirm deletion without touching project files",
+      "references": [
+        "ui/e2e/navigation.spec.ts::session menus rename pin fork archive and confirm deletion without touching project files",
+        "tests/rewrite/parity.rs::captured_session_actions_preserve_transcript_and_inject_state_on_the_next_turn"
+      ],
+      "proof": "Show archived exposes archived sessions and Hide archived conceals them. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-431": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "session menus rename pin fork archive and confirm deletion without touching project files",
+      "references": [
+        "ui/e2e/navigation.spec.ts::session menus rename pin fork archive and confirm deletion without touching project files",
+        "tests/rewrite/parity.rs::captured_session_actions_preserve_transcript_and_inject_state_on_the_next_turn"
+      ],
+      "proof": "The current archived session stays visible while archives are hidden. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-432": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "session menus rename pin fork archive and confirm deletion without touching project files",
+      "references": [
+        "ui/e2e/navigation.spec.ts::session menus rename pin fork archive and confirm deletion without touching project files",
+        "tests/rewrite/parity.rs::captured_session_actions_preserve_transcript_and_inject_state_on_the_next_turn"
+      ],
+      "proof": "Session Rename opens the session and its title editor. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-433": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "session menus rename pin fork archive and confirm deletion without touching project files",
+      "references": [
+        "ui/e2e/navigation.spec.ts::session menus rename pin fork archive and confirm deletion without touching project files",
+        "tests/rewrite/parity.rs::captured_session_actions_preserve_transcript_and_inject_state_on_the_next_turn"
+      ],
+      "proof": "Session Pin to top persists the pinned state. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-434": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "session menus rename pin fork archive and confirm deletion without touching project files",
+      "references": [
+        "ui/e2e/navigation.spec.ts::session menus rename pin fork archive and confirm deletion without touching project files",
+        "tests/rewrite/parity.rs::captured_session_actions_preserve_transcript_and_inject_state_on_the_next_turn"
+      ],
+      "proof": "Session Unpin clears the pinned state. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-435": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "session menus rename pin fork archive and confirm deletion without touching project files",
+      "references": [
+        "ui/e2e/navigation.spec.ts::session menus rename pin fork archive and confirm deletion without touching project files",
+        "tests/rewrite/parity.rs::captured_session_actions_preserve_transcript_and_inject_state_on_the_next_turn"
+      ],
+      "proof": "Session Fork creates and opens a session from handoff state. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-436": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "session menus rename pin fork archive and confirm deletion without touching project files",
+      "references": [
+        "ui/e2e/navigation.spec.ts::session menus rename pin fork archive and confirm deletion without touching project files",
+        "tests/rewrite/parity.rs::captured_session_actions_preserve_transcript_and_inject_state_on_the_next_turn"
+      ],
+      "proof": "Session Archive persists archived state. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-437": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "session menus rename pin fork archive and confirm deletion without touching project files",
+      "references": [
+        "ui/e2e/navigation.spec.ts::session menus rename pin fork archive and confirm deletion without touching project files",
+        "tests/rewrite/parity.rs::captured_session_actions_preserve_transcript_and_inject_state_on_the_next_turn"
+      ],
+      "proof": "Session Unarchive clears archived state. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-438": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "session menus rename pin fork archive and confirm deletion without touching project files",
+      "references": [
+        "ui/e2e/navigation.spec.ts::session menus rename pin fork archive and confirm deletion without touching project files",
+        "tests/rewrite/parity.rs::captured_session_actions_preserve_transcript_and_inject_state_on_the_next_turn"
+      ],
+      "proof": "Session Delete requires confirmation and preserves project files. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-448": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "session menus rename pin fork archive and confirm deletion without touching project files",
+      "references": [
+        "ui/e2e/navigation.spec.ts::session menus rename pin fork archive and confirm deletion without touching project files",
+        "tests/rewrite/parity.rs::captured_session_actions_preserve_transcript_and_inject_state_on_the_next_turn"
+      ],
+      "proof": "Session actions open from right-click and the More button. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-450": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "context menus wrap keyboard focus dismiss restore focus and clamp near viewport edges",
+      "references": [
+        "ui/e2e/navigation.spec.ts::context menus wrap keyboard focus dismiss restore focus and clamp near viewport edges"
+      ],
+      "proof": "Context menus keep their right and bottom edges inside the viewport. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-451": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "context menus wrap keyboard focus dismiss restore focus and clamp near viewport edges",
+      "references": [
+        "ui/e2e/navigation.spec.ts::context menus wrap keyboard focus dismiss restore focus and clamp near viewport edges"
+      ],
+      "proof": "Clicking outside a context menu closes it. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-836": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "context menus wrap keyboard focus dismiss restore focus and clamp near viewport edges",
+      "references": [
+        "ui/e2e/navigation.spec.ts::context menus wrap keyboard focus dismiss restore focus and clamp near viewport edges"
+      ],
+      "proof": "Escape closes the context menu. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-837": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "context menus wrap keyboard focus dismiss restore focus and clamp near viewport edges",
+      "references": [
+        "ui/e2e/navigation.spec.ts::context menus wrap keyboard focus dismiss restore focus and clamp near viewport edges"
+      ],
+      "proof": "ArrowUp and ArrowDown wrap focus among context-menu items. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-611": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "split shares one event connection retains independent drafts attachments scroll and swaps sessions",
+      "references": [
+        "ui/e2e/navigation.spec.ts::split shares one event connection retains independent drafts attachments scroll and swaps sessions",
+        "ui/src/lib/panes.test.ts::retains drafts across swapping, reopening and independent refresh with one snapshot"
+      ],
+      "proof": "Split opens a second independently selected session. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-612": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "split shares one event connection retains independent drafts attachments scroll and swaps sessions",
+      "references": [
+        "ui/e2e/navigation.spec.ts::split shares one event connection retains independent drafts attachments scroll and swaps sessions",
+        "ui/src/lib/panes.test.ts::retains drafts across swapping, reopening and independent refresh with one snapshot"
+      ],
+      "proof": "Split selection persists and restores on reload when still valid. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-613": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "split shares one event connection retains independent drafts attachments scroll and swaps sessions",
+      "references": [
+        "ui/e2e/navigation.spec.ts::split shares one event connection retains independent drafts attachments scroll and swaps sessions",
+        "ui/src/lib/panes.test.ts::retains drafts across swapping, reopening and independent refresh with one snapshot"
+      ],
+      "proof": "Opening split hides the side panel. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-616": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "split shares one event connection retains independent drafts attachments scroll and swaps sessions",
+      "references": [
+        "ui/e2e/navigation.spec.ts::split shares one event connection retains independent drafts attachments scroll and swaps sessions",
+        "ui/src/lib/panes.test.ts::retains drafts across swapping, reopening and independent refresh with one snapshot"
+      ],
+      "proof": "Close split removes the second session and persisted selection. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-617": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "split shares one event connection retains independent drafts attachments scroll and swaps sessions",
+      "references": [
+        "ui/e2e/navigation.spec.ts::split shares one event connection retains independent drafts attachments scroll and swaps sessions",
+        "ui/src/lib/panes.test.ts::retains drafts across swapping, reopening and independent refresh with one snapshot"
+      ],
+      "proof": "Swap sides exchanges the left and right sessions. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-618": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "split shares one event connection retains independent drafts attachments scroll and swaps sessions",
+      "references": [
+        "ui/e2e/navigation.spec.ts::split shares one event connection retains independent drafts attachments scroll and swaps sessions",
+        "ui/src/lib/panes.test.ts::retains drafts across swapping, reopening and independent refresh with one snapshot"
+      ],
+      "proof": "The embedded Close side by side action closes split view. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-619": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "split shares one event connection retains independent drafts attachments scroll and swaps sessions",
+      "references": [
+        "ui/e2e/navigation.spec.ts::split shares one event connection retains independent drafts attachments scroll and swaps sessions",
+        "ui/src/lib/panes.test.ts::retains drafts across swapping, reopening and independent refresh with one snapshot"
+      ],
+      "proof": "Cross-origin split control messages are ignored. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-620": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "split shares one event connection retains independent drafts attachments scroll and swaps sessions",
+      "references": [
+        "ui/e2e/navigation.spec.ts::split shares one event connection retains independent drafts attachments scroll and swaps sessions",
+        "ui/src/lib/panes.test.ts::retains drafts across swapping, reopening and independent refresh with one snapshot"
+      ],
+      "proof": "Embedded views omit sidebar, drawer and nested split controls. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-868": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "split shares one event connection retains independent drafts attachments scroll and swaps sessions",
+      "references": [
+        "ui/e2e/navigation.spec.ts::split shares one event connection retains independent drafts attachments scroll and swaps sessions",
+        "ui/src/lib/panes.test.ts::retains drafts across swapping, reopening and independent refresh with one snapshot"
+      ],
+      "proof": "Split view keeps two content columns below the sidebar-collapse breakpoint. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-614": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "empty sidebar has its own state and split choices mark busy sessions and cap at fourteen",
+      "references": [
+        "ui/e2e/navigation.spec.ts::empty sidebar has its own state and split choices mark busy sessions and cap at fourteen",
+        "ui/src/lib/navigation.test.ts::limits split choices to fourteen recent distinct unarchived other sessions and retains status"
+      ],
+      "proof": "Split choices list up to fourteen recent unarchived other sessions. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-615": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "empty sidebar has its own state and split choices mark busy sessions and cap at fourteen",
+      "references": [
+        "ui/e2e/navigation.spec.ts::empty sidebar has its own state and split choices mark busy sessions and cap at fourteen",
+        "ui/src/lib/navigation.test.ts::limits split choices to fourteen recent distinct unarchived other sessions and retains status",
+        "ui/e2e/navigation.spec.ts::split menu handles duplicate titles no choices and keyboard navigation on narrow screens"
+      ],
+      "proof": "Split choices identify busy sessions and no-other-session state. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-846": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "split menu handles duplicate titles no choices and keyboard navigation on narrow screens",
+      "references": [
+        "ui/e2e/navigation.spec.ts::split menu handles duplicate titles no choices and keyboard navigation on narrow screens",
+        "ui/src/lib/navigation.test.ts::steps through visible pinned and project order and wraps at either end"
+      ],
+      "proof": "Cmd/Ctrl+K focuses and selects search. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-849": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "split menu handles duplicate titles no choices and keyboard navigation on narrow screens",
+      "references": [
+        "ui/e2e/navigation.spec.ts::split menu handles duplicate titles no choices and keyboard navigation on narrow screens",
+        "ui/src/lib/navigation.test.ts::steps through visible pinned and project order and wraps at either end"
+      ],
+      "proof": "Cmd/Ctrl+Backslash toggles split view outside embedded sessions. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-850": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "split menu handles duplicate titles no choices and keyboard navigation on narrow screens",
+      "references": [
+        "ui/e2e/navigation.spec.ts::split menu handles duplicate titles no choices and keyboard navigation on narrow screens",
+        "ui/src/lib/navigation.test.ts::steps through visible pinned and project order and wraps at either end"
+      ],
+      "proof": "Cmd/Ctrl+Shift+[ or { selects the previous visible session. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-851": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "split menu handles duplicate titles no choices and keyboard navigation on narrow screens",
+      "references": [
+        "ui/e2e/navigation.spec.ts::split menu handles duplicate titles no choices and keyboard navigation on narrow screens",
+        "ui/src/lib/navigation.test.ts::steps through visible pinned and project order and wraps at either end"
+      ],
+      "proof": "Cmd/Ctrl+Shift+] or } selects the next visible session. The linked scenario asserts this behavior against an isolated engine."
+    },
+    "F-858": {
+      "path": "ui/e2e/navigation.spec.ts",
+      "test": "split menu handles duplicate titles no choices and keyboard navigation on narrow screens",
+      "references": [
+        "ui/e2e/navigation.spec.ts::split menu handles duplicate titles no choices and keyboard navigation on narrow screens",
+        "ui/src/lib/navigation.test.ts::steps through visible pinned and project order and wraps at either end"
+      ],
+      "proof": "Below 860 pixels the sidebar becomes a slide-in overlay with Open and Close controls. The linked scenario asserts this behavior against an isolated engine."
+    }
+  },
+  "pending": {
+    "F-443": "Native project reveal and Finder proof in Slice10.",
+    "F-453": "Prompt history is restored by the Slice9d composer."
+  }
+}

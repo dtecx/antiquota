@@ -93,7 +93,7 @@ export interface Dictation {
   /** When the current recording started, for the elapsed-time label. */
   since: Readable<number>;
   toggle(): Promise<void>;
-  /** Escape: drops a recording or live recognition without inserting anything. */
+  /** Escape: cancels dictation, including pending acquisition or transcription. */
   cancel(): Promise<boolean>;
 }
 
@@ -103,12 +103,14 @@ export function createDictation(host: DictationHost, env: DictationEnvironment):
   let current: DictationState = 'idle';
   let recognition: Recognition | null = null;
   let recording: Recording | null = null;
+  let generation = 0;
+  let acquiring = false;
   const set = (next: DictationState) => {
     current = next;
     state.set(next);
   };
 
-  function startSpeech(speech: RecognitionConstructor) {
+  function startSpeech(speech: RecognitionConstructor, own: number) {
     const rec = new speech();
     const draft = host.draft();
     const base = draft ? `${draft.trimEnd()} ` : '';
@@ -116,20 +118,23 @@ export function createDictation(host: DictationHost, env: DictationEnvironment):
     rec.interimResults = true;
     rec.lang = env.language;
     rec.onresult = (event) => {
+      if (own !== generation || recognition !== rec) return;
       let text = '';
       for (const result of Array.from(event.results)) text += result[0]?.transcript ?? '';
       host.live(base + text.trim());
     };
     rec.onerror = (event) => {
+      if (own !== generation || recognition !== rec) return;
       recognition = null;
       set('idle');
       // No speech service (or no permission for it): record and transcribe instead.
       if (['not-allowed', 'service-not-allowed', 'network'].includes(event.error))
-        void startRecording();
+        void startRecording(own);
       else if (event.error !== 'aborted' && event.error !== 'no-speech')
         host.fail(`Dictation: ${event.error}`);
     };
     rec.onend = () => {
+      if (own !== generation || recognition !== rec) return;
       recognition = null;
       if (current === 'listening') set('idle');
     };
@@ -138,18 +143,26 @@ export function createDictation(host: DictationHost, env: DictationEnvironment):
     set('listening');
   }
 
-  async function startRecording() {
+  async function startRecording(own: number) {
+    acquiring = true;
     let stream: MediaStream;
     try {
       stream = await env.microphone({
         audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true },
       });
     } catch (error) {
+      if (own !== generation) return;
+      acquiring = false;
       host.fail(
         `No microphone access: ${error instanceof Error ? error.message || error.name : String(error)}`,
       );
       return;
     }
+    if (own !== generation) {
+      for (const track of stream.getTracks()) track.stop();
+      return;
+    }
+    acquiring = false;
     let recorder: Recorder;
     try {
       recorder = env.recorder(stream);
@@ -190,7 +203,7 @@ export function createDictation(host: DictationHost, env: DictationEnvironment):
     rec.peak = Math.max(rec.peak, peakOf(rec.samples));
   }
 
-  async function stopRecording(cancel: boolean) {
+  async function stopRecording(cancel: boolean, own: number) {
     const rec = recording;
     if (!rec) return;
     recording = null;
@@ -205,6 +218,7 @@ export function createDictation(host: DictationHost, env: DictationEnvironment):
     rec.source.disconnect();
     for (const track of rec.stream.getTracks()) track.stop();
     await rec.context.close();
+    if (own !== generation) return;
     if (cancel) return set('idle');
     const problem = recordingProblem(seconds, rec.peak);
     if (problem) {
@@ -220,9 +234,11 @@ export function createDictation(host: DictationHost, env: DictationEnvironment):
     const type = rec.recorder.mimeType || rec.chunks[0]?.type || 'audio/webm';
     try {
       const heard = await host.transcribe(new Blob(rec.chunks, { type }), audioExtension(type));
+      if (own !== generation) return;
       if (heard.text) host.insert(heard.text);
       else host.notice('Nothing heard');
     } catch (error) {
+      if (own !== generation) return;
       host.fail(error instanceof Error ? error.message : 'Dictation failed.');
     }
     set('idle');
@@ -233,23 +249,22 @@ export function createDictation(host: DictationHost, env: DictationEnvironment):
     since,
     async toggle() {
       if (current === 'listening') return recognition?.stop();
-      if (current === 'recording') return stopRecording(false);
-      if (current === 'transcribing') return;
-      if (env.speech) startSpeech(env.speech);
-      else await startRecording();
+      if (current === 'recording') return stopRecording(false, generation);
+      if (current === 'transcribing' || acquiring) return;
+      const own = ++generation;
+      if (env.speech) startSpeech(env.speech, own);
+      else await startRecording(own);
     },
     async cancel() {
-      if (current === 'recording') {
-        await stopRecording(true);
-        return true;
-      }
-      if (current === 'listening') {
-        recognition?.abort();
-        recognition = null;
-        set('idle');
-        return true;
-      }
-      return false;
+      const active = current !== 'idle' || acquiring;
+      const own = ++generation;
+      acquiring = false;
+      const rec = recognition;
+      recognition = null;
+      set('idle');
+      rec?.abort();
+      await stopRecording(true, own);
+      return active;
     },
   };
 }

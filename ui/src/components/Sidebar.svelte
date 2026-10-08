@@ -1,21 +1,61 @@
-<!-- Owns project groups and session navigation in the compact warm workbench. -->
+<!-- Owns project groups, message search and session/project menu entry points. -->
 <script lang="ts">
+  import { onDestroy, untrack } from 'svelte';
   import type { Workbench } from '../lib/workbench';
   import type { Accounts } from '../lib/accounts';
   import type { Login } from '../lib/login';
-  import AccountPill from './AccountPill.svelte';
+  import type { Api } from '../lib/api';
+  import type { Panes } from '../lib/panes';
   import type { Connection } from '../lib/stream';
   import { isBusy, projectName, relativeTime } from '../lib/format';
+  import { groupSessions, PINNED } from '../lib/navigation';
+  import { preferences } from '../lib/preferences';
+  import { createMessageSearch } from '../lib/message-search';
+  import { createSidebarActions } from '../lib/sidebar-actions';
+  import AccountPill from './AccountPill.svelte';
+  import SessionRow from './SessionRow.svelte';
   import Icon from './Icon.svelte';
-  import { groupSessions } from '../lib/navigation';
   let {
     workbench,
     connection,
     accounts,
     login,
-  }: { workbench: Workbench; connection: Connection; accounts: Accounts; login: Login } = $props();
+    api,
+    panes,
+  }: {
+    workbench: Workbench;
+    connection: Connection;
+    accounts: Accounts;
+    login: Login;
+    api: Api;
+    panes: Panes;
+  } = $props();
   const view = $derived(workbench.state);
-  const groups = $derived(groupSessions($view.snapshot?.sessions ?? [], $view.filter));
+  const prefs = preferences.state;
+  const search = untrack(() => createMessageSearch(api)),
+    found = search.state;
+  const { sessionMenu, projectMenu, toggle } = untrack(() =>
+    createSidebarActions(api, workbench, panes.select),
+  );
+
+  const sessions = $derived($view.snapshot?.sessions ?? []);
+  const groups = $derived(
+    groupSessions(sessions, $view.filter, {
+      showArchived: $view.showArchived,
+      current: $view.selected?.id ?? '',
+    }),
+  );
+  const archived = $derived(sessions.filter((s) => s.archived).length);
+  const filter = $derived($view.filter);
+  $effect(() => search.query(filter));
+  onDestroy(search.dispose);
+  function select(id: string, right: boolean) {
+    if (right) void panes.open(id);
+    else {
+      panes.focus('left');
+      void panes.select(id);
+    }
+  }
 </script>
 
 <aside class:open={$view.sidebarOpen} aria-label="Sessions">
@@ -35,49 +75,80 @@
       aria-label="Filter sessions"
       placeholder="Filter sessions…"
       value={$view.filter}
-      oninput={(event) => workbench.change({ filter: event.currentTarget.value })}
+      oninput={(e) => workbench.change({ filter: e.currentTarget.value })}
     />
   </div>
   <nav aria-label="Projects and sessions">
     {#each groups as group (group.cwd)}
-      <details class="project" open>
-        <summary title={group.cwd}
-          ><Icon name="folder" /><span>{projectName(group.cwd)}</span><span class="count"
-            >{group.sessions.length}</span
-          ></summary
-        >
-        <div class="sessions">
-          {#each group.sessions as session (session.id)}
-            <button
-              class="session"
-              class:active={session.id === $view.selected?.id}
-              onclick={() => workbench.select(session.id)}
-              aria-current={session.id === $view.selected?.id ? 'page' : undefined}
-              title={session.title || 'New session'}
-            >
-              <span
-                class="session-dot"
-                class:running={isBusy(session.status)}
-                class:attention={session.status === 'approval'}
-              ></span>
-              <span class="session-title">{session.title || 'New session'}</span>
-              {#if session.worktree}<span class="worktree" title="Own git worktree"
-                  ><Icon name="branch" size={11} /></span
-                >{/if}
-              {#if session.status === 'approval'}<span class="attention-label">approval</span
-                >{:else if session.pinned}<Icon name="pin" size={12} />{:else}<time
-                  >{relativeTime(session.updated)}</time
-                >{/if}
-            </button>
-          {/each}
+      {@const closed =
+        !$view.filter.trim() &&
+        $prefs.collapsed.includes(group.cwd) &&
+        !group.sessions.some((s) => s.id === $view.selected?.id)}
+      <section
+        class="project"
+        aria-label={group.cwd === PINNED ? 'Pinned' : projectName(group.cwd)}
+      >
+        <div class="project-head">
+          <button
+            class="project-name"
+            oncontextmenu={(e) => {
+              if (group.cwd !== PINNED) projectMenu(group.cwd, group.sessions, e);
+            }}
+            title={group.cwd === PINNED ? 'Pinned' : group.cwd}
+            aria-expanded={!closed}
+            onclick={() => toggle(group.cwd)}
+            ><Icon name={group.cwd === PINNED ? 'pin' : 'folder'} /><span
+              >{group.cwd === PINNED ? 'Pinned' : projectName(group.cwd)}</span
+            ><span class="count">{group.sessions.length}</span
+            >{#if closed && group.sessions.some((s) => isBusy(s.status))}<span
+                class="working"
+                title="A session here is working">●</span
+              >{/if}<span class="chevron">{closed ? '›' : '⌄'}</span></button
+          >
+          {#if group.cwd !== PINNED}<button
+              class="project-action"
+              aria-label={`New session in ${projectName(group.cwd)}`}
+              onclick={() => workbench.openDialog('create', { cwd: group.cwd, worktree: false })}
+              >+</button
+            ><button
+              class="project-action"
+              aria-label={`Project actions: ${projectName(group.cwd)}`}
+              title="Project actions"
+              onclick={(e) => projectMenu(group.cwd, group.sessions, e)}>⋯</button
+            >{/if}
         </div>
-      </details>
+        {#if !closed}{#each group.sessions as session (session.id)}<SessionRow
+              {session}
+              current={$view.selected?.id}
+              onselect={select}
+              onmenu={sessionMenu}
+            />{/each}{/if}
+      </section>
     {/each}
-    {#if !groups.length && $view.snapshot}
-      <p class="empty muted">
+    {#if !groups.length && $view.snapshot}<p class="empty muted">
         {$view.filter ? 'No matching sessions.' : 'Your sessions will appear here.'}
-      </p>
-    {/if}
+      </p>{/if}
+    {#if $view.filter.trim().length >= 2}<section aria-label="In messages" class="message-results">
+        <h3>In messages</h3>
+        {#if $found.loading}<p class="empty" role="status">Searching…</p>{:else if $found.error}<p
+            class="empty"
+            role="alert"
+          >
+            {$found.error}
+          </p>{:else}{#each $found.hits as hit (`${hit.id}:${hit.ts}`)}<button
+              class="hit"
+              title={hit.cwd}
+              onclick={() => select(hit.id, false)}
+              ><b>{hit.title || 'New session'}</b><time>{relativeTime(hit.ts)}</time><small
+                >{hit.who === 'user' ? 'you' : 'agy'}: {hit.snippet}</small
+              ></button
+            >{:else}<p class="empty">Nothing found.</p>{/each}{/if}
+      </section>{/if}
+    {#if archived}<button
+        class="archived-toggle quiet"
+        onclick={() => workbench.change({ showArchived: !$view.showArchived })}
+        >{$view.showArchived ? 'Hide archived' : `Show archived (${archived})`}</button
+      >{/if}
   </nav>
   <button class="quiet settings-link" onclick={() => accounts.open('general')}
     >Settings <kbd>⌘ ,</kbd></button
@@ -95,6 +166,75 @@
 </aside>
 
 <style>
+  .project-head {
+    display: flex;
+    align-items: center;
+  }
+  .project-name {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    text-align: left;
+  }
+  .project-name > span:first-of-type {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .chevron {
+    margin-left: auto;
+  }
+  .project-action {
+    width: 24px;
+    min-height: 30px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--ink-4);
+  }
+  .working {
+    color: var(--baton);
+  }
+  .message-results h3 {
+    font: 11px var(--mono);
+    color: var(--ink-3);
+    padding: var(--space-3) var(--space-2);
+  }
+  .hit {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--space-2);
+    text-align: left;
+    background: transparent;
+    border: 0;
+    font-size: 11px;
+  }
+  .hit b {
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .hit small {
+    grid-column: 1 / -1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .hit time,
+  .hit small {
+    font: 10px var(--mono);
+    color: var(--ink-4);
+  }
+  .archived-toggle {
+    font-size: 11px;
+    width: 100%;
+    text-align: left;
+  }
+
   .settings-link {
     display: flex;
     justify-content: space-between;
@@ -163,7 +303,7 @@
     overflow: auto;
     padding: 0 var(--space-2);
   }
-  summary {
+  .project-name {
     display: flex;
     align-items: center;
     gap: var(--space-2);
@@ -174,81 +314,12 @@
     font-size: 11px;
     font-weight: 500;
   }
-  summary::-webkit-details-marker {
-    display: none;
-  }
-  summary::after {
-    content: '›';
-    color: var(--ink-4);
-    margin-left: auto;
-    transform: rotate(90deg);
-  }
-  details:not([open]) summary::after {
-    transform: none;
-  }
-  summary > span:first-of-type {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
   .count {
     color: var(--ink-4);
     font: 10px var(--mono);
   }
   .project {
     margin-bottom: var(--space-2);
-  }
-  .session {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    width: 100%;
-    min-height: 36px;
-    padding: var(--space-2) var(--space-3);
-    border-color: transparent;
-    background: transparent;
-    text-align: left;
-    border-radius: var(--r-sm);
-    color: var(--ink-2);
-    font-size: 12px;
-  }
-  .session.active {
-    background: var(--baton-soft);
-    color: var(--ink);
-    border-left-color: var(--baton);
-  }
-  .session-title {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .session-dot {
-    width: 5px;
-    height: 5px;
-    flex-shrink: 0;
-    border-radius: 50%;
-    background: var(--ink-4);
-  }
-  .session-dot.running {
-    background: var(--baton);
-  }
-  .session-dot.attention {
-    box-shadow: 0 0 0 3px var(--baton-soft);
-  }
-  .worktree {
-    display: inline-flex;
-    color: var(--ink-4);
-  }
-  .attention-label {
-    flex-shrink: 0;
-    color: var(--baton);
-    font: 10px var(--mono);
-  }
-  time {
-    color: var(--ink-4);
-    font: 10px var(--mono);
   }
   .empty {
     padding: var(--space-4) var(--space-2);
@@ -281,7 +352,7 @@
   .close-sidebar {
     display: none;
   }
-  @media (max-width: 760px) {
+  @media (max-width: 859px) {
     aside {
       position: absolute;
       inset: 0 auto 0 0;

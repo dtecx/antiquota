@@ -60,3 +60,18 @@ describe('device preferences', () => {
     ).toBe(1);
   });
 });
+it('restores per-device collapse and split choices while rejecting malformed values', () => {
+  const valid = createPreferences({
+    getItem: (key) =>
+      key === 'antiquota.prefs'
+        ? JSON.stringify({ collapsed: ['/Desktop/test/a', 4], split: 'session-b' })
+        : null,
+    setItem: () => {},
+  });
+  expect(get(valid.state)).toMatchObject({ collapsed: ['/Desktop/test/a'], split: 'session-b' });
+  const invalid = createPreferences({
+    getItem: () => JSON.stringify({ collapsed: 'wrong', split: 42 }),
+    setItem: () => {},
+  });
+  expect(get(invalid.state)).toMatchObject({ collapsed: [], split: null });
+});

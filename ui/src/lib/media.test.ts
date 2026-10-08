@@ -96,3 +96,12 @@ describe('dictation helpers', () => {
     expect(audioExtension('')).toBe('webm');
   });
 });
+it('keeps both visible pane attachment trays while clearing all other sessions', () => {
+  const file = { ...pendingFile(new File(['a'], 'a.txt'), 'a.txt'), uploading: false };
+  trays.set({ a: [file], b: [file], c: [file] });
+  clearTrays(['a', 'b']);
+  expect(Object.keys(get(trays))).toEqual(['a', 'b']);
+  clearTrays(['b']);
+  expect(Object.keys(get(trays))).toEqual(['b']);
+  clearTrays([]);
+});

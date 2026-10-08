@@ -12,6 +12,7 @@ import { EXECUTE_PLAN } from './goals';
 import { jobLog } from './jobs';
 
 export interface DialogState {
+  id?: string | undefined;
   kind: 'create' | 'rename';
   title: string;
   cwd: string;
@@ -24,6 +25,7 @@ export interface WorkbenchState {
   drafts: Record<string, string>;
   filter: string;
   sidebarOpen: boolean;
+  showArchived: boolean;
   dialog: DialogState | null;
   loading: boolean;
   mutating: boolean;
@@ -37,13 +39,18 @@ const initial: WorkbenchState = {
   drafts: {},
   filter: '',
   sidebarOpen: false,
+  showArchived: false,
   dialog: null,
   loading: true,
   mutating: false,
   error: '',
   feedback: '',
 };
-export function createWorkbench(api: Api, remember: (id: string) => void = () => {}) {
+export function createWorkbench(
+  api: Api,
+  remember: (id: string) => void = () => {},
+  shared?: () => StateResponse | null,
+) {
   const state = writable<WorkbenchState>({ ...initial, drafts: {} });
   let wanted = '';
   let generation = 0;
@@ -147,13 +154,13 @@ export function createWorkbench(api: Api, remember: (id: string) => void = () =>
     syncing = true;
     const own = generation;
     try {
-      const snapshot = await api.state();
+      const snapshot = shared?.() ?? (await api.state());
       state.update((value) => ({ ...value, snapshot, error: '' }));
       const id =
         preferred || wanted || snapshot.sessions.find((session) => !session.archived)?.id || '';
       if (id && snapshot.sessions.some((session) => session.id === id)) {
-        if (id !== wanted) await select(id);
-        else {
+        if (id !== wanted && own === generation) await select(id);
+        else if (id === wanted) {
           const response = await api.session(id);
           if (own === generation)
             state.update((value) => ({
@@ -194,12 +201,13 @@ export function createWorkbench(api: Api, remember: (id: string) => void = () =>
       state.update((value) => ({ ...value, mutating: false }));
     }
   }
-  function openDialog(kind: DialogState['kind']) {
+  function openDialog(kind: DialogState['kind'], options: Partial<DialogState> = {}) {
     const value = get(state);
     state.update((current) => ({
       ...current,
       error: '',
       dialog: {
+        id: kind === 'rename' ? value.selected?.id : undefined,
         worktree: kind === 'create' && current.snapshot?.defaults.worktree_default === 'on',
         kind,
         title: kind === 'rename' ? (value.selected?.title ?? '') : '',
@@ -210,6 +218,7 @@ export function createWorkbench(api: Api, remember: (id: string) => void = () =>
               value.snapshot?.defaults.default_cwd ||
               value.snapshot?.defaults.cwd ||
               '',
+        ...options,
       },
     }));
   }
@@ -218,8 +227,22 @@ export function createWorkbench(api: Api, remember: (id: string) => void = () =>
     onEvent,
     select,
     refresh,
-    change: (patch: Partial<Pick<WorkbenchState, 'filter' | 'sidebarOpen' | 'dialog' | 'error'>>) =>
-      state.update((value) => ({ ...value, ...patch })),
+    acceptSnapshot: (snapshot: StateResponse) =>
+      state.update((value) => ({
+        ...value,
+        snapshot,
+        selected: snapshot.sessions.find((s) => s.id === wanted) ?? value.selected,
+      })),
+    clearSelection: () => {
+      wanted = '';
+      generation++;
+      state.update((value) => ({ ...value, selected: null, events: [], loading: false }));
+    },
+    change: (
+      patch: Partial<
+        Pick<WorkbenchState, 'filter' | 'sidebarOpen' | 'showArchived' | 'dialog' | 'error'>
+      >,
+    ) => state.update((value) => ({ ...value, ...patch })),
     draft: (text: string) =>
       state.update((value) => ({ ...value, drafts: { ...value.drafts, [wanted]: text } })),
     openDialog,
@@ -232,9 +255,8 @@ export function createWorkbench(api: Api, remember: (id: string) => void = () =>
       mutate(async () => {
         const value = get(state);
         if (!value.dialog) return;
-        const { kind, title, cwd, worktree } = value.dialog;
-        if (kind === 'rename' && value.selected)
-          replaceSession(await api.update(value.selected.id, { title }));
+        const { kind, title, cwd, worktree, id } = value.dialog;
+        if (kind === 'rename' && id) replaceSession(await api.update(id, { title }));
         else {
           const session = await api.create({
             cwd,

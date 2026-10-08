@@ -167,6 +167,7 @@ export function createApi(token: string, request: typeof fetch = fetch) {
     stack: () => call<StackResponse>('GET', '/api/stack?refresh=1'),
     reseedStack: () => call<StackResponse>('POST', '/api/stack/reseed', {}),
     session: (id: string) => call<SessionResponse>('GET', sessionPath(id)),
+    deleteSession: (id: string) => call<OkResponse>('DELETE', sessionPath(id)),
     create: (body: CreateSessionRequest) => call<Session>('POST', '/api/sessions', body),
     update: (id: string, body: PatchSessionRequest) =>
       call<Session>('PATCH', sessionPath(id), body),

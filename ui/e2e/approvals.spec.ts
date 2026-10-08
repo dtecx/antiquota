@@ -43,7 +43,10 @@ test('answers approval cards and keeps rules in settings', async ({ page, engine
   await expect(card).toContainText('waits 15 min');
   await expect(page.getByText('needs your approval')).toBeVisible();
   await expect(
-    page.getByRole('button', { name: 'Approval fixture' }).getByText('approval', { exact: true }),
+    page
+      .locator('button.session')
+      .filter({ hasText: 'Approval fixture' })
+      .getByText('approval', { exact: true }),
   ).toBeVisible();
   await screenshot(page, engine, 'approval-pending');
   await card.getByRole('button', { name: 'Always allow command(touch)' }).click();

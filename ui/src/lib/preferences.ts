@@ -9,6 +9,8 @@ export const notificationLabels = {
 };
 export type NotificationKind = keyof typeof notificationLabels;
 export interface Preferences {
+  collapsed: string[];
+  split: string | null;
   zoom: number;
   view: 'grouped' | 'steps';
   stamps: boolean;
@@ -18,6 +20,8 @@ export interface Preferences {
 }
 export function createPreferences(storage?: Pick<Storage, 'getItem' | 'setItem'>) {
   const defaults: Preferences = {
+    collapsed: [],
+    split: null,
     zoom: 1,
     view: 'grouped',
     stamps: true,
@@ -32,6 +36,10 @@ export function createPreferences(storage?: Pick<Storage, 'getItem' | 'setItem'>
       const row = value as Partial<Preferences>;
       initial = {
         ...defaults,
+        collapsed: Array.isArray(row.collapsed)
+          ? row.collapsed.filter((s): s is string => typeof s === 'string')
+          : [],
+        split: typeof row.split === 'string' ? row.split : null,
         zoom:
           typeof row.zoom === 'number' && Number.isFinite(row.zoom)
             ? Math.min(1.6, Math.max(0.7, row.zoom))

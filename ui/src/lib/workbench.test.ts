@@ -203,3 +203,29 @@ describe('session workbench store', () => {
     expect(get(workbench.state).drafts.fixture).toBe('Keep the draft');
   });
 });
+it('a delayed preferred refresh cannot replace a newer explicit selection', async () => {
+  const api = fixtureApi(),
+    workbench = createWorkbench(api);
+  await workbench.refresh();
+  let finish: (value: ReturnType<typeof fixtureState>) => void = () => {};
+  api.state = () =>
+    new Promise((resolve) => {
+      finish = resolve;
+    });
+  const pending = workbench.refresh('a');
+  await workbench.select('b');
+  finish(fixtureState([fixtureSession('a'), fixtureSession('b')]));
+  await pending;
+  expect(get(workbench.state).selected?.id).toBe('b');
+});
+it('rename saves its original dialog target after changing sessions', async () => {
+  const api = fixtureApi(),
+    workbench = createWorkbench(api);
+  await workbench.refresh();
+  workbench.openDialog('rename');
+  workbench.dialogField('title', 'Original target');
+  await workbench.select('b');
+  await workbench.saveDialog();
+  expect(api.update).toHaveBeenCalledWith('fixture', { title: 'Original target' });
+  expect(get(workbench.state).selected?.id).toBe('b');
+});

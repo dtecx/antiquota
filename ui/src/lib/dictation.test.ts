@@ -16,6 +16,16 @@ function host(draft = ''): DictationHost & { log: string[] } {
   };
 }
 
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason: Error) => void;
+  const promise = new Promise<T>((accept, decline) => {
+    resolve = accept;
+    reject = decline;
+  });
+  return { promise, resolve, reject };
+}
+
 class FakeRecognition {
   static last: FakeRecognition | null = null;
   continuous = false;
@@ -135,7 +145,7 @@ describe('dictation', () => {
     expect(await dictation.cancel()).toBe(true);
     expect(listening.calls).toContain('abort');
     listening.onerror?.({ error: 'audio-capture' });
-    expect(h.log).toEqual(['fail:Dictation: audio-capture']);
+    expect(h.log).toEqual([]);
     expect(await dictation.cancel()).toBe(false);
   });
   it('records the container MediaRecorder chose, uploads it and inserts the words', async () => {
@@ -220,7 +230,6 @@ describe('dictation', () => {
     await vi.waitFor(() => expect(get(dictation.state)).toBe('transcribing'));
     await dictation.toggle();
     expect(microphone).toHaveBeenCalledTimes(1);
-    expect(await dictation.cancel()).toBe(false);
     finish({ text: 'Done.' });
     await stopping;
     expect(h.log).toEqual(['insert:Done.']);
@@ -242,5 +251,97 @@ describe('dictation', () => {
     expect(log).toEqual(['meter', 'start', 'stop', 'source', 'track', 'context']);
     expect(h.transcribe).not.toHaveBeenCalled();
     expect(get(dictation.state)).toBe('idle');
+  });
+  it('cancels pending microphone access and releases a stream that arrives later', async () => {
+    const h = host();
+    const { env, microphone } = environment(null);
+    const pending = deferred<MediaStream>();
+    const stop = vi.fn();
+    env.microphone = vi.fn().mockReturnValueOnce(pending.promise).mockImplementation(microphone);
+    const dictation = createDictation(h, env);
+    const starting = dictation.toggle();
+    await dictation.toggle();
+    expect(env.microphone).toHaveBeenCalledTimes(1);
+    expect(await dictation.cancel()).toBe(true);
+    expect(get(dictation.state)).toBe('idle');
+    await dictation.toggle();
+    pending.resolve({ getTracks: () => [{ stop }] } as unknown as MediaStream);
+    await starting;
+    expect(stop).toHaveBeenCalledOnce();
+    expect(get(dictation.state)).toBe('recording');
+    expect(h.log).toEqual([]);
+    await dictation.cancel();
+    expect(h.transcribe).not.toHaveBeenCalled();
+  });
+  it('suppresses microphone errors after cancellation', async () => {
+    const h = host();
+    const { env } = environment(null);
+    const pending = deferred<MediaStream>();
+    env.microphone = () => pending.promise;
+    const dictation = createDictation(h, env);
+    const starting = dictation.toggle();
+    expect(await dictation.cancel()).toBe(true);
+    pending.reject(new Error('Permission denied'));
+    await starting;
+    expect(h.log).toEqual([]);
+    expect(get(dictation.state)).toBe('idle');
+    expect(await dictation.cancel()).toBe(false);
+  });
+  it('ignores stale speech callbacks without ending newer recognition or opening the mic', async () => {
+    const h = host();
+    const { env, microphone } = environment(FakeRecognition);
+    const dictation = createDictation(h, env);
+    await dictation.toggle();
+    const old = FakeRecognition.last!;
+    await dictation.cancel();
+    await dictation.toggle();
+    old.onresult?.({ results: [[{ transcript: 'Late words' }]] });
+    old.onerror?.({ error: 'network' });
+    old.onerror?.({ error: 'audio-capture' });
+    old.onend?.();
+    expect(h.log).toEqual([]);
+    expect(microphone).not.toHaveBeenCalled();
+    expect(get(dictation.state)).toBe('listening');
+    await dictation.cancel();
+  });
+  it('cancels transcription results, empty answers and errors without disturbing a newer recording', async () => {
+    for (const answer of ['Late words', '', new Error('Late failure')]) {
+      const h = host();
+      const pending = deferred<{ text: string }>();
+      h.transcribe = vi.fn(() => pending.promise);
+      const dictation = createDictation(h, environment(null).env);
+      await dictation.toggle();
+      const stopping = dictation.toggle();
+      await vi.waitFor(() => expect(get(dictation.state)).toBe('transcribing'));
+      expect(await dictation.cancel()).toBe(true);
+      expect(get(dictation.state)).toBe('idle');
+      await dictation.toggle();
+      if (answer instanceof Error) pending.reject(answer);
+      else pending.resolve({ text: answer });
+      await stopping;
+      expect(h.log).toEqual([]);
+      expect(get(dictation.state)).toBe('recording');
+      await dictation.cancel();
+    }
+  });
+  it('cancels while the audio graph closes without starting transcription', async () => {
+    const h = host();
+    const { env, log } = environment(null);
+    const context = env.audioContext();
+    const closing = deferred<void>();
+    context.close = vi.fn().mockReturnValueOnce(closing.promise).mockResolvedValue(undefined);
+    env.audioContext = () => context;
+    const dictation = createDictation(h, env);
+    await dictation.toggle();
+    const stopping = dictation.toggle();
+    await vi.waitFor(() => expect(context.close).toHaveBeenCalledOnce());
+    expect(await dictation.cancel()).toBe(true);
+    await dictation.toggle();
+    closing.resolve();
+    await stopping;
+    expect(h.transcribe).not.toHaveBeenCalled();
+    expect(log).toContain('track');
+    expect(get(dictation.state)).toBe('recording');
+    await dictation.cancel();
   });
 });

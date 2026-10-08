@@ -45,12 +45,12 @@ test('fork and compact preserve visible history across fresh turns and reload', 
     (await engine.call('POST', `/api/sessions/${session.id}/fork`, {})).text,
   );
   await expect(
-    page.getByRole('button', { name: 'Recovery routes (fork)', exact: false }),
+    page.locator('button.session').filter({ hasText: 'Recovery routes (fork)' }),
   ).toBeVisible();
   const directory = join(engine.sandbox.repository, '.handoff', 'evidence', 'ui-slice9a');
   await mkdir(directory, { recursive: true });
   await page.screenshot({ path: join(directory, 'recovery-history.png'), fullPage: true });
-  await page.getByRole('button', { name: 'Recovery routes (fork)', exact: false }).click();
+  await page.locator('button.session').filter({ hasText: 'Recovery routes (fork)' }).click();
   await expect(
     page.getByRole('heading', { name: 'Recovery routes (fork)', exact: true }),
   ).toBeVisible();

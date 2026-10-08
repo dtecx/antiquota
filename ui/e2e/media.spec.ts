@@ -30,7 +30,7 @@ test('attaches files by picker, paste and drop, then sends them', async ({ page,
         bubbles: true,
         cancelable: true,
       });
-      document.querySelector('#prompt')?.dispatchEvent(event);
+      document.querySelector('textarea[aria-label="Message"]')?.dispatchEvent(event);
     },
     [...PNG],
   );
@@ -191,7 +191,7 @@ test('failed and slow uploads, session switches and drops without a session', as
   await page.getByRole('textbox', { name: 'Project folder' }).fill(engine.sandbox.project);
   await page.getByRole('button', { name: 'Create session' }).click();
   await expect(page.getByRole('heading', { name: 'Second session', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: /Upload failures fixture/ }).click();
+  await page.locator('button.session').filter({ hasText: 'Upload failures fixture' }).click();
   await expect(page.getByRole('heading', { name: 'Upload failures fixture' })).toBeVisible();
   await expect(page.getByLabel('Attached files')).toBeHidden();
   expect((await calls(engine)).filter((argv) => argv.includes('stream-json'))).toHaveLength(0);

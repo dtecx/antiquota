@@ -4,18 +4,28 @@
   import Icon from './Icon.svelte';
   import { drawer } from '../lib/git';
   import { asWorktree } from '../lib/workbench';
-  let { workbench }: { workbench: Workbench } = $props();
+  let {
+    workbench,
+    onsplit,
+    onclose,
+    onswap,
+  }: {
+    workbench: Workbench;
+    onsplit?: ((e: MouseEvent) => void) | undefined;
+    onclose?: (() => void) | undefined;
+    onswap?: (() => void) | undefined;
+  } = $props();
   const view = $derived(workbench.state);
   const models = $derived($view.snapshot?.models ?? []);
   const worktree = $derived(asWorktree($view.selected?.worktree));
 </script>
 
 <header>
-  <button
-    class="icon quiet menu"
-    aria-label="Open sessions"
-    onclick={() => workbench.change({ sidebarOpen: true })}><Icon name="menu" /></button
-  >
+  {#if !onclose}<button
+      class="icon quiet menu"
+      aria-label="Open sessions"
+      onclick={() => workbench.change({ sidebarOpen: true })}><Icon name="menu" /></button
+    >{/if}
   <div class="identity">
     <h1>{$view.selected?.title || 'New session'}</h1>
     {#if worktree}<p
@@ -29,6 +39,16 @@
   </div>
   {#if $view.selected}
     <div class="controls">
+      {#if onclose}<button class="quiet" aria-label="Swap sides" onclick={onswap}>⇄</button><button
+          class="quiet"
+          aria-label="Close side by side"
+          onclick={onclose}>×</button
+        >{:else if onsplit}<button
+          class="quiet"
+          aria-label="Split view"
+          title="Split view (⌘\\)"
+          onclick={onsplit}>◫</button
+        >{/if}
       {#if models.length}<label class="model"
           ><span class="sr-only">Model</span><select
             aria-label="Model"
@@ -57,15 +77,15 @@
         title={$view.selected.pinned ? 'Unpin session' : 'Pin session'}
         onclick={() => workbench.update({ pinned: !$view.selected?.pinned })}
         disabled={$view.mutating}><Icon name="pin" /></button
-      ><button
-        class="icon quiet"
-        class:pinned={$drawer.open}
-        aria-label="Changes and files"
-        title="Changes and files (⌘B)"
-        aria-pressed={$drawer.open}
-        onclick={() => drawer.update((d) => ({ ...d, open: !d.open }))}
-        ><Icon name="panel" /></button
-      >
+      >{#if !onclose}<button
+          class="icon quiet"
+          class:pinned={$drawer.open}
+          aria-label="Changes and files"
+          title="Changes and files (⌘B)"
+          aria-pressed={$drawer.open}
+          onclick={() => drawer.update((d) => ({ ...d, open: !d.open }))}
+          ><Icon name="panel" /></button
+        >{/if}
     </div>
   {/if}
 </header>
@@ -129,7 +149,7 @@
   .menu {
     display: none;
   }
-  @media (max-width: 760px) {
+  @media (max-width: 859px) {
     header {
       padding: var(--space-2);
     }

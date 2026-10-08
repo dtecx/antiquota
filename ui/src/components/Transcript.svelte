@@ -1,5 +1,7 @@
 <!-- Owns scroll behavior and empty/loading presentation for the event projection. -->
 <script lang="ts">
+  import { tick } from 'svelte';
+  import { scrollPositions } from '../lib/session-view';
   import type { Login } from '../lib/login';
   import type { Api } from '../lib/api';
   import type { Workbench } from '../lib/workbench';
@@ -8,30 +10,61 @@
   import { isBusy } from '../lib/format';
   let { workbench, login, api }: { workbench: Workbench; login: Login; api: Api } = $props();
   const view = $derived(workbench.state);
-  const groups = $derived(groupTranscript($view.events));
-  let scroller: HTMLDivElement;
-  let follow = true;
-  $effect(() => {
-    void $view.events;
-    void $view.selected?.id;
-    if (follow && scroller)
-      requestAnimationFrame(() => {
-        scroller.scrollTop = scroller.scrollHeight;
+  const events = $derived($view.events),
+    sid = $derived($view.selected?.id ?? ''),
+    loading = $derived($view.loading);
+  const groups = $derived(groupTranscript(events));
+  let scroller = $state.raw<HTMLDivElement>();
+  let shown = '',
+    follow = true,
+    restoring = false;
+  $effect.pre(() => {
+    const id = sid;
+    void events;
+    if (scroller && shown && id !== shown && !restoring) {
+      scrollPositions.set(shown, {
+        top: scroller.scrollTop,
+        follow: scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 100,
       });
+      restoring = true;
+    } else if (scroller && shown && !restoring && !loading) {
+      follow = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 100;
+    }
   });
+  $effect(() => {
+    void events;
+    const id = sid;
+    if (loading || !id) return;
+    const changed = shown !== id,
+      saved = scrollPositions.get(id);
+    shown = id;
+    if (changed) {
+      follow = saved?.follow ?? true;
+      restoring = true;
+    }
+    void tick().then(() => {
+      if (!scroller || shown !== id || loading) return;
+      if (changed) scroller.scrollTop = saved?.top ?? scroller.scrollHeight;
+      else if (follow) scroller.scrollTop = scroller.scrollHeight;
+      restoring = false;
+    });
+  });
+  function scrolled() {
+    if (!scroller || restoring || loading || !shown) return;
+    follow = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 100;
+    scrollPositions.set(shown, { top: scroller.scrollTop, follow });
+  }
 </script>
 
 <div
   class="transcript"
   bind:this={scroller}
-  onscroll={() => {
-    follow = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 100;
-  }}
+  onscroll={scrolled}
   aria-label="Conversation"
-  aria-busy={$view.loading}
+  aria-busy={loading}
 >
   <div class="content">
-    {#if $view.loading && !groups.length}<div class="empty">
+    {#if loading && !groups.length}<div class="empty">
         <span class="eyebrow">SESSION</span>
         <h2>Loading conversation…</h2>
         <p>Reading the session history.</p>

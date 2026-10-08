@@ -14,7 +14,7 @@
     await uploadFiles(api, sid, files, (error) =>
       workbench.change({ error: error instanceof Error ? error.message : String(error) }),
     );
-    document.getElementById('prompt')?.focus();
+    document.getElementById(`prompt-${sid}`)?.focus();
   }
 </script>
 
