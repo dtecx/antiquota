@@ -60,6 +60,9 @@ jobs:
           "$engine" --help
           "$engine" serve --help
           test -s app/engine-dist/ui/index.html
+      - name: Free the test build before the installer build
+        if: runner.os != 'macOS'
+        run: cargo clean --profile dev
       - name: Build native platform installers
         if: runner.os != 'macOS'
         working-directory: app

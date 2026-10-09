@@ -183,6 +183,8 @@ mod tests {
         let inside = root.join("sessions/s1/attachments/note.txt");
         let outside = root.join("outside.txt");
         fs::write(&outside, "secret").unwrap();
+        // Only Unix adds an escaping link below.
+        #[cfg_attr(not(unix), allow(unused_mut))]
         let mut offered = vec![
             inside.to_string_lossy().into_owned(),
             outside.to_string_lossy().into_owned(),
