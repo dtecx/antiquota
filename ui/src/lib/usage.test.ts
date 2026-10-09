@@ -7,6 +7,7 @@ import {
   cacheRate,
   createUsage,
   dayAccounts,
+  keptDay,
   partsLine,
   percent,
   tooltipLeft,
@@ -164,5 +165,13 @@ describe('usage detail', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+  it('keeps an open day tooltip across a refresh of the same days only', () => {
+    const open = { index: 1, left: 40, day: data.days[1]! };
+    const fresh = data.days.map((day) => ({ ...day, total: day.total + 5 }));
+    expect(keptDay(open, fresh)).toEqual({ index: 1, left: 40, day: fresh[1] });
+    expect(keptDay(open, data.days.slice(1))).toBeNull();
+    expect(keptDay(open, data.days.slice(0, 0))).toBeNull();
+    expect(keptDay(null, fresh)).toBeNull();
   });
 });

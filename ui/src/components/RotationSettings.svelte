@@ -15,15 +15,12 @@
       title: 'Fill first',
       kind: 'sequential · default',
       text: 'Keep new sessions on one account until its quota runs out, then move to the next.',
-      // Three sessions on the first account, then the next one.
-      sketch: [3, 0],
     },
     {
       value: 'spread',
       title: 'Spread first',
       kind: 'parallel',
       text: 'Put new sessions on accounts without a running session first, so their quotas work at once.',
-      sketch: [1, 1, 1],
     },
   ];
 </script>
@@ -98,12 +95,6 @@
             }}
           /><span class="title">{placement.title}<small>{placement.kind}</small></span><span
             class="text">{placement.text}</span
-          ><span class="sketch" aria-hidden="true"
-            >{#each placement.sketch as sessions, index (index)}<span class="account"
-                >{String.fromCharCode(65 + index)}<span class="dots"
-                  >{'●'.repeat(sessions) || '○'}</span
-                ></span
-              >{/each}</span
           ></label
         >{/each}
     </fieldset>
@@ -195,29 +186,10 @@
     font-weight: 400;
     margin-left: var(--space-2);
   }
-  .text,
-  .sketch {
-    grid-column: 2;
-  }
   .text {
+    grid-column: 2;
     color: var(--ink-3);
     line-height: 1.6;
-  }
-  .sketch {
-    display: flex;
-    gap: var(--space-2);
-    font: 10px var(--mono);
-    color: var(--ink-3);
-  }
-  .account {
-    display: inline-flex;
-    gap: var(--space-1);
-    padding: 2px var(--space-2);
-    border: 1px solid var(--rule);
-    border-radius: var(--r-sm);
-  }
-  .dots {
-    color: var(--baton);
   }
   @media (max-width: 600px) {
     .fields,

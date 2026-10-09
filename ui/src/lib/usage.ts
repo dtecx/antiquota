@@ -72,6 +72,14 @@ export function breakdown(detail: NonNullable<UsageResponse['detail']>) {
     },
   ];
 }
+/** An open day tooltip after new data: the same day stays open with its new totals. */
+export function keptDay<T extends { date: string }>(
+  open: { index: number; left: number; day: T } | null,
+  days: readonly T[],
+): { index: number; left: number; day: T } | null {
+  const day = open ? days[open.index] : undefined;
+  return open && day && day.date === open.day.date ? { ...open, day } : null;
+}
 export function dayAccounts(day: UsageResponse['days'][number]) {
   return Object.entries(day.by).sort((a, b) => b[1] - a[1]);
 }

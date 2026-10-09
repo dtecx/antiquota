@@ -7,6 +7,7 @@
     cacheRate,
     createUsage,
     dayAccounts,
+    keptDay,
     partsLine,
     percent,
     tooltipLeft,
@@ -76,7 +77,8 @@
         layout: { padding: 0 },
       },
     });
-    hovered = null;
+    // A background refresh keeps an open day tooltip; a new period closes it.
+    hovered = untrack(() => keptDay(hovered, data.days));
     return () => {
       chart?.destroy();
       chart = null;

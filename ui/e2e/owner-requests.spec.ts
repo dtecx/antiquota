@@ -85,10 +85,14 @@ test('shows every token part with the cache hit rate and refreshes as turns end'
     'input 300 · cached input 900 · output 50 · thinking 25',
   );
   await shot(page, engine, 'usage-breakdown');
-  // A turn that ends while the panel is open updates it without any click.
+  // A turn that ends while the panel is open updates it without any click, and the open
+  // tooltip stays with the new totals.
   const sent = await engine.call('POST', `/api/sessions/${id}/send`, { text: 'Second turn.' });
   expect(sent.status).toBe(200);
   await expect(parts.first()).toHaveText(/^Input\s*600\s*today 600$/);
+  await expect(usage.getByRole('tooltip')).toContainText(
+    'input 600 · cached input 1.8k · output 100 · thinking 50',
+  );
   await expect(usage.locator('.stats')).toContainText('2 turns');
   await expect(account.locator('td').nth(4)).toHaveText('600');
 });
@@ -103,6 +107,11 @@ test('places new sessions fill first by default and saves spread first', async (
     spread = rotation.getByRole('radio', { name: /^Spread first/ });
   await expect(fill).toBeChecked();
   await expect(spread).not.toBeChecked();
+  // Each choice is text only: its title, its kind and what it does.
+  await expect(rotation.locator('.choice')).toHaveText([
+    /^Fill first\s*sequential · default\s*Keep new sessions on one account until its quota runs out, then move to the next\.$/,
+    /^Spread first\s*parallel\s*Put new sessions on accounts without a running session first, so their quotas work at once\.$/,
+  ]);
   await shot(page, engine, 'placement-fill');
   await spread.check();
   await expect(page.getByText('Rotation settings saved.')).toBeVisible();

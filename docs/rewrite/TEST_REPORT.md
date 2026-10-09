@@ -179,6 +179,8 @@ The owner asked for six changes, now rows F-1145 to F-1150, all Passed. Prompts 
 
 A follow-up request removed the manual Probe now button, since the engine refreshes idle accounts every Quota check minutes and the Accounts view now says so. The UI says refresh instead of probe: cards read `refreshed 2h`, `/quota` refreshes every account and the tray reads `not refreshed yet`. F-711 records the decision and is proved again ([test log](../../.handoff/evidence/slice14-refresh-test.log)).
 
+The placement choices now show text only. A gate run then caught W-031: a background usage refresh closed an open day tooltip. The tooltip now stays open with the new totals ([test log](../../.handoff/evidence/slice14-tooltip-test.log)).
+
 Mark a row Passed only when its full acceptance has passing tests and evidence. Passing architecture requirements describe the current sources; each future feature must still prove its own behavior. Logs and screenshots live in ignored `.handoff/evidence/`; local tokens and backup contents must never enter committed fixtures or this report.
 
 | Feature ID | Tests | Status | Evidence path |
