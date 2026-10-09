@@ -37,7 +37,7 @@ check: check-types
 
 test-unit:
     cargo build --jobs 2 -p antiquota-cli -p fake-agy
-    cargo test --workspace --jobs 2
+    cargo test --workspace --jobs 2 --no-fail-fast
     pnpm --dir ui test
 
 test-e2e: build-engine build-ui

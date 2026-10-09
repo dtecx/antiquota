@@ -287,7 +287,11 @@ fn hook_invocation_obeys_denial_without_executing_a_tool_command() {
         .args(["-p", "hook fixture", "--output-format", "stream-json"])
         .output()
         .unwrap();
-    assert!(output.status.success());
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
     assert!(!fixture.project.join("fake-hook-marker").exists());
     assert!(!fixture.project.join("notes.txt").exists());
     assert!(

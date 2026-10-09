@@ -31,11 +31,12 @@ pub fn invoke(script: &Script) -> Result<Option<Value>, FakeError> {
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
         .spawn()?;
-    child
-        .stdin
-        .take()
-        .unwrap()
-        .write_all(serde_json::to_string(&script.hook_payload)?.as_bytes())?;
+    let payload = serde_json::to_string(&script.hook_payload)?;
+    // A hook may answer without reading its input and close the pipe before the write ends.
+    match child.stdin.take().unwrap().write_all(payload.as_bytes()) {
+        Err(e) if e.kind() != std::io::ErrorKind::BrokenPipe => return Err(e.into()),
+        _ => {}
+    }
     let deadline = Instant::now() + Duration::from_secs(5);
     loop {
         if child.try_wait()?.is_some() {

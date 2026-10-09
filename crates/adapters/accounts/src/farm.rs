@@ -271,8 +271,9 @@ pub(crate) fn linked(path: &Path) -> bool {
 pub(crate) fn remove_entry(path: &Path) -> Result<(), PortError> {
     // A junction must be detached before removing a directory tree.
     // https://docs.rs/junction/2.1.0/junction/fn.delete.html
+    // A plain file or folder is not a reparse point, which `exists` reports as an error.
     #[cfg(windows)]
-    if junction::exists(path).map_err(io_error)? {
+    if junction::exists(path).unwrap_or(false) {
         junction::delete(path).map_err(io_error)?;
         return Ok(());
     }
