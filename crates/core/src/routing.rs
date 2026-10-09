@@ -95,6 +95,7 @@ pub fn rank_accounts(
             used.insert(slot.as_str(), entry.ts);
         }
     }
+    let spread = settings.placement == crate::SPREAD;
     let mut live: Vec<_> = accounts
         .iter()
         .filter(|a| !a.paused && a.walls.get(bucket).copied().unwrap_or(0.0) <= now)
@@ -107,7 +108,9 @@ pub fn rank_accounts(
             .cmp(&br.is_some_and(|v| v < reserve))
             .then_with(|| {
                 (preferred != Some(a.slot.as_str())).cmp(&(preferred != Some(b.slot.as_str())))
-            });
+            })
+            // Spreading puts accounts without a running call first; filling ignores calls.
+            .then_with(|| (spread && a.busy).cmp(&(spread && b.busy)));
         let strategy = match settings.rotation.as_str() {
             "sticky" => a.slot.cmp(&b.slot),
             "round-robin" => used

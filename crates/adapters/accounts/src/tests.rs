@@ -419,3 +419,45 @@ fn today_starts_at_local_midnight() {
     let today = totals.get("one").unwrap();
     assert_eq!((today.input, today.turns), (Some(110), Some(2)));
 }
+#[test]
+fn model_calls_share_an_account_and_probes_need_it_alone() {
+    let s = Sandbox::new();
+    s.write(
+        "data/slots/one@example.com/.gemini/antigravity-cli/antigravity-oauth-token",
+        "synthetic",
+    );
+    let accounts = s.accounts();
+    let name = "one@example.com";
+    let first = accounts.share_named(name).unwrap().unwrap();
+    let second = accounts.share_named(name).unwrap().unwrap();
+    assert_eq!(second.slot().name, name);
+    assert!(accounts.lease_named(name).unwrap().is_none());
+    assert!(accounts.accounts().unwrap()[0].busy);
+    drop(first);
+    assert!(accounts.lease_named(name).unwrap().is_none());
+    drop(second);
+    assert!(!accounts.accounts().unwrap()[0].busy);
+    let alone = accounts.lease_named(name).unwrap().unwrap();
+    assert!(accounts.share_named(name).unwrap().is_none());
+    drop(alone);
+    assert!(accounts.share_named(name).unwrap().is_some());
+}
+#[test]
+fn today_counts_cached_input_only_when_some_was_reused() {
+    let s = Sandbox::new();
+    s.write(
+        "data/state/usage.jsonl",
+        "{\"t\":200,\"slot\":\"one\",\"input\":3,\"cache\":40}\n{\"t\":201,\"slot\":\"one\",\"input\":2,\"cache\":\"bad\"}\n{\"t\":202,\"slot\":\"one\",\"input\":1,\"cache\":2}\n{\"t\":203,\"slot\":\"two\",\"input\":5}\n",
+    );
+    let totals = overview::usage_today(&s.accounts(), 300.0).unwrap();
+    assert_eq!(
+        serde_json::to_value(&totals["one"]).unwrap(),
+        serde_json::json!({"input":6,"output":0,"thinking":0,"turns":3,"cache":42})
+    );
+    assert!(
+        serde_json::to_value(&totals["two"])
+            .unwrap()
+            .get("cache")
+            .is_none()
+    );
+}

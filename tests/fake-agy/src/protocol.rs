@@ -112,9 +112,17 @@ pub fn frames(script: &Script, ctx: &TurnContext) -> (Vec<Action>, i32) {
             0,
         ));
     }
-    let complete = json!({"event":"step_update","step_update":{"conversation_id":ctx.conversation,
+    let mut complete = json!({"event":"step_update","step_update":{"conversation_id":ctx.conversation,
         "step_index":4,"step_type":"agent_response","state":"DONE","text_delta":"",
         "usage":{"input_tokens":script.input_tokens,"output_tokens":script.output_tokens,"total_tokens":script.input_tokens+script.output_tokens}}});
+    for (key, value) in [
+        ("cache_read_tokens", script.cache_read_tokens),
+        ("thinking_tokens", script.thinking_tokens),
+    ] {
+        if value > 0 {
+            complete["step_update"]["usage"][key] = json!(value);
+        }
+    }
     result.push(action(complete.clone(), 0));
     if scenario == Scenario::DuplicateDone {
         result.push(action(complete, 0));

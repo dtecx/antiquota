@@ -19,6 +19,8 @@ mod lifecycle;
 mod metadata_limits;
 #[path = "../../../tests/rewrite/accounts_models.rs"]
 mod models;
+#[path = "../../../tests/rewrite/accounts_placement.rs"]
+mod placement;
 #[path = "../../../tests/rewrite/accounts_replay.rs"]
 mod replay;
 #[path = "../../../tests/rewrite/accounts_rotation.rs"]
@@ -35,3 +37,5 @@ mod storage;
 )]
 #[path = "../../../tests/rewrite/support/mod.rs"]
 mod support;
+#[path = "../../../tests/rewrite/accounts_usage.rs"]
+mod usage;

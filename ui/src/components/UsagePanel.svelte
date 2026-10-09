@@ -1,24 +1,49 @@
-<!-- Shows ledger magnitude over time; chart instances remain outside Svelte proxies. -->
+<!-- Shows ledger magnitude and its parts over time; chart instances remain outside Svelte proxies. -->
 <script lang="ts">
   import { Chart, BarController, BarElement, CategoryScale, LinearScale } from 'chart.js';
   import type { UsageResponse } from '../gen/UsageResponse';
-  import { createUsage, usageSummary, dayAccounts, tooltipLeft } from '../lib/usage';
+  import {
+    breakdown,
+    cacheRate,
+    createUsage,
+    dayAccounts,
+    partsLine,
+    percent,
+    tooltipLeft,
+    usageSummary,
+  } from '../lib/usage';
   import type { Api } from '../lib/api';
+  import type { Accounts } from '../lib/accounts';
   import { formatTokens } from '../lib/format';
   import { onMount, untrack } from 'svelte';
-  let { api }: { api: Api } = $props();
+  let { api, accounts }: { api: Api; accounts: Accounts } = $props();
   const usage = untrack(() => createUsage(api)),
-    view = usage.state;
+    view = usage.state,
+    accountsView = untrack(() => accounts.state);
   const summary = $derived($view.data ? usageSummary($view.data) : null);
   const period = $derived($view.data?.days.length ?? $view.days);
   let canvas = $state.raw<HTMLCanvasElement>();
   let plot = $state.raw<HTMLDivElement>();
   let chart = $state.raw<Chart<'bar'> | null>(null);
-  let hovered = $state<{ day: UsageResponse['days'][number]; left: number } | null>(null);
+  let hovered = $state<{ day: UsageResponse['days'][number]; index: number; left: number } | null>(
+    null,
+  );
+  const parts = $derived(summary?.detail ? breakdown(summary.detail) : []);
+  const hoveredParts = $derived(hovered ? summary?.detail?.days[hovered.index] : undefined);
   Chart.register(BarController, BarElement, CategoryScale, LinearScale);
   onMount(() => {
     void usage.load();
+    usage.start();
     return usage.dispose;
+  });
+  // A finished turn announces the accounts again: read the ledger shortly after.
+  let announced: unknown;
+  $effect(() => {
+    const list = $accountsView.accounts;
+    untrack(() => {
+      if (announced !== undefined && announced !== list) usage.changed();
+      announced = list;
+    });
   });
   $effect(() => {
     const data = $view.data;
@@ -63,6 +88,7 @@
     if (day && days && plot)
       hovered = {
         day,
+        index,
         left: tooltipLeft(index, days.length, plot.clientWidth, Math.min(240, plot.clientWidth)),
       };
   }
@@ -72,7 +98,7 @@
   <header>
     <div>
       <h3>Usage</h3>
-      <p>Tokens antiquota spent through agy, from its own ledger.</p>
+      <p>Tokens antiquota spent through agy, from its own ledger. It updates as turns end.</p>
     </div>
     <div class="periods" role="group" aria-label="Usage period">
       {#each [7, 14, 30] as days (days)}<button
@@ -105,6 +131,12 @@
         </dd>
       </div>
     </dl>
+    {#if parts.length}<dl class="parts" aria-label="Token breakdown">
+        {#each parts as part (part.label)}<div title={part.hint}>
+            <dt>{part.label}</dt>
+            <dd>{part.period} <small>today {part.today}</small></dd>
+          </div>{/each}
+      </dl>{/if}
     <div class="plot" bind:this={plot}>
       <canvas
         bind:this={canvas}
@@ -128,8 +160,9 @@
       {#if hovered}<div class="tip" role="tooltip" style:left={`${hovered.left}px`}>
           <b>{hovered.day.date}</b><span
             >{formatTokens(hovered.day.total)} tokens · {hovered.day.turns} turns</span
-          >{#each dayAccounts(hovered.day) as [slot, tokens] (slot)}<span class="contribution"
-              ><span>{slot}</span><b>{formatTokens(tokens)}</b></span
+          >{#if hoveredParts}<span class="split">{partsLine(hoveredParts)}</span
+            >{/if}{#each dayAccounts(hovered.day) as [slot, tokens] (slot)}<span
+              class="contribution"><span>{slot}</span><b>{formatTokens(tokens)}</b></span
             >{/each}
         </div>{/if}
     </div>
@@ -140,21 +173,34 @@
     </div>
     <div class="tables">
       {#if summary.accounts.length}<table aria-label="Usage by account">
-          <thead><tr><th>Account</th><th>{period} days</th><th>Today</th><th>Turns</th></tr></thead
+          <thead
+            ><tr
+              ><th>Account</th><th>{period} days</th><th>Today</th><th>Turns</th><th>Input</th><th
+                >Output</th
+              ><th title="Cached input as a share of all input">Cache hit</th></tr
+            ></thead
           ><tbody
             >{#each summary.accounts as [slot, row] (slot)}<tr
                 ><td title={slot}>{slot}</td><td>{formatTokens(row.tokens)}</td><td
                   >{formatTokens(row.today)}</td
-                ><td>{row.turns}</td></tr
+                ><td>{row.turns}</td><td>{formatTokens(row.input)}</td><td
+                  >{formatTokens(row.output)}</td
+                ><td>{percent(cacheRate(summary.detail?.accounts[slot]))}</td></tr
               >{/each}</tbody
           >
         </table>{:else}<p>No turns in this period yet.</p>{/if}
       {#if summary.models.length}<table aria-label="Usage by model">
-          <thead><tr><th>Model</th><th>Tokens</th><th>Share</th></tr></thead><tbody
+          <thead
+            ><tr
+              ><th>Model</th><th>Tokens</th><th>Share</th><th
+                title="Cached input as a share of all input">Cache hit</th
+              ></tr
+            ></thead
+          ><tbody
             >{#each summary.models as [model, tokens] (model)}<tr
                 ><td>{model}</td><td>{formatTokens(tokens)}</td><td
                   >{Math.round((tokens / Math.max(1, summary.total)) * 100)}%</td
-                ></tr
+                ><td>{percent(cacheRate(summary.detail?.models[model]))}</td></tr
               >{/each}</tbody
           >
         </table>{/if}
@@ -200,6 +246,16 @@
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: var(--space-3);
+  }
+  .parts {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--rule);
+  }
+  .parts dd {
+    font-size: 15px;
   }
   dt {
     font: 10px var(--mono);
@@ -253,6 +309,9 @@
     z-index: 1;
     overflow-wrap: anywhere;
   }
+  .split {
+    color: var(--ink-3);
+  }
   .contribution {
     display: flex;
     justify-content: space-between;
@@ -267,7 +326,6 @@
   .tables {
     display: grid;
     gap: var(--space-5);
-    grid-template-columns: 1fr 1fr;
     min-width: 0;
   }
   table {
@@ -288,7 +346,7 @@
     overflow-wrap: anywhere;
   }
   th:first-child {
-    width: 45%;
+    width: 34%;
   }
   td:not(:first-child),
   th:not(:first-child) {
@@ -296,13 +354,9 @@
     font-family: var(--mono);
   }
   @media (max-width: 719px) {
-    .stats {
+    .stats,
+    .parts {
       grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
-  @media (max-width: 760px) {
-    .tables {
-      grid-template-columns: 1fr;
     }
   }
 </style>

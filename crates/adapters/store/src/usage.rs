@@ -33,7 +33,10 @@ impl FileStore {
                     {
                         continue;
                     }
-                    let row = json!({"t":record.ts,"slot":slot,"model":turn_models.get(turn).unwrap_or(&model),"session":sid,"input":usage.input_tokens,"output":usage.output_tokens,"thinking":usage.thinking_tokens});
+                    let mut row = json!({"t":record.ts,"slot":slot,"model":turn_models.get(turn).unwrap_or(&model),"session":sid,"input":usage.input_tokens,"output":usage.output_tokens,"thinking":usage.thinking_tokens});
+                    if usage.cache_read_tokens > 0 {
+                        row["cache"] = json!(usage.cache_read_tokens);
+                    }
                     append_json(&path, &row)?;
                     rows.push(row);
                 }
@@ -45,7 +48,12 @@ impl FileStore {
 }
 
 impl FileStore {
-    pub(crate) fn history(&self, days: u32, now: f64) -> Result<serde_json::Value, PortError> {
+    pub(crate) fn history(
+        &self,
+        days: u32,
+        now: f64,
+        detail: bool,
+    ) -> Result<serde_json::Value, PortError> {
         use chrono::{DateTime, Duration, Local};
         use serde_json::{Value, json};
         use std::collections::BTreeMap;
@@ -65,6 +73,13 @@ impl FileStore {
             .collect();
         let mut accounts = json!({});
         let mut models = json!({});
+        // The detail splits every total into its parts, including the cached input agy reused.
+        let zero = json!({"input":0,"output":0,"thinking":0,"cache":0,"turns":0});
+        let mut parts = json!({"period":zero,"today":zero,"accounts":{},"models":{}});
+        let mut part_days: BTreeMap<String, Value> = rows
+            .keys()
+            .map(|date| (date.clone(), zero.clone()))
+            .collect();
         let add = |value: &mut Value, n: u64| -> Result<(), PortError> {
             let total = value
                 .as_u64()
@@ -99,6 +114,8 @@ impl FileStore {
                 .checked_add(output)
                 .and_then(|n| n.checked_add(thinking))
                 .ok_or_else(|| PortError::Invalid("usage counter overflow".into()))?;
+            // Older rows have no cache count; an unreadable one counts as none.
+            let cache = row["cache"].as_u64().unwrap_or(0);
             let r = rows.get_mut(&day.to_string()).unwrap();
             add(&mut r["total"], n)?;
             add(&mut r["turns"], 1)?;
@@ -120,6 +137,32 @@ impl FileStore {
             ] {
                 add(&mut accounts[slot][key], n)?;
             }
+            if detail {
+                let counts = [
+                    ("input", input),
+                    ("output", output),
+                    ("thinking", thinking),
+                    ("cache", cache),
+                    ("turns", 1),
+                ];
+                let tally = |target: &mut Value| -> Result<(), PortError> {
+                    for (key, n) in counts {
+                        add(&mut target[key], n)?;
+                    }
+                    Ok(())
+                };
+                tally(&mut parts["period"])?;
+                if day == today {
+                    tally(&mut parts["today"])?;
+                }
+                tally(part_days.get_mut(&day.to_string()).unwrap())?;
+                for (group, key) in [("accounts", slot), ("models", model)] {
+                    if parts[group].get(key).is_none() {
+                        parts[group][key] = zero.clone();
+                    }
+                    tally(&mut parts[group][key])?;
+                }
+            }
         }
         let days: Vec<_> = rows
             .into_iter()
@@ -128,6 +171,11 @@ impl FileStore {
                 r
             })
             .collect();
-        Ok(json!({"days":days,"accounts":accounts,"models":models}))
+        let mut result = json!({"days":days,"accounts":accounts,"models":models});
+        if detail {
+            parts["days"] = json!(part_days.into_values().collect::<Vec<_>>());
+            result["detail"] = parts;
+        }
+        Ok(result)
     }
 }

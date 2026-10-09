@@ -148,7 +148,8 @@ export function createApi(
       call<string[]>('GET', `${sessionPath(id)}/files?${new URLSearchParams({ q })}`),
     engine: () => call<EngineResponse>('GET', '/api/engine'),
     engineLog: () => call<TextResponse>('GET', '/api/engine/log'),
-    usage: (days = 14) => call<UsageResponse>('GET', `/api/usage?days=${days}`),
+    usage: (days = 14, detail = false) =>
+      call<UsageResponse>('GET', `/api/usage?days=${days}${detail ? '&detail=1' : ''}`),
     browse: (path: string) =>
       call<FolderResponse>('GET', `/api/fs?${new URLSearchParams({ path })}`),
     stackFile: (path: string) =>

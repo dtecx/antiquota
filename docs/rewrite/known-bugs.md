@@ -48,6 +48,7 @@ These are not claimed as failures observed in the Gemini run. The rewrite must r
 
 | R-009 | Background native proof blocks opening the sandbox engine.json before HTTP discovery. | The process sample remains in fs::read_to_string → open → __open. Files are regular and owned by the test user. A contemporaneous sandboxd SystemPolicyAllFiles preflight returns denied, but the exact causal policy is unconfirmed. The native polling deadline starts after the initial read and cannot bound a kernel-blocked read. | Resolve the OS access condition with the user, then prove startup, retry and lifecycle in the built app. Do not bypass permissions or claim the pending Mac rows from IPC mocks. |
 | R-010 | Tauri's Linux GTK3 build macros depend on unmaintained proc-macro-error. | Cargo-deny initially reports RUSTSEC-2024-0370; upstream provides no patched version. One explicit advisory exception records this build dependency. | Retain the exception in reports and review it when the GTK3 dependency changes. No blanket advisory suppression is allowed. |
+| R-011 | Several agy processes on one account home may refresh its OAuth token at the same moment. Legacy avoided this with exclusive leases; the owner chose shared accounts (ADR 0025). | Not observed: the fake agent never refreshes a token. agy owns and rewrites the token file. | Watch live multi-session runs for sign-in failures on one account; spread-first placement lowers the overlap if it appears. |
 
 ## Stopped run observations
 

@@ -78,7 +78,7 @@ The conversation store link is `~/.config/antigravity` pointing to `<base>/stack
 
 ## Settings, rules, skills, and hooks
 
-The optional root `settings.json` stores GUI/engine defaults as strings, including numeric settings. Its absence means use defaults; it was absent in the current real installation. Keep the known settings and unknown data on read/write. The defaults are model/verifier `gemini-3.8-flash-high`, mode `default`, rotation `perishable`, keep-awake `on`, reserve `3`, quota polling `10`, approval timeout `15`, maximum rounds `20`, auto-continue `2`, cwd empty, and worktree default `off`.
+The optional root `settings.json` stores GUI/engine defaults as strings, including numeric settings. Its absence means use defaults; it was absent in the current real installation. Keep the known settings and unknown data on read/write. The defaults are model/verifier `gemini-3.8-flash-high`, mode `default`, rotation `perishable`, keep-awake `on`, reserve `3`, quota polling `10`, approval timeout `15`, maximum rounds `20`, auto-continue `2`, cwd empty, and worktree default `off`. The rewrite adds `placement` (`fill` or `spread`, default `fill`) on the owner's request; the default is not written, so a file without the key reads as `fill` and the legacy app ignores the key.
 
 The shared stack is `stack/.gemini`. Permission lists live in `antigravity-cli/settings.json` under `permissions.allow` and `permissions.deny`. Values are rule strings, with duplicates removed by the API. Preserve unrelated settings keys. Arbitrary runner commands must never be newly added to allow lists; risky flags and shell composition remain part of the permission policy.
 
@@ -107,7 +107,7 @@ The `antiquota` hook entry contains PreToolUse and PreInvocation configuration a
 | `walls/<slot>.<pool>` | Text: `<integer-expiry> <reason>\n`. Expired/malformed walls are inactive; preserve the readable reason. |
 | `paused/<slot>` | Empty marker file means the slot is excluded from automatic rotation. |
 | `verify/<slot>.json` | `{url, since}` for a signed-in account needing Google verification; retain token and parked state. |
-| `usage.jsonl` | One turn row: `t`, `slot`, `model`, `session`, `input`, `output`, and optional `thinking`. Local-day aggregation tolerates bad lines. |
+| `usage.jsonl` | One turn row: `t`, `slot`, `model`, `session`, `input`, `output`, and optional `thinking`. The rewrite adds an optional `cache`, the input tokens agy read from its cache (`cache_read_tokens`), written only when above zero. Local-day aggregation tolerates bad lines, and an unreadable `cache` counts as zero. |
 | `routing.jsonl` | Append-only decisions with `ts`, `event`, and variable contextual fields (slot, bucket, session, previous, reason). Current writer trims at about 2 MB to the latest 5,000 lines. |
 | `calls.jsonl` | CLI call ledger with `t`, `slot`, `bucket`, `rc`, `secs`, and boolean `walled`; optional when only GUI turns were run. |
 | `failures/` | Captured sign-in/call diagnostics; may include private identifiers, so retain locally and redact before sharing. |

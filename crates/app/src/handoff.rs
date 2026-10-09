@@ -274,13 +274,17 @@ impl Service {
             }
             let affinity =
                 preferred.is_some_and(|name| ranked.first().is_some_and(|first| first == name));
-            let waiting_for_affinity = affinity && self.clock.now() - started < AFFINITY_WAIT;
-            for name in ranked.iter().take(if waiting_for_affinity {
-                1
-            } else {
-                ranked.len()
-            }) {
-                if let Some(lease) = self.accounts.lease_named(name)? {
+            // Calls share an account, so only a probe holds one alone, and only for a moment.
+            // The session's own account, and with fill-first placement the first ranked
+            // account, is worth that short wait.
+            let fill = settings.placement != antiquota_core::SPREAD;
+            let waiting_for_first =
+                (affinity || fill) && self.clock.now() - started < AFFINITY_WAIT;
+            for name in ranked
+                .iter()
+                .take(if waiting_for_first { 1 } else { ranked.len() })
+            {
+                if let Some(lease) = self.accounts.share_named(name)? {
                     if affinity && preferred != Some(name.as_str()) {
                         self.route(RoutingEntry {
                             event: "affinity-broke".into(),

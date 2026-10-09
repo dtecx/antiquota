@@ -13,6 +13,8 @@ impl AccountService {
         defaults.extra.clear();
         let mut data =
             serde_json::to_value(&defaults).map_err(|e| AppError::Invalid(e.to_string()))?;
+        // The default placement is left out of the wire format; it is still a known key.
+        data["placement"] = json!(defaults.placement);
         if let Some(values) = values.as_object() {
             for (key, value) in values {
                 if data.get(key).is_some() {
@@ -31,6 +33,9 @@ impl AccountService {
             return Err(AppError::Invalid(
                 "rotation: perishable · sticky · round-robin".into(),
             ));
+        }
+        if ![antiquota_core::FILL, antiquota_core::SPREAD].contains(&defaults.placement.as_str()) {
+            return Err(AppError::Invalid("placement: fill or spread".into()));
         }
         for (key, value) in [
             ("keep_awake", &defaults.keep_awake),

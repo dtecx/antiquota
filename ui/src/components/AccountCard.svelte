@@ -2,8 +2,8 @@
 <script lang="ts">
   import type { Account } from '../gen/Account';
   import type { Accounts } from '../lib/accounts';
-  import { pools } from '../lib/account-format';
-  import { formatTokens, relativeTime } from '../lib/format';
+  import { pools, todayLine } from '../lib/account-format';
+  import { relativeTime } from '../lib/format';
   import QuotaPool from './QuotaPool.svelte';
   import VerificationBlock from './VerificationBlock.svelte';
   let { account, accounts, signIn }: { account: Account; accounts: Accounts; signIn: () => void } =
@@ -30,13 +30,9 @@
     />{/if}
   {#if account.today.turns}<p
       class="today"
-      title="Tokens this account used today through antiquota"
+      title="Tokens this account used today through antiquota: input sent to the model, output it wrote"
     >
-      today ↑ {formatTokens(account.today.input ?? 0)} ↓ {formatTokens(
-        account.today.output ?? 0,
-      )}{#if account.today.thinking}{` ✻ ${formatTokens(account.today.thinking)}`}{/if} · {account
-        .today.turns}
-      {account.today.turns === 1 ? 'turn' : 'turns'}
+      {todayLine(account.today)}
     </p>{/if}
   {#if !account.verify}<div class="pools">
       {#each pools as pool (pool.key)}<QuotaPool

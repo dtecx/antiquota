@@ -30,8 +30,8 @@ impl Service {
     }
 
     async fn transcribe_file(&self, folder: &str, path: &str) -> Result<Transcript, AppError> {
-        // An account may be busy for a moment (a quota probe or a turn): wait for one, bounded so
-        // the request never hangs.
+        // An account may be held for a moment by a quota probe: wait for one, bounded so the
+        // request never hangs.
         let started = self.clock.now();
         let lease = loop {
             let ranked = rank_accounts(
@@ -49,7 +49,7 @@ impl Service {
             }
             let mut found = None;
             for name in &ranked {
-                if let Some(lease) = self.accounts.lease_named(name)? {
+                if let Some(lease) = self.accounts.share_named(name)? {
                     found = Some(lease);
                     break;
                 }

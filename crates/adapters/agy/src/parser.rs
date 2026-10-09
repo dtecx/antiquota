@@ -66,6 +66,7 @@ impl Decoder {
                 (&mut self.usage.output_tokens, "output_tokens"),
                 (&mut self.usage.thinking_tokens, "thinking_tokens"),
                 (&mut self.usage.total_tokens, "total_tokens"),
+                (&mut self.usage.cache_read_tokens, "cache_read_tokens"),
             ] {
                 *target = target
                     .checked_add(count(key))
@@ -190,6 +191,32 @@ mod tests {
         assert_eq!(result.status, "SUCCESS");
         assert_eq!(result.usage.input_tokens, 100);
         assert_eq!(result.usage.output_tokens, 10);
+    }
+    #[test]
+    fn cached_input_and_thinking_add_up_over_completed_steps() {
+        let mut d = Decoder::new(1);
+        for (step, cache) in [(1, 300), (2, 500)] {
+            d.accept(json!({"event":"step_update","step_update":{"step_index":step,"step_type":"agent_response","state":"DONE","usage":{"input_tokens":20,"output_tokens":5,"thinking_tokens":7,"cache_read_tokens":cache}}})).unwrap();
+        }
+        let usage = d.finish(0, false, "").usage;
+        assert_eq!(
+            (
+                usage.input_tokens,
+                usage.cache_read_tokens,
+                usage.thinking_tokens
+            ),
+            (40, 800, 14)
+        );
+        // The context is the largest prompt one step sent, cached part included.
+        assert_eq!(usage.context, 520);
+        let wire = serde_json::to_value(&usage).unwrap();
+        assert_eq!(wire["cache_read_tokens"], 800);
+        assert!(
+            serde_json::to_value(StepUsage::default())
+                .unwrap()
+                .get("cache_read_tokens")
+                .is_none()
+        );
     }
     #[test]
     fn only_agy_error_channels_classify_a_failed_turn() {

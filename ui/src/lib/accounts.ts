@@ -14,7 +14,7 @@ export interface AccountsView {
   section: SettingsSection;
   accounts: Account[];
   defaults: Settings | null;
-  fields: { rotation: string; reserve: string; quota_poll: string };
+  fields: { rotation: string; reserve: string; quota_poll: string; placement: string };
   dirty: boolean;
   routing: RoutingEntry[];
   loading: boolean;
@@ -23,6 +23,15 @@ export interface AccountsView {
   remove: string | null;
   error: string;
   feedback: string;
+}
+/** The rotation fields of the saved defaults; a missing placement is the default, fill. */
+export function fieldsOf(settings: Settings): AccountsView['fields'] {
+  return {
+    rotation: settings.rotation,
+    reserve: settings.reserve,
+    quota_poll: settings.quota_poll,
+    placement: settings.placement ?? 'fill',
+  };
 }
 export function createAccounts(
   api: Api,
@@ -33,7 +42,7 @@ export function createAccounts(
     section: 'accounts',
     accounts: [],
     defaults: null,
-    fields: { rotation: 'perishable', reserve: '3', quota_poll: '10' },
+    fields: { rotation: 'perishable', reserve: '3', quota_poll: '10', placement: 'fill' },
     dirty: false,
     routing: [],
     loading: false,
@@ -52,13 +61,7 @@ export function createAccounts(
     state.update((value) => ({
       ...value,
       defaults: settings,
-      fields: value.dirty
-        ? value.fields
-        : {
-            rotation: settings.rotation,
-            reserve: settings.reserve,
-            quota_poll: settings.quota_poll,
-          },
+      fields: value.dirty ? value.fields : fieldsOf(settings),
     }));
   }
   function accept(accounts: Account[]) {
@@ -115,6 +118,8 @@ export function createAccounts(
       if (key === 'rotation') {
         if (!['perishable', 'sticky', 'round-robin'].includes(text))
           throw new Error('Choose a rotation order.');
+      } else if (key === 'placement') {
+        if (!['fill', 'spread'].includes(text)) throw new Error('Choose where new sessions go.');
       } else if (
         !text.trim() ||
         !Number.isFinite(number) ||
@@ -142,16 +147,17 @@ export function createAccounts(
           validate(submitted, keys);
           const body: DefaultsRequest = {};
           for (const key of keys) body[key] = submitted[key];
-          const saved = await api.saveDefaults(body);
+          const saved = await api.saveDefaults(body),
+            values = fieldsOf(saved);
           state.update((value) => {
             const fields = { ...value.fields };
-            for (const key of keys) if (fields[key] === submitted[key]) fields[key] = saved[key];
+            for (const key of keys) if (fields[key] === submitted[key]) fields[key] = values[key];
             return {
               ...value,
               defaults: saved,
               fields,
               dirty: Object.keys(fields).some(
-                (key) => fields[key as keyof typeof fields] !== saved[key as keyof typeof fields],
+                (key) => fields[key as keyof typeof fields] !== values[key as keyof typeof values],
               ),
               feedback: 'Rotation settings saved.',
             };

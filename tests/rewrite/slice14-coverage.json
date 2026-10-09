@@ -1,0 +1,49 @@
+{
+ "format": 1,
+ "slice": "14",
+ "passed_before": 809,
+ "added": 6,
+ "passed_after": 815,
+ "pending_after": 335,
+ "passed_after_is_prospective": false,
+ "gate_status": "just check passed; just test passed 346 Rust, 457 Vitest and 120 Chromium tests with no failures. Linux x86_64. F-049 was re-proved after the owner's change to shared leases.",
+ "feature_ids": [
+  "F-049",
+  "F-1145",
+  "F-1146",
+  "F-1147",
+  "F-1148",
+  "F-1149",
+  "F-1150"
+ ],
+ "proofs": {
+  "F-049": {
+   "proof": "[tests::model_calls_share_an_account_and_probes_need_it_alone](../../crates/adapters/accounts/src/tests.rs); [concurrency::concurrent_sessions_use_different_account_homes_and_skip_busy_probe](../../tests/rewrite/accounts_concurrency.rs); [concurrency::python_account_lock_excludes_rust_probe_and_rust_lock_excludes_python](../../tests/rewrite/accounts_concurrency.rs); [placement::fill_first_runs_several_sessions_on_one_account_at_once](../../tests/rewrite/accounts_placement.rs). Model calls share the lease while probes need it alone, so a busy account's check is refused, and every lease is released after the calls. Python and Rust locks exclude each other, including a shared Rust lease. With spread-first placement a concurrent session uses the other account's home.",
+   "evidence": ".handoff/evidence/slice14-test.log"
+  },
+  "F-1145": {
+   "proof": "[copies a prompt and a completed reply exactly](../../ui/e2e/owner-requests.spec.ts); [renders safe Markdown, external and file links, and copies exact code and completed replies](../../ui/e2e/transcript.spec.ts). A real turn through the fake agent shows Copy on the prompt and on the reply. The clipboard receives the prompt's two lines and the reply's Markdown source exactly.",
+   "evidence": ".handoff/evidence/slice14-test.log"
+  },
+  "F-1146": {
+   "proof": "[parser::tests::cached_input_and_thinking_add_up_over_completed_steps](../../crates/adapters/agy/src/parser.rs); [tests::cached_input_reaches_the_ledger_and_the_usage_detail](../../crates/adapters/store/src/tests.rs); [usage::usage_detail_splits_input_cached_input_output_and_thinking](../../tests/rewrite/accounts_usage.rs); [tests::today_counts_cached_input_only_when_some_was_reused](../../crates/adapters/accounts/src/tests.rs); [usage detail](../../ui/src/lib/usage.test.ts); [shows every token part with the cache hit rate and refreshes as turns end](../../ui/e2e/owner-requests.spec.ts). Completed steps add up cached input and thinking. The ledger stores `cache` only when used and reads old or unreadable rows as zero. `detail=1` splits the period, today, each day, account and model, and the plain response keeps its captured shape. Chromium shows 300 input, 900 cached input, 50 output, 25 thinking and a 75% hit rate in the breakdown, both tables and the day tooltip.",
+   "evidence": ".handoff/evidence/slice14-test.log"
+  },
+  "F-1147": {
+   "proof": "[names today tokens input and output, adding thinking and cached input only when used](../../ui/src/lib/account-format.test.ts); [shows all four today counters and excludes earlier local-day usage](../../ui/e2e/account-display.spec.ts); [handoff preserves one user message and shows the next serving account](../../ui/e2e/accounts.spec.ts). Account cards read `today input 300 · output 30 · thinking 12 · 2 turns` and add cached input when present; no arrow or sent/received label remains.",
+   "evidence": ".handoff/evidence/slice14-test.log"
+  },
+  "F-1148": {
+   "proof": "[tests::model_calls_share_an_account_and_probes_need_it_alone](../../crates/adapters/accounts/src/tests.rs); [placement::fill_first_runs_several_sessions_on_one_account_at_once](../../tests/rewrite/accounts_placement.rs); [concurrency::python_account_lock_excludes_rust_probe_and_rust_lock_excludes_python](../../tests/rewrite/accounts_concurrency.rs); [deterministic::warm_account_affinity_waits_ten_fake_seconds_before_another_lease](../../tests/rewrite/accounts_deterministic.rs). Two shared leases coexist while an exclusive one fails, and the account reads busy until the last is dropped. Three real sessions run at once on one account and home while a check of that account is refused. A shared lease also keeps the legacy exclusive lock out, and a probe-held account still gets the ten-second affinity wait.",
+   "evidence": ".handoff/evidence/slice14-test.log"
+  },
+  "F-1149": {
+   "proof": "[refreshes quietly in the background and never cancels a period change](../../ui/src/lib/usage.test.ts); [shows every token part with the cache hit rate and refreshes as turns end](../../ui/e2e/owner-requests.spec.ts). With fake timers, the minute refresh and the read after a turn update the data, a failed read keeps it without an error, a pending period change is not cancelled, and nothing runs after dispose. In Chromium, a turn sent over HTTP while Usage is open updates input, turns and the account table without a click.",
+   "evidence": ".handoff/evidence/slice14-test.log"
+  },
+  "F-1150": {
+   "proof": "[routing::tests::spread_prefers_accounts_without_a_call_and_fill_ignores_calls](../../crates/core/src/routing/tests.rs); [routing::tests::placement_is_left_out_of_json_while_it_is_the_default](../../crates/core/src/routing/tests.rs); [placement::spread_first_prefers_idle_accounts_then_shares_the_rotation_choice](../../tests/rewrite/accounts_placement.rs); [placement::placement_setting_saves_spread_and_keeps_fill_out_of_the_wire_format](../../tests/rewrite/accounts_placement.rs); [concurrency::concurrent_sessions_use_different_account_homes_and_skip_busy_probe](../../tests/rewrite/accounts_concurrency.rs); [saves placement and treats a missing placement as fill first](../../ui/src/lib/accounts.test.ts); [places new sessions fill first by default and saves spread first](../../ui/e2e/owner-requests.spec.ts). Fill first ranks a busy account first as before; spread first puts idle accounts first, keeps a session's own account first and falls back to the rotation order. Real sessions all run on the first account under fill and go one, two, one under spread. The setting saves spread, leaves fill out of JSON and the file, rejects other values, and Chromium shows and keeps the choice.",
+   "evidence": ".handoff/evidence/slice14-test.log"
+  }
+ }
+}

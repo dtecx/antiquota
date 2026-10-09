@@ -116,8 +116,14 @@ pub trait AccountStore: Send + Sync {
     fn accounts_at(&self, _now: f64) -> Result<Vec<Account>, PortError> {
         self.accounts()
     }
+    /// The account alone, for probes, checks and removal; None while any call holds it.
     fn lease_named(&self, name: &str) -> Result<Option<Box<dyn AccountLease>>, PortError> {
         self.acquire(Some(name))
+    }
+    /// The account for a model call, which other model calls may share; None while it is held
+    /// alone.
+    fn share_named(&self, name: &str) -> Result<Option<Box<dyn AccountLease>>, PortError> {
+        self.lease_named(name)
     }
     fn prepare(&self, _slot: &Slot) -> Result<(), PortError> {
         Ok(())
@@ -313,7 +319,13 @@ pub trait SessionStore: Send + Sync {
     fn resolve_mentions(&self, _cwd: &str, _candidates: &[String]) -> Vec<String> {
         vec![]
     }
-    fn usage_history(&self, _days: u32, _now: f64) -> Result<serde_json::Value, PortError> {
+    /// Tokens per local day; `detail` adds input, output, thinking and cached input totals.
+    fn usage_history(
+        &self,
+        _days: u32,
+        _now: f64,
+        _detail: bool,
+    ) -> Result<serde_json::Value, PortError> {
         unavailable()
     }
     fn save_state_document(&self, _sid: &str, _text: &str) -> Result<(), PortError> {

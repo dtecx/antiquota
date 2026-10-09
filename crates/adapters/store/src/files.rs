@@ -21,6 +21,13 @@ pub struct FileLease {
     _file: File,
 }
 pub fn lock_file(path: &Path) -> Result<Option<FileLease>, PortError> {
+    lock(path, false)
+}
+/// A lock that other shared holders may hold at the same time; an exclusive lock excludes it.
+pub fn lock_file_shared(path: &Path) -> Result<Option<FileLease>, PortError> {
+    lock(path, true)
+}
+fn lock(path: &Path, shared: bool) -> Result<Option<FileLease>, PortError> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent).map_err(io_error)?;
     }
@@ -32,7 +39,12 @@ pub fn lock_file(path: &Path) -> Result<Option<FileLease>, PortError> {
         options.mode(0o600);
     }
     let file = options.open(path).map_err(io_error)?;
-    match file.try_lock() {
+    let locked = if shared {
+        file.try_lock_shared()
+    } else {
+        file.try_lock()
+    };
+    match locked {
         Ok(()) => Ok(Some(FileLease { _file: file })),
         Err(std::fs::TryLockError::WouldBlock) => Ok(None),
         Err(std::fs::TryLockError::Error(e)) => Err(io_error(e)),

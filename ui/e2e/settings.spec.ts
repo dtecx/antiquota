@@ -352,7 +352,7 @@ test('renders exact usage with bounded hover and keyboard tooltips in both theme
   await accentBar(page, 30);
   await expect(usage.locator('.stats')).toContainText('47');
   await screenshot(page, engine, 'usage-dark');
-  await page.route('**/api/usage?days=7', (route) =>
+  await page.route('**/api/usage?days=7&detail=1', (route) =>
     route.fulfill({ status: 503, body: 'Usage temporarily unavailable' }),
   );
   await usage.getByRole('button', { name: '7 days', exact: true }).click();
@@ -364,7 +364,7 @@ test('renders exact usage with bounded hover and keyboard tooltips in both theme
   await expect(
     usage.getByRole('table', { name: 'Usage by account' }).locator('thead'),
   ).toContainText('30 days');
-  await page.unroute('**/api/usage?days=7');
+  await page.unroute('**/api/usage?days=7&detail=1');
   await usage.getByRole('button', { name: 'Retry usage', exact: true }).click();
   await expect(usage.locator('.stats dt').first()).toHaveText('7 days');
   await page.emulateMedia({ colorScheme: 'light' });

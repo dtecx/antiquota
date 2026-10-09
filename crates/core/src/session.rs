@@ -24,6 +24,9 @@ pub struct Usage {
     #[ts(skip)]
     pub extra: BTreeMap<String, Value>,
 }
+fn is_zero(n: &u64) -> bool {
+    *n == 0
+}
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, TS)]
 #[serde(default)]
 pub struct StepUsage {
@@ -32,6 +35,10 @@ pub struct StepUsage {
     pub thinking_tokens: u64,
     pub total_tokens: u64,
     pub context: u64,
+    /// Prompt tokens agy read from its cache, on top of `input_tokens`. Left out while zero.
+    #[serde(skip_serializing_if = "is_zero")]
+    #[ts(as = "Option<u64>", optional)]
+    pub cache_read_tokens: u64,
     #[serde(flatten)]
     #[ts(skip)]
     pub extra: BTreeMap<String, Value>,

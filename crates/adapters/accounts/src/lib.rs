@@ -12,7 +12,7 @@ use antiquota_core::{
     AccountLease, AccountStore, LoginLink, LoginState, Model, PortError, PortFuture, Quota,
     RoutingEntry, Slot,
 };
-use antiquota_store::{FileLease, io_error, lock_file};
+use antiquota_store::{FileLease, io_error, lock_file, lock_file_shared};
 pub use metadata::{find_agy, parse_quota};
 use std::{
     fs,
@@ -93,13 +93,20 @@ impl FileAccounts {
         Ok(slots)
     }
     fn lease(&self, slot: Slot) -> Result<Option<Box<dyn AccountLease>>, PortError> {
-        lock_file(
-            &self
-                .root
-                .join("state/leases")
-                .join(format!("{}.lock", slot.name)),
-        )
-        .map(|file| file.map(|file| Box::new(Lease { slot, _file: file }) as Box<dyn AccountLease>))
+        lock_file(&self.lease_path(&slot)).map(|file| {
+            file.map(|file| Box::new(Lease { slot, _file: file }) as Box<dyn AccountLease>)
+        })
+    }
+    /// Model calls share an account; probes, checks and removal need it alone.
+    fn share(&self, slot: Slot) -> Result<Option<Box<dyn AccountLease>>, PortError> {
+        lock_file_shared(&self.lease_path(&slot)).map(|file| {
+            file.map(|file| Box::new(Lease { slot, _file: file }) as Box<dyn AccountLease>)
+        })
+    }
+    fn lease_path(&self, slot: &Slot) -> PathBuf {
+        self.root
+            .join("state/leases")
+            .join(format!("{}.lock", slot.name))
     }
     pub fn sync(&self, slot: &Slot) -> Result<(), PortError> {
         farm::sync(self, slot)
@@ -143,6 +150,9 @@ impl AccountStore for FileAccounts {
     }
     fn lease_named(&self, name: &str) -> Result<Option<Box<dyn AccountLease>>, PortError> {
         self.lease(self.slot(name)?)
+    }
+    fn share_named(&self, name: &str) -> Result<Option<Box<dyn AccountLease>>, PortError> {
+        self.share(self.slot(name)?)
     }
     fn prepare(&self, slot: &Slot) -> Result<(), PortError> {
         self.sync(slot)

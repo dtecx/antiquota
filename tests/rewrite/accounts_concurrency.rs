@@ -1,4 +1,4 @@
-//! Proves exclusive account contexts and Python/Rust file-lock interoperability.
+//! Proves separate account contexts and Python/Rust file-lock interoperability.
 use crate::{setup, support::Server};
 use serde_json::json;
 use std::{
@@ -11,6 +11,11 @@ use std::{
 #[test]
 fn concurrent_sessions_use_different_account_homes_and_skip_busy_probe() {
     let mut server = Server::new_stopped("concurrent-slots", true);
+    // Spread-first placement sends the second session to the idle account.
+    setup::write(
+        &server.data.join("settings.json"),
+        &json!({"placement":"spread","keep_awake":"off"}).to_string(),
+    );
     setup::script(&server, json!({"delay_ms":1200}));
     setup::start(&mut server);
     let first = server.create();
@@ -124,6 +129,16 @@ fn python_account_lock_excludes_rust_probe_and_rust_lock_excludes_python() {
     assert!(!output.status.success());
     assert!(output.stdout.is_empty());
     drop(rust);
+    // A shared model-call lease also keeps the legacy exclusive lock out.
+    let shared = antiquota_store::lock_file_shared(&lock).unwrap().unwrap();
+    let output = Command::new(python)
+        .args(["-c", &script, lock.to_str().unwrap()])
+        .current_dir(&server.project)
+        .stdin(Stdio::null())
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    drop(shared);
     assert_eq!(
         server
             .call(
@@ -136,7 +151,7 @@ fn python_account_lock_excludes_rust_probe_and_rust_lock_excludes_python() {
     );
     setup::evidence(
         "python-lock",
-        json!({"pythonExcludesRust":true,"rustExcludesPython":true,"busyHttpProbeRejected":true,"platform":std::env::consts::OS}),
+        json!({"pythonExcludesRust":true,"rustExcludesPython":true,"sharedExcludesPython":true,"busyHttpProbeRejected":true,"platform":std::env::consts::OS}),
     );
     server.stop();
 }

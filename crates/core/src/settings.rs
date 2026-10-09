@@ -37,6 +37,13 @@ pub struct Rule {
     pub text: String,
     pub deny: bool,
 }
+/// The default placement: new sessions fill one account before using the next.
+pub const FILL: &str = "fill";
+/// New sessions prefer accounts without a running call.
+pub const SPREAD: &str = "spread";
+fn fill_first(placement: &str) -> bool {
+    placement == FILL
+}
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[serde(default)]
 pub struct Settings {
@@ -52,6 +59,12 @@ pub struct Settings {
     pub auto_continue: String,
     pub default_cwd: String,
     pub worktree_default: String,
+    /// Where new sessions go: "fill" keeps them on the first ranked account until it is spent,
+    /// "spread" prefers accounts without a running call. Left out of JSON while it is "fill", so
+    /// the captured settings wire format is unchanged.
+    #[serde(skip_serializing_if = "fill_first")]
+    #[ts(as = "Option<String>", optional)]
+    pub placement: String,
     #[serde(flatten)]
     #[ts(skip)]
     pub extra: BTreeMap<String, Value>,
@@ -71,6 +84,7 @@ impl Default for Settings {
             auto_continue: "2".into(),
             default_cwd: String::new(),
             worktree_default: "off".into(),
+            placement: FILL.into(),
             extra: BTreeMap::new(),
         }
     }

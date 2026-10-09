@@ -52,6 +52,9 @@ pub struct Script {
     pub done_after: u64,
     pub input_tokens: u64,
     pub output_tokens: u64,
+    /// Cached prompt and thinking tokens of the reply step; left out of the frame while zero.
+    pub cache_read_tokens: u64,
+    pub thinking_tokens: u64,
     pub result_input_tokens: u64,
     pub result_output_tokens: u64,
     pub hook_command: Vec<String>,
@@ -85,6 +88,8 @@ impl Default for Script {
             done_after: 1,
             input_tokens: 100,
             output_tokens: 10,
+            cache_read_tokens: 0,
+            thinking_tokens: 0,
             result_input_tokens: 9_999,
             result_output_tokens: 999,
             hook_command: Vec::new(),

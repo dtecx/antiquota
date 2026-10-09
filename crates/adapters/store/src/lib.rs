@@ -215,8 +215,13 @@ impl SessionStore for FileStore {
     ) -> Result<(Vec<String>, Vec<String>), PortError> {
         self.restore_checkpoints(sid, turn, cwd)
     }
-    fn usage_history(&self, days: u32, now: f64) -> Result<serde_json::Value, PortError> {
-        self.history(days, now)
+    fn usage_history(
+        &self,
+        days: u32,
+        now: f64,
+        detail: bool,
+    ) -> Result<serde_json::Value, PortError> {
+        self.history(days, now, detail)
     }
     fn engine_details(&self) -> Result<serde_json::Value, PortError> {
         let read = |p: &str| {
@@ -379,7 +384,9 @@ fn settings_from(text: &str) -> antiquota_core::Settings {
         tracing::warn!("settings are unreadable; using defaults without changing the file");
         return Default::default();
     };
-    let known = serde_json::to_value(antiquota_core::Settings::default()).unwrap_or_default();
+    let mut known = serde_json::to_value(antiquota_core::Settings::default()).unwrap_or_default();
+    // The default placement is left out of the wire format but is still a known key.
+    known["placement"] = Value::String(antiquota_core::FILL.into());
     for key in known.as_object().into_iter().flat_map(|k| k.keys()) {
         match map.get(key) {
             Some(Value::Number(n)) => {

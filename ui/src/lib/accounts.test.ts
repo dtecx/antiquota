@@ -2,7 +2,7 @@
 import { get } from 'svelte/store';
 import { describe, expect, it, vi } from 'vitest';
 import { createApi, type Api } from './api';
-import { createAccounts } from './accounts';
+import { createAccounts, fieldsOf } from './accounts';
 import { fixtureAccount, fixtureSettings, fixtureState } from './fixtures.test-support';
 function savedDefaults(body: Parameters<Api['saveDefaults']>[0]) {
   const defaults = { ...fixtureSettings().defaults };
@@ -181,5 +181,31 @@ describe('account settings store', () => {
     expect(api.saveDefaults).toHaveBeenCalledWith({ rotation: 'sticky' });
     expect(get(accounts.state).fields.reserve).toBe('51');
     expect(get(accounts.state).dirty).toBe(true);
+  });
+  it('saves placement and treats a missing placement as fill first', async () => {
+    const api = fixtureApi();
+    // The engine leaves the default placement out of its settings.
+    api.saveDefaults = vi.fn(async (body) => {
+      const saved = savedDefaults(body);
+      if (saved.placement === 'fill') delete saved.placement;
+      return saved;
+    });
+    const accounts = createAccounts(api);
+    await accounts.refresh();
+    expect(get(accounts.state).fields.placement).toBe('fill');
+    expect(fieldsOf({ ...fixtureSettings().defaults, placement: 'spread' }).placement).toBe(
+      'spread',
+    );
+    accounts.field('placement', 'spread');
+    await accounts.saveField('placement');
+    expect(api.saveDefaults).toHaveBeenLastCalledWith({ placement: 'spread' });
+    expect(get(accounts.state)).toMatchObject({ dirty: false, fields: { placement: 'spread' } });
+    accounts.field('placement', 'fill');
+    await accounts.saveField('placement');
+    expect(get(accounts.state)).toMatchObject({ dirty: false, fields: { placement: 'fill' } });
+    accounts.field('placement', 'both');
+    await accounts.saveField('placement');
+    expect(api.saveDefaults).toHaveBeenCalledTimes(2);
+    expect(get(accounts.state).error).toBe('Choose where new sessions go.');
   });
 });

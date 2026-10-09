@@ -24,6 +24,10 @@ pub struct TodayUsage {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub thinking: Option<u64>,
+    /// Input agy reused from its cache; present only when some was reused today.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub cache: Option<u64>,
 }
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, TS)]
 pub struct Account {

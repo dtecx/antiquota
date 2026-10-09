@@ -141,3 +141,12 @@ The table below is generated from the legacy match block and special route handl
 | [F-397](FEATURES.md) | `GET` | `/api/fs` | [filesystem](../../tests/fixtures/api/cases/filesystem.json) |
 
 Slice 9e adds optional `add_allow` to `PUT /api/permissions`. It is a validated list of permanent allow rules, appended atomically without replacing existing allow or deny rules. It cannot be combined with `allow` or `deny`. The response remains the stored permission object. Unsafe or malformed batches fail before writing; the captured replacement requests retain their existing behavior.
+
+## Additive owner requests (2026-10-09)
+
+These additions leave every captured response unchanged:
+
+- `GET /api/usage?days=N&detail=1` adds `detail`, with `period`, `today`, `days` (in `days` order), `accounts` and `models`, each split into `input`, `output`, `thinking`, `cache` and `turns`. Without `detail=1` the response is the captured shape.
+- `placement` in the defaults is `fill` or `spread`. It is left out while it is `fill`, so captured settings, defaults and state responses keep their exact keys. `PUT /api/settings/defaults` accepts it and rejects other values with `placement: fill or spread`.
+- A turn's `usage` adds `cache_read_tokens`, and an account's `today` adds `cache`, only when they are above zero.
+- Model calls share an account, so `busy` means at least one call or probe holds it; a probe or check still needs the account alone.

@@ -1,6 +1,8 @@
 /** Owns quota and account display calculations; it never makes routing decisions. */
 import type { Account } from '../gen/Account';
 import type { Quota } from '../gen/Quota';
+import type { TodayUsage } from '../gen/TodayUsage';
+import { formatTokens } from './format';
 
 export const pools = [
   { key: 'gemini', label: 'Gemini' },
@@ -18,6 +20,17 @@ export function quotaPercent(fraction: number | null): string {
 }
 export function quotaWidth(fraction: number | null): number {
   return fraction === null ? 0 : Math.min(100, Math.max(2, fraction * 100));
+}
+/** Today's tokens on one account, named as input and output rather than arrows. */
+export function todayLine(today: TodayUsage): string {
+  const turns = today.turns ?? 0;
+  return [
+    `today input ${formatTokens(today.input ?? 0)}`,
+    `output ${formatTokens(today.output ?? 0)}`,
+    ...(today.thinking ? [`thinking ${formatTokens(today.thinking)}`] : []),
+    ...(today.cache ? [`cached input ${formatTokens(today.cache)}`] : []),
+    `${turns} ${turns === 1 ? 'turn' : 'turns'}`,
+  ].join(' · ');
 }
 export function shortAccount(slot: string | null | undefined): string {
   return (slot ?? '').split('@')[0] ?? '';

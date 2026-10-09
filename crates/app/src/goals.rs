@@ -440,7 +440,7 @@ impl Service {
         Ok(Verification::Verdict(verdict))
     }
 
-    /// An idle account with live quota in `bucket`, or `None` when none has any.
+    /// An account with live quota in `bucket`, or `None` when none has any.
     async fn verifier_lease(
         &self,
         bucket: &str,
@@ -462,7 +462,7 @@ impl Service {
                 return Ok(None);
             }
             for name in &ranked {
-                if let Some(lease) = self.accounts.lease_named(name)? {
+                if let Some(lease) = self.accounts.share_named(name)? {
                     return Ok(Some(lease));
                 }
             }

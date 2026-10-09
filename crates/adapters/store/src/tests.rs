@@ -334,3 +334,68 @@ fn only_turns_with_tokens_reach_the_ledger_with_their_account_model_and_session(
         "a turn without tokens writes no row"
     );
 }
+#[test]
+fn cached_input_reaches_the_ledger_and_the_usage_detail() {
+    let sandbox = Sandbox::new();
+    let store = FileStore::open(sandbox.0.clone()).unwrap();
+    let session = Session {
+        id: "s".into(),
+        model: "gemini-3.8-flash-high".into(),
+        ..Default::default()
+    };
+    let now = 1_800_000_000.0;
+    let records = vec![
+        EventRecord::new(
+            now - 10.0,
+            Event::Meta {
+                meta: Box::new(session),
+            },
+        ),
+        EventRecord::new(
+            now - 5.0,
+            Event::TurnEnd {
+                turn: 1,
+                slot: "one@example.com".into(),
+                status: "SUCCESS".into(),
+                usage: StepUsage {
+                    input_tokens: 40,
+                    output_tokens: 6,
+                    thinking_tokens: 3,
+                    total_tokens: 49,
+                    cache_read_tokens: 160,
+                    ..Default::default()
+                },
+                secs: 1.0,
+            },
+        ),
+    ];
+    store.reconcile_usage("s", &records).unwrap();
+    let ledger = sandbox.0.join("state/usage.jsonl");
+    let rows = read_values(&ledger).unwrap();
+    assert_eq!(rows[0]["cache"], 160);
+    // Older rows have no cache count, and an unreadable count reads as none.
+    let mut text = std::fs::read_to_string(&ledger).unwrap();
+    text.push_str(&format!(
+        "{}\n{}\n",
+        json!({"t":now - 4.0,"slot":"one@example.com","model":"gemini-3.8-flash-high","input":10,"output":1,"thinking":0}),
+        json!({"t":now - 3.0,"slot":"two@example.com","model":"other-model","input":5,"output":2,"thinking":1,"cache":"bad"}),
+    ));
+    std::fs::write(&ledger, text).unwrap();
+    let plain = store.usage_history(7, now, false).unwrap();
+    assert!(plain.get("detail").is_none());
+    let usage = store.usage_history(7, now, true).unwrap();
+    assert_eq!(usage["days"], plain["days"]);
+    let detail = &usage["detail"];
+    let parts = |input: u64, output: u64, thinking: u64, cache: u64, turns: u64| json!({"input":input,"output":output,"thinking":thinking,"cache":cache,"turns":turns});
+    assert_eq!(detail["period"], parts(55, 9, 4, 160, 3));
+    assert_eq!(detail["today"], detail["period"]);
+    assert_eq!(detail["days"].as_array().unwrap().len(), 7);
+    assert_eq!(detail["days"][6], detail["period"]);
+    assert_eq!(detail["days"][0], parts(0, 0, 0, 0, 0));
+    assert_eq!(
+        detail["accounts"]["one@example.com"],
+        parts(50, 7, 3, 160, 2)
+    );
+    assert_eq!(detail["accounts"]["two@example.com"], parts(5, 2, 1, 0, 1));
+    assert_eq!(detail["models"]["other-model"], parts(5, 2, 1, 0, 1));
+}

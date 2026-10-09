@@ -73,7 +73,7 @@ pub async fn run(accounts: Arc<FileAccounts>, mut args: Vec<String>) -> anyhow::
         }
         let mut selected = None;
         for name in ranked {
-            if let Some(lease) = accounts.lease_named(&name)? {
+            if let Some(lease) = accounts.share_named(&name)? {
                 selected = Some(lease);
                 break;
             }

@@ -158,6 +158,8 @@ pub struct DefaultsRequest {
     #[ts(optional)]
     pub auto_continue: Option<serde_json::Value>,
     #[ts(optional)]
+    pub placement: Option<serde_json::Value>,
+    #[ts(optional)]
     pub default_cwd: Option<serde_json::Value>,
     #[ts(optional)]
     pub worktree_default: Option<serde_json::Value>,
@@ -299,11 +301,33 @@ pub struct UsageAccount {
     pub input: u64,
     pub output: u64,
 }
+/// Token counts split into their parts; `cache` is the input agy reused from its cache.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct UsageParts {
+    pub input: u64,
+    pub output: u64,
+    pub thinking: u64,
+    pub cache: u64,
+    pub turns: u64,
+}
+/// The period, today, each day (in `days` order), each account and each model, by part.
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+pub struct UsageDetail {
+    pub period: UsageParts,
+    pub today: UsageParts,
+    pub days: Vec<UsageParts>,
+    pub accounts: std::collections::BTreeMap<String, UsageParts>,
+    pub models: std::collections::BTreeMap<String, UsageParts>,
+}
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct UsageResponse {
     pub days: Vec<UsageDay>,
     pub accounts: std::collections::BTreeMap<String, UsageAccount>,
     pub models: std::collections::BTreeMap<String, u64>,
+    /// Present only when the request asks for `detail=1`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub detail: Option<UsageDetail>,
 }
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 pub struct StackResponse {

@@ -58,6 +58,7 @@ pub async fn route(
                 .usage_history(
                     days.clamp(1, 90) as u32,
                     antiquota_core::Clock::now(&antiquota_app::SystemClock),
+                    query_value(query, "detail").is_some_and(|v| v == "1"),
                 )
                 .map_err(AppError::from),
             Err(_) => Err(AppError::Invalid("days must be an integer".into())),

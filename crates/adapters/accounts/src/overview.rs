@@ -80,7 +80,21 @@ pub fn usage_today(
             output: Some(0),
             thinking: Some(0),
             turns: Some(0),
+            cache: None,
         });
+        // Older rows have no cache count; an unreadable one counts as none.
+        if let Some(cache) = row["cache"].as_u64().filter(|n| *n > 0) {
+            entry.cache = Some(
+                entry
+                    .cache
+                    .unwrap_or(0)
+                    .checked_add(cache)
+                    .filter(|v| *v <= MAX_SAFE_INTEGER)
+                    .ok_or_else(|| {
+                        PortError::Invalid("account usage exceeds safe integer range".into())
+                    })?,
+            );
+        }
         for (target, key) in [
             (&mut entry.input, input),
             (&mut entry.output, output),

@@ -9,6 +9,7 @@
   import Markdown from './Markdown.svelte';
   import Notice from './Notice.svelte';
   import ApprovalCard from './ApprovalCard.svelte';
+  import Icon from './Icon.svelte';
   import { asJob, jobFailed, jobStatus } from '../lib/jobs';
   import { extensionLabel } from '../lib/media';
   let {
@@ -42,6 +43,12 @@
 <article class="turn">
   {#if group.user && user}
     <section class="user-message" aria-label="Your message" title={user.tooltip}>
+      <button
+        class="quiet copy-message"
+        aria-label="Copy prompt"
+        title="Copy prompt"
+        onclick={() => actions.copy(user.text)}><Icon name="copy" size={12} />Copy</button
+      >
       <div class="speaker">{user.label}</div>
       <div class="message">{user.text}</div>
       {#if group.user.steered}<span class="steered">sent while agy worked</span>{/if}
@@ -97,7 +104,8 @@
               >{:else}<button
                 class="quiet copy-message"
                 aria-label="Copy message"
-                onclick={() => actions.copy(event.text)}>Copy</button
+                title="Copy reply"
+                onclick={() => actions.copy(event.text)}><Icon name="copy" size={12} />Copy</button
               >{/if}
           </div>
           <Markdown text={event.text} onfile={actions.file} oncopy={actions.copy} />
@@ -255,8 +263,13 @@
   }
   .copy-message {
     float: right;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
     min-height: 24px;
+    margin-top: -4px;
     font: 10px var(--mono);
+    letter-spacing: 0;
   }
   .routing {
     display: flex;

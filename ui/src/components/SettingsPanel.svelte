@@ -130,7 +130,7 @@
             models={$bench.snapshot?.models ?? []}
           />
         {:else if section === 'appearance'}<SettingsAppearance />
-        {:else if section === 'usage'}<UsagePanel {api} />
+        {:else if section === 'usage'}<UsagePanel {api} {accounts} />
         {:else if section === 'permissions'}<button
             disabled={$setup.saving}
             onclick={async () => {

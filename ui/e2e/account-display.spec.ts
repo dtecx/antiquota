@@ -22,7 +22,7 @@ test('shows all four today counters and excludes earlier local-day usage', async
   await openAccounts(page, engine);
   await expect(
     page.getByRole('article', { name: 'one@example.com', exact: true }).locator('.today'),
-  ).toHaveText('today ↑ 300 ↓ 30 ✻ 12 · 2 turns');
+  ).toHaveText('today input 300 · output 30 · thinking 12 · 2 turns');
   await screenshot(page, engine, 'accounts-today');
 });
 test('renders every routing kind newest first with the prior account and session', async ({

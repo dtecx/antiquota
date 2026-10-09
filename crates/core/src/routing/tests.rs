@@ -1,5 +1,6 @@
 //! Proves routing order, reset boundaries and error-channel policy.
 use super::*;
+use crate::{FILL, SPREAD};
 use proptest::prelude::*;
 fn account(name: &str, fraction: f64, reset: f64) -> Account {
     Account {
@@ -478,5 +479,60 @@ fn error_text_keeps_agy_error_channels_without_the_reply() {
     assert_eq!(
         classify_error(&error_text(0, &frame, "")),
         Some(Failure::Transient)
+    );
+}
+#[test]
+fn spread_prefers_accounts_without_a_call_and_fill_ignores_calls() {
+    let mut busy = account("a", 0.9, 10.0);
+    busy.busy = true;
+    let rows = [busy, account("b", 0.5, 20.0), account("c", 0.01, 5.0)];
+    let fill = Settings::default();
+    assert_eq!(fill.placement, FILL);
+    // Filling keeps the soonest reset first even while a call runs there; c is under the reserve.
+    assert_eq!(
+        rank_accounts(&rows, "gemini", None, &fill, &[], 0.0),
+        ["a", "b", "c"]
+    );
+    let spread = Settings {
+        placement: SPREAD.into(),
+        ..Default::default()
+    };
+    assert_eq!(
+        rank_accounts(&rows, "gemini", None, &spread, &[], 0.0),
+        ["b", "a", "c"]
+    );
+    // A session's own account stays first while another call uses it: its conversation is warm.
+    assert_eq!(
+        rank_accounts(&rows, "gemini", Some("a"), &spread, &[], 0.0),
+        ["a", "b", "c"]
+    );
+    // With every account in use, spreading falls back to the rotation order.
+    let all: Vec<_> = rows
+        .iter()
+        .cloned()
+        .map(|mut row| {
+            row.busy = true;
+            row
+        })
+        .collect();
+    assert_eq!(
+        rank_accounts(&all, "gemini", None, &spread, &[], 0.0),
+        ["a", "b", "c"]
+    );
+}
+#[test]
+fn placement_is_left_out_of_json_while_it_is_the_default() {
+    let fill = serde_json::to_value(Settings::default()).unwrap();
+    assert!(fill.get("placement").is_none());
+    let spread = Settings {
+        placement: SPREAD.into(),
+        ..Default::default()
+    };
+    let value = serde_json::to_value(&spread).unwrap();
+    assert_eq!(value["placement"], "spread");
+    assert_eq!(serde_json::from_value::<Settings>(value).unwrap(), spread);
+    assert_eq!(
+        serde_json::from_value::<Settings>(fill).unwrap().placement,
+        FILL
     );
 }

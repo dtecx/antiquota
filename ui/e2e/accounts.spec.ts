@@ -308,7 +308,7 @@ for (const scenario of ['quota', 'rate', 'auth'])
     );
     await expect(
       page.getByRole('article', { name: 'two@example.com', exact: true }).locator('.today'),
-    ).toContainText('today ↑ 100 ↓ 10 · 1 turn');
+    ).toContainText('today input 100 · output 10 · 1 turn');
     await page.setViewportSize({ width: 1280, height: 1050 });
     await routing.locator('.row').first().scrollIntoViewIfNeeded();
     await screenshot(page, engine, `handoff-${scenario}`);

@@ -27,14 +27,14 @@ The legacy implementation is in this branch for reference: `antiquota/*.py` (eng
 - `tests/rewrite/*.rs`: HTTP integration tests. Each is included by a `crates/server/tests/*_contract.rs` file through `#[path]`. `tests/rewrite/support` provides `Server` (an isolated engine under `~/Desktop/test`), `Replay` (replays captured cases from `tests/fixtures/api/cases/*.json`) and raw HTTP helpers.
 - `ui/`: Svelte 5, strict TypeScript and Vite. `src/gen/` holds types generated from Rust by ts-rs. `src/lib/*.ts` holds the logic, with Vitest tests next to it. `src/components/*.svelte` holds the components. `e2e/*.spec.ts` holds the Playwright tests; `e2e/fixtures.ts` starts a sandbox engine per test.
 - `docs/ARCHITECTURE.md`, `docs/adr/` (ADR 0001 to 0022), and `docs/rewrite/`:
-  - `FEATURES.md` is the canonical checklist: 1144 rows, each with acceptance text and a `[ ]`/`[x]` box.
+  - `FEATURES.md` is the canonical checklist: 1150 rows, each with acceptance text and a `[ ]`/`[x]` box.
   - `TEST_REPORT.md` holds one row per feature (tests, status, evidence) and a section per slice.
   - `known-bugs.md` lists B- (legacy defects), R- (risks) and W- (defects found during the rewrite) entries.
   - `API_CONTRACT.md` and `DATA_FORMATS.md` describe the wire and file formats.
 
 ## Status
 
-Slices 1, 3 to 8, 9a to 9f, 11 (storage and defaults), 12 (session lifecycle and turn edges) and 13 (quota routing, walls and error channels) are done and committed: sessions, permissions and approvals, goals, jobs, worktrees, terminal, attachments and dictation. Slice 2 (accounts and handoff) has code and tests; 33 fully proved backend rows are now folded into the report through `tests/rewrite/slice9f-account-coverage.json`; 32 partial proposal rows retain explicit remaining acceptance. Its account UI evidence is folded in Slice 9b, and Slice 13 proved 19 more quota and routing rows (`tests/rewrite/slice13-coverage.json`). 809 of 1144 rows are Passed. Slice 10 native-shell code and the macOS app/DMG build are implemented and tested; actual native engine navigation, zoom, lifecycle, menus, tray, OS permissions and AAC recording remain Pending because the background test app blocks on a sandbox engine.json filesystem open (R-009).
+Slices 1, 3 to 8, 9a to 9f, 11 (storage and defaults), 12 (session lifecycle and turn edges) 13 (quota routing, walls and error channels) and 14 (the owner's requests of 2026-10-09: shared accounts, placement, usage detail and copy buttons) are done and committed: sessions, permissions and approvals, goals, jobs, worktrees, terminal, attachments and dictation. Slice 2 (accounts and handoff) has code and tests; 33 fully proved backend rows are now folded into the report through `tests/rewrite/slice9f-account-coverage.json`; 32 partial proposal rows retain explicit remaining acceptance. Its account UI evidence is folded in Slice 9b, and Slice 13 proved 19 more quota and routing rows (`tests/rewrite/slice13-coverage.json`). 815 of 1150 rows are Passed. Slice 10 native-shell code and the macOS app/DMG build are implemented and tested; actual native engine navigation, zoom, lifecycle, menus, tray, OS permissions and AAC recording remain Pending because the background test app blocks on a sandbox engine.json filesystem open (R-009).
 
 Next work, in order:
 

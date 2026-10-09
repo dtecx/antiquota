@@ -9,6 +9,7 @@ import {
   quotaPercent,
   quotaWidth,
   resetDescription,
+  todayLine,
   wallReason,
 } from './account-format';
 import { fixtureAccount, fixtureSession } from './fixtures.test-support';
@@ -79,5 +80,17 @@ describe('account presentation', () => {
     expect(wallReason('rate limited, quota left')).toBe('resting');
     expect(wallReason('signed out')).toBe('signed out');
     expect(wallReason('verify')).toBe('verify');
+  });
+  it('names today tokens input and output, adding thinking and cached input only when used', () => {
+    expect(todayLine({ input: 300, output: 30, thinking: 12, turns: 2 })).toBe(
+      'today input 300 · output 30 · thinking 12 · 2 turns',
+    );
+    expect(todayLine({ input: 100, output: 10, turns: 1 })).toBe(
+      'today input 100 · output 10 · 1 turn',
+    );
+    expect(todayLine({ input: 2_500, output: 400, cache: 12_000, turns: 3 })).toBe(
+      'today input 2.5k · output 400 · cached input 12.0k · 3 turns',
+    );
+    expect(todayLine({})).not.toMatch(/[↑↓]|sent|received/);
   });
 });

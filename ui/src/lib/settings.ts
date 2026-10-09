@@ -76,7 +76,7 @@ export function createSettings(api: Api, saved: () => void = () => {}) {
     if (reading !== generation) return;
     state.update((v) => {
       const fields = { ...data.defaults };
-      for (const key of dirty) if (v.fields) fields[key] = v.fields[key];
+      for (const key of dirty) if (v.fields) Object.assign(fields, { [key]: v.fields[key] });
       return { ...v, data, fields };
     });
   }
