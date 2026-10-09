@@ -82,9 +82,10 @@ pub async fn serve(port: u16, open_browser: bool) -> Result<(), ServerError> {
         token: token(&root)?,
         port,
         agy: executable,
-        ui_dir: std::env::var_os("ANTIQUOTA_UI_DIR")
-            .map(PathBuf::from)
-            .unwrap_or_else(|| PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../ui/dist")),
+        ui_dir: ui_dir(
+            std::env::var_os("ANTIQUOTA_UI_DIR").map(PathBuf::from),
+            std::env::current_exe().ok(),
+        ),
         shutdown: shutdown.clone(),
         closing: closing.clone(),
     });
@@ -188,5 +189,48 @@ pub fn open_url(url: &str) {
     let result = std::process::Command::new("xdg-open").arg(url).spawn();
     if let Err(error) = result {
         tracing::warn!(%error,"browser could not open");
+    }
+}
+
+/// The UI build: ANTIQUOTA_UI_DIR, else the `ui` folder beside a packaged engine's own folder
+/// (`engine/antiquota` next to `ui/` in every installer), else the source tree's build.
+fn ui_dir(configured: Option<PathBuf>, executable: Option<PathBuf>) -> PathBuf {
+    configured
+        .or_else(|| {
+            executable
+                .as_deref()
+                .and_then(|exe| exe.parent()?.parent())
+                .map(|folder| folder.join("ui"))
+                .filter(|ui| ui.join("index.html").is_file())
+        })
+        .unwrap_or_else(|| PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../ui/dist"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ui_dir;
+    use std::{fs, path::PathBuf};
+    #[test]
+    fn a_packaged_engine_finds_the_ui_beside_its_folder() {
+        let home = std::env::var_os(if cfg!(windows) { "USERPROFILE" } else { "HOME" });
+        let root = PathBuf::from(home.unwrap())
+            .join("Desktop/test/antiquota-ui-dir")
+            .join(std::process::id().to_string());
+        let exe = root.join("lib/antiquota/engine/antiquota");
+        let ui = root.join("lib/antiquota/ui");
+        fs::create_dir_all(exe.parent().unwrap()).unwrap();
+        fs::create_dir_all(&ui).unwrap();
+        let source = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../ui/dist");
+        // Without an index.html beside it, the engine keeps the source tree's build.
+        assert_eq!(ui_dir(None, Some(exe.clone())), source);
+        fs::write(ui.join("index.html"), "<html></html>").unwrap();
+        assert_eq!(ui_dir(None, Some(exe.clone())), ui);
+        // The configured folder always wins.
+        assert_eq!(
+            ui_dir(Some(root.join("other")), Some(exe)),
+            root.join("other")
+        );
+        assert_eq!(ui_dir(None, None), source);
+        let _ = fs::remove_dir_all(root);
     }
 }

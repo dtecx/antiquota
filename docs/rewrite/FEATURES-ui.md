@@ -721,7 +721,7 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 | ID | Acceptance behavior | Legacy source | Existing legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
 | F-970 | [x] macOS release builds an app and compressed DMG with an Applications shortcut. | `app/scripts/build-app.sh:7` | None identified | [Passed](TEST_REPORT.md#f-970) |
-| F-971 | [ ] Linux release builds deb, rpm and AppImage outputs. | `app/scripts/build-app.sh:21` | None identified | [Pending](TEST_REPORT.md#f-971) |
+| F-971 | [x] Linux release builds deb, rpm and AppImage outputs. | `app/scripts/build-app.sh:21` | None identified | [Passed](TEST_REPORT.md#f-971) |
 | F-972 | [ ] Other release platforms use the configured Tauri bundle targets. | `app/scripts/build-app.sh:24` | None identified | [Pending](TEST_REPORT.md#f-972) |
 
 ## Legacy CI matrix
@@ -731,7 +731,7 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 | F-973 | [ ] CI independently builds desktop artifacts on macOS, Windows and Linux. | `.github/workflows/app.yml:12` | None identified | [Pending](TEST_REPORT.md#f-973) |
 | F-974 | [ ] Authorized CI replacement: run cargo tests and clippy, pnpm check, Vitest, Playwright, stale-type checks and the Rust-sidecar app build on macOS, Windows and Linux; legacy Python test coverage remains reference evidence only. | `.github/workflows/app.yml:33` | None identified | [Pending](TEST_REPORT.md#f-974) |
 | F-975 | [ ] Authorized Windows replacement: bundle the Rust sidecar with portable-pty ConPTY support and verify paths, terminal operation and installer packaging; no pywinpty runtime dependency is required. | `.github/workflows/app.yml:42` | None identified | [Pending](TEST_REPORT.md#f-975) |
-| F-976 | [ ] Authorized POSIX replacement: bundle the self-contained Rust antiquota sidecar, verify its shared-engine discovery and build native installers without Python or PyInstaller. | `.github/workflows/app.yml:45` | None identified | [Pending](TEST_REPORT.md#f-976) |
+| F-976 | [x] Authorized POSIX replacement: bundle the self-contained Rust antiquota sidecar, verify its shared-engine discovery and build native installers without Python or PyInstaller. | `.github/workflows/app.yml:45` | None identified | [Passed](TEST_REPORT.md#f-976) |
 | F-977 | [ ] CI uploads platform app bundles and installers. | `.github/workflows/app.yml:51` | None identified | [Pending](TEST_REPORT.md#f-977) |
 
 ## Dialog defaults and remaining interaction edges

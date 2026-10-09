@@ -2,7 +2,7 @@
 
 This is the canonical checklist for parity and cutover. It contains 1009 baseline acceptance items: 397 engine/API/CLI items (F-001–F-397) and 612 UI/shell items (F-398–F-1009), including the requested zoom and window-persistence repairs. The 141 additional items (F-1010–F-1150) record explicit requirements from the user's rewrite task and the owner's later requests. They are requirements, not claims about legacy behavior. No feature has been dropped.
 
-Every row is independently reviewable and links to its [test report](TEST_REPORT.md). Slices 1, 3–8, 9a–9f, 11–14 and the proved Slice 10 subset have **815 Passed** acceptance items; the other **335 remain Pending**. Legacy test names and captured Python responses explain the baseline; they are not passing Rust or TypeScript proof. Mark a row complete only after its passing tests and evidence have been recorded. Store logs, screenshots and live-cost records in ignored `.handoff/evidence/`.
+Every row is independently reviewable and links to its [test report](TEST_REPORT.md). Slices 1, 3–8, 9a–9f, 11–15 and the proved Slice 10 subset have **818 Passed** acceptance items; the other **332 remain Pending**. Legacy test names and captured Python responses explain the baseline; they are not passing Rust or TypeScript proof. Mark a row complete only after its passing tests and evidence have been recorded. Store logs, screenshots and live-cost records in ignored `.handoff/evidence/`.
 
 Legacy sources were read in full at commit `17ec296`; [engine](source-read-engine.md) and [UI/shell](source-read-ui.md) manifests record coverage and hashes. The sourced subsidiary inventories are [FEATURES-engine.md](FEATURES-engine.md) and [FEATURES-ui.md](FEATURES-ui.md). The canonical rows below contain their full acceptance text. UI identifiers were renumbered once from F-400–F-1011 to F-398–F-1009 to remove the unused gap; engine identifiers were unchanged.
 
@@ -1165,7 +1165,7 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
 | F-970 | [x] <a id="f-970"></a>macOS release builds an app and compressed DMG with an Applications shortcut. | `app/scripts/build-app.sh:7` | None identified | [Passed](TEST_REPORT.md#f-970) |
-| F-971 | [ ] <a id="f-971"></a>Linux release builds deb, rpm and AppImage outputs. | `app/scripts/build-app.sh:21` | None identified | [Pending](TEST_REPORT.md#f-971) |
+| F-971 | [x] <a id="f-971"></a>Linux release builds deb, rpm and AppImage outputs. | `app/scripts/build-app.sh:21` | None identified | [Passed](TEST_REPORT.md#f-971) |
 | F-972 | [ ] <a id="f-972"></a>Other release platforms use the configured Tauri bundle targets. | `app/scripts/build-app.sh:24` | None identified | [Pending](TEST_REPORT.md#f-972) |
 ### Legacy CI matrix
 
@@ -1174,7 +1174,7 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | F-973 | [ ] <a id="f-973"></a>CI independently builds desktop artifacts on macOS, Windows and Linux. | `.github/workflows/app.yml:12` | None identified | [Pending](TEST_REPORT.md#f-973) |
 | F-974 | [ ] <a id="f-974"></a>Authorized CI replacement: run cargo tests and clippy, pnpm check, Vitest, Playwright, stale-type checks and the Rust-sidecar app build on macOS, Windows and Linux; legacy Python test coverage remains reference evidence only. | `.github/workflows/app.yml:33` | None identified | [Pending](TEST_REPORT.md#f-974) |
 | F-975 | [ ] <a id="f-975"></a>Authorized Windows replacement: bundle the Rust sidecar with portable-pty ConPTY support and verify paths, terminal operation and installer packaging; no pywinpty runtime dependency is required. | `.github/workflows/app.yml:42` | None identified | [Pending](TEST_REPORT.md#f-975) |
-| F-976 | [ ] <a id="f-976"></a>Authorized POSIX replacement: bundle the self-contained Rust antiquota sidecar, verify its shared-engine discovery and build native installers without Python or PyInstaller. | `.github/workflows/app.yml:45` | None identified | [Pending](TEST_REPORT.md#f-976) |
+| F-976 | [x] <a id="f-976"></a>Authorized POSIX replacement: bundle the self-contained Rust antiquota sidecar, verify its shared-engine discovery and build native installers without Python or PyInstaller. | `.github/workflows/app.yml:45` | None identified | [Passed](TEST_REPORT.md#f-976) |
 | F-977 | [ ] <a id="f-977"></a>CI uploads platform app bundles and installers. | `.github/workflows/app.yml:51` | None identified | [Pending](TEST_REPORT.md#f-977) |
 ### Dialog defaults and remaining interaction edges
 
@@ -1299,7 +1299,7 @@ The following acceptance items come from the authorized rewrite task, not from a
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-1060 | [ ] <a id="f-1060"></a>Keep app/src-tauri a thin shell that bundles the single Rust antiquota executable as a sidecar without Python or PyInstaller. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1060) |
+| F-1060 | [x] <a id="f-1060"></a>Keep app/src-tauri a thin shell that bundles the single Rust antiquota executable as a sidecar without Python or PyInstaller. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1060) |
 | F-1061 | [ ] <a id="f-1061"></a>Preserve engine.json discovery so CLI, browser and desktop clients share sessions with the same running engine. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1061) |
 | F-1062 | [ ] <a id="f-1062"></a>Keep native tray, application menus, notifications and autostart owned by the desktop shell. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1062) |
 | F-1063 | [ ] <a id="f-1063"></a>Implement desktop zoom through native webview setZoom; never apply CSS zoom to the desktop root or embedded split pane. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1063) |

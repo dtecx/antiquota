@@ -60,8 +60,11 @@ fn emit(shared: &Mutex<Shared>, data: &[u8]) {
     });
 }
 
+/// Marks the shell ended once: the reader's end of output or an explicit kill, whichever is first.
 fn ended(shared: &Mutex<Shared>, alive: &AtomicBool) {
-    alive.store(false, Ordering::SeqCst);
+    if !alive.swap(false, Ordering::SeqCst) {
+        return;
+    }
     emit(shared, EXITED);
     let subscribers = shared
         .lock()
@@ -228,7 +231,15 @@ impl Terminal for ShellTerminal {
         }
         if let Ok(mut child) = self.child.lock() {
             let _ = child.kill();
-            let _ = child.try_wait();
+            // A job that outlives the hangup (disowned or nohup) still holds the terminal open,
+            // so output never ends; the shell being gone is what ends the terminal.
+            for _ in 0..100 {
+                if !matches!(child.try_wait(), Ok(None)) {
+                    ended(&self.shared, &self.alive);
+                    break;
+                }
+                thread::sleep(std::time::Duration::from_millis(20));
+            }
         }
         if let Ok(mut writer) = self.writer.lock() {
             writer.take();
@@ -348,5 +359,33 @@ mod tests {
         terminal.kill();
         let (_, exited) = collect_until(&feed, "never-printed", 8);
         assert!(exited || !terminal.info().alive);
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn kill_ends_the_terminal_when_a_job_outlives_the_shell() {
+        let dir = std::env::temp_dir().canonicalize().unwrap();
+        let terminal = ShellTerminal::spawn(dir.to_str().unwrap(), 80, 24).unwrap();
+        let feed = terminal.subscribe();
+        terminal
+            .write(b"sleep 59 & printf 'jo''b-%s-e''nd' $!; disown\r")
+            .unwrap();
+        // The quotes keep the typed echo from matching the printed job id.
+        let (text, _) = collect_until(&feed, "-end", 10);
+        let job: i32 = text
+            .split("job-")
+            .nth(1)
+            .and_then(|rest| rest.split("-end").next())
+            .and_then(|pid| pid.parse().ok())
+            .unwrap_or_else(|| panic!("no job id in {text:?}"));
+        terminal.kill();
+        assert!(!terminal.info().alive, "the kill ends the terminal at once");
+        let (text, exited) = collect_until(&feed, "never-printed", 2);
+        assert!(exited, "subscribers hear the exit: {text:?}");
+        assert!(terminal.write(b"echo\r").is_err());
+        // The disowned job kept running, as it would after closing any terminal window.
+        let job = nix::unistd::Pid::from_raw(job);
+        assert!(nix::sys::signal::kill(job, None).is_ok());
+        let _ = nix::sys::signal::kill(job, nix::sys::signal::Signal::SIGKILL);
     }
 }

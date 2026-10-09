@@ -29,7 +29,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf cpio rpm2cpio
       - name: Install pinned UI and gate tools
         shell: bash
         run: |
@@ -69,6 +69,9 @@ jobs:
         run: |
           npm ci
           npx --no-install tauri build --config src-tauri/tauri.bundle.json
+      - name: Verify Linux installers
+        if: runner.os == 'Linux'
+        run: sh app/scripts/verify-linux-packages.sh
       - name: Build and verify macOS application and compressed installer
         if: runner.os == 'macOS'
         shell: bash

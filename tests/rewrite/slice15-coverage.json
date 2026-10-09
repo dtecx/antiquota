@@ -1,0 +1,29 @@
+{
+ "format": 1,
+ "slice": "15",
+ "passed_before": 815,
+ "added": 3,
+ "passed_after": 818,
+ "pending_after": 332,
+ "passed_after_is_prospective": false,
+ "gate_status": "just check passed; just test passed 348 Rust, 458 Vitest and 121 Chromium tests with no failures. Linux x86_64. The first test run failed once in kill_ends_the_shell_and_its_children, which led to W-033.",
+ "feature_ids": [
+  "F-971",
+  "F-976",
+  "F-1060"
+ ],
+ "proofs": {
+  "F-971": {
+   "proof": "[verify-linux-packages.sh](../../app/scripts/verify-linux-packages.sh); [build-app.sh](../../app/scripts/build-app.sh); [runtime::tests::a_packaged_engine_finds_the_ui_beside_its_folder](../../crates/server/src/runtime.rs)",
+   "evidence": "../../.handoff/evidence/linux-packages.log"
+  },
+  "F-976": {
+   "proof": "[verify-linux-packages.sh](../../app/scripts/verify-linux-packages.sh); [build-app.sh](../../app/scripts/build-app.sh); [runtime::tests::a_packaged_engine_finds_the_ui_beside_its_folder](../../crates/server/src/runtime.rs)",
+   "evidence": "../../.handoff/evidence/linux-packages.log"
+  },
+  "F-1060": {
+   "proof": "[verify-linux-packages.sh](../../app/scripts/verify-linux-packages.sh); [build-app.sh](../../app/scripts/build-app.sh)",
+   "evidence": "../../.handoff/evidence/linux-packages.log"
+  }
+ }
+}

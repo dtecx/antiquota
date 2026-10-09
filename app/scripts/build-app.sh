@@ -26,6 +26,7 @@ case "$(uname -s)" in
     ;;
   Linux)
     npx --no-install tauri build --config src-tauri/tauri.bundle.json --bundles deb,rpm,appimage
+    sh scripts/verify-linux-packages.sh
     ;;
   *)
     npx --no-install tauri build --config src-tauri/tauri.bundle.json
