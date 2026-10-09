@@ -174,6 +174,19 @@ impl Events {
     pub fn next(&mut self) -> Value {
         self.try_next().expect("SSE ended before expected event")
     }
+    /// The next raw line, comments included, waiting up to `limit` for it.
+    pub fn line_within(&mut self, limit: Duration) -> Option<String> {
+        let timeout = |body: &EventBody<BufReader<TcpStream>>, limit| {
+            body.reader
+                .get_ref()
+                .set_read_timeout(Some(limit))
+                .expect("read timeout");
+        };
+        timeout(&self.body, limit);
+        let line = self.body.line();
+        timeout(&self.body, Duration::from_secs(5));
+        line
+    }
     /// The next event, or None once the server has ended the stream.
     pub fn try_next(&mut self) -> Option<Value> {
         loop {

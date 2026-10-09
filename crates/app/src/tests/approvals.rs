@@ -205,3 +205,33 @@ async fn steering_takes_plain_messages_and_leaves_attachments_queued() {
         .count();
     assert_eq!(steered, 1);
 }
+
+#[tokio::test(start_paused = true)]
+async fn a_wait_is_capped_at_a_minute_and_unknown_requests_ask() {
+    let clock = Arc::new(MovableClock(Mutex::new(1_000.0)));
+    let (service, id) = service(clock, "15");
+    let aid = pending(&service, &id, "touch x");
+    // Tokio's paused clock advances by itself, so a minute passes without real waiting.
+    for (asked, waited) in [(1_000.0, 60), (25.0, 25), (-5.0, 0), (f64::NAN, 0)] {
+        let started = tokio::time::Instant::now();
+        assert_eq!(
+            service.approval_wait(&aid, asked).await.unwrap(),
+            ApprovalReply::Pending(aid.clone()),
+            "{asked}"
+        );
+        assert_eq!(started.elapsed().as_secs(), waited, "{asked}");
+    }
+    let started = tokio::time::Instant::now();
+    assert_eq!(
+        service.approval_wait("missing", 30.0).await.unwrap(),
+        ApprovalReply::Decided {
+            decision: Verdict::Ask,
+            reason: String::new()
+        }
+    );
+    assert_eq!(
+        started.elapsed().as_secs(),
+        0,
+        "an unknown request answers at once"
+    );
+}

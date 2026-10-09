@@ -233,6 +233,9 @@ fn launch_command(mut cmd: Command, base: &Path) -> Result<Command, String> {
     cmd.args(["--port", "8765"])
         .env("ANTIQUOTA_LAUNCHED_BY", "app")
         .env("ANTIQUOTA_DIR", base)
+        // Started from the Dock or a desktop menu, the app has a bare PATH; the engine asks the
+        // login shell for the user's own (ignored on Windows).
+        .env("ANTIQUOTA_FIX_PATH", "1")
         .stdin(Stdio::null())
         .stdout(log)
         .stderr(err);

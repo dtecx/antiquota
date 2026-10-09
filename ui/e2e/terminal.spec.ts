@@ -59,11 +59,23 @@ test('runs a shell in the session folder', async ({ page, engine }) => {
     return { rows: Number(height), cols: Number(width) };
   };
   const wide = await size();
-  const resized = page.waitForRequest((request) => request.url().endsWith('/term/resize'));
+  const sent: { cols: number; rows: number }[] = [];
+  page.on('request', (request) => {
+    if (request.url().endsWith('/term/resize')) sent.push(request.postDataJSON());
+  });
   await page.setViewportSize({ width: 900, height: 820 });
-  const body = (await resized).postDataJSON() as { cols: number; rows: number };
+  // The layout may settle in more than one step; the shell must end at the size sent last.
+  await expect
+    .poll(
+      async () => {
+        const now = await size();
+        const last = sent.at(-1);
+        return last !== undefined && now.cols === last.cols && now.rows === last.rows ? now : null;
+      },
+      { timeout: 10_000 },
+    )
+    .not.toBeNull();
   const narrow = await size();
-  expect(narrow).toEqual({ rows: body.rows, cols: body.cols });
   expect(narrow.cols).toBeLessThan(wide.cols);
   expect(narrow.rows).toBe(wide.rows);
   expect(errors).toEqual([]);

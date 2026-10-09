@@ -51,6 +51,47 @@ enum Commands {
     /// Work on an objective until it is verified done.
     Goal(goal::GoalArgs),
 }
+/// The PATH of the user's login shell. An app started from the Dock or a desktop menu gets a
+/// bare PATH, so commands would resolve differently than in the user's terminal. The shell has
+/// five seconds; its output may carry other text, so the PATH follows a marker.
+#[cfg(unix)]
+fn login_path() -> Option<String> {
+    use std::{
+        io::Read,
+        process::{Command, Stdio},
+        time::{Duration, Instant},
+    };
+    let shell = std::env::var("SHELL")
+        .ok()
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| "/bin/zsh".into());
+    let mut child = Command::new(shell)
+        .args(["-ilc", r#"printf "\n__PATH__%s" "$PATH""#])
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()
+        .ok()?;
+    let mut stdout = child.stdout.take()?;
+    let (tx, rx) = std::sync::mpsc::channel();
+    std::thread::spawn(move || {
+        let mut text = String::new();
+        let _ = stdout.read_to_string(&mut text);
+        let _ = tx.send(text);
+    });
+    let deadline = Instant::now() + Duration::from_secs(5);
+    while child.try_wait().ok()?.is_none() {
+        if Instant::now() >= deadline {
+            let _ = child.kill();
+            let _ = child.wait();
+            return None;
+        }
+        std::thread::sleep(Duration::from_millis(20));
+    }
+    let text = rx.recv_timeout(Duration::from_secs(1)).ok()?;
+    let (_, path) = text.rsplit_once("__PATH__")?;
+    Some(path.trim().to_owned()).filter(|p| !p.is_empty())
+}
 fn main() -> anyhow::Result<()> {
     if std::env::args().nth(1).as_deref() == Some("hook") {
         return hook::run(&std::env::args().nth(2).unwrap_or_else(|| "pre-tool".into()));
@@ -63,6 +104,23 @@ fn main() -> anyhow::Result<()> {
         }
         error.exit()
     });
+    #[cfg(unix)]
+    if std::env::var_os("ANTIQUOTA_FIX_PATH").is_some()
+        && matches!(
+            cli.command,
+            Some(Commands::Serve { .. } | Commands::Gui { .. })
+        )
+        && let Some(path) = login_path()
+    {
+        use std::os::unix::process::CommandExt;
+        // Start again once with the login PATH; clearing the variable makes it happen once.
+        let error = std::process::Command::new(std::env::current_exe()?)
+            .args(std::env::args_os().skip(1))
+            .env("PATH", path)
+            .env_remove("ANTIQUOTA_FIX_PATH")
+            .exec();
+        eprintln!("antiquota: the login shell's PATH could not be used: {error}");
+    }
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()

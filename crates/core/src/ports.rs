@@ -18,6 +18,9 @@ pub enum PortError {
     Unavailable(String),
     #[error("{0}")]
     Invalid(String),
+    /// A file the request named does not exist; the HTTP boundary answers 404.
+    #[error("no such file: {0}")]
+    NoFile(String),
 }
 pub type PortFuture<'a, T> = Pin<Box<dyn Future<Output = Result<T, PortError>> + Send + 'a>>;
 #[derive(Debug, Clone, Default)]

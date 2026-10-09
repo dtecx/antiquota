@@ -21,7 +21,20 @@ const MAX_TEXT: u64 = 2_000_000;
 pub struct FileWorkspace;
 
 fn real(path: &Path) -> Option<PathBuf> {
-    std::fs::canonicalize(path).ok()
+    crate::canonical(path).ok()
+}
+/// A path with `.` dropped and `..` folded by text, like `os.path.abspath`.
+fn lexical(path: &Path) -> PathBuf {
+    path.components().fold(PathBuf::new(), |mut out, part| {
+        match part {
+            std::path::Component::CurDir => {}
+            std::path::Component::ParentDir => {
+                out.pop();
+            }
+            other => out.push(other),
+        }
+        out
+    })
 }
 
 fn inside(path: &Path, root: &Path) -> bool {
@@ -89,7 +102,14 @@ impl Workspace for FileWorkspace {
             Some(rest) => crate::user_home()?.join(rest),
             None => PathBuf::from(path),
         };
-        let file = real(&base.join(expanded)).ok_or_else(refuse)?;
+        let joined = lexical(&base.join(expanded));
+        let Some(file) = real(&joined) else {
+            // A missing file inside the session folder is "no such file", as in the legacy app.
+            if inside(&joined, &base) {
+                return Err(PortError::NoFile(joined.to_string_lossy().into_owned()));
+            }
+            return Err(refuse());
+        };
         let allowed = std::iter::once(base.clone())
             .chain(roots.iter().filter_map(|r| real(Path::new(r))))
             .any(|root| inside(&file, &root));

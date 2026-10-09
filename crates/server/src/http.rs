@@ -177,6 +177,9 @@ pub async fn dispatch(State(state): State<Arc<HttpState>>, request: Request) -> 
         Err(AppError::Invalid(x)) | Err(AppError::Port(antiquota_core::PortError::Invalid(x))) => {
             error(400, &x)
         }
+        Err(AppError::Port(missing @ antiquota_core::PortError::NoFile(_))) => {
+            error(404, &missing.to_string())
+        }
         Err(e) => {
             tracing::error!(error=%e,"request failed");
             error(500, &e.to_string())

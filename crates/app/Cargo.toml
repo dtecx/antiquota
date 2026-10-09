@@ -16,5 +16,9 @@ tokio.workspace = true
 chrono.workspace = true
 uuid.workspace = true
 
+[dev-dependencies]
+# Paused time lets tests wait a virtual minute.
+tokio = { workspace = true, features = ["test-util"] }
+
 [lints]
 workspace = true

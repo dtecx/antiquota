@@ -608,3 +608,63 @@ fn steering_reaches_agy_through_the_hook_with_mentioned_paths() {
     assert_eq!(users[1]["text"], "Also read @notes.txt please.");
     server.stop();
 }
+
+#[test]
+fn every_permanent_entry_point_refuses_a_rule_for_an_arbitrary_program() {
+    let mut server = Server::new_stopped("approvals-runner-entries", false);
+    seed_rules(&server, json!({"allow": ["command(ls)"]}));
+    // The agy CLI's own settings hold a runner rule that must not be imported.
+    let cli = server.home.join(".gemini/antigravity-cli/settings.json");
+    fs::create_dir_all(cli.parent().unwrap()).unwrap();
+    fs::write(
+        &cli,
+        json!({"permissions": {"allow": ["command(bash -c)"], "deny": []}}).to_string(),
+    )
+    .unwrap();
+    server.start();
+    let before = fs::read_to_string(settings(&server)).unwrap();
+    let refused = |response: crate::support::http::Response, entry: &str| {
+        assert_eq!(response.status, 400, "{entry}");
+        let error = response.json()["error"].as_str().unwrap().to_owned();
+        assert!(error.contains("arbitrary programs"), "{entry}: {error}");
+    };
+    refused(
+        server.call(
+            "POST",
+            "/api/settings/copy",
+            Some(json!({"source": "cli", "kind": "permissions"})),
+        ),
+        "settings copy",
+    );
+    let edited = json!({"permissions": {"allow": ["command(xargs)"]}, "general": {"keep": true}});
+    refused(
+        server.call(
+            "PUT",
+            "/api/settings/file",
+            Some(json!({"path": "antigravity-cli/settings.json", "text": edited.to_string()})),
+        ),
+        "settings file edit",
+    );
+    refused(
+        server.call(
+            "PUT",
+            "/api/permissions",
+            Some(json!({"add_allow": ["command(env)"]})),
+        ),
+        "add_allow",
+    );
+    refused(
+        server.call(
+            "PUT",
+            "/api/permissions",
+            Some(json!({"allow": ["command(ls)", "command(python -c)"]})),
+        ),
+        "permissions replace",
+    );
+    assert_eq!(fs::read_to_string(settings(&server)).unwrap(), before);
+    assert_eq!(
+        server.call("GET", "/api/permissions", None).json(),
+        json!({"allow": ["command(ls)"]})
+    );
+    server.stop();
+}

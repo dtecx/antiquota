@@ -432,6 +432,10 @@ fn launch_configuration_appends_both_streams_and_sets_exact_owned_engine_argumen
         env_value(&command, "ANTIQUOTA_LAUNCHED_BY"),
         Some(OsStr::new("app"))
     );
+    assert_eq!(
+        env_value(&command, "ANTIQUOTA_FIX_PATH"),
+        Some(OsStr::new("1"))
+    );
     assert!(command.status().unwrap().success());
     assert_eq!(
         fs::read_to_string(sandbox.0.join("arguments")).unwrap(),
