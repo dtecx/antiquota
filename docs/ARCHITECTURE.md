@@ -171,3 +171,5 @@ Slice 15 builds the Linux deb, rpm and AppImage and checks each one by unpacking
 Slice 16 proves the architecture requirements as tests that read `cargo metadata` and the sources: crate layout and direction, a core without input and output, one event enum, no unsafe code, error and logging crates, module size and ownership comments, tests per crate, and this document. The CLI `goal` command decodes the shared typed events and catches up after a dropped stream. See [ADR 0027](adr/0027-architecture-checks.md).
 
 Slice 16b replaces the quota probe, version control and terminals with fakes in app tests, fires loops and daily schedules by moving a fake clock (in app and with the real adapters), and adds properties for account ranking and for the event log across a restart and a torn write. See [ADR 0028](adr/0028-fake-ports-and-clock-driven-schedules.md).
+
+Slice 17a proves the CLI commands end to end. Every usage error prints the usage line and exits 2. See [ADR 0029](adr/0029-cli-usage-errors.md).

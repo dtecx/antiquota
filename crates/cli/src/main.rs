@@ -4,7 +4,7 @@ mod follow;
 mod goal;
 mod hook;
 mod raw;
-use clap::{Parser, Subcommand};
+use clap::{CommandFactory, Parser, Subcommand};
 #[derive(Parser)]
 #[command(
     name = "antiquota",
@@ -55,7 +55,14 @@ fn main() -> anyhow::Result<()> {
     if std::env::args().nth(1).as_deref() == Some("hook") {
         return hook::run(&std::env::args().nth(2).unwrap_or_else(|| "pre-tool".into()));
     }
-    let cli = Cli::parse();
+    let cli = Cli::try_parse().unwrap_or_else(|error| {
+        // Every usage error shows the usage line, as the legacy CLI did; clap leaves it out of
+        // some, such as an invalid value. The error then exits 2.
+        if error.use_stderr() && !error.to_string().contains("Usage:") {
+            eprintln!("{}", Cli::command().render_usage());
+        }
+        error.exit()
+    });
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
@@ -108,6 +115,13 @@ mod tests {
         assert!(matches!(
             parse(&["serve"]),
             Some(Commands::Serve {
+                port: 8765,
+                no_open: false
+            })
+        ));
+        assert!(matches!(
+            parse(&["gui"]),
+            Some(Commands::Gui {
                 port: 8765,
                 no_open: false
             })

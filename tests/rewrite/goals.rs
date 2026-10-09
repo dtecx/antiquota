@@ -546,3 +546,83 @@ fn the_goal_command_uses_the_running_engine_and_fails_when_abandoned() {
     );
     server.stop();
 }
+
+#[cfg(unix)]
+#[test]
+fn ctrl_c_stops_the_goal_command_keeps_the_goal_resumable_and_exits_one() {
+    use std::io::Read;
+    let mut server = Server::new_stopped("goal-cli-interrupt", false);
+    script(&server, json!({"delay_ms": 20_000}));
+    server.start();
+    let mut child = server
+        .command()
+        .args(["goal", "Complete fixture.", "--cwd"])
+        .arg(&server.project)
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .unwrap();
+    // Read the log as it streams, and interrupt once the first turn has started.
+    let mut stdout = child.stdout.take().unwrap();
+    let (tx, rx) = std::sync::mpsc::channel::<String>();
+    let reader = thread::spawn(move || {
+        let mut chunk = [0u8; 4096];
+        while let Ok(count) = stdout.read(&mut chunk) {
+            if count == 0
+                || tx
+                    .send(String::from_utf8_lossy(&chunk[..count]).into())
+                    .is_err()
+            {
+                break;
+            }
+        }
+    });
+    let mut log = String::new();
+    let deadline = std::time::Instant::now() + Duration::from_secs(10);
+    while !log.contains("\n-- turn 1 on one@example.com") {
+        assert!(
+            std::time::Instant::now() < deadline,
+            "no turn started: {log}"
+        );
+        if let Ok(text) = rx.recv_timeout(Duration::from_millis(50)) {
+            log.push_str(&text);
+        }
+    }
+    let sent = std::process::Command::new("kill")
+        .args(["-INT", &child.id().to_string()])
+        .status()
+        .unwrap();
+    assert!(sent.success());
+    let deadline = std::time::Instant::now() + Duration::from_secs(10);
+    let status = loop {
+        if let Some(status) = child.try_wait().unwrap() {
+            break status;
+        }
+        assert!(
+            std::time::Instant::now() < deadline,
+            "the goal command kept running"
+        );
+        thread::sleep(Duration::from_millis(20));
+    };
+    reader.join().unwrap();
+    while let Ok(text) = rx.try_recv() {
+        log.push_str(&text);
+    }
+    assert_eq!(status.code(), Some(1), "{log}");
+    let state = server.call("GET", "/api/state", None).json();
+    let id = state["sessions"][0]["id"].as_str().unwrap().to_owned();
+    assert!(
+        log.ends_with(&format!(
+            "\nstopped; session {id} can be resumed in the app\n"
+        )),
+        "{log}"
+    );
+    let paused = settled(&server, &id, "paused");
+    assert_eq!(paused["meta"]["status"], "idle");
+    assert_eq!(paused["meta"]["goal"]["objective"], "Complete fixture.");
+    assert!(
+        server.data.join("state/engine.json").exists(),
+        "the shared engine keeps running"
+    );
+    server.stop();
+}

@@ -1,0 +1,54 @@
+{
+ "format": 1,
+ "slice": "17a",
+ "passed_before": 853,
+ "added": 8,
+ "passed_after": 861,
+ "pending_after": 289,
+ "passed_after_is_prospective": false,
+ "gate_status": "just check passed; just test passed 394 Rust, 458 Vitest and 122 Chromium tests with no failures. Linux x86_64.",
+ "feature_ids": [
+  "F-290",
+  "F-291",
+  "F-293",
+  "F-296",
+  "F-297",
+  "F-298",
+  "F-301",
+  "F-305"
+ ],
+ "proofs": {
+  "F-290": {
+   "proof": "[cli_edges::unknown_commands_and_bad_forms_print_usage_and_exit_2](../../tests/rewrite/accounts_cli_edges.rs); [cli::default_accounts_probe_stack_and_unwall_use_only_owned_state](../../tests/rewrite/accounts_cli.rs); [tests::every_command_parses_with_its_legacy_defaults](../../crates/cli/src/main.rs)",
+   "evidence": "../../.handoff/evidence/slice17a-test.log"
+  },
+  "F-291": {
+   "proof": "[cli_edges::accounts_lists_quota_walls_and_busy_leases_and_hints_when_empty](../../tests/rewrite/accounts_cli_edges.rs); [cli::default_accounts_probe_stack_and_unwall_use_only_owned_state](../../tests/rewrite/accounts_cli.rs)",
+   "evidence": "../../.handoff/evidence/slice17a-test.log"
+  },
+  "F-293": {
+   "proof": "[cli_edges::probe_reports_an_unreadable_panel_without_walling_the_account](../../tests/rewrite/accounts_cli_edges.rs); [cli::default_accounts_probe_stack_and_unwall_use_only_owned_state](../../tests/rewrite/accounts_cli.rs); [cli_lifecycle::account_cli_probe_and_raw_quota_do_not_reconcile_active_engine_sessions](../../tests/rewrite/accounts_cli_lifecycle.rs)",
+   "evidence": "../../.handoff/evidence/slice17a-test.log"
+  },
+  "F-296": {
+   "proof": "[cli_edges::unwall_clears_both_buckets_of_the_named_account_only](../../tests/rewrite/accounts_cli_edges.rs); [cli::default_accounts_probe_stack_and_unwall_use_only_owned_state](../../tests/rewrite/accounts_cli.rs)",
+   "evidence": "../../.handoff/evidence/slice17a-test.log"
+  },
+  "F-297": {
+   "proof": "[cli_edges::run_rejects_unknown_slots_forwards_without_a_separator_and_audits_failures](../../tests/rewrite/accounts_cli_edges.rs); [cli::raw_run_preserves_argv_pin_output_and_quota_exit_75](../../tests/rewrite/accounts_cli.rs); [runtime::raw_cli_without_accounts_exits_without_creating_a_session_or_launching_agy](../../tests/rewrite/runtime.rs)",
+   "evidence": "../../.handoff/evidence/slice17a-test.log"
+  },
+  "F-298": {
+   "proof": "[cli_edges::run_rejects_unknown_slots_forwards_without_a_separator_and_audits_failures](../../tests/rewrite/accounts_cli_edges.rs); [cli::raw_run_preserves_argv_pin_output_and_quota_exit_75](../../tests/rewrite/accounts_cli.rs); [cli_lifecycle::raw_current_success_ignores_historical_quota_error_without_walling_account](../../tests/rewrite/accounts_cli_lifecycle.rs)",
+   "evidence": "../../.handoff/evidence/slice17a-test.log"
+  },
+  "F-301": {
+   "proof": "[cli_edges::serve_and_gui_listen_on_a_requested_fixed_port](../../tests/rewrite/accounts_cli_edges.rs); [tests::every_command_parses_with_its_legacy_defaults](../../crates/cli/src/main.rs); [runtime::serve_defaults_to_no_browser_and_gui_respects_no_open](../../tests/rewrite/runtime.rs)",
+   "evidence": "../../.handoff/evidence/slice17a-test.log"
+  },
+  "F-305": {
+   "proof": "[goals::ctrl_c_stops_the_goal_command_keeps_the_goal_resumable_and_exits_one](../../tests/rewrite/goals.rs); [follow::tests::the_log_shows_each_typed_event_as_the_legacy_goal_command_did](../../crates/cli/src/follow/tests.rs); [goals::the_goal_command_starts_its_own_engine_and_exits_zero_when_met](../../tests/rewrite/goals.rs); [goals::the_goal_command_uses_the_running_engine_and_fails_when_abandoned](../../tests/rewrite/goals.rs)",
+   "evidence": "../../.handoff/evidence/slice17a-test.log"
+  }
+ }
+}

@@ -1,6 +1,8 @@
 //! Proves account contracts and handoff using isolated real HTTP and fake agy.
 #[path = "../../../tests/rewrite/accounts_cli.rs"]
 mod cli;
+#[path = "../../../tests/rewrite/accounts_cli_edges.rs"]
+mod cli_edges;
 #[path = "../../../tests/rewrite/accounts_cli_lifecycle.rs"]
 mod cli_lifecycle;
 #[path = "../../../tests/rewrite/accounts_cli_metadata.rs"]
