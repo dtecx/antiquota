@@ -25,7 +25,7 @@ export const commands = [
   ['/effort', 'effort for Gemini models: low · medium · high'],
   ['/mode', 'permissions: default · accept-edits · plan · bypass'],
   ['/rename', 'rename this session'],
-  ['/quota', 'probe quota on every account now'],
+  ['/quota', 'refresh quota on every account now'],
   ['/usage', 'token usage by day, account and model'],
   ['/accounts', 'show accounts'],
   ['/login', 'add a Google account'],

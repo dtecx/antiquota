@@ -222,11 +222,6 @@ export function createAccounts(
             : `${slot} is ready.`,
         }));
       }),
-    probe: () =>
-      mutate('probe', async () => {
-        await api.probeAccounts();
-        state.update((value) => ({ ...value, feedback: 'Probing accounts…' }));
-      }),
     requestRemove: (slot: string | null) =>
       state.update((value) => ({ ...value, remove: slot, error: '' })),
     remove: () =>

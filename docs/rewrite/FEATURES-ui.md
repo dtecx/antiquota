@@ -371,7 +371,7 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 
 | ID | Acceptance behavior | Legacy source | Existing legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-711 | [x] Accounts Probe now probes every account. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-711) |
+| F-711 | [x] Quotas refresh without a manual button. Legacy Settings had Probe now; on the owner's request (2026-10-09) it is removed because the engine refreshes idle accounts every Quota check minutes. The Accounts view says so, a background refresh updates the open cards, and `/quota` and each card's Check still refresh on demand. The UI says refresh, not probe. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-711) |
 | F-712 | [x] Accounts Add account opens sign-in. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-712) |
 | F-713 | [x] Account cards show identity and paused, busy and last-probed states. | `antiquota/ui/app.js:1773` | None identified | [Passed](TEST_REPORT.md#f-713) |
 | F-714 | [x] Account cards show today's input, output, thinking and turn counts. | `antiquota/ui/app.js:1773` | None identified | [Passed](TEST_REPORT.md#f-714) |

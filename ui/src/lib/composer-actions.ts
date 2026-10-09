@@ -105,7 +105,7 @@ export function createComposerActions(
               break;
             case '/quota':
               await api.probeAccounts();
-              say('Probing accounts…');
+              say('Refreshing quotas…');
               break;
             case '/goal': {
               const current = need();

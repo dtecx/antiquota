@@ -11,6 +11,13 @@ import {
   startLogin,
   createSession as create,
 } from './account-support';
+import type { FixtureEngine } from '../scripts/engine';
+/** Quota reads recorded by the fake agent so far. */
+async function quotaReads(engine: FixtureEngine) {
+  return (await readFile(join(engine.sandbox.root, 'fake-calls.jsonl'), 'utf8'))
+    .split('\n')
+    .filter((line) => line.includes('"/quota"')).length;
+}
 test('shows pool windows pauses resumes checks removes and refreshes accounts', async ({
   page,
   engine,
@@ -45,7 +52,9 @@ test('shows pool windows pauses resumes checks removes and refreshes accounts', 
   const callsBeforeProbe = (
     await readFile(join(engine.sandbox.root, 'fake-calls.jsonl'), 'utf8')
   ).split('\n').length;
-  await page.getByRole('button', { name: 'Probe now' }).click();
+  // Quotas refresh in the background; there is no manual probe button.
+  await expect(page.getByRole('button', { name: 'Probe now' })).toHaveCount(0);
+  expect((await engine.call('POST', '/api/accounts/probe', {})).status).toBe(200);
   await expect
     .poll(async () => {
       const calls = (await readFile(join(engine.sandbox.root, 'fake-calls.jsonl'), 'utf8'))
@@ -74,8 +83,7 @@ test('shows pool windows pauses resumes checks removes and refreshes accounts', 
   await two.getByRole('button', { name: 'Remove', exact: true }).click();
   await confirm.getByRole('button', { name: 'Remove', exact: true }).click();
   await expect(two).not.toBeVisible();
-  await page.getByRole('button', { name: 'Probe now' }).click();
-  await expect(page.getByText('Probing accounts…', { exact: true })).toBeVisible();
+  await expect(one.locator('.refreshed')).toHaveText('refreshed now');
   await screenshot(page, engine, 'accounts-dark');
   await page.getByRole('button', { name: 'Close settings' }).click();
   await expect(page.getByRole('heading', { name: 'Accounts', exact: true })).not.toBeVisible();
@@ -104,7 +112,10 @@ test('persists rotation choices and range endpoints without losing focused draft
       .evaluate((input: HTMLInputElement) => input.validity.rangeOverflow),
   ).toBe(true);
   await page.getByRole('spinbutton', { name: 'Reserve', exact: true }).fill('8');
-  await page.getByRole('button', { name: 'Probe now' }).click();
+  // A background quota refresh must not replace the draft.
+  const reads = await quotaReads(engine);
+  expect((await engine.call('POST', '/api/accounts/probe', {})).status).toBe(200);
+  await expect.poll(() => quotaReads(engine)).toBeGreaterThan(reads);
   await expect(page.getByRole('spinbutton', { name: 'Reserve', exact: true })).toHaveValue('8');
   await page.getByRole('spinbutton', { name: 'Quota check', exact: true }).press('Tab');
   await page.reload();
@@ -347,7 +358,7 @@ test('shows a leased account as running and disables check and removal until sto
     .getByRole('button', { name: 'Accounts', exact: true })
     .click();
   const one = page.getByRole('article', { name: 'one@example.com', exact: true });
-  await expect(one.locator('.probe')).toContainText('running');
+  await expect(one.locator('.refreshed')).toContainText('running');
   await expect(one.getByRole('button', { name: 'Check', exact: true })).toBeDisabled();
   await expect(one.getByRole('button', { name: 'Remove', exact: true })).toBeDisabled();
   await page.getByRole('button', { name: 'Close settings' }).click();

@@ -137,12 +137,12 @@ describe('account settings store', () => {
     await accounts.refresh();
     expect(get(accounts.state).accounts).toHaveLength(1);
     expect(get(accounts.state).loading).toBe(false);
-    api.probeAccounts = vi.fn(async () => {
-      throw new Error('Probe failed');
+    api.checkAccount = vi.fn(async () => {
+      throw new Error('Refresh failed');
     });
-    await accounts.probe();
+    await accounts.check('one@example.com');
     expect(get(accounts.state).busy).toBe('');
-    expect(get(accounts.state).error).toBe('Probe failed');
+    expect(get(accounts.state).error).toBe('Refresh failed');
   });
   it('coalesces rapid field changes and persists the newest draft after the in-flight save', async () => {
     const api = fixtureApi(),

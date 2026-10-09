@@ -101,11 +101,11 @@
           <div class="introduction">
             <p>
               Google accounts antiquota signs in separately from your agy CLI. Gemini and Claude/GPT
-              quotas run out separately.
+              quotas run out separately. Quotas refresh by themselves every {$view.defaults
+                ?.quota_poll ?? '10'} minutes without spending tokens.
             </p>
             <div class="actions">
-              <button disabled={!!$view.busy} onclick={() => accounts.probe()}>Probe now</button
-              ><button class="primary" onclick={() => login.open()}>Add account</button>
+              <button class="primary" onclick={() => login.open()}>Add account</button>
             </div>
           </div>
 

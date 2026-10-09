@@ -16,10 +16,10 @@
     <h3>
       {account.slot}{#if account.paused}<span class="paused">paused</span>{/if}
     </h3>
-    <span class="probe"
+    <span class="refreshed"
       >{account.busy ? 'running · ' : ''}{account.probed
-        ? `probed ${relativeTime(account.probed)}`
-        : 'not probed'}</span
+        ? `refreshed ${relativeTime(account.probed)}`
+        : 'not refreshed yet'}</span
     >
   </div>
   {#if account.verify}<VerificationBlock
@@ -95,7 +95,7 @@
     color: var(--ink-3);
     font-weight: 400;
   }
-  .probe {
+  .refreshed {
     font-size: 10px;
     color: var(--ink-3);
   }

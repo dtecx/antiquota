@@ -8,7 +8,7 @@ Legacy sources were read in full at commit `17ec296`; [engine](source-read-engin
 
 Read [known-bugs.md](known-bugs.md), [API_CONTRACT.md](API_CONTRACT.md) and [DATA_FORMATS.md](DATA_FORMATS.md) alongside this checklist. API fixtures preserve observed wire responses, including defects; tests must assert the documented correction where the rewrite is required to repair a bug. Source-only concerns remain explicitly unverified until reproduced.
 
-The authorized changes replace legacy Python/PyInstaller packaging with the Rust sidecar and PCM-only recording with direct MediaRecorder. They preserve equivalent user behavior, shared-engine discovery, useful audio input and silence protection. Native zoom and window persistence must meet the requested acceptance rather than reproduce the existing defects. On the owner's request of 2026-10-09, several sessions may run on one account at once, and a placement setting fills one account first (the default) or spreads new sessions; the usage view also shows cached input. No merge, deletion of the old stack, or push is authorized by this checklist; cutover still requires the user's OK after every item is proven.
+The authorized changes replace legacy Python/PyInstaller packaging with the Rust sidecar and PCM-only recording with direct MediaRecorder. They preserve equivalent user behavior, shared-engine discovery, useful audio input and silence protection. Native zoom and window persistence must meet the requested acceptance rather than reproduce the existing defects. On the owner's request of 2026-10-09, several sessions may run on one account at once, and a placement setting fills one account first (the default) or spreads new sessions; the usage view also shows cached input, and the manual Probe now button is gone because quotas refresh by themselves. No merge, deletion of the old stack, or push is authorized by this checklist; cutover still requires the user's OK after every item is proven.
 
 ## Engine, API and CLI baseline
 
@@ -833,7 +833,7 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-711 | [x] <a id="f-711"></a>Accounts Probe now probes every account. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-711) |
+| F-711 | [x] <a id="f-711"></a>Quotas refresh without a manual button. Legacy Settings had Probe now; on the owner's request (2026-10-09) it is removed because the engine refreshes idle accounts every Quota check minutes. The Accounts view says so, a background refresh updates the open cards, and `/quota` and each card's Check still refresh on demand. The UI says refresh, not probe. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-711) |
 | F-712 | [x] <a id="f-712"></a>Accounts Add account opens sign-in. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-712) |
 | F-713 | [x] <a id="f-713"></a>Account cards show identity and paused, busy and last-probed states. | `antiquota/ui/app.js:1773` | None identified | [Passed](TEST_REPORT.md#f-713) |
 | F-714 | [x] <a id="f-714"></a>Account cards show today's input, output, thinking and turn counts. | `antiquota/ui/app.js:1773` | None identified | [Passed](TEST_REPORT.md#f-714) |

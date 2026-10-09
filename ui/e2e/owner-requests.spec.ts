@@ -3,7 +3,7 @@ import { mkdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
 import type { FixtureEngine } from '../scripts/engine';
-import { createSession, openAccounts } from './account-support';
+import { addAccount, createSession, openAccounts } from './account-support';
 import { test, expect } from './fixtures';
 
 async function shot(page: Page, engine: FixtureEngine, name: string) {
@@ -129,4 +129,38 @@ test('places new sessions fill first by default and saves spread first', async (
         JSON.parse(await readFile(join(engine.sandbox.data, 'settings.json'), 'utf8')).placement,
     )
     .toBeUndefined();
+});
+
+test('refreshes quotas without a button and says when each account was refreshed', async ({
+  page,
+  engine,
+}) => {
+  await addAccount(engine, 'two@example.com', {
+    probed: Date.now() / 1000 - 7_200,
+    quota: {
+      gemini: { '5h': [0.2, 4070926800], weekly: [0.3, 4071427200] },
+      cg: { '5h': [0.5, 4070926800], weekly: [0.7, 4071427200] },
+    },
+  });
+  await openAccounts(page, engine);
+  const intro = page.locator('.introduction');
+  await expect(intro).toContainText(
+    'Quotas refresh by themselves every 10 minutes without spending tokens.',
+  );
+  await expect(page.getByRole('button', { name: /probe/i })).toHaveCount(0);
+  const two = page.getByRole('article', { name: 'two@example.com', exact: true });
+  await expect(two.locator('.refreshed')).toHaveText('refreshed 2h');
+  await expect(two.getByRole('meter', { name: 'Gemini 5h remaining' })).toHaveAttribute(
+    'aria-valuenow',
+    '20',
+  );
+  // The engine's own refresh (the one its timer runs) updates the open cards.
+  expect((await engine.call('POST', '/api/accounts/probe', {})).status).toBe(200);
+  await expect(two.locator('.refreshed')).toHaveText('refreshed now');
+  await expect(two.getByRole('meter', { name: 'Gemini 5h remaining' })).toHaveAttribute(
+    'aria-valuenow',
+    '90',
+  );
+  await expect(page.locator('body')).not.toContainText(/probed|probing/i);
+  await shot(page, engine, 'accounts-refresh');
 });

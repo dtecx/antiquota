@@ -108,7 +108,7 @@ fn account_line(acct: &Value, now: f64) -> String {
         .filter(|v| v.is_finite());
     match left {
         Some(f) => format!("{name}  ·  Gemini {}%", (f * 100.0).round()),
-        None => format!("{name}  ·  not probed yet"),
+        None => format!("{name}  ·  not refreshed yet"),
     }
 }
 
@@ -296,7 +296,7 @@ mod tests {
         for verify in [Value::Null, json!(""), json!("  "), json!(false)] {
             assert_eq!(
                 account_line(&json!({"slot":"one@example.com","verify":verify}), 100.0),
-                "one  ·  not probed yet"
+                "one  ·  not refreshed yet"
             );
         }
     }
