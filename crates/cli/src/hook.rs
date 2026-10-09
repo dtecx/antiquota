@@ -66,7 +66,11 @@ fn answer(kind: &str, payload: &Value, oversized: bool) -> Value {
         Ok(reply) => reply,
         Err(error) => {
             eprintln!("antiquota hook: {error}");
-            decide_here(&state, &tool, &args)
+            let mode = std::env::var("ANTIQUOTA_MODE")
+                .ok()
+                .and_then(|m| serde_json::from_value::<Mode>(json!(m)).ok())
+                .unwrap_or_default();
+            decide_here(&state, mode, &tool, &args)
         }
     }
 }
@@ -141,11 +145,7 @@ fn steer(state: &Path, session: &str) -> Result<Value, String> {
 
 /// No engine to ask (a CLI run, or the app is closed): decide with antiquota's own rules and
 /// refuse what would need a yes, since nobody is there to give it.
-fn decide_here(state: &Path, tool: &str, args: &Value) -> Value {
-    let mode = std::env::var("ANTIQUOTA_MODE")
-        .ok()
-        .and_then(|m| serde_json::from_value::<Mode>(json!(m)).ok())
-        .unwrap_or_default();
+fn decide_here(state: &Path, mode: Mode, tool: &str, args: &Value) -> Value {
     let permissions = state
         .parent()
         .map(|root| root.join("stack/.gemini/antigravity-cli/settings.json"))
@@ -247,3 +247,6 @@ impl Engine {
         Ok(value)
     }
 }
+
+#[cfg(test)]
+mod tests;

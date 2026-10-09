@@ -2,7 +2,7 @@
 
 This is the canonical checklist for parity and cutover. It contains 1009 baseline acceptance items: 397 engine/API/CLI items (F-001–F-397) and 612 UI/shell items (F-398–F-1009), including the requested zoom and window-persistence repairs. The 141 additional items (F-1010–F-1150) record explicit requirements from the user's rewrite task and the owner's later requests. They are requirements, not claims about legacy behavior. No feature has been dropped.
 
-Every row is independently reviewable and links to its [test report](TEST_REPORT.md). Slices 1, 3–8, 9a–9f, 11–15 and the proved Slice 10 subset have **818 Passed** acceptance items; the other **332 remain Pending**. Legacy test names and captured Python responses explain the baseline; they are not passing Rust or TypeScript proof. Mark a row complete only after its passing tests and evidence have been recorded. Store logs, screenshots and live-cost records in ignored `.handoff/evidence/`.
+Every row is independently reviewable and links to its [test report](TEST_REPORT.md). Slices 1, 3–8, 9a–9f, 11–16 and the proved Slice 10 subset have **845 Passed** acceptance items; the other **305 remain Pending**. Legacy test names and captured Python responses explain the baseline; they are not passing Rust or TypeScript proof. Mark a row complete only after its passing tests and evidence have been recorded. Store logs, screenshots and live-cost records in ignored `.handoff/evidence/`.
 
 Legacy sources were read in full at commit `17ec296`; [engine](source-read-engine.md) and [UI/shell](source-read-ui.md) manifests record coverage and hashes. The sourced subsidiary inventories are [FEATURES-engine.md](FEATURES-engine.md) and [FEATURES-ui.md](FEATURES-ui.md). The canonical rows below contain their full acceptance text. UI identifiers were renumbered once from F-400–F-1011 to F-398–F-1009 to remove the unused gap; engine identifiers were unchanged.
 
@@ -1229,15 +1229,15 @@ The following acceptance items come from the authorized rewrite task, not from a
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-1010 | [ ] <a id="f-1010"></a>Build the Rust engine as a Cargo workspace with core, features, app, adapters, server and cli crates. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1010) |
-| F-1011 | [ ] <a id="f-1011"></a>Keep crates/core independent of tokio, filesystem access and process spawning; domain tests run without operating-system adapters. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1011) |
-| F-1012 | [ ] <a id="f-1012"></a>Define Session, Turn, Event, Command, Account, Slot, Quota, Goal, Approval, Rule and Settings as serializable domain types. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1012) |
-| F-1013 | [ ] <a id="f-1013"></a>Use one Event enum for all session event variants; UI, CLI and approval consumers decode that same typed event stream. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1013) |
+| F-1010 | [x] <a id="f-1010"></a>Build the Rust engine as a Cargo workspace with core, features, app, adapters, server and cli crates. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1010) |
+| F-1011 | [x] <a id="f-1011"></a>Keep crates/core independent of tokio, filesystem access and process spawning; domain tests run without operating-system adapters. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1011) |
+| F-1012 | [x] <a id="f-1012"></a>Define Session, Turn, Event, Command, Account, Slot, Quota, Goal, Approval, Rule and Settings as serializable domain types. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1012) |
+| F-1013 | [x] <a id="f-1013"></a>Use one Event enum for all session event variants; UI, CLI and approval consumers decode that same typed event stream. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1013) |
 | F-1014 | [ ] <a id="f-1014"></a>Keep state machines, account routing, rotation and permission policy in the pure domain and test their transitions independently. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1014) |
-| F-1015 | [ ] <a id="f-1015"></a>Expose AgentRunner as a core trait that can be replaced with the scripted test runner. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1015) |
-| F-1016 | [ ] <a id="f-1016"></a>Expose AccountStore as a core trait that can be replaced without reading real account files. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1016) |
+| F-1015 | [x] <a id="f-1015"></a>Expose AgentRunner as a core trait that can be replaced with the scripted test runner. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1015) |
+| F-1016 | [x] <a id="f-1016"></a>Expose AccountStore as a core trait that can be replaced without reading real account files. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1016) |
 | F-1017 | [ ] <a id="f-1017"></a>Expose QuotaProbe as a core trait that can return deterministic account quota and failure responses. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1017) |
-| F-1018 | [ ] <a id="f-1018"></a>Expose SessionStore as a core trait that can save and replay sessions through an in-memory test implementation. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1018) |
+| F-1018 | [x] <a id="f-1018"></a>Expose SessionStore as a core trait that can save and replay sessions through an in-memory test implementation. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1018) |
 | F-1019 | [ ] <a id="f-1019"></a>Expose Vcs as a core trait that can substitute version-control operations in application tests. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1019) |
 | F-1020 | [ ] <a id="f-1020"></a>Expose Pty as a core trait that can substitute terminal input, output, resize and restart operations. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1020) |
 | F-1021 | [ ] <a id="f-1021"></a>Expose Transcriber as a core trait that can return text or NO_SPEECH without live model calls. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1021) |
@@ -1259,22 +1259,22 @@ The following acceptance items come from the authorized rewrite task, not from a
 | F-1032 | [ ] <a id="f-1032"></a>Keep keep-awake behavior in its feature module and release its operating-system assertion after work stops. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1032) |
 | F-1033 | [ ] <a id="f-1033"></a>Add a feature by adding a focused module and registration rather than editing a central object that owns every feature. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1033) |
 | F-1034 | [ ] <a id="f-1034"></a>Accept typed Commands in crates/app and produce typed Events through the shared application services. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1034) |
-| F-1035 | [ ] <a id="f-1035"></a>Keep one append-only event log per session; replay reconstructs the same state after restart. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1035) |
-| F-1036 | [ ] <a id="f-1036"></a>Recover lagging event consumers through replay or explicit resynchronization without silently dropping required events. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1036) |
+| F-1035 | [x] <a id="f-1035"></a>Keep one append-only event log per session; replay reconstructs the same state after restart. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1035) |
+| F-1036 | [x] <a id="f-1036"></a>Recover lagging event consumers through replay or explicit resynchronization without silently dropping required events. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1036) |
 
 ### Operating-system adapters, server and CLI
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-1037 | [ ] <a id="f-1037"></a>The agy adapter launches agy with stream-json output and parses every scripted success and failure scenario. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1037) |
+| F-1037 | [x] <a id="f-1037"></a>The agy adapter launches agy with stream-json output and parses every scripted success and failure scenario. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1037) |
 | F-1038 | [ ] <a id="f-1038"></a>The accounts adapter isolates file-token access using a per-account HOME and SSH_CONNECTION on every agy invocation. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1038) |
 | F-1039 | [ ] <a id="f-1039"></a>The store adapter reads and writes JSON compatible with every captured legacy data specimen without losing unknown preserved data. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1039) |
-| F-1040 | [ ] <a id="f-1040"></a>The git adapter uses the git CLI to create, inspect and remove session worktrees through the Vcs port. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1040) |
+| F-1040 | [x] <a id="f-1040"></a>The git adapter uses the git CLI to create, inspect and remove session worktrees through the Vcs port. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1040) |
 | F-1041 | [ ] <a id="f-1041"></a>The pty adapter uses portable-pty and passes terminal interaction tests using ConPTY on Windows. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1041) |
 | F-1042 | [ ] <a id="f-1042"></a>The transcribe adapter uses agy with gemini-3.8-flash-high and returns no inserted text for NO_SPEECH. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1042) |
 | F-1043 | [ ] <a id="f-1043"></a>The axum server keeps the captured HTTP method, path, authentication, body, error and SSE contracts except documented intentional corrections. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1043) |
 | F-1044 | [x] <a id="f-1044"></a>antiquota serve hosts the built UI and the HTTP/SSE API for browser mode. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1044) |
-| F-1045 | [ ] <a id="f-1045"></a>Build one clap-based antiquota executable with serve, every existing CLI command and the new hook subcommand. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1045) |
+| F-1045 | [x] <a id="f-1045"></a>Build one clap-based antiquota executable with serve, every existing CLI command and the new hook subcommand. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1045) |
 | F-1046 | [x] <a id="f-1046"></a>The hook subcommand starts in milliseconds and applies the permission decision before the protected tool executes; record startup timings. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1046) |
 
 ### Typed UI architecture
@@ -1310,48 +1310,48 @@ The following acceptance items come from the authorized rewrite task, not from a
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-1066 | [ ] <a id="f-1066"></a>just dev runs both development toolchains with a working UI and engine. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1066) |
+| F-1066 | [x] <a id="f-1066"></a>just dev runs both development toolchains with a working UI and engine. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1066) |
 | F-1067 | [x] <a id="f-1067"></a>just test runs the Rust and TypeScript test suites. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1067) |
 | F-1068 | [x] <a id="f-1068"></a>just check runs the required Rust, TypeScript, formatting and generated-type checks. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1068) |
 | F-1069 | [x] <a id="f-1069"></a>just build builds the engine, UI and sidecar desktop bundle. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1069) |
-| F-1070 | [ ] <a id="f-1070"></a>just gen-types regenerates the TypeScript API types from Rust. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1070) |
-| F-1071 | [ ] <a id="f-1071"></a>Use thiserror in library crates and reserve anyhow for executable binaries. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1071) |
-| F-1072 | [ ] <a id="f-1072"></a>Use tracing for Rust logs and serde for persisted and wire types. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1072) |
+| F-1070 | [x] <a id="f-1070"></a>just gen-types regenerates the TypeScript API types from Rust. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1070) |
+| F-1071 | [x] <a id="f-1071"></a>Use thiserror in library crates and reserve anyhow for executable binaries. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1071) |
+| F-1072 | [x] <a id="f-1072"></a>Use tracing for Rust logs and serde for persisted and wire types. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1072) |
 | F-1073 | [x] <a id="f-1073"></a>cargo clippy -- -D warnings passes without ignored warnings. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1073) |
 | F-1074 | [x] <a id="f-1074"></a>Rust source passes rustfmt and dependency policy passes cargo-deny. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1074) |
-| F-1075 | [ ] <a id="f-1075"></a>Unsafe Rust is confined to the pty adapter. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1075) |
+| F-1075 | [x] <a id="f-1075"></a>Unsafe Rust is confined to the pty adapter. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1075) |
 | F-1076 | [x] <a id="f-1076"></a>pnpm check passes svelte-check and strict TypeScript checking. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1076) |
 | F-1077 | [x] <a id="f-1077"></a>TypeScript and Svelte source passes eslint and prettier and contains no any types. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1077) |
-| F-1078 | [ ] <a id="f-1078"></a>Keep modules and components near or below 400 lines, each with a doc comment that states its ownership. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1078) |
-| F-1079 | [ ] <a id="f-1079"></a>docs/ARCHITECTURE.md explains crates, ports, adapters, UI and shell with a diagram; short ADRs record key implementation decisions. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1079) |
+| F-1078 | [x] <a id="f-1078"></a>Keep modules and components near or below 400 lines, each with a doc comment that states its ownership. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1078) |
+| F-1079 | [x] <a id="f-1079"></a>docs/ARCHITECTURE.md explains crates, ports, adapters, UI and shell with a diagram; short ADRs record key implementation decisions. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1079) |
 | F-1080 | [ ] <a id="f-1080"></a>Each vertical slice works through engine, API and UI before the next slice; record passing checks with the slice commit. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1080) |
 
 ### Deterministic engine and UI proof
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-1081 | [ ] <a id="f-1081"></a>Every crate has meaningful unit tests for the behavior it owns. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1081) |
-| F-1082 | [ ] <a id="f-1082"></a>Use proptest for permission policy, including shell-aware command splitting and the RISKY flag cases. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1082) |
+| F-1081 | [x] <a id="f-1081"></a>Every crate has meaningful unit tests for the behavior it owns. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1081) |
+| F-1082 | [x] <a id="f-1082"></a>Use proptest for permission policy, including shell-aware command splitting and the RISKY flag cases. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1082) |
 | F-1083 | [ ] <a id="f-1083"></a>Use proptest for account routing and rotation invariants. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1083) |
 | F-1084 | [ ] <a id="f-1084"></a>Use proptest for event-log replay invariants, including persistence and replay after interruption. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1084) |
 | F-1085 | [x] <a id="f-1085"></a>Use Vitest for UI stores, including event reducers and reconnect behavior. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1085) |
 | F-1086 | [x] <a id="f-1086"></a>Use Vitest for the typed API client and request/error handling. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1086) |
 | F-1087 | [x] <a id="f-1087"></a>Use Vitest for formatting functions and boundary values. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1087) |
 | F-1088 | [x] <a id="f-1088"></a>Provide a fake-agy test executable that plays a successful stream-json turn. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1088) |
-| F-1089 | [ ] <a id="f-1089"></a>The fake-agy executable plays a quota wall in the middle of a turn. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1089) |
-| F-1090 | [ ] <a id="f-1090"></a>The fake-agy executable plays a rate-limit response. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1090) |
+| F-1089 | [x] <a id="f-1089"></a>The fake-agy executable plays a quota wall in the middle of a turn. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1089) |
+| F-1090 | [x] <a id="f-1090"></a>The fake-agy executable plays a rate-limit response. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1090) |
 | F-1091 | [x] <a id="f-1091"></a>The fake-agy executable plays an authentication failure. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1091) |
-| F-1092 | [ ] <a id="f-1092"></a>The fake-agy executable plays tool calls requiring approval. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1092) |
+| F-1092 | [x] <a id="f-1092"></a>The fake-agy executable plays tool calls requiring approval. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1092) |
 | F-1093 | [x] <a id="f-1093"></a>The fake-agy executable invokes the PreToolUse hook. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1093) |
 | F-1094 | [x] <a id="f-1094"></a>The fake-agy executable emits a RUN_IN_BACKGROUND: line. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1094) |
 | F-1095 | [x] <a id="f-1095"></a>The fake-agy executable emits GOAL_COMPLETE. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1095) |
 | F-1096 | [x] <a id="f-1096"></a>The fake-agy executable emits huge output without losing required state or events. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1096) |
 | F-1097 | [x] <a id="f-1097"></a>The fake-agy executable crashes and the engine reports and recovers the failure. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1097) |
 | F-1098 | [ ] <a id="f-1098"></a>Whole-engine tests with fake-agy prove handoff to the next account and cooldown enforcement. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1098) |
-| F-1099 | [ ] <a id="f-1099"></a>Whole-engine tests with fake-agy prove goal rounds, completion checks and the verifier. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1099) |
+| F-1099 | [x] <a id="f-1099"></a>Whole-engine tests with fake-agy prove goal rounds, completion checks and the verifier. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1099) |
 | F-1100 | [ ] <a id="f-1100"></a>Whole-engine tests prove approval timeout behavior using a fake Clock. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1100) |
 | F-1101 | [ ] <a id="f-1101"></a>Whole-engine tests prove loop and schedule timing using a fake Clock. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1101) |
-| F-1102 | [ ] <a id="f-1102"></a>Whole-engine tests prove mid-turn steering, plan mode and fork behavior. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1102) |
+| F-1102 | [x] <a id="f-1102"></a>Whole-engine tests prove mid-turn steering, plan mode and fork behavior. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1102) |
 | F-1103 | [ ] <a id="f-1103"></a>Contract tests replay every captured API fixture against the Rust server and document each intentional difference. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1103) |
 
 ### Browser end-to-end proof
@@ -1363,7 +1363,7 @@ The following acceptance items come from the authorized rewrite task, not from a
 | F-1106 | [ ] <a id="f-1106"></a>Playwright exercises approval cards and their allow, deny, expiry and resolved states. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1106) |
 | F-1107 | [x] <a id="f-1107"></a>Playwright verifies grouped transcript steps in expanded and collapsed states. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1107) |
 | F-1108 | [ ] <a id="f-1108"></a>Playwright verifies both split panes at 80, 100, 125 and 150 percent zoom. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1108) |
-| F-1109 | [ ] <a id="f-1109"></a>Playwright types into the terminal, resizes it and restarts its process. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1109) |
+| F-1109 | [x] <a id="f-1109"></a>Playwright types into the terminal, resizes it and restarts its process. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1109) |
 | F-1110 | [x] <a id="f-1110"></a>Playwright uses recorded WAV audio and silence to verify dictation text and the silence guard. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1110) |
 | F-1111 | [x] <a id="f-1111"></a>Playwright verifies the usage chart and its tooltips. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1111) |
 | F-1112 | [x] <a id="f-1112"></a>Playwright exercises project and session menus. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1112) |

@@ -514,6 +514,37 @@ fn rule_lists_are_validated_and_deduplicated() {
     );
 }
 
+/// Each risky flag form of the `RISKY` pattern, next to the same command without it.
+const RISKY_FORMS: [(&str, &str); 24] = [
+    ("find {w} -exec rm {} +", "find {w} -name x"),
+    ("find {w} -execdir rm {} +", "find {w} -type f"),
+    ("find {w} -ok rm {} +", "find {w} -print"),
+    ("find {w} -okdir rm {} +", "find {w} -maxdepth 1"),
+    ("find {w} -delete", "find {w} -empty"),
+    ("find {w} -fprint out", "find {w} -newer x"),
+    ("find {w} -fprintf out %p", "find {w} -size +1k"),
+    ("git push origin {w} --force", "git push origin {w}"),
+    (
+        "git push origin {w} --force-with-lease",
+        "git push -u origin {w}",
+    ),
+    ("git push origin {w} -f", "git push origin {w} --tags"),
+    ("git push origin --delete {w}", "git push origin HEAD:{w}"),
+    ("git push --mirror {w}", "git push {w}"),
+    ("git push origin -d {w}", "git push --dry-run origin {w}"),
+    ("git push origin :{w}", "git push origin main"),
+    ("sed -i s/a/b/ {w}", "sed s/a/b/ {w}"),
+    ("sed -i.bak s/a/b/ {w}", "sed -n 1p {w}"),
+    ("git reset --hard {w}", "git reset {w}"),
+    ("git checkout -- {w}", "git checkout {w}"),
+    ("git stash drop", "git stash list"),
+    ("git stash clear", "git stash show"),
+    ("git clean -fd {w}", "git clean -n {w}"),
+    ("git clean --force {w}", "git clean --dry-run {w}"),
+    ("git branch -D {w}", "git branch {w}"),
+    ("git branch --force {w} main", "git branch --list {w}"),
+];
+
 proptest! {
     #[test]
     fn risky_flags_ask_after_any_allowed_prefix(prefix in "[a-z]{1,8}( [a-z0-9]{1,6}){0,2}") {
@@ -522,6 +553,25 @@ proptest! {
             let line = format!("{prefix} && {risky}");
             prop_assert_eq!(command(&p, &line), "ask");
         }
+    }
+
+    #[test]
+    fn every_risky_form_asks_under_any_allow_rule_and_its_safe_form_does_not(
+        word in "[a-z][a-z0-9_]{0,5}",
+        form in 0usize..RISKY_FORMS.len(),
+        rule in prop::sample::select(vec!["command(*)", "command(git)", "command(find)", "command(sed)", "command(git push)", "command(git branch)", "command(git clean)"]),
+        prefixed in any::<bool>(),
+    ) {
+        let (risky, safe) = RISKY_FORMS[form];
+        let p = rules(&[rule], &[]);
+        let fill = |line: &str| {
+            let line = line.replace("{w}", &word);
+            if prefixed { format!("cd {word} && {line}") } else { line }
+        };
+        prop_assert_eq!(command(&p, &fill(risky)), "ask", "{}", fill(risky));
+        // The same command without the risky flag is covered by a wide enough rule.
+        let wide = rules(&["command(*)"], &[]);
+        prop_assert_eq!(command(&wide, &fill(safe)), "allow", "{}", fill(safe));
     }
 
     #[test]

@@ -29,6 +29,8 @@ pub const DEFAULT_MODEL: &str = "gemini-3.8-flash-high";
 pub const MAX_SAFE_INTEGER: u64 = 9_007_199_254_740_991;
 
 #[cfg(test)]
+mod domain_tests;
+#[cfg(test)]
 mod event_tests;
 
 mod event_codec;

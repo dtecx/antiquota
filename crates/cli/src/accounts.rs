@@ -241,3 +241,17 @@ pub async fn doctor(accounts: Arc<FileAccounts>) -> anyhow::Result<i32> {
     }
     Ok(i32::from(problems > 0))
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn local_times_are_short_and_impossible_ones_read_unknown() {
+        let text = super::local(1_700_000_000.0);
+        let shape: String = text
+            .chars()
+            .map(|c| if c.is_ascii_digit() { '9' } else { c })
+            .collect();
+        assert_eq!(shape, "99-99 99:99");
+        assert_eq!(super::local(f64::MAX), "?");
+    }
+}

@@ -1,5 +1,6 @@
 //! Owns command-line dispatch; the hook runs before logging and Tokio startup.
 mod accounts;
+mod follow;
 mod goal;
 mod hook;
 mod raw;
@@ -89,4 +90,79 @@ fn main() -> anyhow::Result<()> {
         std::process::exit(code);
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn parse(args: &[&str]) -> Option<Commands> {
+        Cli::try_parse_from(std::iter::once("antiquota").chain(args.iter().copied()))
+            .unwrap()
+            .command
+    }
+
+    #[test]
+    fn every_command_parses_with_its_legacy_defaults() {
+        assert!(parse(&[]).is_none(), "no command lists the accounts");
+        assert!(matches!(
+            parse(&["serve"]),
+            Some(Commands::Serve {
+                port: 8765,
+                no_open: false
+            })
+        ));
+        assert!(matches!(
+            parse(&["gui", "--port", "9000", "--no-open"]),
+            Some(Commands::Gui {
+                port: 9000,
+                no_open: true
+            })
+        ));
+        assert!(matches!(parse(&["accounts"]), Some(Commands::Accounts)));
+        assert!(matches!(parse(&["login"]), Some(Commands::Login)));
+        assert!(matches!(parse(&["probe"]), Some(Commands::Probe)));
+        assert!(matches!(parse(&["doctor"]), Some(Commands::Doctor)));
+        assert!(matches!(
+            parse(&["stack"]),
+            Some(Commands::Stack { action: None })
+        ));
+        assert!(matches!(
+            parse(&["stack", "reseed"]),
+            Some(Commands::Stack { action: Some(a) }) if a == "reseed"
+        ));
+        assert!(matches!(
+            parse(&["unwall", "one@example.com"]),
+            Some(Commands::Unwall { name }) if name == "one@example.com"
+        ));
+        assert!(matches!(
+            parse(&["hook"]),
+            Some(Commands::Hook { kind }) if kind == "pre-tool"
+        ));
+        assert!(matches!(
+            parse(&["hook", "pre-invocation"]),
+            Some(Commands::Hook { kind }) if kind == "pre-invocation"
+        ));
+        assert!(matches!(
+            parse(&["goal", "Ship it"]),
+            Some(Commands::Goal(_))
+        ));
+    }
+
+    #[test]
+    fn run_passes_every_later_word_to_agy_and_unknown_commands_fail() {
+        let Some(Commands::Run { args }) = parse(&["run", "-p", "hi", "--model", "m", "x"]) else {
+            panic!("run did not parse");
+        };
+        assert_eq!(args, ["-p", "hi", "--model", "m", "x"]);
+        for line in [
+            &["stack", "wipe"][..],
+            &["chat"],
+            &["unwall"],
+            &["serve", "--port", "x"],
+        ] {
+            let words = std::iter::once("antiquota").chain(line.iter().copied());
+            assert!(Cli::try_parse_from(words).is_err(), "{line:?}");
+        }
+    }
 }

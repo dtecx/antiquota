@@ -1,4 +1,4 @@
-/** Proves the Terminal tab: a shell in the session folder, input, output, clear, restart and kill. */
+/** Proves the Terminal tab: a shell in the session folder, input, output, resize, clear, restart and kill. */
 import type { Page } from '@playwright/test';
 import { mkdir, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -47,6 +47,25 @@ test('runs a shell in the session folder', async ({ page, engine }) => {
   await page.keyboard.type('echo again-$((40+2))');
   await page.keyboard.press('Enter');
   await expect(output.locator('.xterm-rows')).toContainText('again-42');
+  // The shell itself sees the new size after the window narrows.
+  const size = async () => {
+    await page.getByRole('button', { name: 'Clear' }).click();
+    await page.locator('.xterm-helper-textarea').focus();
+    await page.keyboard.type('echo "si""ze-$(stty size | tr \' \' x)-end"');
+    await page.keyboard.press('Enter');
+    const rows = output.locator('.xterm-rows');
+    await expect(rows).toContainText(/size-\d+x\d+-end/);
+    const [, height, width] = /size-(\d+)x(\d+)-end/.exec((await rows.textContent()) ?? '') ?? [];
+    return { rows: Number(height), cols: Number(width) };
+  };
+  const wide = await size();
+  const resized = page.waitForRequest((request) => request.url().endsWith('/term/resize'));
+  await page.setViewportSize({ width: 900, height: 820 });
+  const body = (await resized).postDataJSON() as { cols: number; rows: number };
+  const narrow = await size();
+  expect(narrow).toEqual({ rows: body.rows, cols: body.cols });
+  expect(narrow.cols).toBeLessThan(wide.cols);
+  expect(narrow.rows).toBe(wide.rows);
   expect(errors).toEqual([]);
 });
 

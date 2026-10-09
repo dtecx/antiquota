@@ -1,0 +1,149 @@
+{
+ "format": 1,
+ "slice": "16",
+ "passed_before": 818,
+ "added": 27,
+ "passed_after": 845,
+ "pending_after": 305,
+ "passed_after_is_prospective": false,
+ "gate_status": "just check passed; just test passed 377 Rust, 458 Vitest and 122 Chromium tests with no failures. Linux x86_64.",
+ "feature_ids": [
+  "F-1010",
+  "F-1011",
+  "F-1012",
+  "F-1013",
+  "F-1015",
+  "F-1016",
+  "F-1018",
+  "F-1035",
+  "F-1036",
+  "F-1037",
+  "F-1040",
+  "F-1045",
+  "F-1066",
+  "F-1070",
+  "F-1071",
+  "F-1072",
+  "F-1075",
+  "F-1078",
+  "F-1079",
+  "F-1081",
+  "F-1082",
+  "F-1089",
+  "F-1090",
+  "F-1092",
+  "F-1099",
+  "F-1102",
+  "F-1109"
+ ],
+ "proofs": {
+  "F-1010": {
+   "proof": "[architecture::the_workspace_has_core_features_app_adapter_server_and_cli_crates](../../tests/rewrite/architecture.rs)",
+   "evidence": "../../.handoff/evidence/slice16-test.log"
+  },
+  "F-1011": {
+   "proof": "[architecture::core_does_no_input_output_and_its_tests_need_no_adapter](../../tests/rewrite/architecture.rs)",
+   "evidence": "../../.handoff/evidence/slice16-test.log"
+  },
+  "F-1012": {
+   "proof": "[domain_tests::sessions_turns_goals_and_events_round_trip](../../crates/core/src/domain_tests.rs); [domain_tests::commands_round_trip_in_every_form](../../crates/core/src/domain_tests.rs); [domain_tests::accounts_slots_quotas_approvals_rules_and_settings_round_trip](../../crates/core/src/domain_tests.rs)",
+   "evidence": "../../.handoff/evidence/slice16-test.log"
+  },
+  "F-1013": {
+   "proof": "[architecture::one_event_enum_feeds_the_ui_cli_and_approval_consumers](../../tests/rewrite/architecture.rs); [follow::tests::frames_decode_typed_events_for_this_session_and_report_unreadable_ones](../../crates/cli/src/follow/tests.rs); [goals::the_goal_command_starts_its_own_engine_and_exits_zero_when_met](../../tests/rewrite/goals.rs)",
+   "evidence": "../../.handoff/evidence/slice16-test.log"
+  },
+  "F-1015": {
+   "proof": "[tests::queued_turns_replay_and_delete_retains_usage](../../crates/app/src/tests.rs); [tests::goals::stopping_during_the_verifier_never_marks_the_goal_met](../../crates/app/src/tests/goals.rs); [tests::dictation::silence_failures_and_limits_answer_without_leaving_recordings](../../crates/app/src/tests/dictation.rs)",
+   "evidence": "../../.handoff/evidence/slice16-test.log"
+  },
+  "F-1016": {
+   "proof": "[tests::accepted_prompt_is_durable_before_runner_poll_and_survives_no_account_restart](../../crates/app/src/tests.rs); [tests::goals::a_goal_sleeps_until_the_wall_lifts_then_continues](../../crates/app/src/tests/goals.rs); [tests::lifecycle::an_internal_worker_error_leaves_a_notice_and_an_idle_session](../../crates/app/src/tests/lifecycle.rs)",
+   "evidence": "../../.handoff/evidence/slice16-test.log"
+  },
+  "F-1018": {
+   "proof": "[tests::queued_turns_replay_and_delete_retains_usage](../../crates/app/src/tests.rs)",
+   "evidence": "../../.handoff/evidence/slice16-test.log"
+  },
+  "F-1035": {
+   "proof": "[tests::queued_turns_replay_and_delete_retains_usage](../../crates/app/src/tests.rs); [sessions::restart_loads_valid_sessions_skips_broken_ones_and_fills_defaults](../../tests/rewrite/sessions.rs); [tests::unterminated_line_is_retained_without_corrupting_next_append](../../crates/adapters/store/src/tests.rs); [abrupt_engine_exit_after_init_resumes_the_durable_conversation](../../crates/server/tests/interruptions.rs)",
+   "evidence": "../../.handoff/evidence/slice16-test.log"
+  },
+  "F-1036": {
+   "proof": "[sessions::a_lagging_event_reader_is_disconnected_instead_of_skipping_events](../../tests/rewrite/sessions.rs); [stream.test.ts: uses one connection and requests a fresh snapshot on reconnect or invalid frames](../../ui/src/lib/stream.test.ts); [follow::tests::catch_up_shows_only_the_missed_saved_events_once](../../crates/cli/src/follow/tests.rs); [follow::tests::catch_up_keeps_waiting_while_the_goal_is_still_active](../../crates/cli/src/follow/tests.rs); [follow::tests::a_character_split_between_chunks_stays_whole](../../crates/cli/src/follow/tests.rs)",
+   "evidence": "../../.handoff/evidence/slice16-test.log"
+  },
+  "F-1037": {
+   "proof": "[process_plays_every_scenario_and_preserves_current_turn_usage](../../tests/fake-agy/tests/scenarios.rs); [resumed_stale_and_duplicate_results_preserve_usage_and_success](../../crates/server/tests/rewrite_contract.rs); [queued_messages_stop_delete_and_crash_leave_recoverable_sessions](../../crates/server/tests/rewrite_contract.rs); [handoff::quota_wall_hands_off_same_conversation_and_counts_current_steps_once](../../tests/rewrite/accounts_handoff.rs); [handoff::quota_without_initialization_retries_original_prompt_without_resume_flag](../../tests/rewrite/accounts_handoff.rs); [handoff::lost_conversation_recovers_with_summary_and_a_fresh_id](../../tests/rewrite/accounts_handoff.rs); [handoff::short_rate_limit_hands_off_the_stored_conversation_with_one_continuation](../../tests/rewrite/accounts_handoff.rs); [lifecycle::auth_failure_parks_both_baskets_then_hands_off_without_token_changes](../../tests/rewrite/accounts_lifecycle.rs); [deterministic::transient_retries_use_fake_time_then_park_and_resume_on_next_account](../../tests/rewrite/accounts_deterministic.rs); [jobs::a_goal_waits_for_its_job_without_spending_a_round](../../tests/rewrite/jobs.rs); [goals::denied_commands_get_a_bounded_follow_up_outside_goals](../../tests/rewrite/goals.rs); [approvals::hook_waits_for_the_user_and_relays_each_answer](../../tests/rewrite/approvals.rs)",
+   "evidence": "../../.handoff/evidence/slice16-test.log"
+  },
+  "F-1040": {
+   "proof": "[tests::worktrees_need_a_commit_and_keep_the_subfolder](../../crates/adapters/git/src/tests.rs); [tests::review_commit_discard_merge_and_remove](../../crates/adapters/git/src/tests.rs); [git::captured_worktree_flow_and_refusals](../../tests/rewrite/git.rs)",
+   "evidence": "../../.handoff/evidence/slice16-test.log"
+  },
+  "F-1045": {
+   "proof": "[tests::every_command_parses_with_its_legacy_defaults](../../crates/cli/src/main.rs); [tests::run_passes_every_later_word_to_agy_and_unknown_commands_fail](../../crates/cli/src/main.rs); [runtime::serve_defaults_to_no_browser_and_gui_respects_no_open](../../tests/rewrite/runtime.rs); [approvals::the_hook_fails_closed_and_starts_fast](../../tests/rewrite/approvals.rs); [goals::the_goal_command_starts_its_own_engine_and_exits_zero_when_met](../../tests/rewrite/goals.rs)",
+   "evidence": "../../.handoff/evidence/slice16-test.log"
+  },
+  "F-1066": {
+   "proof": "[dev.spec.ts: just dev runs Vite against a sandbox engine and stops both](../../ui/e2e/dev.spec.ts)",
+   "evidence": "../../.handoff/evidence/slice16-test.log"
+  },
+  "F-1070": {
+   "proof": "[export_types::recursive_stale_check_detects_changed_missing_and_extra_nested_files](../../crates/server/examples/export_types.rs)",
+   "evidence": "../../.handoff/evidence/slice16-test.log"
+  },
+  "F-1071": {
+   "proof": "[architecture::libraries_use_thiserror_tracing_and_serde_and_only_executables_use_anyhow](../../tests/rewrite/architecture.rs)",
+   "evidence": "../../.handoff/evidence/slice16-test.log"
+  },
+  "F-1072": {
+   "proof": "[architecture::libraries_use_thiserror_tracing_and_serde_and_only_executables_use_anyhow](../../tests/rewrite/architecture.rs); [domain_tests::accounts_slots_quotas_approvals_rules_and_settings_round_trip](../../crates/core/src/domain_tests.rs)",
+   "evidence": "../../.handoff/evidence/slice16-test.log"
+  },
+  "F-1075": {
+   "proof": "[architecture::unsafe_code_is_forbidden_in_every_crate](../../tests/rewrite/architecture.rs)",
+   "evidence": "../../.handoff/evidence/slice16-test.log"
+  },
+  "F-1078": {
+   "proof": "[architecture::modules_stay_small_and_state_what_they_own](../../tests/rewrite/architecture.rs)",
+   "evidence": "../../.handoff/evidence/slice16-test.log"
+  },
+  "F-1079": {
+   "proof": "[architecture::the_architecture_document_draws_every_layer_and_decisions_stay_short](../../tests/rewrite/architecture.rs)",
+   "evidence": "../../.handoff/evidence/slice16-test.log"
+  },
+  "F-1081": {
+   "proof": "[architecture::every_crate_has_tests_of_its_own](../../tests/rewrite/architecture.rs); [hook::tests::a_pending_request_is_polled_until_the_user_decides](../../crates/cli/src/hook/tests.rs); [hook::tests::without_an_engine_the_hook_applies_the_owned_rules_and_refuses_questions](../../crates/cli/src/hook/tests.rs)",
+   "evidence": "../../.handoff/evidence/slice16-test.log"
+  },
+  "F-1082": {
+   "proof": "[every_risky_form_asks_under_any_allow_rule_and_its_safe_form_does_not](../../crates/core/src/policy/tests.rs); [risky_flags_ask_after_any_allowed_prefix](../../crates/core/src/policy/tests.rs); [quoted_separators_never_create_commands](../../crates/core/src/policy/tests.rs); [arbitrary_lines_never_panic_and_never_allow_unlisted_commands](../../crates/core/src/policy/tests.rs)",
+   "evidence": "../../.handoff/evidence/slice16-test.log"
+  },
+  "F-1089": {
+   "proof": "[quota_wall_arrives_mid_turn_after_a_tool_and_partial_text](../../tests/fake-agy/tests/scenarios.rs); [handoff::quota_wall_hands_off_same_conversation_and_counts_current_steps_once](../../tests/rewrite/accounts_handoff.rs)",
+   "evidence": "../../.handoff/evidence/slice16-test.log"
+  },
+  "F-1090": {
+   "proof": "[handoff::short_rate_limit_hands_off_the_stored_conversation_with_one_continuation](../../tests/rewrite/accounts_handoff.rs); [rotation::rate_limit_with_quota_left_uses_escalating_short_cooldowns](../../tests/rewrite/accounts_rotation.rs)",
+   "evidence": "../../.handoff/evidence/slice16-test.log"
+  },
+  "F-1092": {
+   "proof": "[approvals::hook_waits_for_the_user_and_relays_each_answer](../../tests/rewrite/approvals.rs); [hook_invocation_obeys_denial_without_executing_a_tool_command](../../tests/fake-agy/tests/scenarios.rs); [approvals.spec.ts: relays a browser answer to a waiting agy tool call](../../ui/e2e/approvals.spec.ts)",
+   "evidence": "../../.handoff/evidence/slice16-test.log"
+  },
+  "F-1099": {
+   "proof": "[goals::a_goal_runs_its_check_and_verifier_until_met](../../tests/rewrite/goals.rs); [goals::a_failed_check_skips_the_verifier_and_the_round_limit_abandons](../../tests/rewrite/goals.rs); [goals::a_rejected_verdict_feeds_back_and_a_spent_verifier_pool_falls_back](../../tests/rewrite/goals.rs); [goals::stop_pauses_a_goal_and_resume_restarts_it](../../tests/rewrite/goals.rs)",
+   "evidence": "../../.handoff/evidence/slice16-test.log"
+  },
+  "F-1102": {
+   "proof": "[approvals::steering_reaches_agy_through_the_hook_with_mentioned_paths](../../tests/rewrite/approvals.rs); [goals::plan_mode_plans_by_instruction_without_native_plan_mode](../../tests/rewrite/goals.rs); [parity::captured_session_actions_preserve_transcript_and_inject_state_on_the_next_turn](../../tests/rewrite/parity.rs); [tests::session_actions::fork_inherits_handoff_without_jobs_goal_or_worktree_and_clear_keeps_history](../../crates/app/src/tests/session_actions.rs)",
+   "evidence": "../../.handoff/evidence/slice16-test.log"
+  },
+  "F-1109": {
+   "proof": "[terminal.spec.ts: runs a shell in the session folder](../../ui/e2e/terminal.spec.ts)",
+   "evidence": "../../.handoff/evidence/slice16-test.log"
+  }
+ }
+}

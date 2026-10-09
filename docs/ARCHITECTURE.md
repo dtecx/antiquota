@@ -13,7 +13,7 @@ flowchart TB
     App["crates/app: session and account services"]
     Features["crates/features: small feature modules"]
     Core["crates/core: types, reducers, policy, ports"]
-    Adapters["crates/adapters: agy, accounts, store, git, pty, transcribe"]
+    Adapters["crates/adapters: agy, accounts, store, git, pty, shell"]
     Data["Existing ~/.antiquota files and conversation store"]
     Agy["Unmodified agy CLI"]
     UI -.->|runtime: typed HTTP and SSE| Server
@@ -46,8 +46,8 @@ Solid edges show Rust crate imports. Dashed edges show labeled runtime connectio
 | `crates/adapters/accounts` | Slot paths, leases, account HOME and file-token isolation, sign-in, quota/model probes, and owned configuration links. |
 | `crates/adapters/store` | Existing JSON/JSONL files, atomic snapshots, append-only event records, checkpoints, attachments, and read-only conversation database access. |
 | `crates/adapters/git` | Explicit `git` argument lists, status/diffs, worktree creation, commit, merge, and removal. |
-| `crates/adapters/pty` | Portable PTY/ConPTY lifecycle, input, resize, output, and safe process-tree cleanup. Project-owned unsafe code is allowed only here. |
-| `crates/adapters/transcribe` | Temporary audio, an isolated agy call using Flash High, NO_SPEECH handling, and cleanup. |
+| `crates/adapters/pty` | Portable PTY/ConPTY lifecycle, input, resize, output, and safe process-tree cleanup through safe wrappers; the workspace forbids unsafe code everywhere. |
+| `crates/adapters/shell` | Check and `!` commands, background jobs with their logs, and keep-awake. Dictation has no adapter of its own: app sends the recording through the agy adapter's tool-free call with Flash High and handles NO_SPEECH. |
 | `crates/server` | HTTP-runtime startup composition, captured HTTP routes, Host/token checks, body limits, JSON errors, SSE encoding, and built UI serving. Handlers use application commands; startup alone chooses concrete adapters. |
 | `crates/cli` | One clap binary, legacy commands, `serve`, and the fast `hook` entry point. `anyhow` is confined to executables. |
 | `ui/src/lib` | Generated-type API client, one event connection, pure reducers, view stores, formatting, and platform actions. |
@@ -60,7 +60,7 @@ Each source module states its ownership in a doc comment. Keep modules and compo
 
 Core declares `AgentRunner`, `AccountStore`, `QuotaProbe`, `SessionStore`, `Vcs`, `Pty`, `Transcriber`, `Clock`, and `Notifier`. A port exposes the smallest operations used by its service, domain input/output types, and a typed error. Runtime handles and adapter details remain behind that boundary. No Tokio types cross into core. A synchronous or standard-library future signature is chosen for each concrete operation; adapters may use Tokio internally. Do not introduce a universal request/response port.
 
-`AgentRunner` executes an owned turn request, reports typed events, and supports cancellation. `AccountStore` acquires an owned account lease and provides the selected slot context; only the adapter constructs environment variables or reads credentials. `SessionStore` loads snapshots/records, appends records, and atomically replaces snapshots. `Clock` supplies time and local-calendar conversion needed by decisions; runtime waiting happens in app, with a fake clock in tests. `Notifier` receives explicit user notification data and has a harmless CLI/browser implementation.
+`AgentRunner` executes an owned turn request, reports typed events, and supports cancellation. `AccountStore` acquires an owned account lease and provides the selected slot context; only the adapter constructs environment variables or reads credentials. `SessionStore` loads snapshots/records, appends records, and atomically replaces snapshots. `Clock` supplies time and local-calendar conversion needed by decisions; runtime waiting happens in app, with a fake clock in tests. `Notifier` receives explicit user notification data. `Transcriber` and `Notifier` are declared but not wired yet; dictation uses `AgentRunner::ask` and notifications come from the UI and desktop shell (F-1021, F-1023).
 
 The small `Feature` trait has `before_turn`, `on_event`, and `after_turn` hooks. Hooks inspect a session/turn view and return ordinary `Command` values or a typed refusal. They do not spawn processes, write files, subscribe independently, or mutate shared session state. App executes returned commands through the same command dispatcher. A feature can request a follow-up turn, a verifier call, a job, an account handoff, or a wake-state change without owning the runtime. Keep-awake computes whether active turns/jobs require a hold; app owns one safe platform handle and releases it on shutdown. A safe platform library avoids new unsafe code outside the PTY adapter.
 
@@ -167,3 +167,5 @@ Slice 13 proves quota walls, model buckets, ranking, the next reset, error class
 Slice 14 carries the owner's requests of 2026-10-09. Model calls share an account through a shared file lease while probes and removal still need it alone, and a pure placement rule fills one account first or spreads new sessions. Cached input flows from the decoder into the ledger and an opt-in usage detail, and the Usage view refreshes itself. Prompts and replies have Copy buttons, and token counts are named input and output. See [ADR 0025](adr/0025-shared-accounts-placement-and-usage-detail.md).
 
 Slice 15 builds the Linux deb, rpm and AppImage and checks each one by unpacking it and starting its engine in a sandbox; CI runs the same check. A packaged engine finds the UI beside its own folder. See [ADR 0026](adr/0026-linux-installers.md).
+
+Slice 16 proves the architecture requirements as tests that read `cargo metadata` and the sources: crate layout and direction, a core without input and output, one event enum, no unsafe code, error and logging crates, module size and ownership comments, tests per crate, and this document. The CLI `goal` command decodes the shared typed events and catches up after a dropped stream. See [ADR 0027](adr/0027-architecture-checks.md).

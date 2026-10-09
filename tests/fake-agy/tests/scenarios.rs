@@ -178,6 +178,50 @@ fn process_plays_every_scenario_and_preserves_current_turn_usage() {
     }
 }
 #[test]
+fn quota_wall_arrives_mid_turn_after_a_tool_and_partial_text() {
+    let fixture = Fixture::new();
+    let output = fixture.turn("quota");
+    assert_eq!(output.status.code(), Some(1));
+    let steps: Vec<String> = frames(&output)
+        .iter()
+        .map(|frame| match frame["event"].as_str().unwrap_or("") {
+            "step_update" => {
+                let step = &frame["step_update"];
+                format!(
+                    "{} {}",
+                    step["step_type"].as_str().unwrap_or(""),
+                    step["state"].as_str().unwrap_or("")
+                )
+            }
+            "result" => format!(
+                "result {}",
+                frame["result"]["status"].as_str().unwrap_or("")
+            ),
+            other => other.to_owned(),
+        })
+        .collect();
+    let tool = steps
+        .iter()
+        .position(|s| s == "tool DONE")
+        .expect("a finished tool");
+    let text = steps
+        .iter()
+        .position(|s| s == "agent_response ACTIVE")
+        .expect("partial reply text");
+    assert_eq!(steps.last().map(String::as_str), Some("result ERROR"));
+    assert!(
+        steps[0] == "init" && tool < text && text + 1 == steps.len() - 1,
+        "{steps:?}"
+    );
+    let all = frames(&output);
+    assert_eq!(
+        all[text]["step_update"]["text_delta"],
+        "Partial answer before quota."
+    );
+    let error = all.last().unwrap()["result"]["error"].to_string();
+    assert!(error.contains("RESOURCE_EXHAUSTED"), "{error}");
+}
+#[test]
 fn delay_can_be_cancelled_before_any_edit() {
     let fixture = Fixture::new();
     let mut child = fixture

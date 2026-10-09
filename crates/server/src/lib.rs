@@ -5,6 +5,7 @@ mod http;
 mod parity_http;
 pub mod routes;
 mod runtime;
+mod session_http;
 mod stream;
 pub use runtime::{ServerError, discover, open_url, serve};
 fn expand_cwd(text: &str) -> Result<String, antiquota_app::AppError> {
