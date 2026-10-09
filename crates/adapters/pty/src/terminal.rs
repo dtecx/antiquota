@@ -368,9 +368,10 @@ mod tests {
         let terminal = ShellTerminal::spawn(dir.to_str().unwrap(), 80, 24).unwrap();
         let feed = terminal.subscribe();
         terminal
-            .write(b"sleep 59 & printf 'jo''b-%s-e''nd' $!; disown\r")
+            .write(b"sh -c 'printf \"jo\"\"b-%s-e\"\"nd\" $$; exec sleep 59' & disown\r")
             .unwrap();
-        // The quotes keep the typed echo from matching the printed job id.
+        // The job prints its own process id (`$!` would meet history expansion in bash 3.2),
+        // and the quotes keep the typed echo from matching it.
         let (text, _) = collect_until(&feed, "-end", 10);
         let job: i32 = text
             .split("job-")
