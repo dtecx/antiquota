@@ -152,6 +152,10 @@ pub trait AccountStore: Send + Sync {
     fn routes(&self, _n: usize) -> Result<Vec<RoutingEntry>, PortError> {
         Ok(vec![])
     }
+    /// The newest routing decisions when a reader names no count.
+    fn recent_routes(&self) -> Result<Vec<RoutingEntry>, PortError> {
+        self.routes(crate::ROUTING_READ)
+    }
     fn record_route(&self, _entry: &RoutingEntry) -> Result<(), PortError> {
         unavailable()
     }

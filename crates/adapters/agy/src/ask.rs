@@ -1,6 +1,8 @@
 //! Owns separate read-only agy calls in a fresh conversation, such as the goal verifier.
 use crate::AgyRunner;
-use antiquota_core::{AskRequest, AskResult, Cancellation, Failure, PortError, classify_error};
+use antiquota_core::{
+    AskRequest, AskResult, Cancellation, Failure, PortError, classify_error, error_text,
+};
 use std::time::Duration;
 use tokio::process::Command;
 
@@ -70,7 +72,9 @@ impl AgyRunner {
             || response.is_none();
         if failed {
             let text = format!("{err}\n{out}");
-            let status = match classify_error(&text) {
+            // Only agy's error channels count: a reply that mentions quota is not a wall.
+            let status = match classify_error(&error_text(captured.code.unwrap_or(-1), &out, &err))
+            {
                 Some(Failure::Quota) => "quota",
                 Some(Failure::Auth) => "auth",
                 _ => "error",
@@ -165,6 +169,23 @@ mod tests {
             .unwrap();
         assert_eq!(bad.status, "error");
         assert!(bad.error.contains("something broke"));
+        // Only agy's error fields classify a failed answer; its reply text never walls an account.
+        let prose = stub(
+            &root,
+            r#"{"status":"ERROR","error":"tool crashed","response":"RESOURCE_EXHAUSTED quota 429 UNAUTHENTICATED"}"#,
+        )
+        .ask_agy(request(), Cancellation::default())
+        .await
+        .unwrap();
+        assert_eq!(prose.status, "error");
+        let spent = stub(
+            &root,
+            r#"{"status":"ERROR","error":"RESOURCE_EXHAUSTED: quota"}"#,
+        )
+        .ask_agy(request(), Cancellation::default())
+        .await
+        .unwrap();
+        assert_eq!(spent.status, "quota");
         let _ = fs::remove_dir_all(root);
     }
 }

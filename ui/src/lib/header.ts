@@ -6,7 +6,7 @@ import { clockTime } from './account-format';
 import { formatTokens, statusLabel } from './format';
 
 export function shortHeaderPath(path: string): string {
-  return path.replace(/^\/(?:Users|home)\/[^/]+(?=\/|$)/, '~');
+  return path.replace(/^\/(?:(?:Users|home)\/[^/]+|root)(?=\/|$)/, '~');
 }
 
 export function headerPath(cwd: string, worktree: Worktree | null) {

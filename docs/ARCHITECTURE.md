@@ -161,3 +161,5 @@ Slice 10 integrates the native crate into the workspace, bundles the Rust sideca
 Slice 11 proves the storage location and the persisted defaults. The account home comes from the account database on POSIX, the old `~/.agyloop` folder moves once with its links and config paths, and `settings.json` is read key by key so one bad value no longer resets the rest. See [ADR 0023](adr/0023-storage-location-and-defaults.md).
 
 Slice 12 proves the session lifecycle and turn edges and fixes four defects: transcript deduplication independent of key order, a single no-account notice, the `result.response` reply fallback (carried on `TurnResult`), and normalized session folders.
+
+Slice 13 proves quota walls, model buckets, ranking, the next reset, error classification and the routing history. Classification reads only agy's error channels through one shared `error_text`, so the separate ask call no longer reads reply text. Tests with a fixed clock compare wall times and routing timestamps exactly. See [ADR 0024](adr/0024-quota-routing-and-error-channels.md).

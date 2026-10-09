@@ -19,6 +19,7 @@ pub async fn route(
                 let text = query
                     .split('&')
                     .find_map(|p| p.strip_prefix("n="))
+                    .filter(|n| !n.is_empty())
                     .unwrap_or("60");
                 let n = text
                     .parse::<i64>()

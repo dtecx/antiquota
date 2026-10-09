@@ -339,3 +339,209 @@ async fn warm_account_affinity_waits_ten_fake_seconds_before_another_lease() {
     );
     service.shutdown().await;
 }
+
+fn all_calls() -> Vec<Value> {
+    std::fs::read_to_string(std::env::var_os("FAKE_AGY_RECORD").unwrap())
+        .unwrap_or_default()
+        .lines()
+        .map(|line| serde_json::from_str::<Value>(line).unwrap())
+        .collect()
+}
+fn routing_rows() -> Vec<Value> {
+    std::fs::read_to_string(
+        PathBuf::from(std::env::var_os("ANTIQUOTA_DIR").unwrap()).join("state/routing.jsonl"),
+    )
+    .unwrap_or_default()
+    .lines()
+    .map(|line| serde_json::from_str::<Value>(line).unwrap())
+    .collect()
+}
+
+#[tokio::test]
+async fn routing_ledger_stamps_policy_time_and_auth_parks_exactly_thirty_days() {
+    let name = "routing_ledger_stamps_policy_time_and_auth_parks_exactly_thirty_days";
+    if !worker(
+        name,
+        json!({"scenarios_by_slot":{setup::ONE:"transient",setup::TWO:"auth"}}),
+    ) {
+        return;
+    }
+    let clock = TestClock::new(false);
+    let service = compose(clock.clone());
+    let id = send(&service, "Record every routing decision.");
+    idle(&service).await;
+    assert_eq!(clock.waits(), [10.0, 30.0]);
+    let parked = NOW + 40.0 + 30.0 * 86_400.0;
+    let accounts = service.account_overview().unwrap();
+    assert_eq!(accounts[0].walls["gemini"], NOW + 40.0 + 300.0);
+    assert_eq!(accounts[1].walls["gemini"], parked);
+    assert_eq!(accounts[1].walls["cg"], parked);
+    assert_eq!(accounts[1].why["cg"], "signed out: sign in again");
+    service
+        .account_service
+        .pause_account(setup::ONE, true)
+        .unwrap();
+    service
+        .account_service
+        .pause_account(setup::ONE, false)
+        .unwrap();
+    let error = "UNAVAILABLE: the model is overloaded";
+    assert_eq!(
+        routing_rows(),
+        [
+            json!({"ts":NOW,"event":"pick","slot":setup::ONE,"bucket":"gemini","session":id,"previous":null}),
+            json!({"ts":NOW,"event":"retry","slot":setup::ONE,"bucket":"gemini","session":id,"why":error,"wait":10.0}),
+            json!({"ts":NOW + 10.0,"event":"retry","slot":setup::ONE,"bucket":"gemini","session":id,"why":error,"wait":30.0}),
+            json!({"ts":NOW + 40.0,"event":"cooldown","slot":setup::ONE,"bucket":"gemini","why":"repeated errors","secs":300.0}),
+            json!({"ts":NOW + 40.0,"event":"pick","slot":setup::TWO,"bucket":"gemini","session":id,"previous":setup::ONE}),
+            json!({"ts":NOW + 40.0,"event":"signed-out","slot":setup::TWO,"why":"agy rejected the account's token"}),
+            json!({"ts":NOW + 40.0,"event":"paused","slot":setup::ONE,"why":"by the user"}),
+            json!({"ts":NOW + 40.0,"event":"resumed","slot":setup::ONE,"why":"by the user"}),
+        ]
+    );
+    // A healthy reading repairs the signed-out account.
+    service
+        .account_service
+        .check_account(setup::TWO)
+        .await
+        .unwrap();
+    let repaired = &service.account_overview().unwrap()[1];
+    assert_eq!(repaired.walls["gemini"], 0.0);
+    assert_eq!(repaired.walls["cg"], 0.0);
+    assert_eq!(repaired.probed, Some(NOW + 40.0));
+    setup::evidence(
+        "routing-timestamps",
+        json!({"events":["pick","retry","retry","cooldown","pick","signed-out","paused","resumed"],"parkedSeconds":2592000,"repairedByProbe":true}),
+    );
+    service.shutdown().await;
+}
+
+#[tokio::test]
+async fn quota_wall_ledger_entry_and_verification_parking_use_policy_time() {
+    let name = "quota_wall_ledger_entry_and_verification_parking_use_policy_time";
+    if !worker(
+        name,
+        json!({"scenarios_by_slot":{setup::ONE:"quota"},"metadata_by_slot":{
+            setup::ONE:{"quota_after_turn":setup::healthy_quota(0.0)},
+            setup::TWO:{"verify_url":"https://accounts.google.com/signin/continue?fixture=1"}
+        }}),
+    ) {
+        return;
+    }
+    let clock = TestClock::new(false);
+    let service = compose(clock.clone());
+    service
+        .account_service
+        .check_account(setup::TWO)
+        .await
+        .unwrap();
+    let parked = NOW + 30.0 * 86_400.0;
+    let verify = &service.account_overview().unwrap()[1];
+    assert_eq!(verify.walls["gemini"], parked);
+    assert_eq!(verify.walls["cg"], parked);
+    assert_eq!(verify.why["gemini"], "verify the account with Google");
+    let id = send(&service, "Spend the first account.");
+    idle(&service).await;
+    let wall = 4_070_926_800.0 + 120.0;
+    assert_eq!(service.account_overview().unwrap()[0].walls["gemini"], wall);
+    assert_eq!(
+        routing_rows(),
+        [
+            json!({"ts":NOW,"event":"pick","slot":setup::ONE,"bucket":"gemini","session":id,"previous":null}),
+            json!({"ts":NOW,"event":"wall","slot":setup::ONE,"bucket":"gemini","until":wall,"why":"quota spent"}),
+        ]
+    );
+    setup::evidence(
+        "wall-timestamps",
+        json!({"verificationParkedSeconds":2592000,"wallEntry":"quota spent","until":wall}),
+    );
+    service.shutdown().await;
+}
+
+#[tokio::test]
+async fn polling_uses_quota_poll_freshness_and_refreshes_only_stale_idle_accounts() {
+    let name = "polling_uses_quota_poll_freshness_and_refreshes_only_stale_idle_accounts";
+    if !worker(name, json!({})) {
+        return;
+    }
+    let data = PathBuf::from(std::env::var_os("ANTIQUOTA_DIR").unwrap());
+    let stamp = |slot: &str, at: f64| {
+        let path = data.join(format!("state/quota/{slot}.json"));
+        let mut value: Value = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+        value["at"] = json!(at);
+        std::fs::write(path, value.to_string()).unwrap();
+    };
+    let probes = || {
+        all_calls()
+            .into_iter()
+            .filter(|row| setup::argument(row, "-p") == Some("/quota"))
+            .map(|row| row["slot"].as_str().unwrap().to_owned())
+            .collect::<Vec<_>>()
+    };
+    for (poll, freshness) in [("abc", 600.0), ("1", 120.0), ("5", 300.0)] {
+        std::fs::write(
+            data.join("settings.json"),
+            json!({"quota_poll":poll,"keep_awake":"off"}).to_string(),
+        )
+        .unwrap();
+        // One account is a second younger than the freshness age, the other exactly at it.
+        stamp(setup::ONE, NOW - freshness + 1.0);
+        stamp(setup::TWO, NOW - freshness);
+        let before = probes().len();
+        let clock = TestClock::new(true);
+        let service = compose(clock.clone());
+        service.account_service.start_account_polling();
+        let started = Instant::now();
+        while clock.waits().is_empty() {
+            assert!(started.elapsed() < Duration::from_secs(5), "{poll}");
+            tokio::time::sleep(Duration::from_millis(1)).await;
+        }
+        assert_eq!(clock.waits(), [freshness], "{poll}");
+        assert_eq!(probes()[before..], [setup::TWO.to_owned()], "{poll}");
+        service.shutdown().await;
+    }
+    // The direct refresh reports which accounts gained a valid reading.
+    stamp(setup::ONE, NOW);
+    stamp(setup::TWO, NOW - 601.0);
+    let service = compose(TestClock::new(false));
+    assert_eq!(
+        service
+            .account_service
+            .refresh_accounts(600.0)
+            .await
+            .unwrap(),
+        [setup::TWO.to_owned()]
+    );
+    let lease = service.accounts.lease_named(setup::TWO).unwrap().unwrap();
+    stamp(setup::TWO, NOW - 601.0);
+    assert!(
+        service
+            .account_service
+            .refresh_accounts(600.0)
+            .await
+            .unwrap()
+            .is_empty()
+    );
+    drop(lease);
+    // An unreadable panel is not a valid update.
+    std::fs::write(
+        std::env::var_os("FAKE_AGY_SCRIPT").unwrap(),
+        json!({"metadata_by_slot":{setup::TWO:{"quota_error":"fixture panel failure"}}})
+            .to_string(),
+    )
+    .unwrap();
+    stamp(setup::TWO, NOW - 601.0);
+    assert!(
+        service
+            .account_service
+            .refresh_accounts(600.0)
+            .await
+            .unwrap()
+            .is_empty()
+    );
+    setup::evidence(
+        "poll-freshness",
+        json!({"invalid":600,"oneMinute":120,"fiveMinutes":300,"onlyOlderThanMaxAge":true,"busySkipped":true}),
+    );
+    service.shutdown().await;
+}

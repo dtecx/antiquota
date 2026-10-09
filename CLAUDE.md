@@ -34,7 +34,7 @@ The legacy implementation is in this branch for reference: `antiquota/*.py` (eng
 
 ## Status
 
-Slices 1, 3 to 8, 9a, 9b, 9c, 9d, 9e and 9f are done and committed: sessions, permissions and approvals, goals, jobs, worktrees, terminal, attachments and dictation. Slice 2 (accounts and handoff) has code and tests; 33 fully proved backend rows are now folded into the report through `tests/rewrite/slice9f-account-coverage.json`; 32 partial proposal rows retain explicit remaining acceptance. Its account UI evidence is folded in Slice 9b. 758 of 1144 rows are Passed. Slice 10 native-shell code and the macOS app/DMG build are implemented and tested; actual native engine navigation, zoom, lifecycle, menus, tray, OS permissions and AAC recording remain Pending because the background test app blocks on a sandbox engine.json filesystem open (R-009).
+Slices 1, 3 to 8, 9a to 9f, 11 (storage and defaults), 12 (session lifecycle and turn edges) and 13 (quota routing, walls and error channels) are done and committed: sessions, permissions and approvals, goals, jobs, worktrees, terminal, attachments and dictation. Slice 2 (accounts and handoff) has code and tests; 33 fully proved backend rows are now folded into the report through `tests/rewrite/slice9f-account-coverage.json`; 32 partial proposal rows retain explicit remaining acceptance. Its account UI evidence is folded in Slice 9b, and Slice 13 proved 19 more quota and routing rows (`tests/rewrite/slice13-coverage.json`). 809 of 1144 rows are Passed. Slice 10 native-shell code and the macOS app/DMG build are implemented and tested; actual native engine navigation, zoom, lifecycle, menus, tray, OS permissions and AAC recording remain Pending because the background test app blocks on a sandbox engine.json filesystem open (R-009).
 
 Next work, in order:
 
@@ -59,6 +59,8 @@ corepack enable && corepack prepare pnpm@11.19.0 --activate   # or: npx -y pnpm@
 pnpm --dir ui install --frozen-lockfile
 pnpm --dir ui exec playwright install --with-deps chromium
 ```
+
+On a Linux machine, the workspace needs Rust 1.99 or later (`rustup update stable`) and the webview libraries for the desktop crate: `apt-get install libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf`. If Playwright cannot download its Chromium, point `PLAYWRIGHT_BROWSERS_PATH` at a folder whose `chromium-<revision>` and `chromium_headless_shell-<revision>` entries link to an installed Chromium; the revision is in `playwright-core/browsers.json`. Keep one Cargo target folder per checkout in mind: each takes about 13 GB.
 
 `ui/package.json` asks for Node 26.10.0. If pnpm refuses an older Node, install that version (for example with nvm). If `cargo deny` cannot reach its advisory database, run `cargo deny --config .cargo/deny.toml check bans licenses sources` and say so in the report.
 

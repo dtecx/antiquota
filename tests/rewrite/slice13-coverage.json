@@ -1,0 +1,109 @@
+{
+ "format": 1,
+ "slice": "13",
+ "passed_before": 790,
+ "added": 19,
+ "passed_after": 809,
+ "pending_after": 335,
+ "passed_after_is_prospective": false,
+ "gate_status": "just check passed; just test passed 336 Rust and 452 Vitest tests; the Chromium step was rerun after the disk filled and passed all 117 scenarios. Linux x86_64.",
+ "feature_ids": [
+  "F-034",
+  "F-037",
+  "F-040",
+  "F-044",
+  "F-047",
+  "F-048",
+  "F-052",
+  "F-053",
+  "F-054",
+  "F-055",
+  "F-056",
+  "F-058",
+  "F-059",
+  "F-060",
+  "F-061",
+  "F-064",
+  "F-065",
+  "F-066",
+  "F-068"
+ ],
+ "proofs": {
+  "F-034": {
+   "proof": "[deterministic::quota_wall_ledger_entry_and_verification_parking_use_policy_time](../../tests/rewrite/accounts_deterministic.rs); [replay::verified_login_keeps_the_account_parked_until_successful_probe](../../tests/rewrite/accounts_replay.rs). With a fixed clock, a verification probe parks both buckets until exactly now + 2,592,000 seconds with the verification reason. The replay test keeps the token, exposes the continue URL and clears verification and both walls after a healthy probe.",
+   "evidence": ".handoff/evidence/slice13-test.log"
+  },
+  "F-037": {
+   "proof": "[routing_edges::removing_an_account_clears_both_of_its_bucket_walls](../../tests/rewrite/accounts_routing_edges.rs); [replay::captured_account_routes_preserve_exact_overviews_and_routing_records](../../tests/rewrite/accounts_replay.rs). Removing an account deletes both of its seeded wall files and keeps the other account's walls. The replay test rejects invalid and leased removals and removes an idle account.",
+   "evidence": ".handoff/evidence/slice13-test.log"
+  },
+  "F-040": {
+   "proof": "[routing::tests::models_classify_by_case_sensitive_prefix_from_either_argument_form](../../crates/core/src/routing/tests.rs); [routing_edges::model_buckets_keep_independent_walls_and_unwall_clears_both](../../tests/rewrite/accounts_routing_edges.rs). Models that start with claude or gpt (case-sensitive, as in legacy) use cg; all others, and no model, use gemini. `--model M` wins over `--model=M`. Claude and GPT sessions, and raw CLI runs in both argument forms, skip an account walled only for cg and record bucket cg.",
+   "evidence": ".handoff/evidence/slice13-test.log"
+  },
+  "F-044": {
+   "proof": "[routing::tests::walls_need_two_percent_or_less_and_use_the_latest_applicable_reset](../../crates/core/src/routing/tests.rs); [routing_edges::quota_panel_walls_at_two_percent_with_the_latest_spent_reset_or_the_fallback](../../tests/rewrite/accounts_routing_edges.rs). A window at exactly 2% walls the bucket and 2.01% does not. The latest reset among spent windows applies; a spent window without a reset uses the other windows' latest reset; with no usable reset the wall is now + 5 h 10 min. Each adds 120 seconds. Real HTTP probes set these walls and a later healthy reading clears them.",
+   "evidence": ".handoff/evidence/slice13-test.log"
+  },
+  "F-047": {
+   "proof": "[deterministic::routing_ledger_stamps_policy_time_and_auth_parks_exactly_thirty_days](../../tests/rewrite/accounts_deterministic.rs); [lifecycle::auth_failure_parks_both_baskets_then_hands_off_without_token_changes](../../tests/rewrite/accounts_lifecycle.rs). With a fixed clock, a genuine auth failure parks both buckets until exactly now + 30 days with the signed-out reason, and a later healthy check clears both walls. The lifecycle test hands the turn off without changing token bytes.",
+   "evidence": ".handoff/evidence/slice13-test.log"
+  },
+  "F-048": {
+   "proof": "[routing_edges::model_buckets_keep_independent_walls_and_unwall_clears_both](../../tests/rewrite/accounts_routing_edges.rs); [routing::tests::paused_or_walled_accounts_never_rank](../../crates/core/src/routing/tests.rs). A cg wall leaves the account available to Gemini sessions, an expired wall reads as no wall, and `antiquota unwall <account>` removes both seeded bucket walls of that account and no other.",
+   "evidence": ".handoff/evidence/slice13-test.log"
+  },
+  "F-052": {
+   "proof": "[deterministic::polling_uses_quota_poll_freshness_and_refreshes_only_stale_idle_accounts](../../tests/rewrite/accounts_deterministic.rs); [cli_lifecycle::account_cli_probe_and_raw_quota_do_not_reconcile_active_engine_sessions](../../tests/rewrite/accounts_cli_lifecycle.rs). Refresh probes an account whose reading is exactly max_age old and skips one a second younger. It skips a leased account and returns the accounts that got a valid new reading, so an unreadable panel returns none. `refresh_accounts` now returns these names instead of nothing.",
+   "evidence": ".handoff/evidence/slice13-test.log"
+  },
+  "F-053": {
+   "proof": "[routing::tests::freshness_uses_minutes_with_a_two_minute_floor_and_a_ten_minute_fallback](../../crates/core/src/routing/tests.rs); [deterministic::polling_uses_quota_poll_freshness_and_refreshes_only_stale_idle_accounts](../../tests/rewrite/accounts_deterministic.rs). Freshness is quota_poll minutes in seconds with a 120-second floor. Non-numeric or non-finite text gives 600 seconds; surrounding spaces are ignored, as legacy `float()` did. The engine's poller waits 600, 120 and 300 seconds for `abc`, `1` and `5`.",
+   "evidence": ".handoff/evidence/slice13-test.log"
+  },
+  "F-054": {
+   "proof": "[routing::tests::headroom_is_the_smallest_fraction_and_the_latest_known_reset](../../crates/core/src/routing/tests.rs). Headroom is the smallest window fraction and the expiry is the latest positive reset. A missing bucket or an empty window set stays unknown, and fractions without resets keep the expiry unknown.",
+   "evidence": ".handoff/evidence/slice13-test.log"
+  },
+  "F-055": {
+   "proof": "[routing::tests::perishable_spends_the_soonest_reset_then_more_headroom_with_unknown_expiry_last](../../crates/core/src/routing/tests.rs); [rotation::perishable_uses_earliest_weekly_reset_and_round_robin_uses_last_pick](../../tests/rewrite/accounts_rotation.rs). Perishable ranking orders by soonest reset, then by more headroom at an equal reset. Accounts with unknown expiry come last, ordered by headroom with unknown quota counted as 50%. Input order does not change the result. The HTTP test picks the earlier weekly reset and keeps the warm account.",
+   "evidence": ".handoff/evidence/slice13-test.log"
+  },
+  "F-056": {
+   "proof": "[routing::tests::sticky_uses_sorted_names_and_round_robin_the_least_recent_pick](../../crates/core/src/routing/tests.rs); [rotation::perishable_uses_earliest_weekly_reset_and_round_robin_uses_last_pick](../../tests/rewrite/accounts_rotation.rs); [routing_edges::paused_and_walled_accounts_sit_out_until_resumed_or_expired](../../tests/rewrite/accounts_routing_edges.rs). Sticky ranks by account name whatever the quota or history. Round-robin ranks by each account's last pick time, never-picked accounts first, and only pick entries count. Real HTTP turns follow both orders.",
+   "evidence": ".handoff/evidence/slice13-test.log"
+  },
+  "F-058": {
+   "proof": "[routing_edges::paused_and_walled_accounts_sit_out_until_resumed_or_expired](../../tests/rewrite/accounts_routing_edges.rs); [routing::tests::paused_or_walled_accounts_never_rank](../../crates/core/src/routing/tests.rs). With sticky rotation, a paused or currently walled first account is skipped for new turns, and it is chosen again after resume or once its wall has expired.",
+   "evidence": ".handoff/evidence/slice13-test.log"
+  },
+  "F-059": {
+   "proof": "[routing::tests::next_reset_is_the_earliest_live_wall_of_the_requested_bucket](../../crates/core/src/routing/tests.rs); [routing_edges::all_walled_notice_reports_the_earliest_reset_of_the_requested_bucket](../../tests/rewrite/accounts_routing_edges.rs). The next reset is the earliest unexpired wall of the requested bucket, ignoring the other bucket and expired walls, or zero. When every account is walled, the wall notice carries that reset and no agy turn starts.",
+   "evidence": ".handoff/evidence/slice13-test.log"
+  },
+  "F-060": {
+   "proof": "[parser::tests::only_agy_error_channels_classify_a_failed_turn](../../crates/adapters/agy/src/parser.rs); [routing::tests::error_text_keeps_agy_error_channels_without_the_reply](../../crates/core/src/routing/tests.rs); [ask::tests::answers_need_agy_json_and_pass_folder_access_without_skipping_permissions](../../crates/adapters/agy/src/ask.rs); [routing_edges::model_prose_and_successful_stderr_never_wall_an_account](../../tests/rewrite/accounts_routing_edges.rs); [cli_lifecycle::raw_current_success_ignores_historical_quota_error_without_walling_account](../../tests/rewrite/accounts_cli_lifecycle.rs). A reply full of error words and stderr warnings on a successful turn leave status SUCCESS, no wall and no routing decision. stderr counts only after a failed exit, and agy error frames count without their response field. The verifier and dictation path no longer classifies the reply text (W-026).",
+   "evidence": ".handoff/evidence/slice13-test.log"
+  },
+  "F-061": {
+   "proof": "[routing::tests::classification_prefers_auth_then_quota_then_transient](../../crates/core/src/routing/tests.rs); [routing_edges::an_auth_error_outranks_quota_and_transient_words](../../tests/rewrite/accounts_routing_edges.rs). Each pattern of each class is classified; auth beats quota and transient, quota beats transient, and status codes must stand alone. Through HTTP, an agy error naming auth, quota and 503 together parks both accounts as signed out instead of walling them for quota.",
+   "evidence": ".handoff/evidence/slice13-test.log"
+  },
+  "F-064": {
+   "proof": "[deterministic::routing_ledger_stamps_policy_time_and_auth_parks_exactly_thirty_days](../../tests/rewrite/accounts_deterministic.rs); [deterministic::quota_wall_ledger_entry_and_verification_parking_use_policy_time](../../tests/rewrite/accounts_deterministic.rs); [replay::routing_reads_requested_tails_in_stored_order_and_skips_malformed_lines](../../tests/rewrite/accounts_replay.rs). With a fixed clock, the ledger holds the exact pick, retry, cooldown, signed-out, paused, resumed and wall entries with their policy times and fields. The replay test skips malformed lines.",
+   "evidence": ".handoff/evidence/slice13-test.log"
+  },
+  "F-065": {
+   "proof": "[tests::routing_history_trims_above_two_megabytes_to_the_newest_five_thousand_lines](../../crates/adapters/accounts/src/tests.rs); [routing_edges::routing_history_reads_default_to_sixty_and_trim_above_two_megabytes](../../tests/rewrite/accounts_routing_edges.rs). A history of exactly 2,000,000 bytes after an append stays whole; one byte more keeps the newest 5000 lines, ending with the new entry. A read without a count returns the newest 200. HTTP returns 60 by default and for an empty `n` (W-027).",
+   "evidence": ".handoff/evidence/slice13-test.log"
+  },
+  "F-066": {
+   "proof": "[tests::today_starts_at_local_midnight](../../crates/adapters/accounts/src/tests.rs); [tests::local_day_usage_skips_malformed_rows_and_keeps_all_four_fields](../../crates/adapters/accounts/src/tests.rs). A row one second before local midnight is excluded and a row at midnight is included. Malformed rows are skipped and all four totals are kept.",
+   "evidence": ".handoff/evidence/slice13-test.log"
+  },
+  "F-068": {
+   "proof": "[parity::usage_replays_captured_calendar_and_clamps_the_window](../../tests/rewrite/parity.rs); [routing_edges::routing_history_reads_default_to_sixty_and_trim_above_two_megabytes](../../tests/rewrite/accounts_routing_edges.rs). Usage history clamps the day count to 1–90. Routing reads honor an explicit `n=5` and `n=0` (everything) and default to 60.",
+   "evidence": ".handoff/evidence/slice13-test.log"
+  }
+ }
+}

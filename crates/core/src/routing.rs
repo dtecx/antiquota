@@ -5,6 +5,8 @@ pub const FALLBACK_WALL: f64 = 18_600.0;
 pub const COOLDOWNS: [f64; 3] = [60.0, 300.0, 900.0];
 pub const AFFINITY_WAIT: f64 = 10.0;
 pub const PARKED_SECONDS: f64 = 30.0 * 86_400.0;
+/// Routing history entries a read returns when the caller names no count.
+pub const ROUTING_READ: usize = 200;
 pub fn bucket_of_model(model: &str) -> &'static str {
     if model.starts_with("claude") || model.starts_with("gpt") {
         "cg"
@@ -24,6 +26,7 @@ pub fn bucket_of_args(args: &[String]) -> &'static str {
 pub fn quota_fresh(settings: &Settings) -> f64 {
     settings
         .quota_poll
+        .trim()
         .parse::<f64>()
         .ok()
         .filter(|v| v.is_finite())
@@ -140,6 +143,38 @@ pub fn cooldown_strikes(routes: &[RoutingEntry], slot: &str, bucket: &str, now: 
                 && now - r.ts < 3600.0
         })
         .count()
+}
+/// agy's own error channels: stderr of a failed call and error results, never the model's reply.
+pub fn error_text(code: i32, out: &str, err: &str) -> String {
+    let mut parts = if code != 0 && !err.is_empty() {
+        vec![err.to_owned()]
+    } else {
+        vec![]
+    };
+    for chunk in std::iter::once(out).chain(out.lines()) {
+        let Ok(mut value) = serde_json::from_str::<serde_json::Value>(chunk) else {
+            continue;
+        };
+        if value["result"].is_object() {
+            value = value["result"].clone();
+        }
+        if error_frame(&value) {
+            if let Some(object) = value.as_object_mut() {
+                object.remove("response");
+            }
+            parts.push(value.to_string());
+        }
+    }
+    parts.join("\n")
+}
+/// A JSON frame that agy itself marks as failed.
+pub fn error_frame(value: &serde_json::Value) -> bool {
+    value.is_object()
+        && (value["type"] == "error"
+            || value.get("error").is_some_and(|v| !v.is_null() && v != "")
+            || value
+                .get("status")
+                .is_some_and(|v| !v.is_null() && v != "SUCCESS"))
 }
 pub fn classify_error(text: &str) -> Option<Failure> {
     // The pinned regex release caches literal regexes: https://docs.rs/regex/1.13.1/regex/macro.regex.html

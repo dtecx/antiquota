@@ -365,10 +365,13 @@ fn a_lagging_event_reader_is_disconnected_instead_of_skipping_events() {
     use crate::support::http::Events;
     let mut server = Server::new("sessions-lag");
     let id = server.create();
-    let mut events = Events::open(server.port, &server.token);
-    // Far more meta snapshots than the 1024-event buffer while this reader reads nothing.
-    let title = "t".repeat(2000);
-    for round in 0..1600 {
+    let mut events = Events::open_small(server.port, &server.token);
+    // Far more meta snapshots than the 1024-event buffer while this reader reads nothing. They are
+    // large, so a socket send buffer of even 16 MB (Linux autotunes up to 4 MB) holds only a few
+    // hundred of them and the rest must wait in the event buffer.
+    const ROUNDS: i64 = 2000;
+    let title = "t".repeat(32_000);
+    for round in 0..ROUNDS {
         server.call(
             "PATCH",
             &format!("/api/sessions/{id}"),
@@ -397,7 +400,7 @@ fn a_lagging_event_reader_is_disconnected_instead_of_skipping_events() {
         }
     }
     assert!(
-        received < 1600,
+        received < ROUNDS,
         "the lagging stream ended, so the client must reconnect and resync"
     );
     server.stop();

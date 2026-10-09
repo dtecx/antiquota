@@ -124,6 +124,9 @@ fn run() -> Result<i32, FakeError> {
     if scenario == Scenario::Crash {
         eprintln!("fake agy crashed");
     }
+    if let Some(text) = &script.stderr {
+        eprintln!("{text}");
+    }
     Ok(code)
 }
 fn main() {

@@ -2,9 +2,9 @@
 use antiquota_accounts::FileAccounts;
 use antiquota_core::{
     AccountStore, Cancellation, Clock, Failure, Mode, TurnRequest, bucket_of_args, classify_error,
-    rank_accounts,
+    error_text, rank_accounts,
 };
-use serde_json::{Value, json};
+use serde_json::json;
 use std::sync::Arc;
 pub async fn run(accounts: Arc<FileAccounts>, mut args: Vec<String>) -> anyhow::Result<i32> {
     let pin = if args.first().is_some_and(|v| v == "--slot") && args.len() > 1 {
@@ -140,32 +140,4 @@ pub async fn run(accounts: Arc<FileAccounts>, mut args: Vec<String>) -> anyhow::
         &json!({"t":started.floor(),"slot":lease.slot().name,"bucket":bucket,"rc":result.code,"secs":((clock.now()-started)*10.0).round()/10.0,"walled":walled}),
     )?;
     Ok(if walled { 75 } else { result.code })
-}
-fn error_text(code: i32, out: &str, err: &str) -> String {
-    let mut parts = if code != 0 && !err.is_empty() {
-        vec![err.to_owned()]
-    } else {
-        vec![]
-    };
-    for chunk in std::iter::once(out).chain(out.lines()) {
-        let Ok(mut value) = serde_json::from_str::<Value>(chunk) else {
-            continue;
-        };
-        if value["result"].is_object() {
-            value = value["result"].clone();
-        }
-        if value.is_object()
-            && (value["type"] == "error"
-                || value.get("error").is_some_and(|v| !v.is_null() && v != "")
-                || value
-                    .get("status")
-                    .is_some_and(|v| !v.is_null() && v != "SUCCESS"))
-        {
-            if let Some(object) = value.as_object_mut() {
-                object.remove("response");
-            }
-            parts.push(value.to_string());
-        }
-    }
-    parts.join("\n")
 }

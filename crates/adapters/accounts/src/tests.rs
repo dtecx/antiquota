@@ -346,3 +346,76 @@ fn executable_discovery_prefers_expanded_home_over_bare_path() {
     );
     assert_eq!(metadata::find_in_dirs(&[s.0.join("missing")]), None);
 }
+#[test]
+fn routing_history_trims_above_two_megabytes_to_the_newest_five_thousand_lines() {
+    let s = Sandbox::new();
+    let accounts = s.accounts();
+    let path = s.0.join("data/state/routing.jsonl");
+    let entry = RoutingEntry {
+        ts: 7.0,
+        event: "resumed".into(),
+        slot: Some("one@example.com".into()),
+        ..Default::default()
+    };
+    s.write("data/state/routing.jsonl", "");
+    accounts.record_route(&entry).unwrap();
+    let appended = fs::metadata(&path).unwrap().len() as usize;
+    let line = |i: usize, pad: usize| {
+        format!(
+            "{{\"ts\":{i},\"event\":\"pick\",\"why\":\"{}\"}}\n",
+            "x".repeat(pad)
+        )
+    };
+    // The file ends exactly at 2 MB after the append, then one byte above it.
+    for (size, trimmed) in [(2_000_000, false), (2_000_001, true)] {
+        let mut lines: Vec<String> = (0..6_000).map(|i| line(i, 0)).collect();
+        let short: usize = lines.iter().map(String::len).sum();
+        lines[0] = line(0, size - appended - short);
+        s.write("data/state/routing.jsonl", &lines.concat());
+        accounts.record_route(&entry).unwrap();
+        let text = fs::read_to_string(&path).unwrap();
+        let kept: Vec<_> = text.lines().collect();
+        if trimmed {
+            assert_eq!(kept.len(), 5_000);
+            assert_eq!(kept[0], lines[1_001].trim_end());
+        } else {
+            assert_eq!(text.len(), 2_000_000);
+            assert_eq!(kept.len(), 6_001);
+        }
+        let last: RoutingEntry = serde_json::from_str(kept.last().unwrap()).unwrap();
+        assert_eq!(last, entry);
+    }
+    // A read without a count returns the newest 200 entries in stored order.
+    let rows: String = (0..300)
+        .map(|i| format!("{{\"ts\":{i},\"event\":\"pick\"}}\n"))
+        .collect();
+    s.write("data/state/routing.jsonl", &rows);
+    let tail = accounts.recent_routes().unwrap();
+    assert_eq!(tail.len(), 200);
+    assert_eq!((tail[0].ts, tail[199].ts), (100.0, 299.0));
+    assert_eq!(accounts.routes(5).unwrap()[0].ts, 295.0);
+}
+#[test]
+fn today_starts_at_local_midnight() {
+    use chrono::{Local, TimeZone};
+    let s = Sandbox::new();
+    // Noon keeps the day well inside any daylight-saving change.
+    let noon = Local
+        .with_ymd_and_hms(2026, 3, 18, 12, 0, 0)
+        .single()
+        .unwrap()
+        .timestamp() as f64;
+    let midnight = Local
+        .with_ymd_and_hms(2026, 3, 18, 0, 0, 0)
+        .single()
+        .unwrap()
+        .timestamp() as f64;
+    let row = |t: f64, input: u64| format!("{{\"t\":{t},\"slot\":\"one\",\"input\":{input}}}\n");
+    s.write(
+        "data/state/usage.jsonl",
+        &[row(midnight - 1.0, 1), row(midnight, 10), row(noon, 100)].concat(),
+    );
+    let totals = overview::usage_today(&s.accounts(), noon).unwrap();
+    let today = totals.get("one").unwrap();
+    assert_eq!((today.input, today.turns), (Some(110), Some(2)));
+}

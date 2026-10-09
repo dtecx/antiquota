@@ -11,6 +11,7 @@ pub struct Decoder {
     usage: StepUsage,
     last: Option<(String, String)>,
     result: Value,
+    errors: Vec<String>,
 }
 impl Decoder {
     pub fn new(turn: u64) -> Self {
@@ -23,6 +24,7 @@ impl Decoder {
             usage: StepUsage::default(),
             last: None,
             result: json!({}),
+            errors: vec![],
         }
     }
     pub fn conversation_id(&self) -> Option<&str> {
@@ -31,6 +33,15 @@ impl Decoder {
     pub fn accept(&mut self, value: Value) -> Result<Vec<Event>, PortError> {
         if let Some(conv) = value["conversation_id"].as_str() {
             self.conversation = Some(conv.into());
+        }
+        if value["event"] != "result" && antiquota_core::error_frame(&value) {
+            // agy's own error frame; the model's reply never counts as an error channel.
+            let mut frame = value.clone();
+            if let Some(object) = frame.as_object_mut() {
+                object.remove("response");
+            }
+            self.errors.push(frame.to_string());
+            return Ok(vec![]);
         }
         if value["event"] == "result" {
             self.result = value["result"].clone();
@@ -125,7 +136,13 @@ impl Decoder {
             .last
             .as_ref()
             .is_some_and(|(kind, state)| kind == "agent_response" && state == "DONE");
-        let genuine = self.result["error"].as_str().unwrap_or("");
+        let genuine = self
+            .errors
+            .iter()
+            .map(String::as_str)
+            .chain(self.result["error"].as_str())
+            .collect::<Vec<_>>()
+            .join("\n");
         let genuine_text = format!("{}{}", genuine, if code != 0 { stderr } else { "" });
         let status = if stopped {
             "stopped".into()
@@ -173,6 +190,45 @@ mod tests {
         assert_eq!(result.status, "SUCCESS");
         assert_eq!(result.usage.input_tokens, 100);
         assert_eq!(result.usage.output_tokens, 10);
+    }
+    #[test]
+    fn only_agy_error_channels_classify_a_failed_turn() {
+        let words = "RESOURCE_EXHAUSTED quota 429; UNAUTHENTICATED token expired; 503 UNAVAILABLE";
+        // A successful reply may discuss errors, and successful stderr chatter is ignored.
+        let mut d = Decoder::new(1);
+        d.accept(json!({"event":"step_update","step_update":{"step_index":1,"step_type":"agent_response","state":"DONE","text_delta":words}})).unwrap();
+        d.accept(json!({"event":"result","result":{"status":"SUCCESS","response":words}}))
+            .unwrap();
+        let result = d.finish(
+            0,
+            false,
+            "warning: rate limit quota 503 UNAVAILABLE chatter",
+        );
+        assert_eq!(
+            (result.status.as_str(), result.error.as_str()),
+            ("SUCCESS", "")
+        );
+        // A failed result's response text is not an error channel.
+        let failed = |error: &str, code: i32, stderr: &str| {
+            let mut d = Decoder::new(1);
+            d.accept(json!({"event":"result","result":{"status":"ERROR","error":error,"response":words}}))
+                .unwrap();
+            d.finish(code, false, stderr).status
+        };
+        assert_eq!(failed("tool crashed", 1, ""), "ERROR");
+        // stderr counts only when agy exits with an error.
+        assert_eq!(failed("tool crashed", 0, "UNAUTHENTICATED"), "ERROR");
+        assert_eq!(failed("tool crashed", 1, "UNAUTHENTICATED"), "auth");
+        assert_eq!(failed("Individual quota reached", 1, ""), "quota");
+        // agy's own error frame counts; its response field does not.
+        let mut d = Decoder::new(1);
+        d.accept(
+            json!({"type":"error","message":"UNAVAILABLE: overloaded","response":"quota 429"}),
+        )
+        .unwrap();
+        let result = d.finish(1, false, "");
+        assert_eq!(result.status, "transient");
+        assert!(!result.error.contains("429"));
     }
     #[test]
     fn crash_and_stopping_are_distinct() {

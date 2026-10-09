@@ -23,6 +23,8 @@ mod models;
 mod replay;
 #[path = "../../../tests/rewrite/accounts_rotation.rs"]
 mod rotation;
+#[path = "../../../tests/rewrite/accounts_routing_edges.rs"]
+mod routing_edges;
 #[path = "../../../tests/rewrite/accounts_setup.rs"]
 mod setup;
 #[path = "../../../tests/rewrite/storage.rs"]

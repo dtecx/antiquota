@@ -24,7 +24,28 @@ pub fn connect(
     headers: &BTreeMap<String, String>,
     body: &[u8],
 ) -> TcpStream {
-    let mut socket = TcpStream::connect(("127.0.0.1", port)).expect("connect server");
+    let socket = TcpStream::connect(("127.0.0.1", port)).expect("connect server");
+    send_request(socket, port, method, path, headers, body)
+}
+/// Connects with a fixed small receive buffer. Linux otherwise autotunes loopback buffers to
+/// many megabytes, so a reader that stops reading would never hold the server back.
+pub fn connect_small(port: u16, path: &str) -> TcpStream {
+    use socket2::{Domain, Socket, Type};
+    let socket = Socket::new(Domain::IPV4, Type::STREAM, None).expect("socket");
+    socket.set_recv_buffer_size(4096).expect("receive buffer");
+    socket
+        .connect(&std::net::SocketAddr::from(([127, 0, 0, 1], port)).into())
+        .expect("connect server");
+    send_request(socket.into(), port, "GET", path, &BTreeMap::new(), &[])
+}
+fn send_request(
+    mut socket: TcpStream,
+    port: u16,
+    method: &str,
+    path: &str,
+    headers: &BTreeMap<String, String>,
+    body: &[u8],
+) -> TcpStream {
     socket
         .set_read_timeout(Some(Duration::from_secs(5)))
         .unwrap();
@@ -129,7 +150,13 @@ impl Events {
         Self::open_path(port, &format!("/api/events?token={token}"))
     }
     pub fn open_path(port: u16, path: &str) -> Self {
-        let socket = connect(port, "GET", path, &BTreeMap::new(), &[]);
+        Self::from_socket(connect(port, "GET", path, &BTreeMap::new(), &[]))
+    }
+    /// An event stream whose reader can fall behind the server, as a stalled browser tab does.
+    pub fn open_small(port: u16, token: &str) -> Self {
+        Self::from_socket(connect_small(port, &format!("/api/events?token={token}")))
+    }
+    fn from_socket(socket: TcpStream) -> Self {
         let mut reader = BufReader::new(socket);
         let (status, headers) = head(&mut reader);
         assert_eq!(status, 200);

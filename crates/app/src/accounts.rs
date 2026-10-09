@@ -79,7 +79,9 @@ impl AccountService {
         drop(lease);
         self.announce_accounts()
     }
-    pub async fn refresh_accounts(&self, max_age: f64) -> Result<(), AppError> {
+    /// Probes idle accounts whose reading is at least max_age old; returns those with a new reading.
+    pub async fn refresh_accounts(&self, max_age: f64) -> Result<Vec<String>, AppError> {
+        let mut updated = vec![];
         for account in self.account_overview()? {
             if self.background_cancel.is_cancelled() {
                 break;
@@ -90,11 +92,16 @@ impl AccountService {
             let Some(lease) = self.accounts.lease_named(&account.slot)? else {
                 continue;
             };
-            self.probe_account(&*lease, &self.background_cancel).await?;
+            if matches!(
+                self.probe_account(&*lease, &self.background_cancel).await?,
+                ProbeResult::Quota(_)
+            ) {
+                updated.push(account.slot);
+            }
         }
         self.refresh_models().await?;
         self.announce_accounts()?;
-        Ok(())
+        Ok(updated)
     }
     async fn refresh_models(&self) -> Result<(), AppError> {
         if self.models_fresh.load(std::sync::atomic::Ordering::SeqCst) {
