@@ -366,6 +366,8 @@ pub fn read_records(path: &Path) -> Result<Vec<EventRecord>, PortError> {
     Ok(rows)
 }
 #[cfg(test)]
+mod replay_tests;
+#[cfg(test)]
 mod tests;
 
 pub fn read_settings(root: &Path) -> Result<antiquota_core::Settings, PortError> {

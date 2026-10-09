@@ -1,0 +1,54 @@
+{
+ "format": 1,
+ "slice": "16b",
+ "passed_before": 845,
+ "added": 8,
+ "passed_after": 853,
+ "pending_after": 297,
+ "passed_after_is_prospective": false,
+ "gate_status": "just check passed; just test passed 387 Rust, 458 Vitest and 122 Chromium tests with no failures. Linux x86_64.",
+ "feature_ids": [
+  "F-1017",
+  "F-1019",
+  "F-1020",
+  "F-1022",
+  "F-1083",
+  "F-1084",
+  "F-1098",
+  "F-1101"
+ ],
+ "proofs": {
+  "F-1017": {
+   "proof": "[tests::ports::a_scripted_quota_probe_drives_readings_walls_verification_and_sign_out](../../crates/app/src/tests/ports.rs)",
+   "evidence": "../../.handoff/evidence/slice16b-test.log"
+  },
+  "F-1019": {
+   "proof": "[tests::ports::a_fake_vcs_carries_a_worktree_session_from_creation_to_removal](../../crates/app/src/tests/ports.rs)",
+   "evidence": "../../.handoff/evidence/slice16b-test.log"
+  },
+  "F-1020": {
+   "proof": "[tests::ports::fake_terminals_take_input_resize_restart_and_kill](../../crates/app/src/tests/ports.rs)",
+   "evidence": "../../.handoff/evidence/slice16b-test.log"
+  },
+  "F-1022": {
+   "proof": "[tests::schedules::loops_and_daily_schedules_fire_when_the_fake_clock_reaches_them](../../crates/app/src/tests/schedules.rs); [deterministic::loops_and_daily_schedules_run_agy_turns_when_the_fake_clock_reaches_them](../../tests/rewrite/accounts_deterministic.rs); [deterministic::an_engine_cooldown_keeps_the_account_out_until_it_expires](../../tests/rewrite/accounts_deterministic.rs); [deterministic::transient_retries_use_fake_time_then_park_and_resume_on_next_account](../../tests/rewrite/accounts_deterministic.rs); [tests::approvals::an_unanswered_request_is_declined_at_its_deadline](../../crates/app/src/tests/approvals.rs)",
+   "evidence": "../../.handoff/evidence/slice16b-test.log"
+  },
+  "F-1083": {
+   "proof": "[every_strategy_ranks_exactly_the_usable_accounts_in_a_stable_order](../../crates/core/src/routing/tests.rs); [each_strategy_orders_equal_candidates_by_its_own_rule](../../crates/core/src/routing/tests.rs); [cooldown_strikes_count_only_this_account_bucket_and_hour](../../crates/core/src/routing/tests.rs); [paused_or_walled_accounts_never_rank](../../crates/core/src/routing/tests.rs)",
+   "evidence": "../../.handoff/evidence/slice16b-test.log"
+  },
+  "F-1084": {
+   "proof": "[replay_tests::a_log_replays_after_restart_and_a_torn_write_loses_only_its_record](../../crates/adapters/store/src/replay_tests.rs); [transition::tests::latest_snapshot_replays_only_tail](../../crates/core/src/transition.rs)",
+   "evidence": "../../.handoff/evidence/slice16b-test.log"
+  },
+  "F-1098": {
+   "proof": "[deterministic::an_engine_cooldown_keeps_the_account_out_until_it_expires](../../tests/rewrite/accounts_deterministic.rs); [deterministic::transient_retries_use_fake_time_then_park_and_resume_on_next_account](../../tests/rewrite/accounts_deterministic.rs); [handoff::quota_wall_hands_off_same_conversation_and_counts_current_steps_once](../../tests/rewrite/accounts_handoff.rs)",
+   "evidence": "../../.handoff/evidence/slice16b-test.log"
+  },
+  "F-1101": {
+   "proof": "[deterministic::loops_and_daily_schedules_run_agy_turns_when_the_fake_clock_reaches_them](../../tests/rewrite/accounts_deterministic.rs); [tests::schedules::loops_and_daily_schedules_fire_when_the_fake_clock_reaches_them](../../crates/app/src/tests/schedules.rs)",
+   "evidence": "../../.handoff/evidence/slice16b-test.log"
+  }
+ }
+}

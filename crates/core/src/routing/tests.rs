@@ -536,3 +536,152 @@ fn placement_is_left_out_of_json_while_it_is_the_default() {
         FILL
     );
 }
+
+/// One generated account: remaining fraction, reset, paused, wall, busy, and last pick time.
+type Row = (f64, f64, bool, Option<f64>, bool, Option<f64>);
+fn rows() -> impl Strategy<Value = Vec<Row>> {
+    prop::collection::vec(
+        (
+            0.0f64..1.0,
+            1.0f64..5_000.0,
+            prop::bool::weighted(0.15),
+            prop::option::weighted(0.3, 0.0f64..2_000.0),
+            any::<bool>(),
+            prop::option::of(0.0f64..1_000.0),
+        ),
+        0..12,
+    )
+}
+fn table(rows: &[Row]) -> (Vec<Account>, Vec<RoutingEntry>) {
+    let mut accounts = vec![];
+    let mut picks = vec![];
+    for (i, (fraction, reset, paused, wall, busy, picked)) in rows.iter().enumerate() {
+        let mut row = account(&format!("acct-{i:02}"), *fraction, *reset);
+        row.paused = *paused;
+        row.busy = *busy;
+        if let Some(wall) = wall {
+            row.walls.insert("gemini".into(), *wall);
+        }
+        if let Some(at) = picked {
+            picks.push(RoutingEntry {
+                ts: *at,
+                event: "pick".into(),
+                slot: Some(row.slot.clone()),
+                ..Default::default()
+            });
+        }
+        accounts.push(row);
+    }
+    picks.sort_by(|a, b| a.ts.total_cmp(&b.ts));
+    (accounts, picks)
+}
+fn settings(rotation: &str, placement: &str, reserve: u8) -> Settings {
+    Settings {
+        rotation: rotation.into(),
+        placement: placement.into(),
+        reserve: reserve.to_string(),
+        ..Default::default()
+    }
+}
+const NOW: f64 = 1_000.0;
+
+proptest! {
+    #[test]
+    fn every_strategy_ranks_exactly_the_usable_accounts_in_a_stable_order(
+        rows in rows(),
+        rotation in prop::sample::select(vec!["perishable", "sticky", "round-robin"]),
+        placement in prop::sample::select(vec![FILL, SPREAD]),
+        reserve in 0u8..40,
+        preferred in prop::option::of(0usize..12),
+        seed in any::<u64>(),
+    ) {
+        let (accounts, picks) = table(&rows);
+        let s = settings(rotation, placement, reserve);
+        let preferred = preferred.map(|i| format!("acct-{i:02}"));
+        let ranked = rank_accounts(&accounts, "gemini", preferred.as_deref(), &s, &picks, NOW);
+        // Exactly the accounts that are neither paused nor walled, each once.
+        let mut usable: Vec<String> = accounts
+            .iter()
+            .filter(|a| !a.paused && a.walls.get("gemini").copied().unwrap_or(0.0) <= NOW)
+            .map(|a| a.slot.clone())
+            .collect();
+        let mut sorted = ranked.clone();
+        sorted.sort();
+        usable.sort();
+        prop_assert_eq!(&sorted, &usable);
+        // The order depends only on the accounts, not on the order they are listed in.
+        let mut shuffled = accounts.clone();
+        let len = shuffled.len().max(1);
+        shuffled.rotate_left((seed as usize) % len);
+        if seed % 2 == 0 {
+            shuffled.reverse();
+        }
+        prop_assert_eq!(&rank_accounts(&shuffled, "gemini", preferred.as_deref(), &s, &picks, NOW), &ranked);
+        // Accounts below the reserve come after every account above it.
+        let low = |slot: &str| accounts.iter().any(|a| a.slot == slot && headroom(&a.quota, "gemini").0.is_some_and(|v| v < f64::from(reserve) / 100.0));
+        let first_low = ranked.iter().position(|slot| low(slot)).unwrap_or(ranked.len());
+        prop_assert!(ranked[first_low..].iter().all(|slot| low(slot)));
+        // A preferred account above the reserve comes first.
+        if let Some(preferred) = &preferred && usable.contains(preferred) && !low(preferred) {
+            prop_assert_eq!(&ranked[0], preferred);
+        }
+    }
+
+    #[test]
+    fn each_strategy_orders_equal_candidates_by_its_own_rule(
+        rows in rows(),
+        rotation in prop::sample::select(vec!["perishable", "sticky", "round-robin"]),
+        placement in prop::sample::select(vec![FILL, SPREAD]),
+    ) {
+        let (accounts, picks) = table(&rows);
+        let ranked = rank_accounts(&accounts, "gemini", None, &settings(rotation, placement, 0), &picks, NOW);
+        let row = |slot: &String| accounts.iter().find(|a| &a.slot == slot).unwrap();
+        let last_pick = |slot: &String| picks.iter().rev().find(|p| p.slot.as_ref() == Some(slot)).map_or(0.0, |p| p.ts);
+        for pair in ranked.windows(2) {
+            let (a, b) = (row(&pair[0]), row(&pair[1]));
+            // Spreading puts accounts without a running call first.
+            if placement == SPREAD && a.busy != b.busy {
+                prop_assert!(!a.busy, "{} busy before {} idle", a.slot, b.slot);
+                continue;
+            }
+            match rotation {
+                "sticky" => prop_assert!(a.slot < b.slot),
+                "round-robin" => prop_assert!(last_pick(&a.slot) <= last_pick(&b.slot)),
+                _ => {
+                    let (ar, at) = headroom(&a.quota, "gemini");
+                    let (br, bt) = headroom(&b.quota, "gemini");
+                    let at = at.unwrap_or(f64::INFINITY);
+                    let bt = bt.unwrap_or(f64::INFINITY);
+                    prop_assert!(at < bt || (at == bt && ar.unwrap_or(0.5) >= br.unwrap_or(0.5)));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn cooldown_strikes_count_only_this_account_bucket_and_hour(
+        entries in prop::collection::vec((prop::sample::select(vec!["cooldown", "pick", "retry"]), prop::sample::select(vec!["one", "two"]), prop::sample::select(vec!["gemini", "cg"]), 0.0f64..10_000.0), 0..30),
+        now in 3_600.0f64..10_000.0,
+    ) {
+        let routes: Vec<RoutingEntry> = entries
+            .iter()
+            .map(|(event, slot, bucket, ts)| RoutingEntry {
+                ts: *ts,
+                event: (*event).into(),
+                slot: Some((*slot).into()),
+                bucket: Some((*bucket).into()),
+                ..Default::default()
+            })
+            .collect();
+        let strikes = cooldown_strikes(&routes, "one", "gemini", now);
+        let recent = entries
+            .iter()
+            .filter(|(event, slot, bucket, ts)| *event == "cooldown" && *slot == "one" && *bucket == "gemini" && now - ts < 3_600.0)
+            .count();
+        prop_assert_eq!(strikes, recent);
+        // A strike older than an hour never counts.
+        let mut older = routes.clone();
+        older.push(RoutingEntry { ts: now - 3_600.0, event: "cooldown".into(), slot: Some("one".into()), bucket: Some("gemini".into()), ..Default::default() });
+        prop_assert_eq!(cooldown_strikes(&older, "one", "gemini", now), strikes);
+    }
+}

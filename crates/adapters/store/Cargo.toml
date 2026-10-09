@@ -18,5 +18,8 @@ chrono.workspace = true
 [target.'cfg(unix)'.dependencies]
 nix = { version = "=0.31.3", default-features = false, features = ["user"] }
 
+[dev-dependencies]
+proptest.workspace = true
+
 [lints]
 workspace = true

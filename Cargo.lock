@@ -259,6 +259,7 @@ dependencies = [
  "antiquota-core",
  "chrono",
  "nix 0.31.3",
+ "proptest",
  "serde",
  "serde_json",
  "thiserror 2.0.21",

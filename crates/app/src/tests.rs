@@ -4,6 +4,8 @@ mod dictation;
 mod goals;
 mod jobs;
 mod lifecycle;
+mod ports;
+mod schedules;
 mod session_actions;
 use super::*;
 use antiquota_core::{
@@ -80,6 +82,9 @@ impl SessionStore for MemoryStore {
     }
     fn state_dir(&self) -> String {
         "memory".into()
+    }
+    fn worktrees_dir(&self) -> String {
+        "memory-worktrees".into()
     }
 }
 struct FixedClock;

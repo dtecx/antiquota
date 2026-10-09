@@ -545,3 +545,126 @@ async fn polling_uses_quota_poll_freshness_and_refreshes_only_stale_idle_account
     );
     service.shutdown().await;
 }
+
+/// The prompts of the agy turns the fake agent recorded, in order.
+fn turn_prompts() -> Vec<String> {
+    calls()
+        .iter()
+        .filter_map(|row| setup::argument(row, "-p").map(str::to_owned))
+        .collect()
+}
+
+#[tokio::test]
+async fn loops_and_daily_schedules_run_agy_turns_when_the_fake_clock_reaches_them() {
+    let name = "loops_and_daily_schedules_run_agy_turns_when_the_fake_clock_reaches_them";
+    if !worker(name, json!({})) {
+        return;
+    }
+    let clock = TestClock::new(false);
+    let service = compose(clock.clone());
+    let set = |at: f64| *clock.now.lock().unwrap() = at;
+    let id = service
+        .create(
+            std::env::current_dir().unwrap().to_str().unwrap(),
+            "Scheduled work",
+            "gemini-3.8-flash-high",
+            Mode::Default,
+        )
+        .unwrap()
+        .id;
+    service
+        .set_loop(&id, 600, "Check the nightly build.", None)
+        .unwrap();
+    service.scheduler_tick();
+    idle(&service).await;
+    assert_eq!(turn_prompts().len(), 1);
+    assert!(turn_prompts()[0].ends_with("Check the nightly build."));
+    set(NOW + 599.0);
+    service.scheduler_tick();
+    idle(&service).await;
+    assert_eq!(turn_prompts().len(), 1, "a second early runs nothing");
+    set(NOW + 600.0);
+    service.scheduler_tick();
+    idle(&service).await;
+    assert_eq!(turn_prompts().len(), 2);
+    let at = service
+        .set_loop(&id, 0, "Write the morning report.", Some("03:00"))
+        .unwrap()
+        .unwrap();
+    assert!(at > NOW + 600.0 && at <= NOW + 600.0 + 86_400.0);
+    set(at - 1.0);
+    service.scheduler_tick();
+    idle(&service).await;
+    assert_eq!(turn_prompts().len(), 2);
+    set(at);
+    service.scheduler_tick();
+    idle(&service).await;
+    let prompts = turn_prompts();
+    assert_eq!(prompts.len(), 3);
+    assert!(prompts[2].ends_with("Write the morning report."));
+    let (meta, events) = service.get(&id).unwrap();
+    assert_eq!(meta.loop_config.unwrap()["next"], json!(at + 86_400.0));
+    let kinds: Vec<&str> = events
+        .iter()
+        .filter_map(|r| match &r.event {
+            Event::User { kind, .. } => Some(kind.as_str()),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(kinds, ["loop", "loop", "loop"]);
+    service.shutdown().await;
+}
+
+#[tokio::test]
+async fn an_engine_cooldown_keeps_the_account_out_until_it_expires() {
+    let name = "an_engine_cooldown_keeps_the_account_out_until_it_expires";
+    if !worker(name, json!({"scenarios_by_slot":{setup::ONE:"transient"}})) {
+        return;
+    }
+    let clock = TestClock::new(false);
+    let service = compose(clock.clone());
+    let slots = || -> Vec<String> {
+        calls()
+            .iter()
+            .map(|row| row["slot"].as_str().unwrap().to_owned())
+            .collect()
+    };
+    // Two retries fail on the first account, which then rests 300 seconds from NOW + 40.
+    send(&service, "First request.");
+    idle(&service).await;
+    assert_eq!(slots(), [setup::ONE, setup::ONE, setup::ONE, setup::TWO]);
+    assert_eq!(
+        service.account_overview().unwrap()[0].walls["gemini"],
+        NOW + 340.0
+    );
+    // While it rests, a new session goes straight to the second account.
+    *clock.now.lock().unwrap() = NOW + 339.0;
+    send(&service, "Second request.");
+    idle(&service).await;
+    assert_eq!(slots()[4..], [setup::TWO]);
+    // Once the rest ends, the first account is picked again.
+    *clock.now.lock().unwrap() = NOW + 340.0;
+    send(&service, "Third request.");
+    idle(&service).await;
+    assert_eq!(slots()[5], setup::ONE);
+    let picks: Vec<(f64, String)> = routing_rows()
+        .iter()
+        .filter(|row| row["event"] == "pick")
+        .map(|row| {
+            (
+                row["ts"].as_f64().unwrap(),
+                row["slot"].as_str().unwrap().to_owned(),
+            )
+        })
+        .collect();
+    assert_eq!(
+        picks[..4],
+        [
+            (NOW, setup::ONE.to_owned()),
+            (NOW + 40.0, setup::TWO.to_owned()),
+            (NOW + 339.0, setup::TWO.to_owned()),
+            (NOW + 340.0, setup::ONE.to_owned()),
+        ]
+    );
+    service.shutdown().await;
+}
