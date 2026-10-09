@@ -165,17 +165,27 @@ impl ShellRunner for Shell {
 #[cfg(test)]
 mod tests {
     use super::*;
+    /// The same command in the platform shell's syntax: `sh` on POSIX, `cmd` on Windows.
+    fn line<'a>(posix: &'a str, windows: &'a str) -> &'a str {
+        if cfg!(windows) { windows } else { posix }
+    }
+    const SLEEP: &str = "ping -n 31 127.0.0.1 >nul";
     #[tokio::test]
     async fn commands_report_exit_codes_output_timeouts_and_cancellation() {
         let dir = std::env::temp_dir();
         let cwd = dir.to_str().unwrap();
         let shell = Shell;
         let ok = shell
-            .run(cwd, "echo out; echo err >&2", 10.0, Cancellation::default())
+            .run(
+                cwd,
+                line("echo out; echo err >&2", "echo out& 1>&2 echo err"),
+                10.0,
+                Cancellation::default(),
+            )
             .await
             .unwrap();
         assert_eq!(ok.code, Some(0));
-        assert_eq!(ok.output, "out\nerr\n");
+        assert_eq!(ok.output, line("out\nerr\n", "out\r\nerr\r\n"));
         let failed = shell
             .run(cwd, "exit 3", 10.0, Cancellation::default())
             .await
@@ -183,7 +193,7 @@ mod tests {
         assert_eq!(failed.code, Some(3));
         let started = std::time::Instant::now();
         let slow = shell
-            .run(cwd, "sleep 30", 0.3, Cancellation::default())
+            .run(cwd, line("sleep 30", SLEEP), 0.3, Cancellation::default())
             .await
             .unwrap();
         assert!(slow.timed_out && slow.code.is_none());
@@ -196,7 +206,15 @@ mod tests {
         });
         let started = std::time::Instant::now();
         let stopped = shell
-            .run(cwd, "sleep 30 & sleep 30", 30.0, cancel)
+            .run(
+                cwd,
+                line(
+                    "sleep 30 & sleep 30",
+                    "start /b ping -n 31 127.0.0.1 >nul & ping -n 31 127.0.0.1 >nul",
+                ),
+                30.0,
+                cancel,
+            )
             .await
             .unwrap();
         assert!(!stopped.timed_out && stopped.code.is_none());
@@ -204,8 +222,9 @@ mod tests {
     }
     #[tokio::test]
     async fn output_keeps_only_the_last_bytes_over_the_limit() {
+        let windows = format!("<nul set /p ={}END", "0".repeat(5000));
         let captured = capture(
-            shell_command("printf '%05000d' 0; printf END"),
+            shell_command(line("printf '%05000d' 0; printf END", &windows)),
             Duration::from_secs(10),
             &Cancellation::default(),
             100,

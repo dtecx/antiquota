@@ -3,6 +3,10 @@
 mod runtime;
 #[path = "../../../tests/rewrite/sessions.rs"]
 mod sessions;
+#[allow(
+    dead_code,
+    reason = "Shared transport helpers serve multiple integration targets."
+)]
 #[path = "../../../tests/rewrite/support/mod.rs"]
 mod support;
 use serde_json::json;

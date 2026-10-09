@@ -235,8 +235,25 @@ pub fn compare(expected: &Value, actual: &Value, path: &str, dynamic: &Value) {
             super::numbers::equal(e, a),
             "{path}: exact numeric value {e} != {a}"
         ),
+        // Captured paths use `/`; on Windows the engine writes `\\`, may add `\\?\` and names
+        // executables `.exe`. Only those differences are ignored, and only on Windows.
+        (Value::String(e), Value::String(a)) if cfg!(windows) => {
+            assert_eq!(
+                windows_path(e),
+                windows_path(a),
+                "{path}: exact captured value"
+            )
+        }
         _ => assert_eq!(expected, actual, "{path}: exact captured value"),
     }
+}
+
+fn windows_path(text: &str) -> String {
+    let text = text
+        .strip_prefix(r"\\?\")
+        .unwrap_or(text)
+        .replace('\\', "/");
+    text.strip_suffix(".exe").map(str::to_owned).unwrap_or(text)
 }
 
 /// Decodes recorded raw request bytes without changing malformed JSON fixtures.

@@ -17,7 +17,7 @@ pub use terminal::{ShellTerminal, Shells};
 pub struct Console {
     child: Mutex<Box<dyn Child + Send + Sync>>,
     master: Mutex<Option<Box<dyn MasterPty + Send>>>,
-    writer: Mutex<Option<Box<dyn Write + Send>>>,
+    writer: Arc<Mutex<Option<Box<dyn Write + Send>>>>,
     output: Arc<Mutex<Vec<u8>>>,
     eof: Arc<AtomicBool>,
     stopped: AtomicBool,
@@ -28,6 +28,46 @@ pub struct Console {
 }
 fn failure(e: impl std::fmt::Display) -> PortError {
     PortError::Unavailable(format!("sign-in console: {e}"))
+}
+/// The cursor-position question a console asks its terminal.
+const CURSOR_QUERY: &[u8] = b"\x1b[6n";
+/// The output without cursor-position questions, or `None` when it asks none.
+fn without_cursor_queries(bytes: &[u8]) -> Option<Vec<u8>> {
+    let found = bytes.windows(CURSOR_QUERY.len()).any(|w| w == CURSOR_QUERY);
+    found.then(|| {
+        let mut rest = Vec::with_capacity(bytes.len());
+        let mut at = 0;
+        while at < bytes.len() {
+            if bytes[at..].starts_with(CURSOR_QUERY) {
+                at += CURSOR_QUERY.len();
+            } else {
+                rest.push(bytes[at]);
+                at += 1;
+            }
+        }
+        rest
+    })
+}
+/// ConPTY asks where the cursor is when it starts and waits for the answer before the program
+/// runs; the sign-in console and a shell without a viewer have no terminal to answer. The PTY
+/// answers "top left" itself and drops the question, so a viewer never answers it twice.
+pub(crate) fn answer_cursor_query(
+    bytes: &[u8],
+    writer: &Mutex<Option<Box<dyn Write + Send>>>,
+) -> Vec<u8> {
+    if !cfg!(windows) {
+        return bytes.to_vec();
+    }
+    let Some(rest) = without_cursor_queries(bytes) else {
+        return bytes.to_vec();
+    };
+    if let Ok(mut writer) = writer.lock()
+        && let Some(writer) = writer.as_mut()
+    {
+        let _ = writer.write_all(b"\x1b[1;1R");
+        let _ = writer.flush();
+    }
+    rest
 }
 impl Console {
     pub fn spawn(
@@ -84,10 +124,12 @@ impl Console {
         };
         let output = Arc::new(Mutex::new(vec![]));
         let eof = Arc::new(AtomicBool::new(false));
+        let writer = Arc::new(Mutex::new(Some(writer)));
+        let answers = writer.clone();
         let console = Arc::new(Self {
             child: Mutex::new(child),
             master: Mutex::new(Some(pair.master)),
-            writer: Mutex::new(Some(writer)),
+            writer,
             output: output.clone(),
             eof: eof.clone(),
             stopped: AtomicBool::new(false),
@@ -103,8 +145,9 @@ impl Console {
                 if count == 0 {
                     break;
                 }
+                let data = answer_cursor_query(&chunk[..count], &answers);
                 if let Ok(mut output) = output.lock() {
-                    output.extend_from_slice(&chunk[..count]);
+                    output.extend_from_slice(&data);
                     if output.len() > 1_000_000 {
                         let excess = output.len() - 1_000_000;
                         output.drain(..excess);
@@ -195,5 +238,24 @@ impl Drop for Console {
     fn drop(&mut self) {
         self.stop();
         self.reap();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::without_cursor_queries;
+
+    #[test]
+    fn cursor_questions_are_found_and_dropped_from_output() {
+        assert_eq!(without_cursor_queries(b"plain output"), None);
+        assert_eq!(
+            without_cursor_queries(b"\x1b[6nPS C:\\> \x1b[6n"),
+            Some(b"PS C:\\> ".to_vec())
+        );
+        assert_eq!(
+            without_cursor_queries(b"\x1b[6"),
+            None,
+            "an incomplete question stays"
+        );
     }
 }

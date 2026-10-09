@@ -154,13 +154,13 @@ impl SessionStore for FileStore {
         sid: &str,
         paths: &[String],
     ) -> Result<Vec<antiquota_core::Attachment>, PortError> {
-        let Ok(dir) = self.session_dir(sid)?.join("attachments").canonicalize() else {
+        let Ok(dir) = canonical(self.session_dir(sid)?.join("attachments")) else {
             return Ok(vec![]);
         };
         Ok(paths
             .iter()
             .filter_map(|path| {
-                let canonical = Path::new(path).canonicalize().ok()?;
+                let canonical = canonical(path).ok()?;
                 if !canonical.starts_with(&dir) || !canonical.is_file() {
                     return None;
                 }

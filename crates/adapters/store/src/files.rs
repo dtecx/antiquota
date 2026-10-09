@@ -20,6 +20,18 @@ pub struct EngineInfo {
 pub struct FileLease {
     _file: File,
 }
+/// `canonicalize` without Windows' `\\?\` prefix on ordinary drive paths, so the paths antiquota
+/// stores and shows match the ones users type and the legacy app wrote.
+pub fn canonical(path: impl AsRef<Path>) -> std::io::Result<PathBuf> {
+    let full = path.as_ref().canonicalize()?;
+    #[cfg(windows)]
+    if let Some(rest) = full.to_str().and_then(|text| text.strip_prefix(r"\\?\"))
+        && !rest.starts_with("UNC\\")
+    {
+        return Ok(PathBuf::from(rest));
+    }
+    Ok(full)
+}
 pub fn lock_file(path: &Path) -> Result<Option<FileLease>, PortError> {
     lock(path, false)
 }

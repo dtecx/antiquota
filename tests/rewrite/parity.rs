@@ -306,9 +306,20 @@ fn shell_merges_output_and_preserves_pending_notes_without_an_agent_call() {
         &format!("/api/sessions/{id}/compact"),
         Some(json!({})),
     );
-    let response=server.call("POST",&format!("/api/sessions/{id}/shell"),Some(json!({"cmd":"printf '\\033[31mfirst\\033[0m\\n'; printf 'second\\n' >&2; printf '%s' \"$NO_COLOR\""}))).json();
+    let colored = crate::support::shell_line(
+        "printf '\\033[31mfirst\\033[0m\\n'; printf 'second\\n' >&2; printf '%s' \"$NO_COLOR\"",
+        "echo \u{1b}[31mfirst\u{1b}[0m& 1>&2 echo second& <nul set /p =%NO_COLOR%",
+    );
+    let merged = crate::support::shell_line("first\nsecond\n1", "first\r\nsecond\r\n1");
+    let response = server
+        .call(
+            "POST",
+            &format!("/api/sessions/{id}/shell"),
+            Some(json!({ "cmd": colored })),
+        )
+        .json();
     assert_eq!(response["code"], 0);
-    assert_eq!(response["output"], "first\nsecond\n1");
+    assert_eq!(response["output"], merged);
     assert!(response["ts"].as_f64().unwrap() > 0.0);
     let meta = server
         .call("GET", &format!("/api/sessions/{id}"), None)
@@ -321,18 +332,16 @@ fn shell_merges_output_and_preserves_pending_notes_without_an_agent_call() {
             .unwrap()
             .contains("# Handoff:")
     );
-    assert!(
-        meta["pending_note"]
-            .as_str()
-            .unwrap()
-            .contains("first\nsecond\n1")
-    );
+    assert!(meta["pending_note"].as_str().unwrap().contains(merged));
     assert!(setup::turn_calls(&server).is_empty());
     let response = server
         .call(
             "POST",
             &format!("/api/sessions/{id}/shell"),
-            Some(json!({"cmd":"printf '%060000d' 0; printf END"})),
+            Some(json!({"cmd": crate::support::shell_line(
+                "printf '%060000d' 0; printf END",
+                &format!("(for /l %i in (1,1,12) do @<nul set /p ={})& <nul set /p =END", "0".repeat(5000)),
+            )})),
         )
         .json();
     assert_eq!(response["output"].as_str().unwrap().chars().count(), 50_000);
@@ -408,7 +417,10 @@ fn stopped_sessions_can_run_shell_again_and_delete_waits_for_shell_cleanup() {
         .call(
             "POST",
             &format!("/api/sessions/{id}/shell"),
-            Some(json!({"cmd":"sleep 0.1; printf FINISHED"})),
+            Some(json!({"cmd": crate::support::shell_line(
+                "sleep 0.1; printf FINISHED",
+                "ping -n 1 127.0.0.1 >nul& <nul set /p =FINISHED",
+            )})),
         )
         .json();
     assert_eq!(response["code"], 0);
@@ -427,9 +439,12 @@ fn stopped_sessions_can_run_shell_again_and_delete_waits_for_shell_cleanup() {
             "POST",
             &format!("/api/sessions/{sid}/shell"),
             &headers,
-            json!({"cmd":"sleep 2; printf bad > delayed.txt"})
-                .to_string()
-                .as_bytes(),
+            json!({"cmd": crate::support::shell_line(
+                "sleep 2; printf bad > delayed.txt",
+                "ping -n 3 127.0.0.1 >nul& (<nul set /p =bad)> delayed.txt",
+            )})
+            .to_string()
+            .as_bytes(),
         )
     });
     thread::sleep(Duration::from_millis(200));
@@ -495,9 +510,12 @@ fn concurrent_project_notes_preserve_every_line_and_shutdown_cancels_shells() {
             "POST",
             &format!("/api/sessions/{id}/shell"),
             &headers,
-            json!({"cmd":"sleep 2; printf bad > late.txt"})
-                .to_string()
-                .as_bytes(),
+            json!({"cmd": crate::support::shell_line(
+                "sleep 2; printf bad > late.txt",
+                "ping -n 3 127.0.0.1 >nul& (<nul set /p =bad)> late.txt",
+            )})
+            .to_string()
+            .as_bytes(),
         )
     });
     thread::sleep(Duration::from_millis(200));

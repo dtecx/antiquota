@@ -461,3 +461,42 @@ fn today_counts_cached_input_only_when_some_was_reused() {
             .is_none()
     );
 }
+#[test]
+fn config_paths_move_to_the_own_stack_in_every_written_form() {
+    let rewrite = |text: &str, source: &str, own: &str| farm::rewrite_root(text, source, own);
+    let unix = rewrite(
+        r#"{"command":"/home/u/.gemini/config/hooks/a.sh","ide":"/home/u/.gemini/antigravity/x"}"#,
+        "/home/u/.gemini",
+        "/data/stack/.gemini",
+    );
+    assert_eq!(
+        unix,
+        r#"{"command":"/data/stack/.gemini/config/hooks/a.sh","ide":"/home/u/.gemini/antigravity/x"}"#
+    );
+    let (source, own) = (r"C:\Users\u\.gemini", r"D:\data\stack\.gemini");
+    for (written, moved) in [
+        (
+            r"C:\Users\u\.gemini\config\hooks\a.sh",
+            r"D:\data\stack\.gemini\config\hooks\a.sh",
+        ),
+        (
+            r"C:\Users\u\.gemini\config/hooks/a.sh",
+            r"D:\data\stack\.gemini\config/hooks/a.sh",
+        ),
+        (
+            "C:/Users/u/.gemini/GEMINI.md",
+            "D:/data/stack/.gemini/GEMINI.md",
+        ),
+        (
+            r"C:\Users\u\.gemini\antigravity\x",
+            r"C:\Users\u\.gemini\antigravity\x",
+        ),
+    ] {
+        assert_eq!(rewrite(written, source, own), moved);
+        // Inside JSON text the backslashes are doubled.
+        let json = serde_json::to_string(&serde_json::json!({ "command": written })).unwrap();
+        let rewritten: serde_json::Value =
+            serde_json::from_str(&rewrite(&json, source, own)).unwrap();
+        assert_eq!(rewritten["command"], moved);
+    }
+}

@@ -61,7 +61,7 @@ fn worktrees_need_a_commit_and_keep_the_subfolder() {
     assert_eq!(wt.branch, "antiquota/x-abcd");
     assert_eq!(wt.base, "main");
     assert_eq!(wt.base_sha.len(), 40);
-    assert!(work.ends_with("main-abc/sub"));
+    assert!(Path::new(&work).ends_with("main-abc/sub"));
     assert!(
         !Path::new(&folder).join("dirty.txt").exists(),
         "dirty edits stay behind"

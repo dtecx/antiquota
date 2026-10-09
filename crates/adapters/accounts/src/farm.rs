@@ -166,9 +166,35 @@ pub fn rewrite_paths(accounts: &FileAccounts, text: &str) -> String {
         .join("stack/.gemini")
         .to_string_lossy()
         .into_owned();
+    rewrite_root(text, &source, &own)
+}
+/// Points CLI paths below the real config root at the own stack and leaves IDE paths alone. On
+/// Windows a path may appear as written, with forward slashes, or JSON-escaped (backslashes
+/// doubled), and continue with either separator.
+pub(crate) fn rewrite_root(text: &str, source: &str, own: &str) -> String {
+    let forms = |root: &str| {
+        [
+            root.to_owned(),
+            root.replace('\\', "/"),
+            root.replace('\\', "\\\\"),
+        ]
+    };
     let mut result = text.to_owned();
-    for sub in ["config/", "antigravity-cli/", "GEMINI.md", "settings.json"] {
-        result = result.replace(&format!("{source}/{sub}"), &format!("{own}/{sub}"));
+    for (from, to) in forms(source).iter().zip(forms(own)) {
+        for after in ["/", "\\", "\\\\"] {
+            let mut tails: Vec<String> = ["GEMINI.md", "settings.json"].map(String::from).into();
+            for folder in ["config", "antigravity-cli"] {
+                for inner in ["/", "\\", "\\\\"] {
+                    tails.push(format!("{folder}{inner}"));
+                }
+            }
+            for tail in tails {
+                result = result.replace(
+                    &format!("{from}{after}{tail}"),
+                    &format!("{to}{after}{tail}"),
+                );
+            }
+        }
     }
     result
 }

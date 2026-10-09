@@ -35,7 +35,7 @@ pub struct ShellTerminal {
     shared: Arc<Mutex<Shared>>,
     child: Mutex<Box<dyn Child + Send + Sync>>,
     master: Mutex<Option<Box<dyn MasterPty + Send>>>,
-    writer: Mutex<Option<Box<dyn Write + Send>>>,
+    writer: Arc<Mutex<Option<Box<dyn Write + Send>>>>,
     #[cfg(unix)]
     pid: Option<u32>,
     #[cfg(windows)]
@@ -144,6 +144,8 @@ impl ShellTerminal {
         };
         let alive = Arc::new(AtomicBool::new(true));
         let shared = Arc::new(Mutex::new(Shared::default()));
+        let writer = Arc::new(Mutex::new(Some(writer)));
+        let answers = writer.clone();
         let terminal = Arc::new(Self {
             info: Mutex::new(TerminalInfo {
                 alive: true,
@@ -154,7 +156,7 @@ impl ShellTerminal {
             shared: shared.clone(),
             child: Mutex::new(child),
             master: Mutex::new(Some(pair.master)),
-            writer: Mutex::new(Some(writer)),
+            writer,
             #[cfg(unix)]
             pid,
             #[cfg(windows)]
@@ -167,7 +169,10 @@ impl ShellTerminal {
                 if count == 0 {
                     break;
                 }
-                emit(&shared, &chunk[..count]);
+                emit(
+                    &shared,
+                    &crate::answer_cursor_query(&chunk[..count], &answers),
+                );
             }
             ended(&shared, &alive);
         });

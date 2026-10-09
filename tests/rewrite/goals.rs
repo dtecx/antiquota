@@ -164,10 +164,12 @@ fn a_failed_check_skips_the_verifier_and_the_round_limit_abandons() {
     script(&server, json!({}));
     server.start();
     let id = server.create();
+    let broken = crate::support::shell_line("echo broken; exit 3", "echo broken& exit 3");
+    let nl = crate::support::NL;
     let started = set_goal(
         &server,
         &id,
-        json!({"objective": "Pass the check.", "check": "echo broken; exit 3", "max_rounds": 2}),
+        json!({"objective": "Pass the check.", "check": broken, "max_rounds": 2}),
     );
     // Legacy API defaults: the verifier is on and uses the session model unless one is named.
     assert_eq!(started["goal"]["verifier"], true);
@@ -178,7 +180,7 @@ fn a_failed_check_skips_the_verifier_and_the_round_limit_abandons() {
     assert_eq!(checks.len(), 2);
     assert_eq!(
         checks[0]["data"],
-        json!({"rc": 3, "output": "broken\n", "passed": false})
+        json!({"rc": 3, "output": format!("broken{nl}"), "passed": false})
     );
     assert!(
         notices(&done, "verdict").is_empty(),
@@ -196,9 +198,9 @@ fn a_failed_check_skips_the_verifier_and_the_round_limit_abandons() {
         .filter(|e| e["t"] == "user" && e["kind"] == "nudge")
         .collect();
     assert_eq!(nudges.len(), 2);
-    assert!(nudges[0]["text"].as_str().unwrap().contains(
-        "The objective is not met yet.\n\nThe check command `echo broken; exit 3` exited 3:\nbroken\n"
-    ));
+    assert!(nudges[0]["text"].as_str().unwrap().contains(&format!(
+        "The objective is not met yet.\n\nThe check command `{broken}` exited 3:\nbroken{nl}"
+    )));
     assert_eq!(
         notices(&done, "goal").last().unwrap()["text"],
         "Goal abandoned after 2 rounds."

@@ -31,7 +31,7 @@ fn contents(path: &Path) -> Result<(String, bool), PortError> {
     ))
 }
 fn target(cwd: &str, path: &str) -> Result<PathBuf, PortError> {
-    let root = Path::new(cwd).canonicalize().map_err(io_error)?;
+    let root = crate::canonical(cwd).map_err(io_error)?;
     let lexical = root.join(path);
     if !lexical.starts_with(&root)
         || lexical
@@ -50,7 +50,7 @@ fn target(cwd: &str, path: &str) -> Result<PathBuf, PortError> {
             .parent()
             .ok_or_else(|| PortError::Invalid("invalid checkpoint path".into()))?;
     }
-    let canonical = ancestor.canonicalize().map_err(io_error)?;
+    let canonical = crate::canonical(ancestor).map_err(io_error)?;
     if !canonical.starts_with(&root) {
         return Err(PortError::Invalid(
             "checkpoint must stay inside the project".into(),
@@ -155,7 +155,7 @@ impl FileStore {
                 "no file changes from turn {turn} on"
             )));
         }
-        let root = Path::new(cwd).canonicalize().map_err(io_error)?;
+        let root = crate::canonical(cwd).map_err(io_error)?;
         let relative = |path: &Path| {
             path.strip_prefix(&root)
                 .unwrap()
@@ -233,8 +233,13 @@ mod tests {
             .unwrap()
             .join("checkpoints/1.json");
         let map: Value = serde_json::from_slice(&fs::read(&checkpoint).unwrap()).unwrap();
-        assert_eq!(map[file.to_str().unwrap()]["before"], "");
-        assert_eq!(map[file.to_str().unwrap()]["after"], "two");
+        // Keys are canonical paths: on Windows the full name, without the `\\?\` prefix.
+        let key = crate::canonical(&file)
+            .unwrap()
+            .to_string_lossy()
+            .into_owned();
+        assert_eq!(map[&key]["before"], "");
+        assert_eq!(map[&key]["after"], "two");
         fs::write(&file, "later user edit").unwrap();
         assert!(
             store
@@ -266,7 +271,7 @@ mod tests {
         fs::write(&file, "agent edit").unwrap();
         write_json_atomic(
             &checkpoint,
-            &json!({file.to_str().unwrap():{"before":"","after":"agent edit"}}),
+            &json!({key.as_str():{"before":"","after":"agent edit"}}),
         )
         .unwrap();
         assert!(

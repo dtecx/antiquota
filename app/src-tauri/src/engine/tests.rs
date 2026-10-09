@@ -82,8 +82,8 @@ fn explicit_rust_engine_preserves_serve_and_selects_the_ui_override() {
         [OsStr::new("serve")]
     );
     assert_eq!(
-        env_value(&command, "ANTIQUOTA_UI_DIR"),
-        Some(ui.as_os_str())
+        env_value(&command, "ANTIQUOTA_UI_DIR").map(Path::new),
+        Some(ui.as_path())
     );
     assert_eq!(env_value(&command, "PYTHONPATH"), None);
     assert!(command_for(None, Some(OsStr::new("")), &sandbox.0, None).is_err());
@@ -103,10 +103,10 @@ fn bundled_rust_sidecar_precedes_debug_then_release_and_uses_bundled_ui() {
     sandbox.file("ui/dist/index.html", "development UI");
     for expected in [&bundled, &debug, &release] {
         let command = command_for(Some(&resources), None, &sandbox.0, None).unwrap();
-        assert_eq!(command.get_program(), expected.as_os_str());
+        assert_eq!(Path::new(command.get_program()), expected.as_path());
         assert_eq!(
-            env_value(&command, "ANTIQUOTA_UI_DIR"),
-            Some(resources.join("ui").as_os_str())
+            env_value(&command, "ANTIQUOTA_UI_DIR").map(Path::new),
+            Some(resources.join("ui").as_path())
         );
         fs::remove_file(expected).unwrap();
     }
@@ -125,10 +125,10 @@ fn development_requires_built_rust_engine_and_ui_without_python_fallback() {
     assert!(error.contains("Rust antiquota engine is missing"));
     let debug = sandbox.file(&format!("target/debug/{}", name()), "fixture binary");
     let command = command_for(None, None, &sandbox.0, None).unwrap();
-    assert_eq!(command.get_program(), debug.as_os_str());
+    assert_eq!(Path::new(command.get_program()), debug.as_path());
     assert_eq!(
-        env_value(&command, "ANTIQUOTA_UI_DIR"),
-        Some(sandbox.0.join("ui/dist").as_os_str())
+        env_value(&command, "ANTIQUOTA_UI_DIR").map(Path::new),
+        Some(sandbox.0.join("ui/dist").as_path())
     );
     fs::remove_file(sandbox.0.join("ui/dist/index.html")).unwrap();
     assert!(

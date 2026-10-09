@@ -13,6 +13,12 @@ use std::{
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 static NEXT: AtomicU64 = AtomicU64::new(0);
+/// A command line for the platform shell: `sh` on POSIX, `cmd` on Windows.
+pub fn shell_line<'a>(posix: &'a str, windows: &'a str) -> &'a str {
+    if cfg!(windows) { windows } else { posix }
+}
+/// The line ending a command's output uses on this platform.
+pub const NL: &str = if cfg!(windows) { "\r\n" } else { "\n" };
 pub fn repo() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../..")
@@ -51,7 +57,9 @@ impl Server {
             .or_else(|| std::env::var_os("HOME"))
             .unwrap();
         let root = PathBuf::from(owner)
-            .join("Desktop/test/antiquota-rust-contract")
+            .join("Desktop")
+            .join("test")
+            .join("antiquota-rust-contract")
             .join(format!(
                 "{label}-{}-{}",
                 std::process::id(),

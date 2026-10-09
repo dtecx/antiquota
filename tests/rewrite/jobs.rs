@@ -149,13 +149,15 @@ fn captured_job_loop_and_schedule_routes() {
 #[test]
 fn agent_jobs_pass_the_policy_and_report_back() {
     let mut server = Server::new_stopped("jobs-agent", false);
-    rules(
-        &server,
-        json!({"allow": ["command(printf)"], "deny": ["command(rm)"]}),
-    );
+    let (command, rule) = if cfg!(windows) {
+        ("echo bg fixture", "command(echo)")
+    } else {
+        ("printf 'bg fixture\\n'", "command(printf)")
+    };
+    rules(&server, json!({"allow": [rule], "deny": ["command(rm)"]}));
     script(
         &server,
-        json!({"scenarios_by_turn": ["success", "background"], "background_command": "printf 'bg fixture\\n'",
+        json!({"scenarios_by_turn": ["success", "background"], "background_command": command,
                "reply": "Example:\n```\nRUN_IN_BACKGROUND: rm -rf /\n```\nDone."}),
     );
     server.start();
@@ -177,8 +179,11 @@ fn agent_jobs_pass_the_policy_and_report_back() {
     assert_eq!(jobs[1]["job"]["code"], 0);
     let result = job_users(&done);
     assert_eq!(result.len(), 1);
-    assert!(result[0].starts_with("Background job `printf 'bg fixture\\n'` exit 0 after "));
-    assert!(result[0].contains("\n```\nbg fixture\n\n```\nAnalyze the result and continue."));
+    assert!(result[0].starts_with(&format!("Background job `{command}` exit 0 after ")));
+    assert!(result[0].contains(&format!(
+        "\n```\nbg fixture{}\n```\nAnalyze the result and continue.",
+        crate::support::NL
+    )));
     server.stop();
 }
 
@@ -267,11 +272,15 @@ fn a_goal_waits_for_its_job_without_spending_a_round() {
 fn running_jobs_check_in_while_idle() {
     let mut server = Server::new("jobs-check-in");
     let id = server.create();
+    let slow = crate::support::shell_line(
+        "echo working; sleep 7",
+        "echo working& ping -n 8 127.0.0.1 >nul",
+    );
     let job = server
         .call(
             "POST",
             &format!("/api/sessions/{id}/jobs"),
-            Some(json!({"cmd": "echo working; sleep 7", "every": "1s"})),
+            Some(json!({"cmd": slow, "every": "1s"})),
         )
         .json();
     assert_eq!(job["every"], 1);
@@ -280,8 +289,11 @@ fn running_jobs_check_in_while_idle() {
         job_users(v).len() >= 2 && v["meta"]["status"] == "idle"
     });
     let users = job_users(&done);
-    assert!(users[0].starts_with("Background job `echo working; sleep 7` is still running ("));
-    assert!(users[0].contains("\n```\nworking\n\n```\nIf it is going wrong, stop it"));
+    assert!(users[0].starts_with(&format!("Background job `{slow}` is still running (")));
+    assert!(users[0].contains(&format!(
+        "\n```\nworking{}\n```\nIf it is going wrong, stop it",
+        crate::support::NL
+    )));
     assert!(users.last().unwrap().contains("exit 0 after"));
     server.stop();
 }
@@ -316,7 +328,10 @@ fn jobs_outlive_the_engine_and_are_adopted_after_a_restart() {
         .call(
             "POST",
             &format!("/api/sessions/{id}/jobs"),
-            Some(json!({"cmd": "sleep 2; echo survived", "notify": true})),
+            Some(json!({"cmd": crate::support::shell_line(
+                "sleep 2; echo survived",
+                "ping -n 3 127.0.0.1 >nul& echo survived",
+            ), "notify": true})),
         )
         .json();
     server.stop();

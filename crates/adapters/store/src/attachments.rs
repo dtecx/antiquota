@@ -82,10 +82,10 @@ impl FileStore {
         sid: &str,
         name: &str,
     ) -> Result<Option<Vec<u8>>, PortError> {
-        let Ok(dir) = self.attachment_dir(sid)?.canonicalize() else {
+        let Ok(dir) = crate::canonical(self.attachment_dir(sid)?) else {
             return Ok(None);
         };
-        let Ok(path) = dir.join(name).canonicalize() else {
+        let Ok(path) = crate::canonical(dir.join(name)) else {
             return Ok(None);
         };
         if !path.starts_with(&dir) || path == dir || !path.is_file() {
@@ -176,10 +176,12 @@ mod tests {
         );
         assert_eq!(store.load_attachment("s1", "../meta.json").unwrap(), None);
         assert_eq!(store.load_attachment("s1", "missing").unwrap(), None);
-        assert_eq!(
-            store.existing_dirs("s1"),
-            [root.join("sessions/s1/attachments").to_string_lossy()]
-        );
+        let dirs: Vec<PathBuf> = store
+            .existing_dirs("s1")
+            .iter()
+            .map(PathBuf::from)
+            .collect();
+        assert_eq!(dirs, [root.join("sessions").join("s1").join("attachments")]);
         let inside = root.join("sessions/s1/attachments/note.txt");
         let outside = root.join("outside.txt");
         fs::write(&outside, "secret").unwrap();

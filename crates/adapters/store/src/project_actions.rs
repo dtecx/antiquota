@@ -25,7 +25,7 @@ pub fn mention_files(cwd: &str, query: &str) -> Result<Vec<String>, PortError> {
                     dirs.push(e.path());
                 }
             } else if e.path().is_file()
-                && e.path().canonicalize().is_ok_and(|p| p.starts_with(root))
+                && crate::canonical(e.path()).is_ok_and(|p| p.starts_with(root))
             {
                 let rel = e
                     .path()
@@ -49,7 +49,7 @@ pub fn mention_files(cwd: &str, query: &str) -> Result<Vec<String>, PortError> {
         }
         Ok(())
     }
-    let root = Path::new(cwd).canonicalize().map_err(io_error)?;
+    let root = crate::canonical(cwd).map_err(io_error)?;
     let q = query.to_lowercase();
     let mut hits = vec![];
     visit(&root, &root, &q, &mut hits)?;
@@ -68,7 +68,7 @@ pub fn mention_files(cwd: &str, query: &str) -> Result<Vec<String>, PortError> {
     Ok(hits)
 }
 pub fn browse(path: &str) -> Result<Value, PortError> {
-    let home = user_home()?.canonicalize().map_err(io_error)?;
+    let home = crate::canonical(user_home()?).map_err(io_error)?;
     let expanded = if path == "~" || path.is_empty() {
         home.clone()
     } else if let Some(rest) = path.strip_prefix("~/") {
@@ -76,8 +76,7 @@ pub fn browse(path: &str) -> Result<Value, PortError> {
     } else {
         PathBuf::from(path)
     };
-    let path = expanded
-        .canonicalize()
+    let path = crate::canonical(expanded)
         .ok()
         .filter(|p| p.starts_with(&home) && p.is_dir())
         .unwrap_or(home.clone());
@@ -88,7 +87,7 @@ pub fn browse(path: &str) -> Result<Value, PortError> {
             let name = e.file_name().to_string_lossy().into_owned();
             (!name.starts_with('.')
                 && e.path().is_dir()
-                && e.path().canonicalize().is_ok_and(|p| p.starts_with(&home)))
+                && crate::canonical(e.path()).is_ok_and(|p| p.starts_with(&home)))
             .then_some(name)
         })
         .collect();
@@ -98,7 +97,7 @@ pub fn browse(path: &str) -> Result<Value, PortError> {
     )
 }
 pub fn note(cwd: &str, text: &str) -> Result<Value, PortError> {
-    let root = Path::new(cwd).canonicalize().map_err(io_error)?;
+    let root = crate::canonical(cwd).map_err(io_error)?;
     let path = ["GEMINI.md", "AGENTS.md"]
         .into_iter()
         .map(|n| root.join(n))

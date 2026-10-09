@@ -242,7 +242,14 @@ fn editor_limits_and_project_discovery_keep_private_and_heavy_paths_out() {
     let paths = server
         .call("GET", &format!("/api/sessions/{id}/files?q=NEEDLE"), None)
         .json();
-    assert_eq!(paths, json!(["long/needle.txt", "needle/x.txt"]));
+    // Relative paths use the platform separator, as the legacy app's did.
+    let paths: Vec<String> = paths
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|p| p.as_str().unwrap().replace('\\', "/"))
+        .collect();
+    assert_eq!(paths, ["long/needle.txt", "needle/x.txt"]);
     for n in 0..405 {
         setup::write(&server.project.join(format!("hit{n:03}")), "");
     }

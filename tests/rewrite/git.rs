@@ -25,6 +25,8 @@ fn repository(server: &Server) {
         ("user.email", "test@example.com"),
         ("user.name", "Test"),
         ("commit.gpgsign", "false"),
+        // Windows runners convert line endings on checkout unless told not to.
+        ("core.autocrlf", "false"),
     ] {
         git(p, &["config", k, v]);
     }
@@ -158,9 +160,7 @@ fn untitled_worktree_branches_take_the_first_request_and_removal_tells_agy() {
     ));
     assert_eq!(
         last["cwd"],
-        server
-            .project
-            .canonicalize()
+        antiquota_store::canonical(&server.project)
             .unwrap()
             .to_string_lossy()
             .as_ref()
