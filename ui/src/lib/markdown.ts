@@ -1,4 +1,5 @@
 /** Renders only the escaped, bounded Markdown grammar supported by the transcript. */
+import { highlightCode } from './highlight';
 export function escapeMarkup(text: string): string {
   return text.replace(
     /[&<>"']/g,
@@ -46,12 +47,15 @@ export function markdown(source: string): string {
   while (i < lines.length) {
     const line = lines[i]!;
     if (/^```/.test(line)) {
+      const hint = line.slice(3).trim().split(/\s+/, 1)[0] ?? '';
+      const language = /^[a-z0-9_+-]{1,32}$/i.test(hint) ? hint.toLowerCase() : '';
       const code: string[] = [];
       i++;
       while (i < lines.length && !/^```/.test(lines[i]!)) code.push(lines[i++]!);
       if (i < lines.length) i++;
+      const text = code.join('\n');
       output.push(
-        `<pre class="code"><code>${escapeMarkup(code.join('\n'))}</code><button type="button" class="copy-code" aria-label="Copy code">Copy</button></pre>`,
+        `<div class="code-block"><div class="code-toolbar"><span>${language || 'Plain text'}</span><button type="button" class="wrap-code" aria-label="Wrap code" aria-pressed="false">Wrap</button><button type="button" class="copy-code" aria-label="Copy code">Copy</button></div><pre class="code"><code>${highlightCode(text, language) ?? escapeMarkup(text)}</code></pre></div>`,
       );
     } else if (/^#{1,4}\s/.test(line)) {
       const level = line.match(/^#+/)![0].length + 2;

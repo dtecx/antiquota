@@ -34,13 +34,49 @@ it('renders four heading levels, mixed lists, quotes, tables and inline formatti
   expect(html).toContain('<code>code&lt;&gt;&amp;</code>');
   expect(html).toContain('<br>next.');
 });
-it('keeps fenced content literal and handles empty and unterminated fences', () => {
-  expect(markdown('```ts\n**bold** <script>\n```')).toContain(
+it('keeps unknown fenced content literal and handles empty and unterminated fences', () => {
+  expect(markdown('```unknown\n**bold** <script>\n```')).toContain(
     '<code>**bold** &lt;script&gt;</code>',
   );
   expect(markdown('```\n```')).toContain('<code></code>');
   expect(markdown('```\nlast')).toContain('<code>last</code>');
   expect(markdown('')).toBe('');
+});
+it('highlights named languages and aliases while model markup stays inert', () => {
+  for (const [language, code] of [
+    ['ts', 'const count: number = 42;'],
+    ['rust', 'fn main() { let count = 42; }'],
+    ['py', 'def greet(): return "hello"'],
+    ['sh', 'echo "hello"'],
+    ['json', '{"count":42}'],
+    ['diff', '+added\n-removed'],
+    ['css', 'body { color: red; }'],
+    ['go', 'func main() { return }'],
+    ['js', 'const count = 42;'],
+    ['sql', 'SELECT name FROM accounts;'],
+    ['html', '<div>hello</div>'],
+    ['yaml', 'count: 42'],
+  ]) {
+    const html = markdown(`\`\`\`${language}\n${code}\n\`\`\``);
+    expect(html).toContain('class="hljs-');
+    expect(html).toContain(`<span>${language}</span>`);
+    expect(html).toContain('aria-label="Wrap code" aria-pressed="false"');
+  }
+  const html = markdown('```html\n<img src=x onerror="alert(1)"><script>bad()</script>\n```');
+  expect(html).not.toContain('<img');
+  expect(html).not.toContain('<script>');
+  expect(html).toContain('&lt;');
+  expect(markdown('```"><img\nunsafe\n```')).toContain('<span>Plain text</span>');
+});
+it('bounds highlighting work and never autodetects unknown or unnamed languages', () => {
+  for (const language of ['', 'not-a-language', '__proto__', 'constructor']) {
+    const html = markdown(`\`\`\`${language}\nconst count = 42;\n\`\`\``);
+    expect(html).not.toContain('class="hljs-');
+  }
+  const code = 'const count = 42;\n'.repeat(1300);
+  const html = markdown(`\`\`\`ts\n${code}\`\`\``);
+  expect(html).not.toContain('class="hljs-');
+  expect(html).toContain(code.trimEnd());
 });
 it('permits only external HTTP links and file-viewer links with escaped attributes', () => {
   const html = markdown(

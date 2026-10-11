@@ -1,5 +1,5 @@
 /** Proves account settings and synthetic sign-in against the Rust HTTP/SSE engine. */
-import { readFile } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { test, expect } from './fixtures';
 import {
@@ -18,6 +18,64 @@ async function quotaReads(engine: FixtureEngine) {
     .split('\n')
     .filter((line) => line.includes('"/quota"')).length;
 }
+test('refreshes idle quotas without interrupting a running account and reports partial failure', async ({
+  page,
+  engine,
+}) => {
+  await addAccount(engine, 'two@example.com', { paused: true });
+  await addAccount(engine, 'three@example.com', { paused: true });
+  await engine.scenario({ scenario: 'delay', delay_ms: 30000 });
+  const created = await engine.call('POST', '/api/sessions', {
+    cwd: engine.sandbox.project,
+    title: 'Busy account',
+    model: 'gemini-3.8-flash-high',
+    mode: 'default',
+  });
+  const session = JSON.parse(created.text) as { id: string };
+  expect(
+    (
+      await engine.call('POST', `/api/sessions/${session.id}/send`, {
+        text: 'Hold this fake turn.',
+      })
+    ).status,
+  ).toBe(200);
+  await openAccounts(page, engine);
+  const one = page.getByRole('article', { name: 'one@example.com', exact: true });
+  await expect(one.getByRole('button', { name: 'Check', exact: true })).toBeDisabled();
+  await page.route('**/api/accounts/three%40example.com/check', (route) =>
+    route.fulfill({
+      status: 503,
+      contentType: 'application/json',
+      body: JSON.stringify({ error: 'Synthetic quota service unavailable' }),
+    }),
+  );
+  const button = page.getByRole('button', { name: 'Refresh quotas', exact: true });
+  await button.click();
+  await expect(
+    page.getByText('Refreshed 1 of 3 accounts. Skipped 1 busy or removed. Failed 1.', {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(page.getByRole('alert')).toContainText(
+    'three@example.com: Synthetic quota service unavailable',
+  );
+  await expect(
+    page
+      .getByRole('article', { name: 'two@example.com', exact: true })
+      .getByText('paused', { exact: true }),
+  ).toBeVisible();
+  await expect(one.getByRole('button', { name: 'Check', exact: true })).toBeDisabled();
+  const directory = join(engine.sandbox.repository, '.handoff/evidence/ui-slice21');
+  await mkdir(directory, { recursive: true });
+  await page.screenshot({ path: join(directory, 'quota-refresh-partial.png'), fullPage: true });
+  expect((await engine.call('POST', `/api/sessions/${session.id}/stop`, {})).status).toBe(200);
+  await expect(one.getByRole('button', { name: 'Check', exact: true })).toBeEnabled();
+  await page.unroute('**/api/accounts/three%40example.com/check');
+  await button.click();
+  await expect(page.getByText('Refreshed 3 of 3 accounts.', { exact: true })).toBeVisible();
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  await page.screenshot({ path: join(directory, 'quota-refresh-complete.png'), fullPage: true });
+});
 test('shows pool windows pauses resumes checks removes and refreshes accounts', async ({
   page,
   engine,
@@ -150,7 +208,7 @@ test('opens exact verification link and checks continued verification then readi
   await expect(page.getByText('Still not verified.', { exact: true })).toBeVisible();
   await engine.scenario({});
   await one.getByRole('button', { name: 'Check again', exact: true }).click();
-  await expect(page.getByText('one@example.com is ready.', { exact: true })).toBeVisible();
+  await expect(page.getByText('Refreshed one@example.com.', { exact: true })).toBeVisible();
   await expect(one.getByRole('link', { name: 'Verify with Google' })).not.toBeVisible();
 });
 test('signs in synthetically with Enter and removes the adopted account', async ({
@@ -387,7 +445,7 @@ test('reports account API errors without discarding data and accepts a later suc
   await expect(page.getByRole('alert')).toContainText('Fixture account is temporarily busy.');
   await expect(one).toBeVisible();
   await one.getByRole('button', { name: 'Check', exact: true }).click();
-  await expect(page.getByText('one@example.com is ready.', { exact: true })).toBeVisible();
+  await expect(page.getByText('Refreshed one@example.com.', { exact: true })).toBeVisible();
   await expect(page.getByRole('alert')).not.toBeVisible();
 });
 

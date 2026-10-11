@@ -219,7 +219,37 @@ export function createAccounts(
           ...value,
           feedback: accounts.find((account) => account.slot === slot)?.verify
             ? 'Still not verified.'
-            : `${slot} is ready.`,
+            : `Refreshed ${slot}.`,
+        }));
+      }),
+    checkAll: () =>
+      mutate('refresh-all', async () => {
+        const slots = get(state).accounts.map((account) => account.slot);
+        let refreshed = 0,
+          skipped = 0;
+        const failures: string[] = [];
+        for (const slot of slots) {
+          const current = get(state).accounts.find((account) => account.slot === slot);
+          if (!current || current.busy) {
+            skipped++;
+            continue;
+          }
+          state.update((value) => ({ ...value, feedback: `Refreshing ${slot}…` }));
+          const before = revision;
+          try {
+            const accounts = await api.checkAccount(slot);
+            if (revision === before) accept(accounts);
+            refreshed++;
+          } catch (error) {
+            failures.push(
+              `${slot}: ${error instanceof Error ? error.message : 'Could not refresh quota.'}`,
+            );
+          }
+        }
+        state.update((value) => ({
+          ...value,
+          feedback: `Refreshed ${refreshed} of ${slots.length} accounts.${skipped ? ` Skipped ${skipped} busy or removed.` : ''}${failures.length ? ` Failed ${failures.length}.` : ''}`,
+          error: failures.join('\n'),
         }));
       }),
     requestRemove: (slot: string | null) =>

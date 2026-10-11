@@ -88,6 +88,96 @@ async function shot(page: Page, engine: FixtureEngine, name: string) {
   await page.screenshot({ path: join(path, `${name}.png`), fullPage: true });
 }
 
+test('highlights safe code, wraps long lines and copies only conversation messages', async ({
+  page,
+  engine,
+}) => {
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+  await createSession(page, engine, 'Harness tools');
+  const prompt = '  Explain **this code**.\nKeep the formatting.';
+  const code = `// Preserve the original text\nconst count: number = 42;\nconst label = "<script> & ${'long value '.repeat(30)}";`;
+  const text = `A typed example.\n\n\`\`\`typescript\n${code}\n\`\`\`\n\n\`\`\`rust\nfn main() { println!("hello"); }\n\`\`\``;
+  await history(page, engine, [
+    user(prompt),
+    start,
+    { t: 'thinking', ts, turn: 1, step: 1, text: 'Private thinking fixture', tokens: 3 },
+    tool(
+      2,
+      'view_file',
+      { AbsolutePath: '/synthetic/private-file' },
+      { output: 'Private tool fixture' },
+    ),
+    reply(text),
+    end,
+  ]);
+  const body = page.getByLabel('Agent reply');
+  const block = body.locator('.code-block').first();
+  await page.getByRole('textbox', { name: 'Message', exact: true }).fill('Private unsent draft');
+  const pre = block.locator('pre');
+  await expect(block.locator('.code-toolbar > span')).toHaveText('typescript');
+  await expect(block.locator('.hljs-keyword').first()).toHaveText('const');
+  await expect(block.locator('code')).toHaveText(code);
+  await expect(block.locator('script')).toHaveCount(0);
+  const directory = join(engine.sandbox.repository, '.handoff/evidence/ui-slice21');
+  await mkdir(directory, { recursive: true });
+  for (const colorScheme of ['dark', 'light'] as const) {
+    await page.emulateMedia({ colorScheme });
+    await block.evaluate((node) => node.scrollIntoView({ block: 'start' }));
+    await page.screenshot({
+      path: join(directory, `code-${colorScheme}.png`),
+      fullPage: true,
+      animations: 'disabled',
+    });
+    const contrast = await block.evaluate((node) => {
+      const rgb = (color: string) => (color.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
+      const luminance = (color: string) =>
+        rgb(color).reduce((sum, channel, index) => {
+          const value = channel / 255;
+          return (
+            sum +
+            [0.2126, 0.7152, 0.0722][index]! *
+              (value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4)
+          );
+        }, 0);
+      const background = luminance(getComputedStyle(node).backgroundColor);
+      return [
+        '.hljs-keyword',
+        '.hljs-string',
+        '.hljs-number',
+        '.hljs-comment',
+        '.wrap-code',
+        '.copy-code',
+      ].map((selector) => {
+        const style = getComputedStyle(node.querySelector(selector)!);
+        const foreground = luminance(style.color);
+        const surface = selector.endsWith('-code') ? luminance(style.backgroundColor) : background;
+        return (Math.max(surface, foreground) + 0.05) / (Math.min(surface, foreground) + 0.05);
+      });
+    });
+    expect(Math.min(...contrast)).toBeGreaterThanOrEqual(4.5);
+  }
+  await page.setViewportSize({ width: 440, height: 820 });
+  const wrap = block.getByRole('button', { name: 'Wrap code' });
+  await wrap.focus();
+  await page.keyboard.press('Space');
+  await expect(wrap).toHaveAttribute('aria-pressed', 'true');
+  expect(await pre.evaluate((node) => node.scrollWidth - node.clientWidth)).toBeLessThanOrEqual(1);
+  await block.getByRole('button', { name: 'Copy code' }).click();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(code);
+  await block.evaluate((node) => node.scrollIntoView({ block: 'start' }));
+  await page.screenshot({ path: join(directory, 'code-narrow-wrapped.png'), fullPage: true });
+  await page.getByRole('button', { name: 'Copy conversation', exact: true }).click();
+  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  expect(copied).toContain(`## you\n\n${prompt}`);
+  expect(copied).toContain(`## antiquota\n\n${text}`);
+  expect(copied).not.toContain('Private thinking fixture');
+  expect(copied).not.toContain('Private tool fixture');
+  expect(copied).not.toContain('Private unsent draft');
+  await page.screenshot({ path: join(directory, 'conversation-copy.png'), fullPage: true });
+  await wrap.click();
+  await expect(wrap).toHaveAttribute('aria-pressed', 'false');
+});
+
 test('renders safe Markdown, external and file links, and copies exact code and completed replies', async ({
   page,
   engine,

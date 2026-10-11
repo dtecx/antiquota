@@ -105,7 +105,15 @@
                 ?.quota_poll ?? '10'} minutes without spending tokens.
             </p>
             <div class="actions">
-              <button class="primary" onclick={() => login.open()}>Add account</button>
+              <button class="primary" disabled={!!$view.busy} onclick={() => login.open()}
+                >Add account</button
+              >
+              <button
+                disabled={!!$view.busy || $view.loading || !$view.accounts.length}
+                title="Refresh idle accounts one at a time; running accounts are skipped"
+                onclick={() => accounts.checkAll()}
+                >{$view.busy === 'refresh-all' ? 'Refreshing quotas…' : 'Refresh quotas'}</button
+              >
             </div>
           </div>
 

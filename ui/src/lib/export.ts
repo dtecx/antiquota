@@ -29,7 +29,7 @@ export function sessionMarkdown(
         );
         break;
       case 'assistant':
-        out.push(event.text, '');
+        out.push('## antiquota', '', event.text, '');
         break;
       case 'thinking':
         out.push('<details><summary>Thought</summary>', '', event.text, '', '</details>', '');
@@ -56,6 +56,14 @@ export function sessionMarkdown(
     filename: `${(session.title || 'session').replace(/[^\w.-]+/g, '-').slice(0, 60)}.md`,
     text: `${out.join('\n')}\n`,
   };
+}
+
+/** Uses the export format for visible prompts and completed replies, without tool or thinking detail. */
+export function conversationMarkdown(session: Session, events: EventRecord[]): string {
+  return sessionMarkdown(
+    session,
+    events.filter((event) => event.t === 'user' || event.t === 'assistant'),
+  ).text;
 }
 
 export function downloadSession(session: Session, events: EventRecord[]): void | Promise<void> {

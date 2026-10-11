@@ -19,6 +19,10 @@
   --ok-soft: rgb(134 184 139 / 12%);
   --bad: #e2715f;
   --bad-soft: rgb(226 113 95 / 12%);
+  --code-keyword: #e8a33d;
+  --code-string: #9dc69a;
+  --code-number: #deb290;
+  --code-comment: #a4a199;
   --sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
   --space-1: 4px;
@@ -56,5 +60,9 @@
     --ok-soft: rgb(63 125 71 / 10%);
     --bad: #b8432f;
     --bad-soft: rgb(184 67 47 / 9%);
+    --code-keyword: #875000;
+    --code-string: #31663b;
+    --code-number: #963f2c;
+    --code-comment: #64615b;
   }
 }

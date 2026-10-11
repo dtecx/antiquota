@@ -24,6 +24,76 @@ function fixtureApi(): Api {
     saveDefaults: vi.fn(async (body) => savedDefaults(body)),
   };
 }
+it('refreshes idle accounts sequentially, skips current busy slots, and reports partial failure', async () => {
+  const api = fixtureApi();
+  const slots = ['first', 'failed', 'running', 'removed', 'last'].map((name) => ({
+    ...fixtureAccount(),
+    slot: `${name}@example.com`,
+  }));
+  api.accounts = vi.fn(async () => slots);
+  const accounts = createAccounts(api);
+  await accounts.refresh();
+  let finish: (value: Awaited<ReturnType<Api['checkAccount']>>) => void = () => {};
+  api.checkAccount = vi.fn<Api['checkAccount']>((slot) => {
+    if (slot === 'first@example.com')
+      return new Promise((resolve) => {
+        finish = resolve;
+      });
+    if (slot === 'failed@example.com')
+      return Promise.reject(new Error('Quota service unavailable'));
+    const current = get(accounts.state).accounts;
+    expect(current.find((account) => account.slot === 'running@example.com')?.busy).toBe(true);
+    return Promise.resolve(current);
+  });
+  const pending = accounts.checkAll();
+  await accounts.checkAll();
+  await accounts.check('last@example.com');
+  expect(api.checkAccount).toHaveBeenCalledTimes(1);
+  expect(get(accounts.state).busy).toBe('refresh-all');
+  expect(get(accounts.state).feedback).toBe('Refreshing first@example.com…');
+  const live = slots
+    .filter((account) => account.slot !== 'removed@example.com')
+    .map((account) => ({
+      ...account,
+      busy: account.slot === 'running@example.com',
+      probed: 999,
+    }));
+  accounts.onEvent({ t: 'accounts', ts: 999, sid: null, accounts: live });
+  finish(slots);
+  await pending;
+  expect(vi.mocked(api.checkAccount).mock.calls.map(([slot]) => slot)).toEqual([
+    'first@example.com',
+    'failed@example.com',
+    'last@example.com',
+  ]);
+  expect(get(accounts.state).feedback).toBe(
+    'Refreshed 2 of 5 accounts. Skipped 2 busy or removed. Failed 1.',
+  );
+  expect(get(accounts.state).error).toBe('failed@example.com: Quota service unavailable');
+  expect(get(accounts.state).busy).toBe('');
+});
+it('refreshes paused accounts without resuming them and handles no eligible accounts', async () => {
+  const api = fixtureApi();
+  api.accounts = vi.fn(async () => [{ ...fixtureAccount(), paused: true }]);
+  api.checkAccount = vi.fn(async () => [{ ...fixtureAccount(), paused: true }]);
+  const accounts = createAccounts(api);
+  await accounts.refresh();
+  await accounts.checkAll();
+  expect(get(accounts.state).accounts[0]?.paused).toBe(true);
+  expect(api.pauseAccount).not.toHaveBeenCalled();
+  accounts.onEvent({
+    t: 'accounts',
+    ts: 1000,
+    sid: null,
+    accounts: [{ ...fixtureAccount(), busy: true }],
+  });
+  vi.mocked(api.checkAccount).mockClear();
+  await accounts.checkAll();
+  expect(api.checkAccount).not.toHaveBeenCalled();
+  expect(get(accounts.state).feedback).toBe(
+    'Refreshed 0 of 1 accounts. Skipped 1 busy or removed.',
+  );
+});
 describe('account settings store', () => {
   it('keeps live accounts and focused drafts during a stale refresh', async () => {
     const api = fixtureApi();
@@ -62,7 +132,7 @@ describe('account settings store', () => {
     expect(get(accounts.state).feedback).toBe('Still not verified.');
     api.checkAccount = vi.fn(async () => [fixtureAccount()]);
     await accounts.check('one@example.com');
-    expect(get(accounts.state).feedback).toBe('one@example.com is ready.');
+    expect(get(accounts.state).feedback).toBe('Refreshed one@example.com.');
   });
   it('validates ranges before networking and saves string-valued settings', async () => {
     const api = fixtureApi(),

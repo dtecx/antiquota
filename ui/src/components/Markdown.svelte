@@ -21,7 +21,15 @@
       }
       const button = event.target.closest<HTMLButtonElement>('button.copy-code');
       if (button && node.contains(button))
-        void oncopy(button.closest('pre')?.querySelector('code')?.textContent ?? '');
+        void oncopy(button.closest('.code-block')?.querySelector('code')?.textContent ?? '');
+      const wrap = event.target.closest<HTMLButtonElement>('button.wrap-code');
+      if (wrap && node.contains(wrap)) {
+        const wrapped = wrap
+          .closest('.code-block')
+          ?.querySelector('pre')
+          ?.classList.toggle('wrapped');
+        wrap.setAttribute('aria-pressed', String(!!wrapped));
+      }
     }
     node.addEventListener('click', click);
     return { destroy: () => node.removeEventListener('click', click) };
@@ -79,28 +87,71 @@
     border-radius: var(--r-sm);
     padding: 1px 4px;
   }
-  .markdown :global(pre.code) {
-    position: relative;
-    padding: var(--space-4);
+  .markdown :global(.code-block) {
     margin: var(--space-3) 0;
     background: var(--well);
     border: 1px solid var(--rule);
     border-radius: var(--r-sm);
+    overflow: hidden;
+  }
+  .markdown :global(.code-toolbar) {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-3);
+    border-bottom: 1px solid var(--rule);
+    font: 11px var(--mono);
+    color: var(--ink-2);
+  }
+  .markdown :global(.code-toolbar span) {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .markdown :global(.code-toolbar button) {
+    min-height: 28px;
+    padding: var(--space-1) var(--space-2);
+    font: inherit;
+    background: var(--night-1);
+    color: var(--ink-2);
+  }
+  .markdown :global(.code-toolbar button[aria-pressed='true']) {
+    color: var(--code-keyword);
+  }
+  .markdown :global(pre.code) {
+    padding: var(--space-4);
+    margin: 0;
     overflow-x: auto;
     white-space: pre;
+  }
+  .markdown :global(pre.wrapped) {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
   }
   .markdown :global(pre.code code) {
     display: block;
     padding: 0;
     background: transparent;
   }
-  .markdown :global(.copy-code) {
-    position: sticky;
-    float: right;
-    right: 0;
-    font: 10px var(--mono);
-    min-height: 24px;
-    margin-top: var(--space-2);
+  .markdown :global(.hljs-keyword),
+  .markdown :global(.hljs-selector-tag),
+  .markdown :global(.hljs-built_in) {
+    color: var(--code-keyword);
+  }
+  .markdown :global(.hljs-string),
+  .markdown :global(.hljs-addition),
+  .markdown :global(.hljs-attr) {
+    color: var(--code-string);
+  }
+  .markdown :global(.hljs-number),
+  .markdown :global(.hljs-literal),
+  .markdown :global(.hljs-deletion) {
+    color: var(--code-number);
+  }
+  .markdown :global(.hljs-comment),
+  .markdown :global(.hljs-quote) {
+    color: var(--code-comment);
   }
   .markdown :global(table) {
     display: block;

@@ -2,7 +2,7 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import type { EventRecord } from '../gen/EventRecord';
 import { fixtureSession } from './fixtures.test-support';
-import { downloadSession, sessionMarkdown } from './export';
+import { conversationMarkdown, downloadSession, sessionMarkdown } from './export';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -151,4 +151,30 @@ it('releases download resources when clicking the anchor fails', async () => {
   expect(anchor.remove).toHaveBeenCalledOnce();
   await vi.runAllTimersAsync();
   expect(revoke).toHaveBeenCalledExactlyOnceWith('blob:synthetic');
+});
+
+it('copies source Markdown in message order without streaming fragments, thinking or tools', () => {
+  const events: EventRecord[] = [
+    { t: 'user', ts: 1, text: '  Keep **formatting**.\nNext line.', kind: 'user' },
+    { t: 'thinking', ts: 2, turn: 1, step: 1, text: 'private reasoning', tokens: 2 },
+    {
+      t: 'tool',
+      ts: 3,
+      turn: 1,
+      step: 2,
+      name: 'read',
+      params: {},
+      state: 'done',
+      output: 'private tool output',
+    },
+    { t: 'assistant', ts: 4, turn: 1, step: 3, text: '```ts\nconst value = 1;\n```' },
+    { t: 'user', ts: 5, text: 'Continue.', kind: 'user', steered: true },
+    { t: 'delta', ts: 6, turn: 2, step: 1, text: 'unfinished' },
+  ];
+  const text = conversationMarkdown(fixtureSession(), events);
+  expect(text).toContain('## you\n\n  Keep **formatting**.\nNext line.');
+  expect(text).toContain('## antiquota\n\n```ts\nconst value = 1;\n```');
+  expect(text).toContain('## you\n\nContinue.');
+  for (const omitted of ['private reasoning', 'private tool output', 'unfinished'])
+    expect(text).not.toContain(omitted);
 });

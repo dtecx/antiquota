@@ -6,6 +6,7 @@
   import type { Api } from '../lib/api';
   import type { Workbench } from '../lib/workbench';
   import { groupTranscript, nearBottom } from '../lib/transcript';
+  import { conversationMarkdown } from '../lib/export';
   import { createTranscriptActions, type Expansion } from '../lib/transcript-actions';
   import { earlierSessions } from '../lib/session-start';
   import { draftFor, goalDialog } from '../lib/goals';
@@ -85,6 +86,14 @@
     {#if groups.length}<div class="presentation" aria-label="Transcript presentation">
         <button
           class="quiet small"
+          disabled={loading}
+          title="Copy prompts and completed replies as Markdown"
+          onclick={() =>
+            $view.selected && actions.copy(conversationMarkdown($view.selected, events))}
+          >Copy conversation</button
+        >
+        <button
+          class="quiet small"
           aria-pressed={$prefs.detail === 'detailed'}
           onclick={() =>
             preferences.change({ detail: $prefs.detail === 'detailed' ? 'compact' : 'detailed' })}
@@ -159,6 +168,7 @@
   }
   .presentation {
     display: flex;
+    flex-wrap: wrap;
     gap: var(--space-2);
     justify-content: flex-end;
     margin-bottom: var(--space-3);

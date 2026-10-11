@@ -21,3 +21,11 @@ Keep IBM Plex Sans for interface text and JetBrains Mono for technical detail. T
 `npm --prefix app run icons` derives the splash, favicon, platform icons and monochrome tray images using the installed Tauri CLI. The app icon and favicon add a graphite rounded tile. The sidebar and splash use the mark without a tile. The tray keeps the same silhouette as a template image. Do not redraw these assets independently. The mark is static in both motion preferences.
 
 No raster reference shaped this design. The implemented warm palette and the owner's continuity and rotation request set its direction.
+
+## Transcript and account controls
+
+Fenced code uses the existing well surface and mono font, with a fixed language/Wrap/Copy toolbar above the horizontal scroller. Lines remain unwrapped by default; Wrap is a local, keyboard-accessible pressed control. Syntax colors come from four theme tokens for keywords, strings, numbers and comments. These colors and the toolbar text meet 4.5:1 contrast in both settled themes; pressed Wrap uses the keyword token. Unknown, unnamed or oversized blocks retain the same controls and escaped plain text.
+
+Copy conversation sits with the existing transcript presentation controls and copies source Markdown for prompts and completed replies. It uses the existing clipboard feedback; unsent drafts, thinking and tool details are excluded.
+
+Refresh quotas sits beside Add account in account settings. It disables during the existing serialized account operation and reports current progress, refreshed count, busy/removed skips and individual failures using existing status and alert surfaces. Paused accounts can refresh without resuming, and a later refresh can retry failures.
