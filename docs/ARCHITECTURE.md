@@ -173,3 +173,5 @@ Slice 16 proves the architecture requirements as tests that read `cargo metadata
 Slice 16b replaces the quota probe, version control and terminals with fakes in app tests, fires loops and daily schedules by moving a fake clock (in app and with the real adapters), and adds properties for account ranking and for the event log across a restart and a torn write. See [ADR 0028](adr/0028-fake-ports-and-clock-driven-schedules.md).
 
 Slice 17a proves the CLI commands end to end. Every usage error prints the usage line and exits 2. See [ADR 0029](adr/0029-cli-usage-errors.md).
+
+The contract client now finishes a response at its declared HTTP boundary: Content-Length bytes or the final chunk and trailers. It still rejects truncated frames and requires EOF for unframed bodies. This removes the complete-response connection-reset race without retries or production transport changes. Mac Chrome proof uses the existing account and quota paths with app-owned test homes. See [ADR 0030](adr/0030-framed-contract-responses.md).

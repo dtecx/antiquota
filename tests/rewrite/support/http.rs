@@ -2,7 +2,7 @@
 use serde_json::Value;
 use std::{
     collections::BTreeMap,
-    io::{BufRead, BufReader, Read, Write},
+    io::{BufRead, BufReader, Write},
     net::TcpStream,
     time::Duration,
 };
@@ -100,15 +100,10 @@ pub fn request(
 ) -> Response {
     let mut reader = BufReader::new(connect(port, method, path, headers, body));
     let (status, headers) = head(&mut reader);
-    let mut bytes = Vec::new();
-    reader.read_to_end(&mut bytes).expect("HTTP body");
-    let body = if headers
-        .get("transfer-encoding")
-        .is_some_and(|s| s == "chunked")
-    {
-        decode_chunks(&bytes)
+    let body = if method == "HEAD" || matches!(status, 100..=199 | 204 | 304) {
+        Vec::new()
     } else {
-        bytes
+        read_body(&mut reader, &headers)
     };
     Response {
         status,
@@ -116,29 +111,40 @@ pub fn request(
         body,
     }
 }
-fn decode_chunks(bytes: &[u8]) -> Vec<u8> {
+fn read_body(reader: &mut impl BufRead, headers: &BTreeMap<String, String>) -> Vec<u8> {
     let mut output = Vec::new();
-    let mut rest = bytes;
-    loop {
-        let end = rest
-            .windows(2)
-            .position(|p| p == b"\r\n")
-            .expect("chunk length line");
-        let size = usize::from_str_radix(
-            std::str::from_utf8(&rest[..end])
-                .unwrap()
-                .split(';')
-                .next()
-                .unwrap(),
-            16,
-        )
-        .unwrap();
-        if size == 0 {
-            break;
+    if headers
+        .get("transfer-encoding")
+        .is_some_and(|s| s == "chunked")
+    {
+        loop {
+            let mut line = String::new();
+            reader.read_line(&mut line).expect("chunk length line");
+            assert!(line.ends_with("\r\n"), "complete chunk length line");
+            let size = usize::from_str_radix(line.trim().split(';').next().unwrap(), 16)
+                .expect("hex chunk length");
+            if size == 0 {
+                loop {
+                    line.clear();
+                    reader.read_line(&mut line).expect("chunk trailer");
+                    assert!(line.ends_with("\r\n"), "complete chunk trailer");
+                    if line == "\r\n" {
+                        return output;
+                    }
+                }
+            }
+            let start = output.len();
+            output.resize(start + size, 0);
+            reader.read_exact(&mut output[start..]).expect("HTTP chunk");
+            let mut end = [0; 2];
+            reader.read_exact(&mut end).expect("chunk terminator");
+            assert_eq!(&end, b"\r\n");
         }
-        rest = &rest[end + 2..];
-        output.extend_from_slice(&rest[..size]);
-        rest = &rest[size + 2..];
+    } else if let Some(length) = headers.get("content-length") {
+        output.resize(length.parse().expect("HTTP content length"), 0);
+        reader.read_exact(&mut output).expect("HTTP body");
+    } else {
+        reader.read_to_end(&mut output).expect("HTTP body");
     }
     output
 }
@@ -244,8 +250,67 @@ impl<R: BufRead> EventBody<R> {
 }
 #[cfg(test)]
 mod tests {
-    use super::EventBody;
-    use std::io::Cursor;
+    use super::{EventBody, read_body};
+    use std::{
+        collections::BTreeMap,
+        io::{self, BufReader, Cursor, Read},
+    };
+    struct ResetAfter(Cursor<Vec<u8>>);
+    impl Read for ResetAfter {
+        fn read(&mut self, bytes: &mut [u8]) -> io::Result<usize> {
+            if self.0.position() == self.0.get_ref().len() as u64 {
+                return Err(io::ErrorKind::ConnectionReset.into());
+            }
+            self.0.read(bytes)
+        }
+    }
+    #[test]
+    fn framed_http_bodies_finish_before_a_connection_reset() {
+        for (header, value, wire) in [
+            ("content-length", "5", b"hello".as_slice()),
+            (
+                "transfer-encoding",
+                "chunked",
+                b"2;fixture=yes\r\nhe\r\n3\r\nllo\r\n0\r\nTrailer: yes\r\n\r\n",
+            ),
+        ] {
+            let headers = BTreeMap::from([(header.into(), value.into())]);
+            let mut reader = BufReader::new(ResetAfter(Cursor::new(wire.to_vec())));
+            assert_eq!(read_body(&mut reader, &headers), b"hello");
+        }
+    }
+    #[test]
+    fn incomplete_http_frames_are_rejected() {
+        for (header, value, wire) in [
+            ("content-length", "6", b"hello".as_slice()),
+            ("transfer-encoding", "chunked", b"5\r\nhell"),
+            ("transfer-encoding", "chunked", b"5\r\nhello\r\n0\r\n"),
+        ] {
+            assert!(
+                std::panic::catch_unwind(|| {
+                    read_body(
+                        &mut Cursor::new(wire),
+                        &BTreeMap::from([(header.into(), value.into())]),
+                    )
+                })
+                .is_err()
+            );
+        }
+    }
+    #[test]
+    fn unframed_http_bodies_still_require_a_clean_eof() {
+        let headers = BTreeMap::new();
+        assert_eq!(read_body(&mut Cursor::new(b"hello"), &headers), b"hello");
+        assert!(
+            std::panic::catch_unwind(|| {
+                read_body(
+                    &mut BufReader::new(ResetAfter(Cursor::new(b"hello".to_vec()))),
+                    &headers,
+                )
+            })
+            .is_err()
+        );
+    }
     #[test]
     fn sse_lines_survive_transport_chunks_and_utf8_boundaries() {
         let source = "data: {\"text\":\"héllo\"}\n\n".as_bytes();
