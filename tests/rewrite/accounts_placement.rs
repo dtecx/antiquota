@@ -139,3 +139,98 @@ fn placement_setting_saves_spread_and_keeps_fill_out_of_the_wire_format() {
     );
     server.stop();
 }
+
+fn quota_calls(server: &Server) -> usize {
+    setup::calls(server)
+        .iter()
+        .filter(|call| setup::argument(call, "-p") == Some("/quota"))
+        .count()
+}
+
+fn stale_reading(server: &Server) {
+    let path = server.data.join(format!("state/quota/{}.json", setup::ONE));
+    let mut reading: Value = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+    reading["at"] = json!(0);
+    setup::write(&path, &reading.to_string());
+}
+
+#[test]
+fn post_turn_probes_defer_while_another_model_lease_is_held() {
+    for quota_error in [false, true] {
+        let mut server = Server::new_stopped("post-turn-exclusive-probe", true);
+        setup::start(&mut server);
+        stale_reading(&server);
+        let held = antiquota_store::lock_file_shared(
+            &server
+                .data
+                .join(format!("state/leases/{}.lock", setup::ONE)),
+        )
+        .unwrap()
+        .unwrap();
+        if quota_error {
+            setup::script(&server, json!({"scenarios_by_slot":{setup::ONE:"quota"}}));
+        }
+        let before = quota_calls(&server);
+        let id = server.create();
+        setup::send(&server, &id, "Probe only after every shared call ends.");
+        let done = server.idle_turns(&id, if quota_error { 2 } else { 1 });
+        assert_eq!(
+            quota_calls(&server),
+            before,
+            "no quota probe may overlap another shared call; quota error: {quota_error}"
+        );
+        if quota_error {
+            assert_eq!(done["meta"]["last_slot"], setup::TWO);
+            let accounts = server.call("GET", "/api/accounts", None).json();
+            assert!(accounts[0]["walls"]["gemini"].as_f64().unwrap() > 0.0);
+            assert_eq!(accounts[0]["why"]["gemini"], "quota error");
+        }
+        drop(held);
+        assert_eq!(
+            server
+                .call(
+                    "POST",
+                    "/api/accounts/one@example.com/check",
+                    Some(json!({}))
+                )
+                .status,
+            200
+        );
+        assert_eq!(quota_calls(&server), before + 1);
+        server.stop();
+    }
+}
+
+#[test]
+fn automatic_probes_exclude_new_shared_calls_until_the_reading_is_saved() {
+    for quota_error in [false, true] {
+        let mut server = Server::new_stopped("automatic-probe-exclusive", true);
+        setup::start(&mut server);
+        stale_reading(&server);
+        setup::script(
+            &server,
+            json!({
+                "scenarios_by_slot":{setup::ONE:if quota_error { "quota" } else { "success" }},
+                "metadata_by_slot":{setup::ONE:{"quota_delay_ms":500}}
+            }),
+        );
+        let before = quota_calls(&server);
+        let id = server.create();
+        setup::send(&server, &id, "Hold the probe lease until publication.");
+        let deadline = Instant::now() + Duration::from_secs(5);
+        while quota_calls(&server) == before {
+            assert!(Instant::now() < deadline, "automatic probe never started");
+            thread::sleep(Duration::from_millis(5));
+        }
+        let lock = server
+            .data
+            .join(format!("state/leases/{}.lock", setup::ONE));
+        assert!(
+            antiquota_store::lock_file_shared(&lock).unwrap().is_none(),
+            "automatic probes must exclude a new shared model call; quota error: {quota_error}"
+        );
+        server.idle_turns(&id, if quota_error { 2 } else { 1 });
+        assert!(antiquota_store::lock_file_shared(&lock).unwrap().is_some());
+        server.stop();
+    }
+}

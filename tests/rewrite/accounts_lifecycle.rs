@@ -216,10 +216,15 @@ fn stop_cancels_a_slow_quota_probe_and_frees_the_account_lease() {
     setup::script(&server, json!({}));
     setup::send(&server, &id, "Continue after cancelled quota read.");
     let completed = server.idle_turns(&id, 2);
-    assert_eq!(completed["meta"]["last_slot"], setup::ONE);
+    // Stopping the probe must not erase the quota failure the finished model call reported.
+    assert_eq!(completed["meta"]["last_slot"], setup::TWO);
+    let accounts = server.call("GET", "/api/accounts", None).json();
+    assert_eq!(accounts[0]["why"]["gemini"], "quota error");
+    assert!(accounts[0]["walls"]["gemini"].as_f64().unwrap() > 0.0);
+    assert_eq!(accounts[0]["walls"]["cg"], 0.0);
     setup::evidence(
         "probe-cancel",
-        json!({"boundedSeconds":2,"leaseFreed":true,"nextTurnCompletes":true,"cancelledProbeDoesNotWall":true}),
+        json!({"boundedSeconds":2,"leaseFreed":true,"nextTurnCompletes":true,"knownQuotaFailureRetained":true,"nextAccount":setup::TWO}),
     );
     server.stop();
 }

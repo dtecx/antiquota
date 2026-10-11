@@ -2,7 +2,16 @@
 //! writes the terminal log, and catches up from the saved session after the engine ends a
 //! stream that fell behind, so no saved event is lost.
 use antiquota_core::{Event, EventRecord, Session, StreamEvent};
-use std::{collections::HashSet, io::Write};
+use std::{
+    collections::{HashMap, HashSet},
+    io::Write,
+};
+
+#[derive(Default)]
+struct Reply {
+    printed: String,
+    complete: bool,
+}
 
 /// One goal session's view of the shared event stream.
 pub struct Follow {
@@ -10,6 +19,7 @@ pub struct Follow {
     cwd: String,
     /// Timestamps of the transcript events shown; they are unique within a session.
     shown: HashSet<u64>,
+    replies: HashMap<(u64, u64), Reply>,
     started: bool,
     /// The goal state from the newest session snapshot.
     pub state: String,
@@ -21,6 +31,7 @@ impl Follow {
             id: id.into(),
             cwd: cwd.into(),
             shown: HashSet::new(),
+            replies: HashMap::new(),
             started: false,
             state: "active".into(),
         }
@@ -28,7 +39,7 @@ impl Follow {
 
     /// Shows the complete frames in `buffer` and leaves a partial frame for the next chunk.
     /// Bytes are decoded per frame, so a character split between chunks stays whole.
-    /// Returns true once the session has gone idle after working.
+    /// Returns true for a completion candidate; confirm it with an authoritative catch-up.
     pub fn frames(
         &mut self,
         out: &mut impl Write,
@@ -44,7 +55,9 @@ impl Follow {
             };
             match serde_json::from_str::<StreamEvent>(data) {
                 Ok(event) if event.sid.as_deref() == Some(self.id.as_str()) => {
-                    done |= self.record(out, &event.record, true);
+                    if let Some(latest) = self.record(out, &event.record, true) {
+                        done = latest;
+                    }
                 }
                 Ok(_) => {}
                 Err(error) => {
@@ -68,15 +81,35 @@ impl Follow {
         self.meta(meta)
     }
 
-    fn record(&mut self, out: &mut impl Write, record: &EventRecord, live: bool) -> bool {
+    fn record(&mut self, out: &mut impl Write, record: &EventRecord, live: bool) -> Option<bool> {
         if let Event::Meta { meta } = &record.event {
-            return self.meta(meta);
+            return Some(self.meta(meta));
         }
         if record.event.is_transcript() && !self.shown.insert(record.ts.to_bits()) {
-            return false;
+            return None;
         }
-        show(out, &record.event, &self.cwd, live);
-        false
+        match &record.event {
+            Event::Delta { turn, step, text } => {
+                let reply = self.replies.entry((*turn, *step)).or_default();
+                if !reply.complete {
+                    let _ = write!(out, "{text}");
+                    reply.printed.push_str(text);
+                    let _ = out.flush();
+                }
+            }
+            Event::Assistant { turn, step, text } => {
+                let reply = self.replies.entry((*turn, *step)).or_default();
+                if !reply.complete {
+                    let suffix = text.strip_prefix(&reply.printed).unwrap_or(text);
+                    let _ = writeln!(out, "{suffix}");
+                    let _ = out.flush();
+                    reply.printed.clear();
+                    reply.complete = true;
+                }
+            }
+            _ => show(out, &record.event, &self.cwd, live),
+        }
+        None
     }
 
     fn meta(&mut self, meta: &Session) -> bool {
@@ -90,7 +123,11 @@ impl Follow {
             return false;
         }
         // A catch-up can miss the whole working stretch; an ended goal still finishes the run.
-        self.started || (meta.goal.is_some() && self.state != "active")
+        if meta.goal.is_some() {
+            self.state != "active"
+        } else {
+            self.started
+        }
     }
 }
 

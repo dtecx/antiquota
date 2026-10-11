@@ -40,38 +40,48 @@ impl Replay {
         )
         .unwrap();
         let indices = [7, 10, 12, 13, 14, 15, 16, 17];
+        let paths = cfg!(windows).then(|| captured_paths(&fixture));
         assert_eq!(
             actual.len(),
             indices.len(),
             "captured first-turn SSE event count"
         );
         for (index, actual) in indices.into_iter().zip(actual) {
-            let expected = self.substitute(&fixture["response"]["eventSamples"][index]);
+            let expected =
+                self.substitute(&fixture["response"]["eventSamples"][index], cfg!(windows));
             compare(
                 &expected,
                 actual,
                 &format!("/response/eventSamples/{index}"),
                 &fixture["comparison"]["dynamicValues"],
+                paths.as_ref(),
             );
         }
         eprintln!("captured events-sse: all eight first-turn samples matched");
     }
-    fn substitute(&self, value: &Value) -> Value {
+    fn substitute(&self, value: &Value, windows_paths: bool) -> Value {
         match value {
             Value::String(text) => {
-                let mut result = text.clone();
+                let mut result = if windows_paths {
+                    windows_template_paths(text)
+                } else {
+                    text.clone()
+                };
                 for (key, value) in &self.bindings {
                     result = result.replace(key, value);
                 }
                 Value::String(result)
             }
-            Value::Array(items) => {
-                Value::Array(items.iter().map(|item| self.substitute(item)).collect())
-            }
+            Value::Array(items) => Value::Array(
+                items
+                    .iter()
+                    .map(|item| self.substitute(item, windows_paths))
+                    .collect(),
+            ),
             Value::Object(object) => Value::Object(
                 object
                     .iter()
-                    .map(|(k, v)| (k.clone(), self.substitute(v)))
+                    .map(|(k, v)| (k.clone(), self.substitute(v, windows_paths)))
                     .collect(),
             ),
             _ => value.clone(),
@@ -82,7 +92,7 @@ impl Replay {
         let fixture: Value =
             serde_json::from_slice(&fs::read(root.join(format!("cases/{name}.json"))).unwrap())
                 .unwrap();
-        let request = self.substitute(&fixture["request"]);
+        let request = self.substitute(&fixture["request"], false);
         let mut headers: BTreeMap<String, String> =
             serde_json::from_value(request["headers"].clone()).unwrap();
         let data = if request.get("json").is_some() {
@@ -132,7 +142,7 @@ impl Replay {
                 value.into(),
             );
         }
-        let mut expected = self.substitute(&fixture["response"]["json"]);
+        let mut expected = self.substitute(&fixture["response"]["json"], cfg!(windows));
         if let Some(calendar) = fixture["comparison"].get("calendar") {
             assert_eq!(
                 calendar,
@@ -148,11 +158,13 @@ impl Replay {
             }
         }
         if fixture["response"].get("json").is_some() {
+            let paths = cfg!(windows).then(|| captured_paths(&fixture));
             compare(
                 &expected,
                 &actual,
                 "/response/json",
                 &fixture["comparison"]["dynamicValues"],
+                paths.as_ref(),
             );
         }
         for name in ["content-type", "cache-control", "x-content-type-options"] {
@@ -195,7 +207,84 @@ impl Replay {
 fn escape(key: &str) -> String {
     key.replace('~', "~0").replace('/', "~1")
 }
-pub fn compare(expected: &Value, actual: &Value, path: &str, dynamic: &Value) {
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum PathKind {
+    Path,
+    Executable,
+}
+
+const PATH_ROOTS: [&str; 3] = ["{{TEST_ROOT}}", "{{REPO_ROOT}}", "{{WORKTREE_PATH}}"];
+
+/// Captured filesystem suffixes end at whitespace or quotes; leave all other text exact.
+fn windows_template_paths(text: &str) -> String {
+    let mut output = String::with_capacity(text.len());
+    let mut rest = text;
+    while let Some((at, root)) = PATH_ROOTS
+        .iter()
+        .filter_map(|root| rest.find(root).map(|at| (at, *root)))
+        .min_by_key(|(at, _)| *at)
+    {
+        let end = at + root.len();
+        output.push_str(&rest[..end]);
+        rest = &rest[end..];
+        if rest.starts_with('/') {
+            let end = rest
+                .find(|ch: char| ch.is_whitespace() || matches!(ch, '\'' | '"'))
+                .unwrap_or(rest.len());
+            output.push_str(&rest[..end].replace('/', "\\"));
+            rest = &rest[end..];
+        }
+    }
+    output.push_str(rest);
+    output
+}
+
+/// Only captured filesystem fields rooted in documented path placeholders vary by platform.
+fn captured_paths(fixture: &Value) -> BTreeMap<String, PathKind> {
+    fn visit(value: &Value, path: &str, paths: &mut BTreeMap<String, PathKind>) {
+        match value {
+            Value::Object(object) => {
+                for (key, value) in object {
+                    visit(value, &format!("{path}/{}", escape(key)), paths);
+                }
+            }
+            Value::Array(items) => {
+                for (index, value) in items.iter().enumerate() {
+                    visit(value, &format!("{path}/{index}"), paths);
+                }
+            }
+            Value::String(text)
+                if PATH_ROOTS.iter().any(|root| {
+                    text == root
+                        || text
+                            .strip_prefix(root)
+                            .is_some_and(|tail| tail.starts_with('/'))
+                }) =>
+            {
+                let kind = match path.rsplit('/').next() {
+                    Some("agy") => PathKind::Executable,
+                    Some(
+                        "cwd" | "root" | "path" | "base" | "stack" | "repo" | "log" | "TargetFile",
+                    ) => PathKind::Path,
+                    _ => return,
+                };
+                paths.insert(path.into(), kind);
+            }
+            _ => {}
+        }
+    }
+    let mut paths = BTreeMap::new();
+    visit(&fixture["response"], "/response", &mut paths);
+    paths
+}
+
+fn compare(
+    expected: &Value,
+    actual: &Value,
+    path: &str,
+    dynamic: &Value,
+    windows: Option<&BTreeMap<String, PathKind>>,
+) {
     if let Some(rule) = dynamic.get(path) {
         let number = actual
             .as_f64()
@@ -222,25 +311,32 @@ pub fn compare(expected: &Value, actual: &Value, path: &str, dynamic: &Value) {
                 "{path}: exact object keys"
             );
             for (key, value) in e {
-                compare(value, &a[key], &format!("{path}/{}", escape(key)), dynamic);
+                compare(
+                    value,
+                    &a[key],
+                    &format!("{path}/{}", escape(key)),
+                    dynamic,
+                    windows,
+                );
             }
         }
         (Value::Array(e), Value::Array(a)) => {
             assert_eq!(e.len(), a.len(), "{path}: exact array length");
             for (i, (ev, av)) in e.iter().zip(a).enumerate() {
-                compare(ev, av, &format!("{path}/{i}"), dynamic);
+                compare(ev, av, &format!("{path}/{i}"), dynamic, windows);
             }
         }
         (Value::Number(e), Value::Number(a)) => assert!(
             super::numbers::equal(e, a),
             "{path}: exact numeric value {e} != {a}"
         ),
-        // Captured paths use `/`; on Windows the engine writes `\\`, may add `\\?\` and names
-        // executables `.exe`. Only those differences are ignored, and only on Windows.
-        (Value::String(e), Value::String(a)) if cfg!(windows) => {
+        (Value::String(e), Value::String(a))
+            if windows.is_some_and(|fields| fields.contains_key(path)) =>
+        {
+            let kind = windows.unwrap()[path];
             assert_eq!(
-                windows_path(e),
-                windows_path(a),
+                windows_path(e, kind),
+                windows_path(a, kind),
                 "{path}: exact captured value"
             )
         }
@@ -248,12 +344,16 @@ pub fn compare(expected: &Value, actual: &Value, path: &str, dynamic: &Value) {
     }
 }
 
-fn windows_path(text: &str) -> String {
+fn windows_path(text: &str, kind: PathKind) -> String {
     let text = text
         .strip_prefix(r"\\?\")
         .unwrap_or(text)
         .replace('\\', "/");
-    text.strip_suffix(".exe").map(str::to_owned).unwrap_or(text)
+    if kind == PathKind::Executable {
+        text.strip_suffix(".exe").map(str::to_owned).unwrap_or(text)
+    } else {
+        text
+    }
 }
 
 /// Decodes recorded raw request bytes without changing malformed JSON fixtures.
@@ -354,8 +454,9 @@ fn valid_http_date(text: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{compare, decode_base64, valid_http_date};
+    use super::{PathKind, Replay, captured_paths, compare, decode_base64, valid_http_date};
     use serde_json::json;
+    use std::collections::BTreeMap;
     #[test]
     fn recorded_raw_bodies_decode_and_http_dates_are_checked() {
         assert_eq!(decode_base64("ew=="), b"{");
@@ -378,6 +479,150 @@ mod tests {
             &json!(2),
             "/n",
             &json!({"/n":{"type":"invented"}}),
+            None,
         );
+    }
+
+    #[test]
+    fn windows_normalization_is_limited_to_captured_path_and_executable_pointers() {
+        let fixture = json!({"response":{"json":{
+            "cwd":"{{TEST_ROOT}}/home/project",
+            "agy":"{{TEST_ROOT}}/fake-agy",
+            "path":"{{TEST_ROOT}}/project/script.exe",
+            "id":"{{TEST_ROOT}}/identity.exe",
+            "error":"{{TEST_ROOT}}/missing.exe",
+            "text":"{{TEST_ROOT}}/message.exe"
+        }}});
+        let paths = captured_paths(&fixture);
+        assert_eq!(paths.len(), 3);
+        assert_eq!(paths["/response/json/cwd"], PathKind::Path);
+        assert_eq!(paths["/response/json/agy"], PathKind::Executable);
+        assert_eq!(paths["/response/json/path"], PathKind::Path);
+        for (pointer, expected, actual) in [
+            (
+                "/response/json/cwd",
+                "C:/test/home/project",
+                r"\\?\C:\test\home\project",
+            ),
+            (
+                "/response/json/agy",
+                "C:/test/fake-agy",
+                r"\\?\C:\test\fake-agy.exe",
+            ),
+            (
+                "/response/json/path",
+                "C:/test/project/script.exe",
+                r"C:\test\project\script.exe",
+            ),
+        ] {
+            compare(
+                &json!(expected),
+                &json!(actual),
+                pointer,
+                &json!({}),
+                Some(&paths),
+            );
+            assert!(
+                std::panic::catch_unwind(|| compare(
+                    &json!(expected),
+                    &json!(actual),
+                    pointer,
+                    &json!({}),
+                    None
+                ))
+                .is_err(),
+                "non-Windows replay must stay exact"
+            );
+        }
+        assert!(
+            std::panic::catch_unwind(|| compare(
+                &json!("C:/test/project/script"),
+                &json!(r"C:\test\project\script.exe"),
+                "/response/json/path",
+                &json!({}),
+                Some(&paths)
+            ))
+            .is_err(),
+            "ordinary paths must retain executable-looking suffixes"
+        );
+        for pointer in ["id", "error", "text", "title", "output", "diff", "status"] {
+            for (expected, actual) in [("message.exe", "message"), (r"literal\n", "literal/n")] {
+                assert!(
+                    std::panic::catch_unwind(|| compare(
+                        &json!(expected),
+                        &json!(actual),
+                        &format!("/response/json/{pointer}"),
+                        &json!({}),
+                        Some(&paths)
+                    ))
+                    .is_err(),
+                    "{pointer} must stay exact on Windows"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn windows_expected_templates_expand_only_documented_filesystem_suffixes() {
+        let replay = Replay {
+            bindings: BTreeMap::from([
+                ("{{TEST_ROOT}}".into(), r"C:\test".into()),
+                ("{{REPO_ROOT}}".into(), r"D:\repo".into()),
+                ("{{WORKTREE_PATH}}".into(), r"E:\tree".into()),
+            ]),
+            passed: vec![],
+        };
+        let fixture = json!({"response":{"json":{
+            "error":"not a directory: {{TEST_ROOT}}/home/missing",
+            "nested":[{"text":"café '{{TEST_ROOT}}/home/project' \"{{REPO_ROOT}}/docs/guide.md\"\n{{WORKTREE_PATH}}/src/main.rs https://example/a/b a/b literal\\n reply.exe"}]
+        }}});
+        let actual = json!({
+            "error":r"not a directory: C:\test\home\missing",
+            "nested":[{"text":"café 'C:\\test\\home\\project' \"D:\\repo\\docs\\guide.md\"\nE:\\tree\\src\\main.rs https://example/a/b a/b literal\\n reply.exe"}]
+        });
+        let expected = replay.substitute(&fixture["response"]["json"], true);
+        assert_eq!(expected, actual);
+        let paths = captured_paths(&fixture);
+        assert!(paths.is_empty(), "embedded messages must compare exactly");
+        compare(
+            &expected,
+            &actual,
+            "/response/json",
+            &json!({}),
+            Some(&paths),
+        );
+        // Request and non-Windows substitutions retain the captured slash suffixes.
+        assert_eq!(
+            replay.substitute(&fixture["response"]["json"], false)["error"],
+            r"not a directory: C:\test/home/missing"
+        );
+        for (from, to) in [
+            (r"C:\test\home\project", "C:/test/home/project"),
+            ("https://example/a/b", r"https:\\example\a\b"),
+            ("a/b literal", r"a\b literal"),
+            (r"literal\n", "literal/n"),
+            ("reply.exe", "reply"),
+            ("café", "cafe"),
+        ] {
+            let mut changed = actual.clone();
+            changed["nested"][0]["text"] = json!(
+                actual["nested"][0]["text"]
+                    .as_str()
+                    .unwrap()
+                    .replace(from, to)
+            );
+            assert_ne!(actual, changed);
+            assert!(
+                std::panic::catch_unwind(|| compare(
+                    &expected,
+                    &changed,
+                    "/response/json",
+                    &json!({}),
+                    Some(&paths),
+                ))
+                .is_err(),
+                "actual message change {from:?} must not be normalized"
+            );
+        }
     }
 }

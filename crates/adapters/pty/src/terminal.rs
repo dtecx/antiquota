@@ -165,14 +165,16 @@ impl ShellTerminal {
         thread::spawn(move || {
             let mut reader = reader;
             let mut chunk = [0u8; 65536];
+            let mut queries = crate::CursorQueries::default();
             while let Ok(count) = reader.read(&mut chunk) {
                 if count == 0 {
                     break;
                 }
-                emit(
-                    &shared,
-                    &crate::answer_cursor_query(&chunk[..count], &answers),
-                );
+                emit(&shared, &queries.answer(&chunk[..count], &answers));
+            }
+            let remaining = queries.finish();
+            if !remaining.is_empty() {
+                emit(&shared, &remaining);
             }
             ended(&shared, &alive);
         });

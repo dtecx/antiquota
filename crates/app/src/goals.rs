@@ -362,8 +362,7 @@ impl Service {
                     .await;
                 match result {
                     Ok(answer) if answer.status == "quota" => {
-                        self.quota_failure(&*lease, bucket, cancel).await?;
-                        drop(lease);
+                        self.quota_failure(lease, bucket, cancel).await?;
                         self.notice(
                             id,
                             "info",

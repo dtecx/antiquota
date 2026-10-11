@@ -162,7 +162,8 @@
       {#if hovered}<div class="tip" role="tooltip" style:left={`${hovered.left}px`}>
           <b>{hovered.day.date}</b><span
             >{formatTokens(hovered.day.total)} tokens · {hovered.day.turns} turns</span
-          >{#if hoveredParts}<span class="split">{partsLine(hoveredParts)}</span
+          >{#if hoveredParts}<span class="split"
+              >{partsLine(hoveredParts)} · cache hit {percent(cacheRate(hoveredParts))}</span
             >{/if}{#each dayAccounts(hovered.day) as [slot, tokens] (slot)}<span
               class="contribution"><span>{slot}</span><b>{formatTokens(tokens)}</b></span
             >{/each}
@@ -178,31 +179,41 @@
           <thead
             ><tr
               ><th>Account</th><th>{period} days</th><th>Today</th><th>Turns</th><th>Input</th><th
-                >Output</th
-              ><th title="Cached input as a share of all input">Cache hit</th></tr
+                >Cached input</th
+              ><th>Output</th><th>Thinking</th><th title="Cached input as a share of all input"
+                >Cache hit</th
+              ></tr
             ></thead
           ><tbody
-            >{#each summary.accounts as [slot, row] (slot)}<tr
+            >{#each summary.accounts as [slot, row] (slot)}{@const detail =
+                summary.detail?.accounts[slot]}<tr
                 ><td title={slot}>{slot}</td><td>{formatTokens(row.tokens)}</td><td
                   >{formatTokens(row.today)}</td
-                ><td>{row.turns}</td><td>{formatTokens(row.input)}</td><td
-                  >{formatTokens(row.output)}</td
-                ><td>{percent(cacheRate(summary.detail?.accounts[slot]))}</td></tr
+                ><td>{row.turns}</td><td>{formatTokens(detail?.input ?? row.input)}</td><td
+                  >{detail ? formatTokens(detail.cache) : '–'}</td
+                ><td>{formatTokens(detail?.output ?? row.output)}</td><td
+                  >{detail ? formatTokens(detail.thinking) : '–'}</td
+                ><td>{percent(cacheRate(detail))}</td></tr
               >{/each}</tbody
           >
         </table>{:else}<p>No turns in this period yet.</p>{/if}
       {#if summary.models.length}<table aria-label="Usage by model">
           <thead
             ><tr
-              ><th>Model</th><th>Tokens</th><th>Share</th><th
-                title="Cached input as a share of all input">Cache hit</th
-              ></tr
+              ><th>Model</th><th>Tokens</th><th>Share</th><th>Input</th><th>Cached input</th><th
+                >Output</th
+              ><th>Thinking</th><th title="Cached input as a share of all input">Cache hit</th></tr
             ></thead
           ><tbody
-            >{#each summary.models as [model, tokens] (model)}<tr
+            >{#each summary.models as [model, tokens] (model)}{@const detail =
+                summary.detail?.models[model]}<tr
                 ><td>{model}</td><td>{formatTokens(tokens)}</td><td
                   >{Math.round((tokens / Math.max(1, summary.total)) * 100)}%</td
-                ><td>{percent(cacheRate(summary.detail?.models[model]))}</td></tr
+                ><td>{detail ? formatTokens(detail.input) : '–'}</td><td
+                  >{detail ? formatTokens(detail.cache) : '–'}</td
+                ><td>{detail ? formatTokens(detail.output) : '–'}</td><td
+                  >{detail ? formatTokens(detail.thinking) : '–'}</td
+                ><td>{percent(cacheRate(detail))}</td></tr
               >{/each}</tbody
           >
         </table>{/if}

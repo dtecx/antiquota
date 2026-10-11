@@ -116,18 +116,18 @@ pub async fn run(accounts: Arc<FileAccounts>, mut args: Vec<String>) -> anyhow::
     {
         result.code = 0;
     }
+    let name = lease.slot().name.clone();
     if walled {
         crate::accounts::service(accounts.clone())?
-            .quota_failure(&*lease, bucket, &cancel)
+            .quota_failure(lease, bucket, &cancel)
             .await?;
     }
     if result.code != 0 {
         antiquota_store::write_atomic(
-            &accounts.root.join("state/failures").join(format!(
-                "{}-{}.log",
-                started.floor(),
-                lease.slot().name
-            )),
+            &accounts
+                .root
+                .join("state/failures")
+                .join(format!("{}-{}.log", started.floor(), name)),
             format!(
                 "rc={}\n--- stdout\n{}\n--- stderr\n{}\n",
                 result.code, result.out, result.err
@@ -137,7 +137,7 @@ pub async fn run(accounts: Arc<FileAccounts>, mut args: Vec<String>) -> anyhow::
     }
     antiquota_store::append_json(
         &accounts.root.join("state/calls.jsonl"),
-        &json!({"t":started.floor(),"slot":lease.slot().name,"bucket":bucket,"rc":result.code,"secs":((clock.now()-started)*10.0).round()/10.0,"walled":walled}),
+        &json!({"t":started.floor(),"slot":name,"bucket":bucket,"rc":result.code,"secs":((clock.now()-started)*10.0).round()/10.0,"walled":walled}),
     )?;
     Ok(if walled { 75 } else { result.code })
 }

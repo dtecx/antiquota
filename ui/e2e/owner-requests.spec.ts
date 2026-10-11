@@ -7,7 +7,7 @@ import { addAccount, createSession, openAccounts } from './account-support';
 import { test, expect } from './fixtures';
 
 async function shot(page: Page, engine: FixtureEngine, name: string) {
-  const path = join(engine.sandbox.repository, '.handoff/evidence/ui-slice14');
+  const path = join(engine.sandbox.repository, '.handoff/evidence/ui-slice19');
   await mkdir(path, { recursive: true });
   await page.screenshot({ path: join(path, `${name}.png`), fullPage: true });
 }
@@ -67,34 +67,96 @@ test('shows every token part with the cache hit rate and refreshes as turns end'
     /^Thinking\s*25\s*today 25$/,
     /^Cache hit rate\s*75%\s*today 75%$/,
   ]);
-  const account = usage.getByRole('table', { name: 'Usage by account' }).locator('tbody tr');
+  const accountTable = usage.getByRole('table', { name: 'Usage by account' });
+  await expect(accountTable.getByRole('columnheader')).toHaveText([
+    'Account',
+    '14 days',
+    'Today',
+    'Turns',
+    'Input',
+    'Cached input',
+    'Output',
+    'Thinking',
+    'Cache hit',
+  ]);
+  const account = accountTable.locator('tbody tr');
   await expect(account.locator('td')).toHaveText([
     'one@example.com',
     '375',
     '375',
     '1',
     '300',
+    '900',
     '50',
+    '25',
     '75%',
   ]);
-  await expect(
-    usage.getByRole('table', { name: 'Usage by model' }).locator('tbody td').last(),
-  ).toHaveText('75%');
+  const modelTable = usage.getByRole('table', { name: 'Usage by model' });
+  await expect(modelTable.getByRole('columnheader')).toHaveText([
+    'Model',
+    'Tokens',
+    'Share',
+    'Input',
+    'Cached input',
+    'Output',
+    'Thinking',
+    'Cache hit',
+  ]);
+  const model = modelTable.locator('tbody tr');
+  await expect(model.locator('td')).toHaveText([
+    'gemini-3.8-flash-high',
+    '375',
+    '100%',
+    '300',
+    '900',
+    '50',
+    '25',
+    '75%',
+  ]);
   await usage.getByRole('group', { name: 'Daily usage' }).getByRole('button').last().focus();
   await expect(usage.getByRole('tooltip')).toContainText(
-    'input 300 · cached input 900 · output 50 · thinking 25',
+    'input 300 · cached input 900 · output 50 · thinking 25 · cache hit 75%',
   );
   await shot(page, engine, 'usage-breakdown');
   // A turn that ends while the panel is open updates it without any click, and the open
   // tooltip stays with the new totals.
   const sent = await engine.call('POST', `/api/sessions/${id}/send`, { text: 'Second turn.' });
   expect(sent.status).toBe(200);
-  await expect(parts.first()).toHaveText(/^Input\s*600\s*today 600$/);
+  await expect(parts).toHaveText([
+    /^Input\s*600\s*today 600$/,
+    /^Cached input\s*1.8k\s*today 1.8k$/,
+    /^Output\s*100\s*today 100$/,
+    /^Thinking\s*50\s*today 50$/,
+    /^Cache hit rate\s*75%\s*today 75%$/,
+  ]);
   await expect(usage.getByRole('tooltip')).toContainText(
-    'input 600 · cached input 1.8k · output 100 · thinking 50',
+    'input 600 · cached input 1.8k · output 100 · thinking 50 · cache hit 75%',
   );
   await expect(usage.locator('.stats')).toContainText('2 turns');
-  await expect(account.locator('td').nth(4)).toHaveText('600');
+  await expect(account.locator('td')).toHaveText([
+    'one@example.com',
+    '750',
+    '750',
+    '2',
+    '600',
+    '1.8k',
+    '100',
+    '50',
+    '75%',
+  ]);
+  await expect(model.locator('td')).toHaveText([
+    'gemini-3.8-flash-high',
+    '750',
+    '100%',
+    '600',
+    '1.8k',
+    '100',
+    '50',
+    '75%',
+  ]);
+  await shot(page, engine, 'usage-breakdown-refreshed');
+  await model.scrollIntoViewIfNeeded();
+  await shot(page, engine, 'usage-breakdown-refreshed-tables');
 });
 
 test('places new sessions fill first by default and saves spread first', async ({

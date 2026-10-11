@@ -71,6 +71,18 @@ impl Engine {
             .await
             .context("the event stream did not open")
     }
+
+    async fn saved(&self, id: &str) -> anyhow::Result<SessionResponse> {
+        serde_json::from_value(
+            self.call(
+                reqwest::Method::GET,
+                &format!("/api/sessions/{id}"),
+                json!({}),
+            )
+            .await?,
+        )
+        .context("the saved session is unreadable")
+    }
 }
 
 /// The running engine, or one started in this process (returned as `true`).
@@ -144,7 +156,11 @@ pub async fn run(args: GoalArgs) -> anyhow::Result<i32> {
                 if let Ok(Some(chunk)) = chunk {
                     buffer.extend_from_slice(&chunk);
                     if follow.frames(&mut std::io::stdout().lock(), &mut std::io::stderr(), &mut buffer) {
-                        break false;
+                        // A queued snapshot can predate reconnect catch-up; confirm completion.
+                        let saved = engine.saved(&id).await?;
+                        if follow.catch_up(&mut std::io::stdout().lock(), &saved.meta, &saved.events) {
+                            break false;
+                        }
                     }
                     continue;
                 }
@@ -153,10 +169,7 @@ pub async fn run(args: GoalArgs) -> anyhow::Result<i32> {
                 tokio::time::sleep(Duration::from_millis(200)).await;
                 stream = engine.events().await?;
                 buffer.clear();
-                let saved: SessionResponse = serde_json::from_value(
-                    engine.call(reqwest::Method::GET, &format!("/api/sessions/{id}"), json!({})).await?,
-                )
-                .context("the saved session is unreadable")?;
+                let saved = engine.saved(&id).await?;
                 if follow.catch_up(&mut std::io::stdout().lock(), &saved.meta, &saved.events) {
                     break false;
                 }
@@ -181,13 +194,91 @@ pub async fn run(args: GoalArgs) -> anyhow::Result<i32> {
 
 #[cfg(test)]
 mod tests {
-    use super::GoalArgs;
+    use super::*;
+    use antiquota_core::{Event, EventRecord, Goal, Session, StreamEvent};
     use clap::Parser;
+    use std::io::{Read, Write};
 
     #[derive(Parser)]
     struct Line {
         #[command(flatten)]
         goal: GoalArgs,
+    }
+
+    #[tokio::test]
+    async fn queued_completion_is_confirmed_against_the_current_http_snapshot() {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let engine = Engine {
+            base: format!("http://{}", listener.local_addr().unwrap()),
+            token: "test-token".into(),
+            http: reqwest::Client::new(),
+        };
+        let server = std::thread::spawn(move || {
+            for (state, updated) in [("active", 10.0), ("met", 9.0)] {
+                let (mut stream, _) = listener.accept().unwrap();
+                stream
+                    .set_read_timeout(Some(Duration::from_secs(5)))
+                    .unwrap();
+                let mut request = Vec::new();
+                let mut bytes = [0; 1024];
+                while !request.windows(4).any(|part| part == b"\r\n\r\n") {
+                    let count = stream.read(&mut bytes).unwrap();
+                    assert!(count > 0);
+                    request.extend_from_slice(&bytes[..count]);
+                }
+                let request = String::from_utf8(request).unwrap();
+                assert!(request.starts_with("GET /api/sessions/test HTTP/1.1\r\n"));
+                assert!(
+                    request
+                        .to_lowercase()
+                        .contains("x-antiquota-token: test-token\r\n")
+                );
+                let saved = SessionResponse {
+                    meta: Session {
+                        id: "test".into(),
+                        status: "idle".into(),
+                        updated,
+                        goal: Some(Goal {
+                            state: state.into(),
+                            ..Goal::default()
+                        }),
+                        ..Session::default()
+                    },
+                    events: vec![],
+                };
+                let body = serde_json::to_string(&saved).unwrap();
+                write!(stream, "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}", body.len()).unwrap();
+            }
+        });
+        let mut follow = Follow::new("test", "/work");
+        let queued = StreamEvent {
+            sid: Some("test".into()),
+            record: EventRecord::new(
+                10.0,
+                Event::Meta {
+                    meta: Box::new(Session {
+                        status: "idle".into(),
+                        updated: 10.0,
+                        goal: Some(Goal {
+                            state: "stopped".into(),
+                            ..Goal::default()
+                        }),
+                        ..Session::default()
+                    }),
+                },
+            ),
+        };
+        let mut out = vec![];
+        let mut buffer =
+            format!("data: {}\n\n", serde_json::to_string(&queued).unwrap()).into_bytes();
+        assert!(follow.frames(&mut out, &mut vec![], &mut buffer));
+        let saved = engine.saved("test").await.unwrap();
+        assert!(!follow.catch_up(&mut out, &saved.meta, &saved.events));
+        assert_eq!(follow.state, "active");
+        let saved = engine.saved("test").await.unwrap();
+        assert!(follow.catch_up(&mut out, &saved.meta, &saved.events));
+        assert_eq!(follow.state, "met");
+        server.join().unwrap();
     }
 
     #[test]

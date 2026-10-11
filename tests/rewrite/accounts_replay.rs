@@ -9,6 +9,49 @@ use std::{
     time::{Duration, Instant},
 };
 
+const POST_LOGIN_QUOTA: f64 = 0.63;
+
+fn post_login_refreshed(event: &Value) -> bool {
+    event["t"] == "accounts"
+        && event["accounts"].as_array().is_some_and(|rows| {
+            rows.len() == 3
+                && rows.iter().all(|row| row["busy"] == false)
+                && rows.iter().any(|row| {
+                    row["slot"] == "three@example.com"
+                        && row["quota"]["gemini"]["5h"][0] == POST_LOGIN_QUOTA
+                })
+        })
+}
+
+fn wait_for_post_login_refresh(events: &mut Events) -> Value {
+    let deadline = Instant::now() + Duration::from_secs(8);
+    loop {
+        let event = events.next();
+        if post_login_refreshed(&event) {
+            return event;
+        }
+        assert!(
+            Instant::now() < deadline,
+            "login refresh never completed: {event}"
+        );
+    }
+}
+
+#[test]
+fn login_refresh_barrier_rejects_an_early_all_idle_adoption_announcement() {
+    let mut event = json!({"t":"accounts","accounts":[
+        {"slot":setup::ONE,"busy":false},
+        {"slot":"three@example.com","busy":false,"quota":{"gemini":{"5h":[0.9,null]}}},
+        {"slot":setup::TWO,"busy":false}
+    ]});
+    assert!(!post_login_refreshed(&event));
+    event["accounts"][1]["quota"]["gemini"]["5h"][0] = json!(POST_LOGIN_QUOTA);
+    event["accounts"][1]["busy"] = json!(true);
+    assert!(!post_login_refreshed(&event));
+    event["accounts"][1]["busy"] = json!(false);
+    assert!(post_login_refreshed(&event));
+}
+
 #[test]
 fn pause_defaults_to_on_rejects_unknown_accounts_and_broadcasts_the_response() {
     let mut server = Server::new_stopped("pause-route-edges", true);
@@ -327,8 +370,15 @@ fn captured_account_routes_preserve_exact_overviews_and_routing_records() {
 fn captured_login_routes_adopt_cancel_and_replace_without_opening_browser() {
     let mut server = Server::new_stopped("login-replay", true);
     setup::captured_home(&server);
-    setup::script(&server, json!({"login":{"email":"three@example.com"}}));
+    setup::script(
+        &server,
+        json!({
+            "login":{"email":"three@example.com"},
+            "metadata_by_slot":{"three@example.com":{"quota":setup::healthy_quota(POST_LOGIN_QUOTA)}}
+        }),
+    );
     setup::start(&mut server);
+    let mut events = Events::open(server.port, &server.token);
     let mut replay = Replay::new(&server);
     replay.case(&server, "login-start");
     replay.case(&server, "login-poll");
@@ -355,13 +405,9 @@ fn captured_login_routes_adopt_cancel_and_replace_without_opening_browser() {
             0o700
         );
     }
+    // Adoption reads default temporary-HOME quota; only the named-slot refresh publishes 63%.
+    wait_for_post_login_refresh(&mut events);
     replay.case(&server, "login-delete");
-    setup::wait(&server, "adopted account refresh ends", |rows| {
-        rows.as_array()
-            .unwrap()
-            .iter()
-            .all(|row| row["busy"] == false)
-    });
     replay.case(&server, "account-delete");
     let first = replay.case(&server, "login-start").json();
     let newer = server
@@ -392,6 +438,71 @@ fn captured_login_routes_adopt_cancel_and_replace_without_opening_browser() {
     setup::evidence(
         "login-contract",
         json!({"capturedCases":["login-start","login-poll","login-code-invalid","login-submit","login-delete","login-poll-replaced","login-submit-replaced","account-delete"],"privateCredentials":true,"temporaryHomesRemoved":true,"realBrowserCalls":0}),
+    );
+    server.stop();
+}
+
+#[test]
+fn delayed_post_login_refresh_keeps_busy_delete_exact_until_completion() {
+    let mut server = Server::new_stopped("login-refresh-delete-overlap", true);
+    setup::captured_home(&server);
+    setup::script(
+        &server,
+        json!({
+            "login":{"email":"three@example.com"},
+            "metadata_by_slot":{"three@example.com":{
+                "quota_delay_ms":1500,"quota":setup::healthy_quota(POST_LOGIN_QUOTA)
+            }}
+        }),
+    );
+    setup::start(&mut server);
+    let mut events = Events::open(server.port, &server.token);
+    let mut replay = Replay::new(&server);
+    replay.case(&server, "login-start");
+    replay.case(&server, "login-submit");
+    let busy = setup::wait(
+        &server,
+        "named-slot post-login probe holds its real lease",
+        |rows| {
+            rows.as_array()
+                .unwrap()
+                .iter()
+                .any(|row| row["slot"] == "three@example.com" && row["busy"] == true)
+                && setup::calls(&server).iter().any(|call| {
+                    call["slot"] == "three@example.com"
+                        && setup::argument(call, "-p") == Some("/quota")
+                })
+        },
+    );
+    assert!(!post_login_refreshed(
+        &json!({"t":"accounts","accounts":busy})
+    ));
+    assert!(setup::calls(&server).iter().any(|call| {
+        call["slot"] == "three@example.com" && setup::argument(call, "-p") == Some("/quota")
+    }));
+    let auth = server
+        .data
+        .join("slots/three@example.com/.gemini/antigravity-cli/antigravity-oauth-token");
+    let rejected = server.call("DELETE", "/api/accounts/three@example.com", None);
+    assert_eq!(rejected.status, 400);
+    assert_eq!(
+        rejected.json(),
+        json!({
+            "error":"'three@example.com' is running a call; stop it first"
+        })
+    );
+    assert!(auth.is_file());
+    wait_for_post_login_refresh(&mut events);
+    replay.case(&server, "login-delete");
+    replay.case(&server, "account-delete");
+    assert!(!auth.exists());
+    server.evidence(
+        "login-refresh-delete",
+        &json!({
+            "forcedProbeDelayMs":1500,"busyDeleteStatus":400,
+            "completedRefreshQuota":POST_LOGIN_QUOTA,"capturedDeleteStatus":200,
+            "retryCount":0,"paidCalls":0
+        }),
     );
     server.stop();
 }

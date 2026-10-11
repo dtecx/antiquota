@@ -213,15 +213,50 @@ impl AccountService {
     }
     pub async fn quota_failure(
         &self,
-        lease: &dyn AccountLease,
+        lease: Box<dyn AccountLease>,
         bucket: &str,
         cancel: &Cancellation,
     ) -> Result<Failure, AppError> {
-        let panel = self.probe_account(lease, cancel).await?;
         if cancel.is_cancelled() || self.background_cancel.is_cancelled() {
             return Ok(Failure::Quota);
         }
-        let name = &lease.slot().name;
+        let name = lease.slot().name.clone();
+        let now = self.clock.now();
+        let cached_wall = self
+            .account_overview()?
+            .iter()
+            .find(|a| a.slot == name)
+            .and_then(|a| a.walls.get(bucket).copied())
+            .unwrap_or(0.0);
+        // Publish the failure while our model lease still excludes any older probe.
+        let deferred_wall = if cached_wall > now {
+            cached_wall
+        } else {
+            self.accounts
+                .set_wall(&name, bucket, now + FALLBACK_WALL, "quota error")?;
+            now + FALLBACK_WALL
+        };
+        drop(lease);
+        if cancel.is_cancelled() || self.background_cancel.is_cancelled() {
+            return Ok(Failure::Quota);
+        }
+        let Some(probe_lease) = self.accounts.lease_named(&name)? else {
+            self.route(RoutingEntry {
+                event: "wall".into(),
+                slot: Some(name),
+                bucket: Some(bucket.into()),
+                until: Some(deferred_wall),
+                why: Some("quota error, probe deferred while account busy".into()),
+                ..Default::default()
+            })?;
+            self.announce_accounts()?;
+            return Ok(Failure::Quota);
+        };
+        let panel = self.probe_account(&*probe_lease, cancel).await?;
+        if cancel.is_cancelled() || self.background_cancel.is_cancelled() {
+            return Ok(Failure::Quota);
+        }
+        let name = &name;
         let now = self.clock.now();
         let until = self
             .account_overview()?
@@ -234,8 +269,16 @@ impl AccountService {
                 event: "wall".into(),
                 slot: Some(name.clone()),
                 bucket: Some(bucket.into()),
-                until: Some(until),
-                why: Some("quota spent".into()),
+                until: Some(if matches!(panel, ProbeResult::Unreadable) {
+                    until.max(deferred_wall)
+                } else {
+                    until
+                }),
+                why: Some(if matches!(panel, ProbeResult::Unreadable) {
+                    "quota error, panel unreadable".into()
+                } else {
+                    "quota spent".into()
+                }),
                 ..Default::default()
             })?;
         } else if matches!(panel, ProbeResult::Unreadable) {

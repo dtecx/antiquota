@@ -1,0 +1,9 @@
+# ADR 0033: exclusive probes and authoritative goal completion
+
+Model calls may share an account HOME, but every automatic quota probe must acquire the existing exclusive account lease. A quota failure publishes its fallback wall before releasing the model lease, then attempts an exclusive probe. If another call still holds the account, the probe is deferred and the wall remains. Healthy post-turn probes skip busy accounts. Authentication and repeated-error walls retain the model lease until publication; an older healthy probe cannot erase a newly published failure.
+
+Stopping an in-progress probe releases its process and lease promptly while retaining a quota failure already reported by the model call. The next turn uses another healthy account; a manual check or unwall can restore the account earlier. Stopping before failure classification does not add a wall. This intentionally corrects the old cancellation behavior that reopened an account immediately after its quota error. Routing preserves the exact fallback deadline even though the legacy wall overview uses whole seconds.
+
+The CLI treats streamed goal completion as a candidate and confirms it through the existing session HTTP snapshot before exiting or shutting down its own engine. Snapshot timestamps are wall-clock values, not ordering cursors. Catch-up also tracks each assistant step's printed prefix and completed state so saved replies and queued deltas do not repeat terminal output. The captured transport and storage formats do not change.
+
+Windows PTY readers retain partial cursor-position queries across reads. Captured HTTP comparisons normalize only documented filesystem fields; arbitrary messages and IDs remain exact. Login replay waits for a distinct named-slot quota result and the final idle account event, preserving the real busy-delete rejection instead of retrying it. Usage account, model and daily views expose every existing token part and cache hit rate.

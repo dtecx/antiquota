@@ -166,12 +166,14 @@ fn the_run_ends_when_the_session_goes_idle_after_working() {
     let mut follow = Follow::new(ID, CWD);
     let (mut out, mut warn) = (vec![], vec![]);
     let meta_frame = |ts: f64, status: &str, goal: &str| {
+        let mut value = meta(status, Some(goal));
+        value.updated = ts;
         frame(
             ID,
             record(
                 ts,
                 Event::Meta {
-                    meta: Box::new(meta(status, Some(goal))),
+                    meta: Box::new(value),
                 },
             ),
         )
@@ -210,7 +212,7 @@ fn catch_up_shows_only_the_missed_saved_events_once() {
     assert!(!follow.frames(&mut out, &mut warn, &mut late));
     assert_eq!(
         text(out),
-        "\n-- turn 1 on one@example.com (gemini-3.8-flash-high)\n   . run_command ls\nPartlyPartly done.\n   done in 2.3s\n"
+        "\n-- turn 1 on one@example.com (gemini-3.8-flash-high)\n   . run_command ls\nPartly done.\n   done in 2.3s\n"
     );
     assert!(warn.is_empty());
 }
@@ -220,8 +222,22 @@ fn catch_up_keeps_waiting_while_the_goal_is_still_active() {
     let mut follow = Follow::new(ID, CWD);
     let mut out = vec![];
     assert!(!follow.catch_up(&mut out, &meta("idle", Some("active")), &[]));
-    assert!(!follow.catch_up(&mut out, &meta("idle", None), &[]));
-    assert!(follow.catch_up(&mut out, &meta("idle", Some("abandoned")), &[]));
+    assert!(!follow.catch_up(
+        &mut out,
+        &Session {
+            updated: 1.0,
+            ..meta("idle", None)
+        },
+        &[]
+    ));
+    assert!(follow.catch_up(
+        &mut out,
+        &Session {
+            updated: 2.0,
+            ..meta("idle", Some("abandoned"))
+        },
+        &[]
+    ));
     assert!(out.is_empty());
 }
 
@@ -237,4 +253,154 @@ fn a_character_split_between_chunks_stays_whole() {
     assert!(!follow.frames(&mut out, &mut warn, &mut buffer));
     assert_eq!(text(out), "naïve ✓");
     assert!(buffer.is_empty() && warn.is_empty());
+}
+
+fn metadata(ts: f64, status: &str, goal: &str) -> EventRecord {
+    let mut value = meta(status, Some(goal));
+    value.updated = ts;
+    record(
+        ts,
+        Event::Meta {
+            meta: Box::new(value),
+        },
+    )
+}
+
+#[test]
+fn an_authoritative_snapshot_corrects_stale_completion_across_chunks() {
+    let mut follow = Follow::new(ID, CWD);
+    let (mut out, mut warn) = (vec![], vec![]);
+    let mut current = meta("running", Some("active"));
+    current.updated = 10.0;
+    assert!(!follow.catch_up(&mut out, &current, &[]));
+    for (older, candidate) in [
+        (metadata(8.0, "idle", "paused"), true),
+        (metadata(9.0, "idle", "active"), false),
+    ] {
+        let mut buffer = frame(ID, older).into_bytes();
+        assert_eq!(follow.frames(&mut out, &mut warn, &mut buffer), candidate);
+        assert!(!follow.catch_up(&mut out, &current, &[]));
+        assert_eq!(follow.state, "active");
+    }
+    let mut buffer = frame(ID, metadata(11.0, "idle", "met")).into_bytes();
+    assert!(follow.frames(&mut out, &mut warn, &mut buffer));
+    assert_eq!(follow.state, "met");
+    assert!(out.is_empty() && warn.is_empty());
+}
+
+#[test]
+fn equal_or_backward_clock_metadata_can_finish_the_goal() {
+    for updated in [10.0, 9.0] {
+        let mut follow = Follow::new(ID, CWD);
+        let (mut out, mut warn) = (vec![], vec![]);
+        let mut current = meta("running", Some("active"));
+        current.updated = 10.0;
+        assert!(!follow.catch_up(&mut out, &current, &[]));
+        let mut terminal = meta("idle", Some("met"));
+        terminal.updated = updated;
+        let mut buffer = frame(
+            ID,
+            record(
+                20.0,
+                Event::Meta {
+                    meta: Box::new(terminal.clone()),
+                },
+            ),
+        )
+        .into_bytes();
+        assert!(follow.frames(&mut out, &mut warn, &mut buffer));
+        assert!(follow.catch_up(&mut out, &terminal, &[]));
+        assert_eq!(follow.state, "met");
+        assert!(out.is_empty() && warn.is_empty());
+    }
+}
+
+#[test]
+fn a_queued_resume_uses_the_newest_metadata_in_the_chunk() {
+    let mut follow = Follow::new(ID, CWD);
+    let (mut out, mut warn) = (vec![], vec![]);
+    assert!(!follow.catch_up(&mut out, &meta("running", Some("active")), &[]));
+    let mut buffer = frame(ID, metadata(1.0, "idle", "paused")).into_bytes();
+    buffer.extend(frame(ID, metadata(2.0, "idle", "active")).bytes());
+    buffer.extend(frame(ID, metadata(3.0, "waiting", "active")).bytes());
+    buffer.extend(frame(ID, metadata(4.0, "running", "active")).bytes());
+    assert!(!follow.frames(&mut out, &mut warn, &mut buffer));
+    assert_eq!(follow.state, "active");
+    let mut buffer = frame(ID, metadata(5.0, "idle", "active")).into_bytes();
+    assert!(
+        !follow.frames(&mut out, &mut warn, &mut buffer),
+        "Resume can publish idle/active before waiting"
+    );
+    assert!(out.is_empty() && warn.is_empty());
+}
+
+#[test]
+fn caught_up_replies_suppress_queued_deltas_and_keep_other_steps_separate() {
+    let mut follow = Follow::new(ID, CWD);
+    let (mut out, mut warn) = (vec![], vec![]);
+    assert!(!follow.catch_up(
+        &mut out,
+        &meta("running", Some("active")),
+        &[reply(3.0, "Fresh reply ✓")]
+    ));
+    let mut buffer = frame(ID, delta(2.0, "Fresh reply ✓")).into_bytes();
+    buffer.extend(frame(ID, reply(3.0, "Fresh reply ✓")).bytes());
+    buffer.extend(
+        frame(
+            ID,
+            record(
+                4.0,
+                Event::Delta {
+                    turn: 1,
+                    step: 4,
+                    text: "Other step".into(),
+                },
+            ),
+        )
+        .bytes(),
+    );
+    buffer.extend(
+        frame(
+            ID,
+            record(
+                5.0,
+                Event::Assistant {
+                    turn: 1,
+                    step: 4,
+                    text: "Other step done".into(),
+                },
+            ),
+        )
+        .bytes(),
+    );
+    buffer.extend(
+        frame(
+            ID,
+            record(
+                6.0,
+                Event::Assistant {
+                    turn: 2,
+                    step: 3,
+                    text: "Other turn".into(),
+                },
+            ),
+        )
+        .bytes(),
+    );
+    assert!(!follow.frames(&mut out, &mut warn, &mut buffer));
+    assert_eq!(text(out), "Fresh reply ✓\nOther step done\nOther turn\n");
+    assert!(warn.is_empty());
+}
+
+#[test]
+fn caught_up_replies_append_only_the_missing_unicode_suffix() {
+    let mut follow = Follow::new(ID, CWD);
+    let (mut out, mut warn) = (vec![], vec![]);
+    let mut buffer = frame(ID, delta(1.0, "naïve ✓")).into_bytes();
+    assert!(!follow.frames(&mut out, &mut warn, &mut buffer));
+    let events = [reply(2.0, "naïve ✓ done")];
+    assert!(!follow.catch_up(&mut out, &meta("running", Some("active")), &events));
+    assert!(!follow.catch_up(&mut out, &meta("running", Some("active")), &events));
+    assert_eq!(text(out), "naïve ✓ done\n");
+    assert!(warn.is_empty());
 }

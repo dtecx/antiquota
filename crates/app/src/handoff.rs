@@ -69,29 +69,35 @@ impl Service {
             if cancel.is_cancelled() {
                 return Ok(Default::default());
             }
-            let name = &lease.slot().name;
-            if result.status == "quota" {
-                self.quota_failure(&*lease, bucket, &cancel).await?;
-            } else if result.status == "auth" {
-                self.park_account(name, "signed out: sign in again")?;
+            let name = lease.slot().name.clone();
+            let lease = if result.status == "quota" {
+                self.quota_failure(lease, bucket, &cancel).await?;
+                None
+            } else if result.status == "SUCCESS" {
+                drop(lease);
+                let stale = self
+                    .account_overview()?
+                    .iter()
+                    .find(|a| a.slot == name)
+                    .is_some_and(|a| {
+                        self.clock.now() - a.probed.unwrap_or(0.0)
+                            > quota_fresh(&self.defaults().unwrap_or_default())
+                    });
+                if stale && let Some(probe) = self.accounts.lease_named(&name)? {
+                    self.probe_account(&*probe, &cancel).await?;
+                }
+                None
+            } else {
+                Some(lease)
+            };
+            if result.status == "auth" {
+                self.park_account(&name, "signed out: sign in again")?;
                 self.route(RoutingEntry {
                     event: "signed-out".into(),
                     slot: Some(name.clone()),
                     why: Some("agy rejected the account's token".into()),
                     ..Default::default()
                 })?;
-            } else if result.status == "SUCCESS" {
-                let stale = self
-                    .account_overview()?
-                    .iter()
-                    .find(|a| &a.slot == name)
-                    .is_some_and(|a| {
-                        self.clock.now() - a.probed.unwrap_or(0.0)
-                            > quota_fresh(&self.defaults().unwrap_or_default())
-                    });
-                if stale {
-                    self.probe_account(&*lease, &cancel).await?;
-                }
             }
             if cancel.is_cancelled() {
                 return Ok(Default::default());
@@ -157,7 +163,7 @@ impl Service {
                 }
                 "transient" => {
                     self.accounts.set_wall(
-                        name,
+                        &name,
                         bucket,
                         self.clock.now() + COOLDOWNS[1],
                         "repeated errors",

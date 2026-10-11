@@ -147,7 +147,10 @@ fn unreadable_quota_after_wall_uses_fallback_and_preserves_other_basket() {
         .as_f64()
         .unwrap();
     let until = wall["until"].as_f64().unwrap();
-    assert!(until >= failed_end + 18600.0 && until <= wall["ts"].as_f64().unwrap() + 18600.0);
+    assert!(
+        until >= failed_end + 18600.0 && until <= wall["ts"].as_f64().unwrap() + 18600.0,
+        "fallback wall {wall}, failed turn ended at {failed_end}"
+    );
     let accounts = server.call("GET", "/api/accounts", None).json();
     assert_eq!(accounts[0]["walls"]["cg"], 0.0);
     assert_eq!(accounts[0]["why"]["gemini"], "quota error");
