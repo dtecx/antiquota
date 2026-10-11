@@ -5,3 +5,5 @@ The loopback contract client read every response until socket EOF. On macOS, a G
 Read exactly Content-Length bytes, or read chunks through the zero chunk and complete trailers. Responses without framing still require a clean EOF. HEAD and status codes without a body return an empty body. A reset or EOF before the declared frame is complete remains a failure. Do not retry a request or accept a truncated response.
 
 Pure reader regressions supply a reset immediately after a complete frame and reject incomplete lengths, chunks and trailers. Existing HTTP, captured-route and abrupt-engine recovery tests exercise the same shared helper. Production transport and captured fixtures remain unchanged.
+
+Live proof keeps credentials and conversation contents in the app-owned sandbox. Record both the goal and verifier usage. When the app omits verifier counters, read only that test conversation and validate protobuf fields against installed agy plus matching goal totals. Do not infer a monetary charge from subscription quota or add thinking twice when output already includes it.

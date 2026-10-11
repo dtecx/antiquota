@@ -175,3 +175,5 @@ Slice 16b replaces the quota probe, version control and terminals with fakes in 
 Slice 17a proves the CLI commands end to end. Every usage error prints the usage line and exits 2. See [ADR 0029](adr/0029-cli-usage-errors.md).
 
 The contract client now finishes a response at its declared HTTP boundary: Content-Length bytes or the final chunk and trailers. It still rejects truncated frames and requires EOF for unframed bodies. This removes the complete-response connection-reset race without retries or production transport changes. Mac Chrome proof uses the existing account and quota paths with app-owned test homes. See [ADR 0030](adr/0030-framed-contract-responses.md).
+
+Approved Mac Chrome live proof exercises the same hook-gated goal turn and a fresh read-only verifier. The report records both calls, including verifier counters that the current app ledger omits; read-only test-conversation metadata supplies those counters without changing storage or credentials. No accounting behavior is changed by this proof.
