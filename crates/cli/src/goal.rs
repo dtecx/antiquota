@@ -1,11 +1,10 @@
 //! Owns `antiquota goal`: a headless goal run that streams its session in the terminal.
 //! It uses the running engine (so the session shows up in the app), or starts one for the
 //! duration of the run when none is running.
-use crate::follow::Follow;
-use antiquota_server::api::SessionResponse;
-use anyhow::{Context, bail};
+use crate::{engine::engine, follow::Follow};
+use anyhow::Context;
 use clap::Args;
-use serde_json::{Value, json};
+use serde_json::json;
 use std::time::Duration;
 
 #[derive(Args, Debug)]
@@ -29,94 +28,6 @@ pub struct GoalArgs {
     verifier_model: String,
     #[arg(long, default_value_t = 20)]
     max_rounds: u64,
-}
-
-struct Engine {
-    base: String,
-    token: String,
-    http: reqwest::Client,
-}
-impl Engine {
-    async fn call(
-        &self,
-        method: reqwest::Method,
-        path: &str,
-        body: Value,
-    ) -> anyhow::Result<Value> {
-        let response = self
-            .http
-            .request(method, format!("{}{path}", self.base))
-            .header("X-Antiquota-Token", &self.token)
-            .json(&body)
-            .send()
-            .await
-            .context("the engine did not answer")?;
-        let status = response.status();
-        let value: Value = response.json().await.unwrap_or(Value::Null);
-        if !status.is_success() {
-            bail!(
-                "{}",
-                value["error"]
-                    .as_str()
-                    .unwrap_or("the engine refused the request")
-            );
-        }
-        Ok(value)
-    }
-
-    async fn events(&self) -> anyhow::Result<reqwest::Response> {
-        self.http
-            .get(format!("{}/api/events?token={}", self.base, self.token))
-            .send()
-            .await
-            .context("the event stream did not open")
-    }
-
-    async fn saved(&self, id: &str) -> anyhow::Result<SessionResponse> {
-        serde_json::from_value(
-            self.call(
-                reqwest::Method::GET,
-                &format!("/api/sessions/{id}"),
-                json!({}),
-            )
-            .await?,
-        )
-        .context("the saved session is unreadable")
-    }
-}
-
-/// The running engine, or one started in this process (returned as `true`).
-async fn engine() -> anyhow::Result<(Engine, bool)> {
-    let mut own = false;
-    if antiquota_server::discover().await.is_err() {
-        own = true;
-        tokio::spawn(async {
-            if let Err(error) = antiquota_server::serve(0, false).await {
-                eprintln!("antiquota: {error}");
-            }
-        });
-    }
-    let deadline = tokio::time::Instant::now() + Duration::from_secs(15);
-    let info = loop {
-        if let Ok(info) = antiquota_server::discover().await {
-            break info;
-        }
-        if tokio::time::Instant::now() > deadline {
-            bail!("antiquota: the engine did not start");
-        }
-        tokio::time::sleep(Duration::from_millis(50)).await;
-    };
-    let root = antiquota_store::data_root()?;
-    let token = std::fs::read_to_string(root.join("state/gui-token"))
-        .context("the engine token is unreadable")?
-        .trim()
-        .to_owned();
-    let engine = Engine {
-        base: format!("http://127.0.0.1:{}", info.port),
-        token,
-        http: reqwest::Client::new(),
-    };
-    Ok((engine, own))
 }
 
 /// Runs the goal and returns the exit code: 0 only when the goal is met.
@@ -195,7 +106,9 @@ pub async fn run(args: GoalArgs) -> anyhow::Result<i32> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::engine::Engine;
     use antiquota_core::{Event, EventRecord, Goal, Session, StreamEvent};
+    use antiquota_server::api::SessionResponse;
     use clap::Parser;
     use std::io::{Read, Write};
 

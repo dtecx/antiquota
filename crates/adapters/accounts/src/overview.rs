@@ -4,6 +4,11 @@ use antiquota_core::{Account, MAX_SAFE_INTEGER, PortError, Quota, TodayUsage};
 use chrono::{Local, TimeZone, Timelike};
 use std::collections::BTreeMap;
 pub fn accounts(accounts: &FileAccounts, now: f64) -> Result<Vec<Account>, PortError> {
+    // A status read briefly takes a lease; concurrent readers must not look like workers.
+    let _read = accounts
+        .changes
+        .lock()
+        .map_err(|_| PortError::Unavailable("account status unavailable".into()))?;
     let today = usage_today(accounts, now)?;
     let mut rows = vec![];
     for slot in accounts.slots()? {

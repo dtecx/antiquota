@@ -59,6 +59,33 @@ impl Drop for Sandbox {
 }
 
 #[test]
+fn concurrent_overviews_do_not_mark_idle_accounts_busy() {
+    let sandbox = Sandbox::new();
+    sandbox.write(
+        "data/slots/one@example.com/.gemini/antigravity-cli/antigravity-oauth-token",
+        "synthetic",
+    );
+    let accounts = sandbox.accounts();
+    let barrier = Arc::new(std::sync::Barrier::new(8));
+    let workers: Vec<_> = (0..8)
+        .map(|_| {
+            let accounts = accounts.clone();
+            let barrier = barrier.clone();
+            std::thread::spawn(move || {
+                let mut busy = 0;
+                for _ in 0..64 {
+                    barrier.wait();
+                    busy += usize::from(accounts.accounts().unwrap()[0].busy);
+                }
+                busy
+            })
+        })
+        .collect();
+    let busy: usize = workers.into_iter().map(|w| w.join().unwrap()).sum();
+    assert_eq!(busy, 0, "status readers must not look like account workers");
+}
+
+#[test]
 fn concurrent_permission_grants_keep_every_rule_and_opaque_setting() {
     let sandbox = Sandbox::new();
     let source = r#"{"permissions":{"allow":["command(private)"],"deny":["command(rm)"]}}"#;

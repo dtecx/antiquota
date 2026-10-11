@@ -35,3 +35,7 @@ Explicit user prompts show Reuse beside Copy. Reuse loads source text into that 
 Find sits first in the transcript presentation controls. Its pane-local bar uses the existing surfaces, typography and spacing, wraps its controls in a narrow pane and labels its count as matching messages. A theme-aware outline identifies the current prompt or reply without changing rendered Markdown. Cmd/Ctrl+F focuses the active pane's search; Enter and Shift+Enter navigate, and Escape closes with focus returned to Find while retaining the result viewport. Session changes reset the finder.
 
 Jump to latest floats at the bottom of the transcript when the reader is more than 120 pixels from its end. It uses the existing subtle surface and focus treatment. New output keeps the older reading position until the reader jumps or scrolls back near the bottom. Jump restores following and programmatically focuses the conversation region.
+
+## Interactive terminal
+
+`antiquota -i` uses normal terminal scrollback with compact amber headings and the lowercase wordmark. NO_COLOR keeps headings plain. The single editable row clips horizontally, marks hidden leading text with ‹ and logical newlines with ↵; pasted multiline prompts require explicit Enter. Current model, permission mode, serving account, folder and session id appear above each idle prompt. Permission prompts name the tool, show its arguments and state the one-use allow and default deny choices. Output and pasted control bytes remain inert. The terminal and browser share one session and engine.

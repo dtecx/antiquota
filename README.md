@@ -178,6 +178,8 @@ a localhost Host header.
 
 ## CLI
 
+The Rust rewrite adds [interactive shared sessions](docs/CLI.md) with `antiquota -i` and `antiquota -i --resume SESSION_ID`. Existing commands below keep their behavior.
+
 ```sh
 antiquota login                  # add a Google account (link + paste code)
 antiquota accounts               # quota, walls and leases per account

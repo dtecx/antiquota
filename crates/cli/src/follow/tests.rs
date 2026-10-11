@@ -404,3 +404,77 @@ fn caught_up_replies_append_only_the_missing_unicode_suffix() {
     assert_eq!(text(out), "naïve ✓ done\n");
     assert!(warn.is_empty());
 }
+
+#[test]
+fn resolved_approvals_do_not_reopen_from_queued_or_replayed_frames() {
+    let mut f = Follow::new(ID, CWD);
+    let approval = antiquota_core::Approval {
+        id: "a1".into(),
+        state: "pending".into(),
+        ..Default::default()
+    };
+    let pending = record(
+        1.0,
+        Event::Approval {
+            approval: approval.clone(),
+        },
+    );
+    let resolved = record(
+        2.0,
+        Event::Approval {
+            approval: antiquota_core::Approval {
+                state: "allowed".into(),
+                ..approval
+            },
+        },
+    );
+    let mut out = vec![];
+    f.catch_up(
+        &mut out,
+        &meta("working", None),
+        &[pending.clone(), resolved],
+    );
+    assert!(f.approvals.is_empty());
+    let mut buffer = frame(ID, pending).into_bytes();
+    f.frames(&mut out, &mut vec![], &mut buffer);
+    assert!(f.approvals.is_empty());
+    f.accepted();
+    assert!(f.catch_up(&mut out, &meta("idle", None), &[]));
+}
+
+#[test]
+fn the_interactive_prompt_is_echoed_once_across_stream_and_catch_up() {
+    let mut f = Follow::new(ID, CWD);
+    f.interactive = true;
+    f.echoed_user = Some("same prompt".into());
+    let user = record(
+        1.0,
+        Event::User {
+            text: "same prompt".into(),
+            kind: "user".into(),
+            attachments: None,
+            steered: None,
+        },
+    );
+    let mut out = vec![];
+    f.catch_up(
+        &mut out,
+        &meta("working", None),
+        std::slice::from_ref(&user),
+    );
+    assert!(out.is_empty());
+    assert!(f.echoed_user.is_none());
+    f.catch_up(&mut out, &meta("idle", None), &[user]);
+    assert!(out.is_empty());
+    let user = record(
+        2.0,
+        Event::User {
+            text: "same prompt".into(),
+            kind: "user".into(),
+            attachments: None,
+            steered: None,
+        },
+    );
+    f.catch_up(&mut out, &meta("working", None), &[user]);
+    assert_eq!(String::from_utf8(out).unwrap(), "\nyou\nsame prompt\n");
+}

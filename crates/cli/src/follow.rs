@@ -23,6 +23,11 @@ pub struct Follow {
     started: bool,
     /// The goal state from the newest session snapshot.
     pub state: String,
+    pub meta: Session,
+    pub approvals: std::collections::BTreeMap<String, antiquota_core::Approval>,
+    pub deleted: bool,
+    pub interactive: bool,
+    pub echoed_user: Option<String>,
 }
 
 impl Follow {
@@ -34,6 +39,11 @@ impl Follow {
             replies: HashMap::new(),
             started: false,
             state: "active".into(),
+            meta: Session::default(),
+            approvals: Default::default(),
+            deleted: false,
+            interactive: false,
+            echoed_user: None,
         }
     }
 
@@ -81,6 +91,11 @@ impl Follow {
         self.meta(meta)
     }
 
+    /// The accepted send may finish before the first stream frame arrives.
+    pub fn accepted(&mut self) {
+        self.started = true;
+    }
+
     fn record(&mut self, out: &mut impl Write, record: &EventRecord, live: bool) -> Option<bool> {
         if let Event::Meta { meta } = &record.event {
             return Some(self.meta(meta));
@@ -88,7 +103,24 @@ impl Follow {
         if record.event.is_transcript() && !self.shown.insert(record.ts.to_bits()) {
             return None;
         }
+        if let Event::Approval { approval } = &record.event {
+            if approval.state == "pending" {
+                self.approvals.insert(approval.id.clone(), approval.clone());
+            } else {
+                self.approvals.remove(&approval.id);
+            }
+        }
+        if matches!(record.event, Event::Deleted {}) {
+            self.deleted = true;
+        }
         match &record.event {
+            Event::User { text, kind, .. } if self.interactive && kind == "user" => {
+                if self.echoed_user.as_deref() == Some(text) {
+                    self.echoed_user = None;
+                } else {
+                    let _ = writeln!(out, "\nyou\n{text}");
+                }
+            }
             Event::Delta { turn, step, text } => {
                 let reply = self.replies.entry((*turn, *step)).or_default();
                 if !reply.complete {
@@ -113,6 +145,7 @@ impl Follow {
     }
 
     fn meta(&mut self, meta: &Session) -> bool {
+        self.meta = meta.clone();
         self.state = meta
             .goal
             .as_ref()

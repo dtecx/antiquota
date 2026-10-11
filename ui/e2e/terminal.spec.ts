@@ -48,15 +48,26 @@ test('runs a shell in the session folder', async ({ page, engine }) => {
   await page.keyboard.press('Enter');
   await expect(output.locator('.xterm-rows')).toContainText('again-42');
   // The shell itself sees the new size after the window narrows.
+  let measurement = 0;
   const size = async () => {
+    const marker = ++measurement;
     await page.getByRole('button', { name: 'Clear' }).click();
     await page.locator('.xterm-helper-textarea').focus();
-    await page.keyboard.type('echo "si""ze-$(stty size | tr \' \' x)-end"');
+    await page.keyboard.type(`echo "si""ze-${marker}-$(stty size | tr ' ' x)-end"`);
     await page.keyboard.press('Enter');
     const rows = output.locator('.xterm-rows');
-    await expect(rows).toContainText(/size-\d+x\d+-end/);
-    const [, height, width] = /size-(\d+)x(\d+)-end/.exec((await rows.textContent()) ?? '') ?? [];
-    return { rows: Number(height), cols: Number(width) };
+    const pattern = new RegExp(`size-${marker}-(\\d+)x(\\d+)-end`);
+    const measured = { rows: 0, cols: 0 };
+    await expect
+      .poll(async () => {
+        const match = pattern.exec((await rows.textContent()) ?? '');
+        if (!match) return false;
+        measured.rows = Number(match[1]);
+        measured.cols = Number(match[2]);
+        return true;
+      })
+      .toBe(true);
+    return measured;
   };
   const wide = await size();
   const sent: { cols: number; rows: number }[] = [];

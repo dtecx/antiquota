@@ -1,17 +1,24 @@
 //! Owns command-line dispatch; the hook runs before logging and Tokio startup.
 mod accounts;
+mod commands;
+mod engine;
 mod follow;
 mod goal;
 mod hook;
+mod interactive;
 mod raw;
+mod terminal;
 use clap::{CommandFactory, Parser, Subcommand};
 #[derive(Parser)]
 #[command(
     name = "antiquota",
     version,
-    about = "A local workspace for agy sessions"
+    about = "A local workspace for agy sessions",
+    args_conflicts_with_subcommands = true
 )]
 struct Cli {
+    #[command(flatten)]
+    interactive: interactive::InteractiveArgs,
     #[command(subcommand)]
     command: Option<Commands>,
 }
@@ -133,6 +140,10 @@ fn main() -> anyhow::Result<()> {
         .enable_all()
         .build()?;
     let mut code = 0;
+    if cli.interactive.interactive {
+        runtime.block_on(interactive::run(cli.interactive))?;
+        return Ok(());
+    }
     match cli.command.unwrap_or(Commands::Accounts) {
         Commands::Serve { port, .. } => runtime.block_on(antiquota_server::serve(port, false))?,
         Commands::Gui { port, no_open } => {
@@ -219,6 +230,25 @@ mod tests {
             parse(&["goal", "Ship it"]),
             Some(Commands::Goal(_))
         ));
+    }
+
+    #[test]
+    fn interactive_options_are_additive_and_do_not_steal_raw_run_arguments() {
+        let line = Cli::try_parse_from(["antiquota", "-i", "--resume", "session-123"]).unwrap();
+        assert!(line.interactive.interactive);
+        assert!(line.command.is_none());
+        for args in [
+            vec!["--resume", "x"],
+            vec!["-i", "accounts"],
+            vec!["-i", "--resume", "x", "--model", "m"],
+        ] {
+            assert!(Cli::try_parse_from(std::iter::once("antiquota").chain(args)).is_err());
+        }
+        let line =
+            Cli::try_parse_from(["antiquota", "run", "--resume", "x", "--model", "m"]).unwrap();
+        assert!(
+            matches!(line.command, Some(Commands::Run { args }) if args == ["--resume", "x", "--model", "m"])
+        );
     }
 
     #[test]
