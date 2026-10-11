@@ -25,6 +25,9 @@ test('refreshes idle quotas without interrupting a running account and reports p
   await addAccount(engine, 'two@example.com', { paused: true });
   await addAccount(engine, 'three@example.com', { paused: true });
   await engine.scenario({ scenario: 'delay', delay_ms: 30000 });
+  await openAccounts(page, engine);
+  const one = page.getByRole('article', { name: 'one@example.com', exact: true });
+  await expect(one.getByRole('button', { name: 'Check', exact: true })).toBeEnabled();
   const created = await engine.call('POST', '/api/sessions', {
     cwd: engine.sandbox.project,
     title: 'Busy account',
@@ -39,8 +42,6 @@ test('refreshes idle quotas without interrupting a running account and reports p
       })
     ).status,
   ).toBe(200);
-  await openAccounts(page, engine);
-  const one = page.getByRole('article', { name: 'one@example.com', exact: true });
   await expect(one.getByRole('button', { name: 'Check', exact: true })).toBeDisabled();
   await page.route('**/api/accounts/three%40example.com/check', (route) =>
     route.fulfill({

@@ -475,8 +475,8 @@ test('streaming keeps search focus and split retains scroll and caret when switc
     .locator('button.session')
     .filter({ hasText: 'Scroll right' })
     .click({ modifiers: ['Alt'] });
-  const l = primary(page).getByLabel('Conversation'),
-    r = right(page).getByLabel('Conversation');
+  const l = primary(page).getByLabel('Conversation', { exact: true }),
+    r = right(page).getByLabel('Conversation', { exact: true });
   await expect(primary(page).getByLabel('Your message')).toHaveCount(35);
   await expect(right(page).getByLabel('Your message')).toHaveCount(35);
   await l.evaluate((e) => {

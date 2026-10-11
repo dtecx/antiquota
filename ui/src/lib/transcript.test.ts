@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { EventRecord } from '../gen/EventRecord';
 import {
   groupTranscript,
+  findTranscript,
   nearBottom,
   parseStreamEvent,
   projectHistory,
@@ -10,6 +11,49 @@ import {
   transcriptItems,
   userPresentation,
 } from './transcript';
+
+it('finds literal case-insensitive prompt and reply messages once each, excluding private detail', () => {
+  const groups = groupTranscript([
+    { t: 'user', ts: 1, kind: 'message', text: 'Find a.b twice: a.b' },
+    { t: 'thinking', ts: 2, turn: 1, step: 1, text: 'secret-only a.b', tokens: 2 },
+    {
+      t: 'tool',
+      ts: 3,
+      turn: 1,
+      step: 2,
+      name: 'a.b',
+      params: {},
+      state: 'done',
+      output: 'secret-only',
+    },
+    { t: 'assistant', ts: 4, turn: 1, step: 3, text: 'A.B <script>literal</script>' },
+    { t: 'user', ts: 5, kind: 'goal', text: 'Objective: Ship it\n\nsecret-only instructions' },
+  ]);
+  expect(findTranscript(groups, ' A.B ')).toEqual(['user-1-0:user', 'user-1-0:reply-1-3']);
+  expect(findTranscript(groups, 'a.*')).toEqual([]);
+  expect(findTranscript(groups, 'secret-only')).toEqual([]);
+  expect(findTranscript(groups, '<script>')).toEqual(['user-1-0:reply-1-3']);
+  expect(findTranscript(groups, 'ship it')).toEqual(['user-5-1:user']);
+  expect(findTranscript(groups, '   ')).toEqual([]);
+});
+it('keeps a streamed find target stable through final replacement and includes later matches', () => {
+  const events: EventRecord[] = [{ t: 'delta', ts: 1, turn: 1, step: 2, text: 'Match now' }];
+  const first = findTranscript(groupTranscript(events), 'match');
+  const completed = reduceTranscript(events, {
+    t: 'assistant',
+    ts: 2,
+    turn: 1,
+    step: 2,
+    text: 'Match final',
+  });
+  expect(findTranscript(groupTranscript(completed), 'match')).toEqual(first);
+  expect(
+    findTranscript(
+      groupTranscript([...completed, { t: 'user', ts: 3, kind: 'message', text: 'Another match' }]),
+      'match',
+    ),
+  ).toEqual([...first, 'user-3-1:user']);
+});
 
 function ended(turn: number, status = 'success'): Extract<EventRecord, { t: 'turn_end' }> {
   return {

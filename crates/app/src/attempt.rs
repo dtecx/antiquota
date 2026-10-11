@@ -11,6 +11,7 @@ impl Service {
         lease: &dyn AccountLease,
         cancel: &Cancellation,
     ) -> Result<TurnResult, AppError> {
+        self.announce_accounts()?;
         self.accounts.prepare(lease.slot())?;
         let cell = self.cell(id)?;
         let request = {

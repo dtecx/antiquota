@@ -42,6 +42,7 @@ export const shortcuts = [
   ['⌘⇧M', 'dictate a message (again to stop)'],
   ['⌘N', 'new session'],
   ['⌘K', 'find a session or message'],
+  ['⌘F', 'find text in the current conversation; Enter next, ⇧Enter previous, Esc close'],
   ['⌘J', 'focus the message box'],
   ['⌘⇧[  ⌘⇧]', 'previous / next session'],
   ['⌘B', 'show or hide the side panel'],

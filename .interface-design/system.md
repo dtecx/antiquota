@@ -29,3 +29,9 @@ Fenced code uses the existing well surface and mono font, with a fixed language/
 Copy conversation sits with the existing transcript presentation controls and copies source Markdown for prompts and completed replies. It uses the existing clipboard feedback; unsent drafts, thinking and tool details are excluded.
 
 Refresh quotas sits beside Add account in account settings. It disables during the existing serialized account operation and reports current progress, refreshed count, busy/removed skips and individual failures using existing status and alert surfaces. Paused accounts can refresh without resuming, and a later refresh can retry failures.
+
+Explicit user prompts show Reuse beside Copy. Reuse loads source text into that pane's composer, keeps current attachments and never sends automatically. Replacing a different unsent draft uses the existing confirmation dialog. Generated prompts do not offer Reuse.
+
+Find sits first in the transcript presentation controls. Its pane-local bar uses the existing surfaces, typography and spacing, wraps its controls in a narrow pane and labels its count as matching messages. A theme-aware outline identifies the current prompt or reply without changing rendered Markdown. Cmd/Ctrl+F focuses the active pane's search; Enter and Shift+Enter navigate, and Escape closes with focus returned to Find while retaining the result viewport. Session changes reset the finder.
+
+Jump to latest floats at the bottom of the transcript when the reader is more than 120 pixels from its end. It uses the existing subtle surface and focus treatment. New output keeps the older reading position until the reader jumps or scrolls back near the bottom. Jump restores following and programmatically focuses the conversation region.

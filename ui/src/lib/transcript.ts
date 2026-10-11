@@ -168,6 +168,24 @@ export function groupTranscript(events: EventRecord[]): TranscriptGroup[] {
   return groups;
 }
 
+/** Finds prompt/reply messages by literal source text, never tool or thinking detail. */
+export function findTranscript(groups: TranscriptGroup[], query: string): string[] {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return [];
+  return groups.flatMap((group) => [
+    ...(group.user && userPresentation(group.user).text.toLowerCase().includes(needle)
+      ? [`${group.key}:user`]
+      : []),
+    ...transcriptItems(group.events).flatMap((item) =>
+      !('events' in item) &&
+      (item.event.t === 'assistant' || item.event.t === 'delta') &&
+      item.event.text.toLowerCase().includes(needle)
+        ? [`${group.key}:${item.key}`]
+        : [],
+    ),
+  ]);
+}
+
 export function parseStreamEvent(text: string): StreamEvent | null {
   const value: unknown = JSON.parse(text);
   return isStreamEvent(value) ? value : null;

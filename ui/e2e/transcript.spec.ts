@@ -88,6 +88,218 @@ async function shot(page: Page, engine: FixtureEngine, name: string) {
   await page.screenshot({ path: join(path, `${name}.png`), fullPage: true });
 }
 
+test('reuses prompt text without sending, protects drafts and keeps current attachments', async ({
+  page,
+  engine,
+}) => {
+  await createSession(page, engine, 'Reuse prompts');
+  const text = '  Earlier **prompt**.\nKeep this line.';
+  await history(page, engine, [
+    {
+      ...user(text),
+      attachments: [{ name: 'earlier.txt', path: 'synthetic/earlier.txt', image: false }],
+    },
+    start,
+    reply('Earlier answer.'),
+    end,
+  ]);
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'current.txt',
+    mimeType: 'text/plain',
+    buffer: Buffer.from('Current attachment'),
+  });
+  await expect(page.getByLabel('Attached files')).toContainText('current.txt');
+  const prompt = page.getByRole('textbox', { name: 'Message', exact: true });
+  await prompt.fill('Unsent draft');
+  let sends = 0;
+  page.on('request', (request) => {
+    if (request.url().endsWith('/send')) sends++;
+  });
+  await page.getByRole('button', { name: 'Reuse prompt', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Replace unsent draft?' });
+  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await expect(prompt).toHaveValue('Unsent draft');
+  await page.getByRole('button', { name: 'Reuse prompt', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Replace draft', exact: true }).click();
+  await expect(prompt).toHaveValue(text);
+  await expect(prompt).toBeFocused();
+  await expect(page.getByLabel('Attached files')).toContainText('current.txt');
+  await expect(page.getByLabel('Attached files')).not.toContainText('earlier.txt');
+  await expect(page.getByLabel('Your message')).toHaveCount(1);
+  expect(sends).toBe(0);
+  const directory = join(engine.sandbox.repository, '.handoff/evidence/ui-slice22');
+  await page.screenshot({
+    path: join(directory, 'reuse-prompt.png'),
+    fullPage: true,
+    animations: 'disabled',
+  });
+});
+
+test('finds literal conversation messages with keyboard navigation and follows latest output on request', async ({
+  page,
+  engine,
+}) => {
+  await createSession(page, engine, 'Conversation navigation');
+  const events: EventRecord[] = [{ ...start, turn: 500 }];
+  for (let i = 0; i < 20; i++)
+    events.push(
+      { ...user(i === 0 ? 'Needle [x] in a prompt' : `Prompt ${i}`), ts: ts + i },
+      {
+        t: 'assistant',
+        ts: ts + i,
+        turn: 500,
+        step: i + 1,
+        text: `${i === 12 || i === 19 ? 'needle [x]' : 'Answer'} ${i}\n\n${'Useful transcript detail.\n'.repeat(5)}${i === 19 ? '<script>literal</script>' : ''}`,
+      },
+    );
+  events.push(
+    { ...end, turn: 500 },
+    { t: 'thinking', ts, turn: 500, step: 30, text: 'Private-only needle [x]', tokens: 2 },
+  );
+  const id = await history(page, engine, events);
+  await page
+    .getByRole('textbox', { name: 'Message', exact: true })
+    .dispatchEvent('keydown', { key: 'f', ctrlKey: true, isComposing: true });
+  await expect(page.getByRole('search', { name: 'Find in conversation', exact: true })).toHaveCount(
+    0,
+  );
+  await page.keyboard.press('Control+f');
+  const find = page.getByRole('search', { name: 'Find in conversation', exact: true });
+  const input = find.getByRole('searchbox', { name: 'Find text in conversation' });
+  await expect(input).toBeFocused();
+  await input.fill('NEEDLE [x]');
+  await expect(find).toContainText('1 of 3 messages');
+  await expect(page.locator('.find-match')).toContainText('Needle [x] in a prompt');
+  await input.press('Enter');
+  await expect(find).toContainText('2 of 3 messages');
+  await expect(page.locator('.find-match')).toContainText('needle [x] 12');
+  await input.press('Shift+Enter');
+  await expect(find).toContainText('1 of 3 messages');
+  await find.getByRole('button', { name: 'Previous matching message' }).click();
+  await expect(find).toContainText('3 of 3 messages');
+  await find.getByRole('button', { name: 'Next matching message' }).click();
+  await expect(find).toContainText('1 of 3 messages');
+  await input.fill('private-only');
+  await expect(find).toContainText('No matching messages');
+  await expect(find.getByRole('button', { name: 'Next matching message' })).toBeDisabled();
+  await input.fill('<script>');
+  await expect(find).toContainText('1 of 1 messages');
+  await expect(page.locator('.reply script')).toHaveCount(0);
+  await input.fill('needle [x]');
+  const directory = join(engine.sandbox.repository, '.handoff/evidence/ui-slice22');
+  for (const colorScheme of ['dark', 'light'] as const) {
+    await page.emulateMedia({ colorScheme });
+    await page.screenshot({
+      path: join(directory, `find-${colorScheme}.png`),
+      fullPage: true,
+      animations: 'disabled',
+    });
+  }
+  await page.setViewportSize({ width: 440, height: 820 });
+  await page.screenshot({
+    path: join(directory, 'find-narrow.png'),
+    fullPage: true,
+    animations: 'disabled',
+  });
+  expect(await find.evaluate((node) => node.scrollWidth - node.clientWidth)).toBeLessThanOrEqual(1);
+  await input.press('Enter');
+  const scroller = page.getByLabel('Conversation', { exact: true });
+  await expect.poll(() => scroller.evaluate((node) => node.scrollTop)).toBeGreaterThan(100);
+  await input.press('Escape');
+  await expect(find).toHaveCount(0);
+  await expect(
+    page.getByRole('button', { name: 'Find in conversation', exact: true }),
+  ).toBeFocused();
+  await expect.poll(() => scroller.evaluate((node) => node.scrollTop)).toBeGreaterThan(100);
+  await scroller.evaluate((node) => {
+    node.scrollTop = 0;
+  });
+  const jump = page.getByRole('button', { name: 'Jump to latest', exact: true });
+  await expect(jump).toBeVisible();
+  const before = await scroller.evaluate((node) => node.scrollTop);
+  expect(
+    (await engine.call('POST', `/api/sessions/${id}/send`, { text: 'New output while reading.' }))
+      .status,
+  ).toBe(200);
+  await expect(page.getByLabel('Agent reply').last()).toContainText('Fixture reply.');
+  expect(await scroller.evaluate((node) => node.scrollTop)).toBe(before);
+  await jump.click();
+  await expect(jump).toHaveCount(0);
+  await expect(scroller).toBeFocused();
+  await expect
+    .poll(() => scroller.evaluate((node) => node.scrollHeight - node.scrollTop - node.clientHeight))
+    .toBeLessThanOrEqual(1);
+  expect(
+    (await engine.call('POST', `/api/sessions/${id}/send`, { text: 'Keep following.' })).status,
+  ).toBe(200);
+  await expect(page.getByLabel('Agent reply')).toHaveCount(22);
+  await expect
+    .poll(() => scroller.evaluate((node) => node.scrollHeight - node.scrollTop - node.clientHeight))
+    .toBeLessThanOrEqual(1);
+  await page.screenshot({
+    path: join(directory, 'latest-output.png'),
+    fullPage: true,
+    animations: 'disabled',
+  });
+});
+
+test('find and prompt reuse target their own split pane and clear search on session swap', async ({
+  page,
+  engine,
+}) => {
+  await createSession(page, engine, 'Left navigation');
+  await history(page, engine, [user('Left prompt'), reply('Left answer')]);
+  const created = await engine.call('POST', '/api/sessions', {
+    cwd: engine.sandbox.project,
+    title: 'Right navigation',
+  });
+  const other = JSON.parse(created.text) as { id: string };
+  await engine.call('POST', `/api/sessions/${other.id}/send`, { text: 'Right prompt' });
+  await expect
+    .poll(
+      async () =>
+        JSON.parse((await engine.call('GET', `/api/sessions/${other.id}`)).text).meta.status,
+    )
+    .toBe('idle');
+  await page.reload();
+  await expect(page.getByText('Engine connected')).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Session actions: Right navigation', exact: true }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Split view', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Right navigation', exact: true }).click();
+  const left = page.getByRole('region', { name: 'Primary session', exact: true });
+  const right = page.getByRole('region', { name: 'Right session', exact: true });
+  await expect(right.getByLabel('Agent reply')).toContainText('Fixture reply.');
+  const leftPrompt = left.getByRole('textbox', { name: 'Message', exact: true });
+  const rightPrompt = right.getByRole('textbox', { name: 'Message', exact: true });
+  await leftPrompt.fill('Keep left draft');
+  await rightPrompt.focus();
+  await page.keyboard.press('Control+f');
+  await right.getByRole('searchbox').fill('Fixture');
+  await expect(right.getByRole('search')).toContainText('1 of 1 messages');
+  await expect(left.getByRole('search')).toHaveCount(0);
+  await leftPrompt.focus();
+  await page.keyboard.press('Control+f');
+  await left.getByRole('searchbox').fill('Left');
+  await expect(left.getByRole('search')).toContainText('1 of 2 messages');
+  await expect(right.getByRole('searchbox')).toHaveValue('Fixture');
+  await right.getByRole('button', { name: 'Reuse prompt' }).click();
+  await expect(rightPrompt).toHaveValue('Right prompt');
+  await expect(rightPrompt).toBeFocused();
+  await expect(leftPrompt).toHaveValue('Keep left draft');
+  const directory = join(engine.sandbox.repository, '.handoff/evidence/ui-slice22');
+  await page.screenshot({
+    path: join(directory, 'split-find.png'),
+    fullPage: true,
+    animations: 'disabled',
+  });
+  await right.getByRole('button', { name: 'Swap sides' }).click();
+  await expect(page.getByRole('search')).toHaveCount(0);
+  await expect(leftPrompt).toHaveValue('Right prompt');
+  await expect(rightPrompt).toHaveValue('Keep left draft');
+});
+
 test('highlights safe code, wraps long lines and copies only conversation messages', async ({
   page,
   engine,
@@ -704,7 +916,7 @@ test('follows streamed events at 120 pixels and preserves scroll beyond that bou
   await page.getByRole('textbox', { name: 'Message', exact: true }).fill('Long stream.');
   await page.getByRole('button', { name: 'Send', exact: true }).click();
   await expect(page.getByLabel('Agent reply')).toContainText('line');
-  const scroller = page.getByLabel('Conversation');
+  const scroller = page.getByLabel('Conversation', { exact: true });
   await expect
     .poll(() => scroller.evaluate((node) => node.scrollHeight - node.clientHeight))
     .toBeGreaterThan(1000);

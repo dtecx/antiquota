@@ -135,6 +135,10 @@ impl Service {
             if let Err(e) = self.snapshot(&mut state) {
                 tracing::error!(error=%e,"idle persistence failed");
             }
+            drop(state);
+            if let Err(error) = self.announce_accounts() {
+                tracing::error!(%error, "account release publication failed");
+            }
             return;
         }
     }

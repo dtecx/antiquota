@@ -23,6 +23,8 @@
     attachmentUrl,
     actions,
     expand,
+    selectedMatch = '',
+    onreuse,
   }: {
     group: TranscriptGroup;
     running?: boolean;
@@ -34,6 +36,8 @@
     attachmentUrl: (name: string) => string;
     actions: TranscriptActions;
     expand: Expansion;
+    selectedMatch?: string;
+    onreuse: (text: string) => Promise<void>;
   } = $props();
   const prefs = preferences.state;
   const items = $derived(transcriptItems(group.events));
@@ -42,13 +46,27 @@
 
 <article class="turn">
   {#if group.user && user}
-    <section class="user-message" aria-label="Your message" title={user.tooltip}>
-      <button
-        class="quiet copy-message"
-        aria-label="Copy prompt"
-        title="Copy prompt"
-        onclick={() => actions.copy(user.text)}><Icon name="copy" size={12} />Copy</button
-      >
+    <section
+      class="user-message"
+      class:find-match={selectedMatch === `${group.key}:user`}
+      data-find-key={`${group.key}:user`}
+      aria-label="Your message"
+      title={user.tooltip}
+    >
+      <div class="prompt-actions">
+        {#if group.user.kind === 'user' || group.user.kind === 'message'}<button
+            class="quiet copy-message"
+            aria-label="Reuse prompt"
+            title="Load this prompt text into the composer; earlier attachments are not added"
+            onclick={() => onreuse(user.text)}>Reuse</button
+          >{/if}
+        <button
+          class="quiet copy-message"
+          aria-label="Copy prompt"
+          title="Copy prompt"
+          onclick={() => actions.copy(user.text)}><Icon name="copy" size={12} />Copy</button
+        >
+      </div>
       <div class="speaker">{user.label}</div>
       <div class="message">{user.text}</div>
       {#if group.user.steered}<span class="steered">sent while agy worked</span>{/if}
@@ -98,7 +116,13 @@
         </div>
       {:else if event.t === 'thinking'}<Thinking {event} {expand} {actions} />
       {:else if event.t === 'assistant' || event.t === 'delta'}
-        <section class="reply" class:live={event.t === 'delta'} aria-label="Agent reply">
+        <section
+          class="reply"
+          class:live={event.t === 'delta'}
+          class:find-match={selectedMatch === `${group.key}:${item.key}`}
+          data-find-key={`${group.key}:${item.key}`}
+          aria-label="Agent reply"
+        >
           <div class="speaker">
             ANTIQUOTA {#if event.t === 'delta'}<span class="streaming">streaming</span
               >{:else}<button
@@ -146,6 +170,15 @@
 </article>
 
 <style>
+  .find-match {
+    outline: 1px solid var(--code-keyword);
+    outline-offset: 4px;
+  }
+  .prompt-actions {
+    float: right;
+    display: flex;
+    gap: var(--space-1);
+  }
   .turn {
     padding-bottom: var(--space-6);
   }

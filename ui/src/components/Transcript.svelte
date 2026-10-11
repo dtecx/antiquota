@@ -13,6 +13,7 @@
   import { get } from 'svelte/store';
   import { preferences } from '../lib/preferences';
   import TurnGroup from './TurnGroup.svelte';
+  import ConversationFind from './ConversationFind.svelte';
   import { isBusy } from '../lib/format';
   let { workbench, login, api }: { workbench: Workbench; login: Login; api: Api } = $props();
   const view = $derived(workbench.state);
@@ -34,9 +35,25 @@
   let expand = $state<Expansion>({ version: 0, open: false });
   onDestroy(actions.dispose);
   let scroller = $state.raw<HTMLDivElement>();
+  let finder: { open: () => void } | undefined = $state();
+  let findMatch = $state('');
   let shown = '',
-    follow = true,
     restoring = false;
+  let follow = $state(true);
+  async function reuse(text: string) {
+    const id = get(view).selected?.id;
+    if (await actions.reuse(text)) {
+      await tick();
+      if (get(view).selected?.id === id) document.getElementById(`prompt-${id}`)?.focus();
+    }
+  }
+  function latest() {
+    if (!scroller) return;
+    follow = true;
+    scroller.scrollTop = scroller.scrollHeight;
+    scrolled();
+    scroller.focus({ preventScroll: true });
+  }
   $effect.pre(() => {
     const id = sid;
     void events;
@@ -75,89 +92,136 @@
   }
 </script>
 
-<div
-  class="transcript"
-  bind:this={scroller}
-  onscroll={scrolled}
-  aria-label="Conversation"
-  aria-busy={loading}
->
-  <div class="content">
-    {#if groups.length}<div class="presentation" aria-label="Transcript presentation">
-        <button
-          class="quiet small"
-          disabled={loading}
-          title="Copy prompts and completed replies as Markdown"
-          onclick={() =>
-            $view.selected && actions.copy(conversationMarkdown($view.selected, events))}
-          >Copy conversation</button
-        >
-        <button
-          class="quiet small"
-          aria-pressed={$prefs.detail === 'detailed'}
-          onclick={() =>
-            preferences.change({ detail: $prefs.detail === 'detailed' ? 'compact' : 'detailed' })}
-          >{$prefs.detail === 'detailed' ? 'Detailed' : 'Compact'}</button
-        >
-        <button
-          class="quiet small"
-          aria-pressed={expand.open}
-          onclick={() => (expand = { version: expand.version + 1, open: !expand.open })}
-          >{expand.open ? 'Collapse all' : 'Expand all'}</button
-        >
-      </div>{/if}
-    {#if loading && !groups.length}<div class="empty">
-        <span class="eyebrow">SESSION</span>
-        <h2>Loading conversation…</h2>
-        <p>Reading the session history.</p>
-      </div>
-    {:else if !groups.length}<div class="empty">
-        <span class="eyebrow">READY WHEN YOU ARE</span>
-        <h2>What are we working on?</h2>
-        <p>
-          Ask a question, inspect a project, or describe a change.<br />Each turn stays with this
-          session.
-        </p>
-        <div class="folder">Commands run in {$view.selected?.cwd}.</div>
-        <button
-          onclick={() =>
-            goalDialog.set(
-              draftFor(
-                $view.selected?.goal ?? null,
-                $view.drafts[sid] ?? '',
-                $view.snapshot?.defaults.verifier_model || 'gemini-3.8-flash-high',
-              ),
-            )}>Set a goal</button
-        >
-        {#if earlier.length}<div class="pickup" aria-label="Earlier sessions">
-            <p>Pick up from an earlier session here:</p>
-            {#each earlier as previous (previous.id)}<button
-                disabled={$view.mutating}
-                title="Its handoff state goes in front of your next message"
-                onclick={() => inherit(previous.id, previous.title)}
-                >{previous.title || 'Untitled'}</button
-              >{/each}
-          </div>{/if}
-        {#if !$view.snapshot?.accounts.length}<button onclick={() => login.open()}
-            >Add a Google account</button
-          >{/if}
-      </div>
-    {:else}{#each groups as group, index (group.key)}<TurnGroup
-          {group}
-          running={index === groups.length - 1 && isBusy($view.selected?.status)}
-          busy={$view.mutating}
-          {actions}
-          {expand}
-          onlogin={() => login.open()}
-          cwd={$view.selected?.cwd ?? ''}
-          onanswer={workbench.answer}
-          onlog={workbench.openJobLog}
-          attachmentUrl={(name) => api.attachmentUrl($view.selected?.id ?? '', name)}
-        />{/each}{/if}
+<div class="transcript-shell">
+  <ConversationFind
+    {groups}
+    {sid}
+    {scroller}
+    bind:selected={findMatch}
+    bind:this={finder}
+    onclose={() =>
+      scroller
+        ?.querySelector<HTMLButtonElement>('[aria-label="Find in conversation"]')
+        ?.focus({ preventScroll: true })}
+  />
+  <div
+    class="transcript"
+    bind:this={scroller}
+    onscroll={scrolled}
+    aria-label="Conversation"
+    role="region"
+    tabindex="-1"
+    aria-busy={loading}
+  >
+    <div class="content">
+      {#if groups.length}<div class="presentation" aria-label="Transcript presentation">
+          <button
+            class="quiet small"
+            aria-label="Find in conversation"
+            title="Find in this conversation (⌘F / Ctrl+F)"
+            disabled={loading}
+            onclick={() => finder?.open()}>Find</button
+          >
+          <button
+            class="quiet small"
+            disabled={loading}
+            title="Copy prompts and completed replies as Markdown"
+            onclick={() =>
+              $view.selected && actions.copy(conversationMarkdown($view.selected, events))}
+            >Copy conversation</button
+          >
+          <button
+            class="quiet small"
+            aria-pressed={$prefs.detail === 'detailed'}
+            onclick={() =>
+              preferences.change({ detail: $prefs.detail === 'detailed' ? 'compact' : 'detailed' })}
+            >{$prefs.detail === 'detailed' ? 'Detailed' : 'Compact'}</button
+          >
+          <button
+            class="quiet small"
+            aria-pressed={expand.open}
+            onclick={() => (expand = { version: expand.version + 1, open: !expand.open })}
+            >{expand.open ? 'Collapse all' : 'Expand all'}</button
+          >
+        </div>{/if}
+      {#if loading && !groups.length}<div class="empty">
+          <span class="eyebrow">SESSION</span>
+          <h2>Loading conversation…</h2>
+          <p>Reading the session history.</p>
+        </div>
+      {:else if !groups.length}<div class="empty">
+          <span class="eyebrow">READY WHEN YOU ARE</span>
+          <h2>What are we working on?</h2>
+          <p>
+            Ask a question, inspect a project, or describe a change.<br />Each turn stays with this
+            session.
+          </p>
+          <div class="folder">Commands run in {$view.selected?.cwd}.</div>
+          <button
+            onclick={() =>
+              goalDialog.set(
+                draftFor(
+                  $view.selected?.goal ?? null,
+                  $view.drafts[sid] ?? '',
+                  $view.snapshot?.defaults.verifier_model || 'gemini-3.8-flash-high',
+                ),
+              )}>Set a goal</button
+          >
+          {#if earlier.length}<div class="pickup" aria-label="Earlier sessions">
+              <p>Pick up from an earlier session here:</p>
+              {#each earlier as previous (previous.id)}<button
+                  disabled={$view.mutating}
+                  title="Its handoff state goes in front of your next message"
+                  onclick={() => inherit(previous.id, previous.title)}
+                  >{previous.title || 'Untitled'}</button
+                >{/each}
+            </div>{/if}
+          {#if !$view.snapshot?.accounts.length}<button onclick={() => login.open()}
+              >Add a Google account</button
+            >{/if}
+        </div>
+      {:else}{#each groups as group, index (group.key)}<TurnGroup
+            {group}
+            running={index === groups.length - 1 && isBusy($view.selected?.status)}
+            busy={$view.mutating}
+            {actions}
+            {expand}
+            selectedMatch={findMatch}
+            onreuse={reuse}
+            onlogin={() => login.open()}
+            cwd={$view.selected?.cwd ?? ''}
+            onanswer={workbench.answer}
+            onlog={workbench.openJobLog}
+            attachmentUrl={(name) => api.attachmentUrl($view.selected?.id ?? '', name)}
+          />{/each}{/if}
+    </div>
   </div>
+  {#if !follow && groups.length && !loading}<div class="latest">
+      <button onclick={latest}>Jump to latest</button>
+    </div>{/if}
 </div>
 
 <style>
+  .transcript-shell {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .latest {
+    position: absolute;
+    bottom: var(--space-3);
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+  }
+  .latest button {
+    pointer-events: auto;
+    color: var(--ink-2);
+  }
   .pickup {
     display: grid;
     gap: var(--space-2);

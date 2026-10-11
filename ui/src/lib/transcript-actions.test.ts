@@ -49,6 +49,56 @@ afterEach(() => {
 });
 
 describe('transcript files and clipboard', () => {
+  it('loads exact prompt source without sending or changing the transcript', async () => {
+    const { api, actions, workbench } = await setup();
+    const events = get(workbench.state).events;
+    const text = '  Keep **formatting**.\n\n';
+    expect(await actions.reuse(text)).toBe(true);
+    expect(get(workbench.state).drafts.fixture).toBe(text);
+    expect(get(workbench.state).events).toBe(events);
+    expect(get(question)).toBeNull();
+    expect(api.send).not.toHaveBeenCalled();
+  });
+  it('confirms draft replacement, preserving it on cancellation', async () => {
+    const { actions, workbench } = await setup();
+    workbench.draft('Unsent text');
+    const cancelled = actions.reuse('Earlier prompt');
+    expect(get(question)?.ok).toBe('Replace draft');
+    get(question)?.answer(false);
+    expect(await cancelled).toBe(false);
+    expect(get(workbench.state).drafts.fixture).toBe('Unsent text');
+    const accepted = actions.reuse('Earlier prompt');
+    get(question)?.answer(true);
+    expect(await accepted).toBe(true);
+    expect(get(workbench.state).drafts.fixture).toBe('Earlier prompt');
+  });
+  it.each(['selection', 'draft', 'disposed'])(
+    'keeps newer state after a pending reuse: %s',
+    async (change) => {
+      const { api, actions, workbench } = await setup();
+      workbench.draft('Original unsent');
+      const pending = actions.reuse('Earlier prompt');
+      if (change === 'selection') await workbench.select('next');
+      else if (change === 'draft') workbench.draft('Newer unsent');
+      else actions.dispose();
+      get(question)?.answer(true);
+      expect(await pending).toBe(false);
+      expect(get(workbench.state).drafts.fixture).toBe(
+        change === 'draft' ? 'Newer unsent' : 'Original unsent',
+      );
+      expect(get(workbench.state).drafts.next).not.toBe('Earlier prompt');
+      expect(api.send).not.toHaveBeenCalled();
+    },
+  );
+  it('ignores reuse when no session is selected or history is loading', async () => {
+    const empty = await setup(false);
+    expect(await empty.actions.reuse('Prompt')).toBe(false);
+    const loading = await setup();
+    loading.workbench.state.update((value) => ({ ...value, loading: true }));
+    expect(await loading.actions.reuse('Prompt')).toBe(false);
+    expect(get(loading.workbench.state).drafts.fixture).toBeUndefined();
+    expect(get(question)).toBeNull();
+  });
   it('opens the complete decoded file target and passes its requested line to the viewer', async () => {
     const { api, actions } = await setup();
     await actions.file('src/my%20file.ts#L27');

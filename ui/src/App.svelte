@@ -213,6 +213,26 @@
       document.getElementById(`prompt-${id}`)?.focus();
       return;
     }
+    if (
+      mod &&
+      event.key.toLowerCase() === 'f' &&
+      !event.altKey &&
+      !event.shiftKey &&
+      !event.isComposing
+    ) {
+      const id = get(activeWorkbench.state).selected?.id;
+      const button = id
+        ? document
+            .getElementById(`prompt-${id}`)
+            ?.closest('.session-pane')
+            ?.querySelector<HTMLButtonElement>('[aria-label="Find in conversation"]')
+        : null;
+      if (button && !button.disabled) {
+        event.preventDefault();
+        button.click();
+      }
+      return;
+    }
     if (mod && event.key.toLowerCase() === 'k') {
       event.preventDefault();
       findSession();

@@ -13,6 +13,33 @@ export function createTranscriptActions(api: Api, workbench: Workbench) {
     dispose: () => {
       disposed = true;
     },
+    reuse: async (text: string): Promise<boolean> => {
+      const value = get(workbench.state),
+        id = value.selected?.id,
+        draft = id ? (value.drafts[id] ?? '') : '';
+      if (!id || disposed || value.loading) return false;
+      if (
+        draft &&
+        draft !== text &&
+        !(await ask(
+          'Replace unsent draft?',
+          'Load this earlier prompt in place of your current text. Attached files in the composer stay.',
+          { ok: 'Replace draft' },
+        ))
+      )
+        return false;
+      const current = get(workbench.state);
+      if (
+        disposed ||
+        current.loading ||
+        current.selected?.id !== id ||
+        (current.drafts[id] ?? '') !== draft
+      )
+        return false;
+      workbench.draft(text, id);
+      workbench.change({ feedback: 'Prompt loaded. Review text and attachments before sending.' });
+      return true;
+    },
     copy: async (text: string) => {
       try {
         await writeClipboard(text);

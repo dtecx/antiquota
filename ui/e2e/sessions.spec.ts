@@ -111,7 +111,10 @@ test('supports light theme narrow navigation filtering and validation errors', a
   await expect(page.getByText('No matching sessions.')).toBeVisible();
   await page.getByRole('textbox', { name: 'Filter sessions' }).fill('Narrow');
   await page.locator('button.session').filter({ hasText: 'Narrow fixture' }).click();
-  await expect(page.getByLabel('Conversation')).toHaveAttribute('aria-busy', 'false');
+  await expect(page.getByLabel('Conversation', { exact: true })).toHaveAttribute(
+    'aria-busy',
+    'false',
+  );
   await screenshot(page, engine, 'narrow-light');
   await page.setViewportSize({ width: 1280, height: 820 });
   await page.getByRole('button', { name: 'New session' }).first().click();

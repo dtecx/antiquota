@@ -1,5 +1,8 @@
 //! Proves separate account contexts and Python/Rust file-lock interoperability.
-use crate::{setup, support::Server};
+use crate::{
+    setup,
+    support::{Server, http::Events},
+};
 use serde_json::json;
 use std::{
     io::{BufRead, BufReader},
@@ -7,6 +10,56 @@ use std::{
     thread,
     time::{Duration, Instant},
 };
+
+#[test]
+fn account_events_publish_a_running_lease_and_its_release_after_stop() {
+    let mut server = Server::new_stopped("account-busy-events", true);
+    setup::script(&server, json!({"scenario":"delay", "delay_ms":30000}));
+    setup::start(&mut server);
+    let id = server.create();
+    let mut events = Events::open(server.port, &server.token);
+    setup::send(&server, &id, "Hold this fake turn.");
+    loop {
+        let event = events.next();
+        assert_ne!(
+            event["t"], "turn_start",
+            "publish the running lease before turn start"
+        );
+        if event["t"] == "accounts"
+            && event["accounts"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|account| account["slot"] == setup::ONE && account["busy"] == true)
+        {
+            break;
+        }
+    }
+    assert_eq!(
+        server
+            .call("POST", &format!("/api/sessions/{id}/stop"), Some(json!({})))
+            .status,
+        200
+    );
+    loop {
+        let event = events.next();
+        if event["t"] == "accounts"
+            && event["accounts"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .all(|account| account["busy"] == false)
+        {
+            break;
+        }
+    }
+    setup::wait(&server, "stopped account released", |rows| {
+        rows[0]["busy"] == false
+    });
+    server.idle(&id);
+    drop(events);
+    server.stop();
+}
 
 #[test]
 fn concurrent_sessions_use_different_account_homes_and_skip_busy_probe() {
