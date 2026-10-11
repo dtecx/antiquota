@@ -16,6 +16,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 struct MemoryStore {
     rows: Mutex<BTreeMap<String, (Session, Vec<EventRecord>)>>,
     usage: Mutex<BTreeMap<(String, u64), StepUsage>>,
+    fail_append: std::sync::atomic::AtomicBool,
 }
 impl SessionStore for MemoryStore {
     fn load(&self) -> Result<Vec<(Session, Vec<EventRecord>)>, PortError> {
@@ -28,6 +29,9 @@ impl SessionStore for MemoryStore {
             .collect())
     }
     fn append(&self, id: &str, record: &EventRecord) -> Result<(), PortError> {
+        if self.fail_append.swap(false, Ordering::SeqCst) {
+            return Err(PortError::Unavailable("injected append failure".into()));
+        }
         self.rows
             .lock()
             .unwrap()
@@ -282,6 +286,123 @@ async fn stop_denies_queued_continuation_and_finishes_idle() {
             .iter()
             .any(|r| matches!(&r.event,Event::TurnEnd{status,..} if status=="stopped"))
     );
+}
+
+#[tokio::test(start_paused = true)]
+async fn stopped_turns_drain_only_fresh_work_and_never_during_shutdown() {
+    for scenario in [
+        "message",
+        "resume",
+        "shutdown",
+        "failed-meta",
+        "failed-approval",
+    ] {
+        let resume_goal = scenario == "resume";
+        let failed_stop = scenario.starts_with("failed-");
+        let runner = Arc::new(Runner {
+            calls: AtomicU64::new(0),
+        });
+        let store = Arc::new(MemoryStore::default());
+        let service = Service::open(
+            store.clone(),
+            Settings::default(),
+            Arc::new(Accounts),
+            runner.clone(),
+            Arc::new(FixedClock),
+        )
+        .unwrap();
+        let id = service
+            .create("memory", "", "model", antiquota_core::Mode::Default)
+            .unwrap()
+            .id;
+        if resume_goal || failed_stop {
+            service
+                .set_goal(&id, "Finish.", "", false, "", 3, true)
+                .unwrap();
+        } else {
+            service
+                .send(&id, "first".into(), vec![], "user".into())
+                .unwrap();
+        }
+        while runner.calls.load(Ordering::SeqCst) == 0 {
+            tokio::task::yield_now().await;
+        }
+        service
+            .send(&id, "discard me".into(), vec![], "user".into())
+            .unwrap();
+        if scenario == "shutdown" {
+            service.begin_shutdown();
+            service.wait_idle(&id).await;
+            assert_eq!(runner.calls.load(Ordering::SeqCst), 1);
+            assert_eq!(service.get(&id).unwrap().0.queue.len(), 1);
+            continue;
+        }
+        if scenario == "failed-approval" {
+            assert!(matches!(
+                service
+                    .approval_request(
+                        &id,
+                        "run_command",
+                        &serde_json::json!({"CommandLine": "touch x"})
+                    )
+                    .unwrap(),
+                ApprovalReply::Pending(_)
+            ));
+        }
+        if failed_stop {
+            store.fail_append.store(true, Ordering::SeqCst);
+            assert!(service.stop(&id).is_err());
+            assert!(!store.fail_append.load(Ordering::SeqCst));
+            let meta = service.get(&id).unwrap().0;
+            assert!(
+                meta.queue.is_empty(),
+                "failed Stop must still discard old work"
+            );
+            assert_eq!(meta.goal.unwrap().state, "paused");
+        } else {
+            service.stop(&id).unwrap();
+        }
+        // Virtual time holds the old turn asleep while fresh work is queued after Stop.
+        if resume_goal {
+            service.resume_goal(&id).unwrap();
+        } else {
+            assert_eq!(
+                service
+                    .send(&id, "fresh".into(), vec![], "user".into())
+                    .unwrap(),
+                "queued"
+            );
+        }
+        assert_eq!(service.get(&id).unwrap().0.queue.len(), 1);
+        service.wait_idle(&id).await;
+        let (meta, history) = service.get(&id).unwrap();
+        assert!(meta.queue.is_empty(), "fresh work must not remain stranded");
+        assert_eq!(meta.status, "idle");
+        assert_eq!(runner.calls.load(Ordering::SeqCst), 2);
+        assert!(
+            !history.iter().any(
+                |record| matches!(&record.event, Event::User {text, ..} if text == "discard me")
+            )
+        );
+        let endings: Vec<_> = history
+            .iter()
+            .filter_map(|record| match &record.event {
+                Event::TurnEnd { status, .. } => Some(status.as_str()),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(endings, ["stopped", "SUCCESS"]);
+        if failed_stop {
+            let saved = store.load().unwrap().pop().unwrap().0;
+            assert!(saved.queue.is_empty());
+            assert_eq!(saved.goal.unwrap().state, "paused");
+        }
+        if resume_goal {
+            let goal = meta.goal.unwrap();
+            assert_eq!(goal.state, "met");
+            assert_eq!(goal.round, 1);
+        }
+    }
 }
 
 struct EmptyAccounts;

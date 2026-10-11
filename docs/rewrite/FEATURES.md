@@ -2,7 +2,7 @@
 
 This is the canonical checklist for parity and cutover. It contains 1009 baseline acceptance items: 397 engine/API/CLI items (F-001–F-397) and 612 UI/shell items (F-398–F-1009), including the requested zoom and window-persistence repairs. The 143 additional items (F-1010–F-1152) record explicit requirements from the user's rewrite task and the owner's later requests. They are requirements, not claims about legacy behavior. No feature has been dropped.
 
-Every row is independently reviewable and links to its [test report](TEST_REPORT.md). Slices 1, 3–8, 9a–9f, 11–15, 16, 16b, 17a, 17b, 18 and 19 and the proved Slice 10 subset have **887 Passed** acceptance items; the other **265 remain Pending**. Legacy test names and captured Python responses explain the baseline; they are not passing Rust or TypeScript proof. Mark a row complete only after its passing tests and evidence have been recorded. Store logs, screenshots and live-cost records in ignored `.handoff/evidence/`.
+Every row is independently reviewable and links to its [test report](TEST_REPORT.md). Slices 1, 3–8, 9a–9f, 11–15, 16, 16b, 17a, 17b, 18, 19 and 20 and the proved Slice 10 subset have **893 Passed** acceptance items; the other **259 remain Pending**. Legacy test names and captured Python responses explain the baseline; they are not passing Rust or TypeScript proof. Mark a row complete only after its passing tests and evidence have been recorded. Store logs, screenshots and live-cost records in ignored `.handoff/evidence/`.
 
 Legacy sources were read in full at commit `17ec296`; [engine](source-read-engine.md) and [UI/shell](source-read-ui.md) manifests record coverage and hashes. The sourced subsidiary inventories are [FEATURES-engine.md](FEATURES-engine.md) and [FEATURES-ui.md](FEATURES-ui.md). The canonical rows below contain their full acceptance text. UI identifiers were renumbered once from F-400–F-1011 to F-398–F-1009 to remove the unused gap; engine identifiers were unchanged.
 
@@ -810,8 +810,8 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | F-689 | [x] <a id="f-689"></a>Default folder persists the entered folder and falls back to home when empty. | `antiquota/ui/app.js:2251` | None identified | [Passed](TEST_REPORT.md#f-689) |
 | F-690 | [x] <a id="f-690"></a>Separate git worktree by default persists on/off. | `antiquota/ui/app.js:2251` | None identified | [Passed](TEST_REPORT.md#f-690) |
 | F-691 | [x] <a id="f-691"></a>Keep awake while agents work persists on/off. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-691) |
-| F-692 | [ ] <a id="f-692"></a>Open at login reads current native autostart state. | `antiquota/ui/app.js:2226` | None identified | [Pending](TEST_REPORT.md#f-692) |
-| F-693 | [ ] <a id="f-693"></a>Open at login enables or disables native autostart. | `antiquota/ui/app.js:2226` | None identified | [Pending](TEST_REPORT.md#f-693) |
+| F-692 | [x] <a id="f-692"></a>Open at login reads current native autostart state. | `antiquota/ui/app.js:2226` | None identified | [Passed](TEST_REPORT.md#f-692) |
+| F-693 | [x] <a id="f-693"></a>Open at login enables or disables native autostart. | `antiquota/ui/app.js:2226` | None identified | [Passed](TEST_REPORT.md#f-693) |
 | F-694 | [ ] <a id="f-694"></a>An unavailable native autostart adapter removes its settings row. | `antiquota/ui/app.js:2226` | None identified | [Pending](TEST_REPORT.md#f-694) |
 | F-695 | [x] <a id="f-695"></a>Turn-finished notifications can be enabled or disabled independently. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-695) |
 | F-696 | [x] <a id="f-696"></a>Goal-met notifications can be enabled or disabled independently. | `antiquota/ui/app.js:2318` | None identified | [Passed](TEST_REPORT.md#f-696) |
@@ -1082,18 +1082,18 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | F-913 | [ ] <a id="f-913"></a>The default or unavailable-monitor window position is centered. | `app/src-tauri/src/lib.rs:163` | None identified | [Pending](TEST_REPORT.md#f-913) |
 | F-914 | [ ] <a id="f-914"></a>Default window dimensions are 1280×820 with a 720×480 minimum. | `app/src-tauri/src/lib.rs:161` | None identified | [Pending](TEST_REPORT.md#f-914) |
 | F-915 | [ ] <a id="f-915"></a>--hidden starts without showing the main window. | `app/src-tauri/src/lib.rs:167` | None identified | [Pending](TEST_REPORT.md#f-915) |
-| F-916 | [ ] <a id="f-916"></a>Autostart uses a macOS LaunchAgent with --hidden. | `app/src-tauri/src/lib.rs:148` | None identified | [Pending](TEST_REPORT.md#f-916) |
+| F-916 | [x] <a id="f-916"></a>Autostart uses a macOS LaunchAgent with --hidden. | `app/src-tauri/src/lib.rs:148` | None identified | [Passed](TEST_REPORT.md#f-916) |
 | F-917 | [ ] <a id="f-917"></a>The macOS title bar overlays content and traffic lights use position 18,20. | `app/src-tauri/src/lib.rs:171` | None identified | [Pending](TEST_REPORT.md#f-917) |
 | F-918 | [ ] <a id="f-918"></a>HTML drag-and-drop reaches the UI for file attachments. | `app/src-tauri/src/lib.rs:166` | None identified | [Pending](TEST_REPORT.md#f-918) |
 | F-919 | [ ] <a id="f-919"></a>Closing the main window hides it into the tray while the engine keeps running. | `app/src-tauri/src/lib.rs:182` | None identified | [Pending](TEST_REPORT.md#f-919) |
 | F-920 | [ ] <a id="f-920"></a>Reopening from the macOS dock reveals the main window. | `app/src-tauri/src/lib.rs:197` | None identified | [Pending](TEST_REPORT.md#f-920) |
-| F-921 | [ ] <a id="f-921"></a>Boot discovers or starts the engine and navigates the main window to it. | `app/src-tauri/src/lib.rs:37` | None identified | [Pending](TEST_REPORT.md#f-921) |
+| F-921 | [x] <a id="f-921"></a>Boot discovers or starts the engine and navigates the main window to it. | `app/src-tauri/src/lib.rs:37` | None identified | [Passed](TEST_REPORT.md#f-921) |
 | F-922 | [ ] <a id="f-922"></a>Concurrent boot requests are suppressed. | `app/src-tauri/src/lib.rs:37` | None identified | [Pending](TEST_REPORT.md#f-922) |
 | F-923 | [ ] <a id="f-923"></a>Splash retry starts another boot in a worker thread. | `app/src-tauri/src/lib.rs:62` | None identified | [Pending](TEST_REPORT.md#f-923) |
 | F-924 | [ ] <a id="f-924"></a>The app-info command returns version and operating system. | `app/src-tauri/src/lib.rs:57` | None identified | [Pending](TEST_REPORT.md#f-924) |
 | F-925 | [ ] <a id="f-925"></a>Native save writes contents at the user-selected path or returns cancellation. | `app/src-tauri/src/lib.rs:68` | None identified | [Pending](TEST_REPORT.md#f-925) |
 | F-926 | [x] <a id="f-926"></a>Quitting does not shut down an engine started outside the app. | `app/src-tauri/src/lib.rs:83` | None identified | [Passed](TEST_REPORT.md#f-926) |
-| F-927 | [ ] <a id="f-927"></a>Quitting an app-owned idle engine requests shutdown. | `app/src-tauri/src/lib.rs:83` | None identified | [Pending](TEST_REPORT.md#f-927) |
+| F-927 | [x] <a id="f-927"></a>Quitting an app-owned idle engine requests shutdown. | `app/src-tauri/src/lib.rs:83` | None identified | [Passed](TEST_REPORT.md#f-927) |
 | F-928 | [ ] <a id="f-928"></a>Quitting with active sessions or jobs presents the work-aware choice. | `app/src-tauri/src/lib.rs:83` | None identified | [Pending](TEST_REPORT.md#f-928) |
 | F-929 | [ ] <a id="f-929"></a>Keep running in background quits the shell and retains the engine. | `app/src-tauri/src/lib.rs:83` | None identified | [Pending](TEST_REPORT.md#f-929) |
 | F-930 | [ ] <a id="f-930"></a>Stop and quit stops turns while background jobs continue. | `app/src-tauri/src/lib.rs:83` | None identified | [Pending](TEST_REPORT.md#f-930) |
@@ -1154,7 +1154,7 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-968 | [ ] <a id="f-968"></a>Legacy engine resources use an engine/antiquotad tree. Authorized replacement: bundle the single Rust antiquota sidecar through the platform Tauri configuration and discover it while preserving shared engine.json sessions; retain no PyInstaller dependency. | `app/src-tauri/tauri.bundle.json:3` | None identified | [Pending](TEST_REPORT.md#f-968) |
+| F-968 | [x] <a id="f-968"></a>Legacy engine resources use an engine/antiquotad tree. Authorized replacement: bundle the single Rust antiquota sidecar through the platform Tauri configuration and discover it while preserving shared engine.json sessions; retain no PyInstaller dependency. | `app/src-tauri/tauri.bundle.json:3` | None identified | [Passed](TEST_REPORT.md#f-968) |
 ### Legacy bundled command entry point
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |

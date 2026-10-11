@@ -195,13 +195,31 @@ pub fn request_quit(app: AppHandle) {
                     .buttons(MessageDialogButtons::OkCancelCustom("Stop and quit".into(), "Keep running in background".into()))
                     .blocking_show()
             };
-            if stop {
-                e.post("api/shutdown");
+            if stop && let Err(error) = shutdown_for_quit(&e, &QUIT_REQUESTED) {
+                show_main(&app);
+                app.dialog()
+                    .message(error)
+                    .title("Could not stop antiquota")
+                    .kind(MessageDialogKind::Error)
+                    .buttons(MessageDialogButtons::Ok)
+                    .blocking_show();
+                return;
             }
         }
         QUITTING.store(true, Ordering::SeqCst);
         app.exit(0);
     });
+}
+
+fn shutdown_for_quit(engine: &engine::Engine, requested: &AtomicBool) -> Result<(), &'static str> {
+    if engine.post("api/shutdown") {
+        Ok(())
+    } else {
+        requested.store(false, Ordering::SeqCst);
+        Err(
+            "The engine did not accept the shutdown request. antiquota will stay open. Check Engine Log in the Help menu, then retry Quit.",
+        )
+    }
 }
 
 fn active_work(state: Option<&serde_json::Value>) -> Option<(usize, usize)> {
@@ -351,7 +369,7 @@ mod tests {
             serde_json::from_str(include_str!("../capabilities/engine-ui.json")).unwrap();
         assert_eq!(
             capability["remote"]["urls"],
-            json!(["http://127.0.0.1:*/*"])
+            json!(["http://127.0.0.1:*/*", "http://localhost:*/*"])
         );
         let permission = capability["permissions"]
             .as_array()
@@ -369,6 +387,68 @@ mod tests {
             config["plugins"]["opener"]["requireLiteralLeadingDot"],
             false
         );
+    }
+
+    #[test]
+    fn refused_shutdown_keeps_quit_retryable_until_the_engine_accepts() {
+        use std::io::{Read, Write};
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let engine = engine::Engine {
+            url: format!("http://{}/", listener.local_addr().unwrap()),
+            token: "test-token".into(),
+            by_app: true,
+        };
+        let server = std::thread::spawn(move || {
+            for status in ["503 Service Unavailable", "200 OK"] {
+                let (mut stream, _) = listener.accept().unwrap();
+                stream
+                    .set_read_timeout(Some(std::time::Duration::from_secs(5)))
+                    .unwrap();
+                let mut request = vec![];
+                let mut bytes = [0; 1024];
+                while !request.windows(4).any(|bytes| bytes == b"\r\n\r\n") {
+                    let count = stream.read(&mut bytes).unwrap();
+                    assert!(count > 0);
+                    request.extend_from_slice(&bytes[..count]);
+                }
+                let body = request
+                    .windows(4)
+                    .position(|bytes| bytes == b"\r\n\r\n")
+                    .unwrap()
+                    + 4;
+                while request.len() < body + 2 {
+                    let count = stream.read(&mut bytes).unwrap();
+                    assert!(count > 0);
+                    request.extend_from_slice(&bytes[..count]);
+                }
+                assert_eq!(&request[body..body + 2], b"{}");
+                let request = String::from_utf8(request).unwrap();
+                assert!(request.starts_with("POST /api/shutdown HTTP/1.1\r\n"));
+                assert!(
+                    request
+                        .to_lowercase()
+                        .contains("x-antiquota-token: test-token\r\n")
+                );
+                write!(
+                    stream,
+                    "HTTP/1.1 {status}\r\nContent-Length: 2\r\nConnection: close\r\n\r\n{{}}"
+                )
+                .unwrap();
+            }
+        });
+        let requested = AtomicBool::new(true);
+        let error = shutdown_for_quit(&engine, &requested).unwrap_err();
+        assert!(error.contains("stay open") && error.contains("retry Quit"));
+        assert!(
+            !requested.swap(true, Ordering::SeqCst),
+            "a refused quit must admit a retry"
+        );
+        assert!(shutdown_for_quit(&engine, &requested).is_ok());
+        assert!(
+            requested.load(Ordering::SeqCst),
+            "an accepted quit remains claimed until exit"
+        );
+        server.join().unwrap();
     }
     #[test]
     fn rediscovery_preserves_same_origin_drafts_and_selection() {

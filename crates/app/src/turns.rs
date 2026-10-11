@@ -99,7 +99,9 @@ impl Service {
                     json!({"text": text, "attachments": [], "kind": next_kind}),
                     false,
                 )),
-                _ if !state.cancel.is_cancelled() && !state.meta.queue.is_empty() => {
+                _ if !self.background_cancel.is_cancelled() && !state.meta.queue.is_empty() => {
+                    // A cancelled turn must not cancel work queued after Stop.
+                    state.cancel = Cancellation::default();
                     Some((state.meta.queue[0].clone(), true))
                 }
                 _ => None,

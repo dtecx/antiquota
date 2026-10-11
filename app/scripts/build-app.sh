@@ -10,7 +10,7 @@ case "$(uname -s)" in
     npx --no-install tauri build --config src-tauri/tauri.bundle.json --bundles app
     app="../target/release/bundle/macos/Antiquota.app"
     if [ -z "${APPLE_SIGNING_IDENTITY:-}" ]; then
-      codesign --force --deep --sign - "$app"
+      codesign --force --sign - --options runtime --entitlements src-tauri/Entitlements.plist "$app"
     fi
     codesign --verify --deep --strict "$app"
     mkdir -p dist
