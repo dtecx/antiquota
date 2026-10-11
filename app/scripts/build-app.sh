@@ -8,7 +8,7 @@ version=$(node -p "JSON.parse(require('fs').readFileSync('src-tauri/tauri.conf.j
 case "$(uname -s)" in
   Darwin)
     npx --no-install tauri build --config src-tauri/tauri.bundle.json --bundles app
-    app="../target/release/bundle/macos/antiquota.app"
+    app="../target/release/bundle/macos/Antiquota.app"
     if [ -z "${APPLE_SIGNING_IDENTITY:-}" ]; then
       codesign --force --deep --sign - "$app"
     fi
@@ -20,7 +20,7 @@ case "$(uname -s)" in
     stage=$(mktemp -d "$stage_root/antiquota-bundle.XXXXXX")
     cp -R "$app" "$stage/"
     ln -s /Applications "$stage/Applications"
-    hdiutil create -quiet -volname "antiquota" -srcfolder "$stage" -ov -format UDZO "$out"
+    hdiutil create -quiet -volname "Antiquota" -srcfolder "$stage" -ov -format UDZO "$out"
     rm -rf "$stage"
     echo "built $out"
     ;;

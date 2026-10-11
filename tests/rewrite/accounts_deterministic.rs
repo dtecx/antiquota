@@ -64,7 +64,8 @@ fn worker(name: &str, script: Value) -> bool {
     }
     let server = Server::new_stopped(name, true);
     setup::script(&server, script);
-    let output = support::bounded_output(
+    // Composite workers can perform three separately bounded 20-second turns.
+    let output = support::bounded_output_with_timeout(
         Process::new(std::env::current_exe().unwrap())
             .args(["--exact", &format!("deterministic::{name}"), "--nocapture"])
             .current_dir(&server.project)
@@ -77,6 +78,7 @@ fn worker(name: &str, script: Value) -> bool {
             .env("FAKE_AGY_SCRIPT", &server.script)
             .env("FAKE_AGY_RECORD", server.root.join("fake-calls.jsonl"))
             .env_remove("FAKE_AGY_SCENARIO"),
+        Duration::from_secs(90),
     );
     assert!(
         output.status.success(),

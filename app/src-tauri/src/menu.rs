@@ -14,15 +14,15 @@ fn item(
 
 pub fn build(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
     let about = AboutMetadata {
-        name: Some("antiquota".into()),
+        name: Some("Antiquota".into()),
         ..Default::default()
     };
     let app_menu = Submenu::with_items(
         app,
-        "antiquota",
+        "Antiquota",
         true,
         &[
-            &PredefinedMenuItem::about(app, Some("About antiquota"), Some(about))?,
+            &PredefinedMenuItem::about(app, Some("About Antiquota"), Some(about))?,
             &PredefinedMenuItem::separator(app)?,
             &item(app, "settings", "Settings…", Some("CmdOrCtrl+Comma"))?,
             &item(app, "usage", "Accounts and Usage", None)?,
@@ -33,7 +33,7 @@ pub fn build(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
             &PredefinedMenuItem::hide_others(app, None)?,
             &PredefinedMenuItem::show_all(app, None)?,
             &PredefinedMenuItem::separator(app)?,
-            &item(app, "quit", "Quit antiquota", Some("CmdOrCtrl+Q"))?,
+            &item(app, "quit", "Quit Antiquota", Some("CmdOrCtrl+Q"))?,
         ],
     )?;
     let file = Submenu::with_items(

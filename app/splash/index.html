@@ -15,13 +15,8 @@
   html, body { height: 100%; margin: 0; background: var(--night); color: var(--ink); font: 14px/1.5 var(--sans); }
   body { display: grid; place-items: center; -webkit-user-select: none; user-select: none; }
   main { width: min(520px, calc(100vw - 48px)); text-align: center; }
-  .mark { display: inline-flex; gap: 6px; margin-bottom: 22px; }
-  .mark i { display: block; width: 34px; height: 14px; border-radius: 7px; background: var(--ink-3); }
-  .mark i:first-child { background: var(--baton); animation: pass 1.4s cubic-bezier(.4, 0, .2, 1) infinite; }
-  .mark i:last-child { animation: take 1.4s cubic-bezier(.4, 0, .2, 1) infinite; }
-  @keyframes pass { 50% { transform: translateX(4px); } }
-  @keyframes take { 50% { background: var(--ink-2); } }
-  .error .mark i { animation: none; }
+  .mark { width: 80px; height: 80px; margin: 0 auto 22px; }
+  .mark svg { display: block; width: 100%; height: 100%; }
   h1 { margin: 0 0 6px; font: 600 15px var(--mono); letter-spacing: -.02em; }
   #text { margin: 0; color: var(--ink-3); white-space: pre-wrap; }
   .error #text { color: var(--ink-2); text-align: left; font: 12px/1.6 var(--mono); max-height: 50vh; overflow: auto;
@@ -32,12 +27,18 @@
     font: 500 13px var(--sans); cursor: pointer; }
   button.primary { background: var(--baton); border-color: var(--baton); color: #1a1206; }
   button:focus-visible { outline: 2px solid var(--baton); outline-offset: 2px; }
-  @media (prefers-reduced-motion: reduce) { .mark i { animation: none !important; } }
 </style>
 </head>
 <body>
 <main id="main">
-  <div class="mark" aria-hidden="true"><i></i><i></i></div>
+  <div class="mark" aria-hidden="true"><!-- brand:start -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" color="#e8e6e1" stroke-linecap="round" stroke-linejoin="round">
+  <path class="orbit" d="M8 43C0 35 18 23 36 18C45 16 54 17 57 21" stroke="#e8a33d" stroke-width="3" opacity=".5"/>
+  <path class="lift" d="M20 46L29.8 19Q32 13 34.2 19L44 46" stroke="currentColor" stroke-width="5.5"/>
+  <path class="orbit" d="M8 43C16 49 38 41 51 31" stroke="#e8a33d" stroke-width="3"/>
+  <circle class="node" cx="57" cy="26" r="3.5" fill="#e8a33d"/>
+</svg>
+<!-- brand:end --></div>
   <h1>antiquota</h1>
   <p id="text" role="status">Starting the antiquota engine…</p>
   <div class="acts">

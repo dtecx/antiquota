@@ -562,8 +562,8 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 
 | ID | Acceptance behavior | Legacy source | Existing legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-872 | [ ] Desktop scale uses native webview zoom rather than CSS zoom. | `antiquota/ui/app.js:81` | tests/ui.test.cjs:30 | [Pending](TEST_REPORT.md#f-872) |
-| F-873 | [ ] Desktop scale persists per device and restores when the root webview opens. | `antiquota/ui/app.js:81` | tests/ui.test.cjs:30 | [Pending](TEST_REPORT.md#f-873) |
+| F-872 | [x] Desktop scale uses native webview zoom rather than CSS zoom. | `antiquota/ui/app.js:81` | tests/ui.test.cjs:30 | [Passed](TEST_REPORT.md#f-872) |
+| F-873 | [x] Desktop scale persists per device and restores when the root webview opens. | `antiquota/ui/app.js:81` | tests/ui.test.cjs:30 | [Passed](TEST_REPORT.md#f-873) |
 
 ## Embedded scale behavior
 
@@ -587,15 +587,15 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 
 | ID | Acceptance behavior | Legacy source | Existing legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-877 | [ ] antiquota > About antiquota shows native application metadata. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-877) |
-| F-878 | [ ] antiquota > Settings… opens General; Cmd/Ctrl+Comma. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-878) |
-| F-879 | [ ] antiquota > Accounts and Usage opens Usage. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-879) |
-| F-880 | [ ] antiquota > Services exposes platform services. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-880) |
-| F-881 | [ ] antiquota > Hide hides the application. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-881) |
-| F-882 | [ ] antiquota > Hide Others hides other applications. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-882) |
-| F-883 | [ ] antiquota > Show All restores hidden applications. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-883) |
-| F-884 | [ ] antiquota > Quit antiquota uses work-aware quit; Cmd/Ctrl+Q. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-884) |
-| F-885 | [ ] File > New Session opens session creation; Cmd/Ctrl+N. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-885) |
+| F-877 | [x] Antiquota > About Antiquota shows native application metadata. | `app/src-tauri/src/menu.rs:11` | None identified | [Passed](TEST_REPORT.md#f-877) |
+| F-878 | [x] Antiquota > Settings… opens General; Cmd/Ctrl+Comma. | `app/src-tauri/src/menu.rs:11` | None identified | [Passed](TEST_REPORT.md#f-878) |
+| F-879 | [x] Antiquota > Accounts and Usage opens Usage. | `app/src-tauri/src/menu.rs:11` | None identified | [Passed](TEST_REPORT.md#f-879) |
+| F-880 | [x] Antiquota > Services exposes platform services. | `app/src-tauri/src/menu.rs:11` | None identified | [Passed](TEST_REPORT.md#f-880) |
+| F-881 | [ ] Antiquota > Hide hides the application. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-881) |
+| F-882 | [ ] Antiquota > Hide Others hides other applications. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-882) |
+| F-883 | [ ] Antiquota > Show All restores hidden applications. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-883) |
+| F-884 | [ ] Antiquota > Quit Antiquota uses work-aware quit; Cmd/Ctrl+Q. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-884) |
+| F-885 | [x] File > New Session opens session creation; Cmd/Ctrl+N. | `app/src-tauri/src/menu.rs:11` | None identified | [Passed](TEST_REPORT.md#f-885) |
 | F-886 | [ ] File > Export Transcript… exports the transcript; Cmd/Ctrl+Shift+E. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-886) |
 | F-887 | [ ] File > Close Window hides the main window into the tray. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-887) |
 | F-888 | [ ] Edit > Undo uses native undo. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-888) |
@@ -604,13 +604,13 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 | F-891 | [ ] Edit > Copy copies focused content to the clipboard. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-891) |
 | F-892 | [ ] Edit > Paste pastes clipboard content. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-892) |
 | F-893 | [ ] Edit > Select All selects focused editable content. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-893) |
-| F-894 | [ ] Edit > Find Session or Message focuses and selects search; Cmd/Ctrl+K. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-894) |
+| F-894 | [x] Edit > Find Session or Message focuses and selects search; Cmd/Ctrl+K. | `app/src-tauri/src/menu.rs:11` | None identified | [Passed](TEST_REPORT.md#f-894) |
 | F-895 | [ ] Edit > Dictate toggles dictation; Cmd/Ctrl+Shift+M. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-895) |
-| F-896 | [ ] View > Zoom In increases native zoom; Cmd/Ctrl+Equal. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-896) |
-| F-897 | [ ] View > Zoom Out decreases native zoom; Cmd/Ctrl+Minus. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-897) |
-| F-898 | [ ] View > Actual Size resets native zoom; Cmd/Ctrl+0. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-898) |
+| F-896 | [x] View > Zoom In increases native zoom; Cmd/Ctrl+Equal. | `app/src-tauri/src/menu.rs:11` | None identified | [Passed](TEST_REPORT.md#f-896) |
+| F-897 | [x] View > Zoom Out decreases native zoom; Cmd/Ctrl+Minus. | `app/src-tauri/src/menu.rs:11` | None identified | [Passed](TEST_REPORT.md#f-897) |
+| F-898 | [x] View > Actual Size resets native zoom; Cmd/Ctrl+0. | `app/src-tauri/src/menu.rs:11` | None identified | [Passed](TEST_REPORT.md#f-898) |
 | F-899 | [ ] View > Side Panel toggles the drawer; Cmd/Ctrl+B. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-899) |
-| F-900 | [ ] View > Side by Side toggles split; Cmd/Ctrl+Backslash. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-900) |
+| F-900 | [x] View > Side by Side toggles split; Cmd/Ctrl+Backslash. | `app/src-tauri/src/menu.rs:11` | None identified | [Passed](TEST_REPORT.md#f-900) |
 | F-901 | [ ] View > Expand All Steps toggles transcript expansion; Cmd/Ctrl+Shift+O. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-901) |
 | F-902 | [ ] View > Reload reloads the page; Cmd/Ctrl+R. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-902) |
 | F-903 | [ ] View > Fullscreen uses the platform fullscreen action. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-903) |
@@ -618,8 +618,8 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 | F-905 | [ ] Window > Maximize uses the platform maximize action. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-905) |
 | F-906 | [ ] Window > Previous Session opens the previous session; Cmd/Ctrl+Shift+BracketLeft. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-906) |
 | F-907 | [ ] Window > Next Session opens the next session; Cmd/Ctrl+Shift+BracketRight. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-907) |
-| F-908 | [ ] Help > Keyboard Shortcuts opens shortcuts; Cmd/Ctrl+Slash. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-908) |
-| F-909 | [ ] Help > Engine Log opens the engine log viewer. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-909) |
+| F-908 | [x] Help > Keyboard Shortcuts opens shortcuts; Cmd/Ctrl+Slash. | `app/src-tauri/src/menu.rs:11` | None identified | [Passed](TEST_REPORT.md#f-908) |
+| F-909 | [x] Help > Engine Log opens the engine log viewer. | `app/src-tauri/src/menu.rs:11` | None identified | [Passed](TEST_REPORT.md#f-909) |
 
 ## Desktop lifecycle and window state
 
@@ -641,7 +641,7 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 | F-923 | [ ] Splash retry starts another boot in a worker thread. | `app/src-tauri/src/lib.rs:62` | None identified | [Pending](TEST_REPORT.md#f-923) |
 | F-924 | [ ] The app-info command returns version and operating system. | `app/src-tauri/src/lib.rs:57` | None identified | [Pending](TEST_REPORT.md#f-924) |
 | F-925 | [ ] Native save writes contents at the user-selected path or returns cancellation. | `app/src-tauri/src/lib.rs:68` | None identified | [Pending](TEST_REPORT.md#f-925) |
-| F-926 | [ ] Quitting does not shut down an engine started outside the app. | `app/src-tauri/src/lib.rs:83` | None identified | [Pending](TEST_REPORT.md#f-926) |
+| F-926 | [x] Quitting does not shut down an engine started outside the app. | `app/src-tauri/src/lib.rs:83` | None identified | [Passed](TEST_REPORT.md#f-926) |
 | F-927 | [ ] Quitting an app-owned idle engine requests shutdown. | `app/src-tauri/src/lib.rs:83` | None identified | [Pending](TEST_REPORT.md#f-927) |
 | F-928 | [ ] Quitting with active sessions or jobs presents the work-aware choice. | `app/src-tauri/src/lib.rs:83` | None identified | [Pending](TEST_REPORT.md#f-928) |
 | F-929 | [ ] Keep running in background quits the shell and retains the engine. | `app/src-tauri/src/lib.rs:83` | None identified | [Pending](TEST_REPORT.md#f-929) |
@@ -652,7 +652,7 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 | ID | Acceptance behavior | Legacy source | Existing legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
 | F-931 | [ ] Discovery honors ANTIQUOTA_DIR or uses ~/.antiquota. | `app/src-tauri/src/engine.rs:28` | None identified | [Pending](TEST_REPORT.md#f-931) |
-| F-932 | [ ] Discovery reads state/engine.json and GUI token to attach to the shared engine. | `app/src-tauri/src/engine.rs:64` | None identified | [Pending](TEST_REPORT.md#f-932) |
+| F-932 | [x] Discovery reads state/engine.json and GUI token to attach to the shared engine. | `app/src-tauri/src/engine.rs:64` | None identified | [Passed](TEST_REPORT.md#f-932) |
 | F-933 | [x] Discovery accepts only a health response identifying antiquota. | `app/src-tauri/src/engine.rs:51` | None identified | [Passed](TEST_REPORT.md#f-933) |
 | F-934 | [ ] Ownership in engine.json controls shutdown behavior across later app starts. | `app/src-tauri/src/engine.rs:64` | None identified | [Pending](TEST_REPORT.md#f-934) |
 | F-935 | [ ] Native engine requests have a five-second global timeout. | `app/src-tauri/src/engine.rs:39` | None identified | [Pending](TEST_REPORT.md#f-935) |
@@ -769,10 +769,10 @@ The full read manifest is [source-read-ui.md](source-read-ui.md). Known broken b
 
 | ID | Acceptance behavior | Legacy source | Existing legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-1004 | [ ] Both split panes remain fully visible and equally scaled at 80, 100, 125 and 150 percent native zoom. | `antiquota/ui/app.js:81` | None identified | [Pending](TEST_REPORT.md#f-1004) |
+| F-1004 | [x] Both split panes remain fully visible and equally scaled at 80, 100, 125 and 150 percent native zoom. | `antiquota/ui/app.js:81` | None identified | [Passed](TEST_REPORT.md#f-1004) |
 | F-1005 | [ ] Context menus and usage tooltips track their intended position at every required zoom. | `antiquota/ui/app.js:81` | None identified | [Pending](TEST_REPORT.md#f-1005) |
 | F-1006 | [ ] Terminal fitting remains correct at every required zoom. | `antiquota/ui/app.js:81` | None identified | [Pending](TEST_REPORT.md#f-1006) |
-| F-1007 | [ ] Session sidebar content stays clear of macOS traffic lights at every required zoom. | `antiquota/ui/app.js:81` | None identified | [Pending](TEST_REPORT.md#f-1007) |
+| F-1007 | [x] Session sidebar content stays clear of macOS traffic lights at every required zoom. | `antiquota/ui/app.js:81` | None identified | [Passed](TEST_REPORT.md#f-1007) |
 
 ## Requested rewrite desktop persistence acceptance
 

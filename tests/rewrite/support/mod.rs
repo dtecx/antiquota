@@ -313,17 +313,28 @@ fn private_file(path: &Path) {
 
 /// Runs short CLI checks with a bounded wait, killing an unexpected hung process.
 pub fn bounded_output(command: &mut Command) -> std::process::Output {
+    bounded_output_with_timeout(command, Duration::from_secs(8))
+}
+
+pub fn bounded_output_with_timeout(
+    command: &mut Command,
+    timeout: Duration,
+) -> std::process::Output {
     let mut child = command
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
         .unwrap();
-    let deadline = Instant::now() + Duration::from_secs(8);
+    let deadline = Instant::now() + timeout;
     while child.try_wait().unwrap().is_none() {
         if Instant::now() >= deadline {
             child.kill().unwrap();
             let output = child.wait_with_output().unwrap();
-            panic!("CLI timeout: {}", String::from_utf8_lossy(&output.stderr));
+            panic!(
+                "process exceeded {timeout:?}:\n{}\n{}",
+                String::from_utf8_lossy(&output.stdout),
+                String::from_utf8_lossy(&output.stderr)
+            );
         }
         thread::sleep(Duration::from_millis(20));
     }

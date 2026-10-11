@@ -16,6 +16,7 @@
   import AccountPill from './AccountPill.svelte';
   import SessionRow from './SessionRow.svelte';
   import Icon from './Icon.svelte';
+  import BrandMark from './BrandMark.svelte';
   let {
     workbench,
     connection,
@@ -61,7 +62,7 @@
 
 <aside class:open={$view.sidebarOpen} aria-label="Sessions">
   <div class="brand-row" data-tauri-drag-region="deep">
-    <div class="brand"><span class="baton" aria-hidden="true"></span>antiquota</div>
+    <div class="brand"><BrandMark />antiquota</div>
     <button
       class="icon quiet close-sidebar"
       aria-label="Close sessions"
@@ -266,13 +267,6 @@
     font-size: 19px;
     letter-spacing: -0.65px;
     font-weight: 600;
-  }
-  .baton {
-    width: 14px;
-    height: 20px;
-    border-left: 3px solid var(--baton);
-    border-right: 3px solid var(--baton);
-    transform: skew(-17deg);
   }
   .new-session {
     display: flex;

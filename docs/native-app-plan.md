@@ -68,7 +68,7 @@ Why Tauri:
 ### Architecture
 
 ```
-┌──────────── antiquota.app (Tauri v2) ────────────┐
+┌──────────── Antiquota.app (Tauri v2) ────────────┐
 │  WebView UI (TypeScript)        Rust shell       │
 │  sessions · goal · jobs ·       tray · notify ·  │
 │  accounts · settings            updater · deep   │

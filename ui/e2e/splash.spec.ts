@@ -76,8 +76,8 @@ test('bootstrap waits for the status listener before requesting engine startup',
     await page.evaluate(() => (window as unknown as { splashMock: SplashMock }).splashMock.event),
   ).toBe('engine-status');
   expect(await calls(page)).toEqual([]);
-  await expect(page.locator('.mark i')).toHaveCount(2);
-  await expect(page.locator('.mark i').first()).toHaveCSS('animation-name', 'pass');
+  await expect(page.locator('.mark svg')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'antiquota', exact: true })).toBeVisible();
   await release(page);
   await screenshot(page, 'starting');
 });
@@ -98,7 +98,7 @@ test('status errors expose retry and quit and retry restores the starting presen
   );
   await expect(page.locator('#main')).toHaveClass('error');
   await expect(page.locator('#text script')).toHaveCount(0);
-  await expect(page.locator('.mark i').first()).toHaveCSS('animation-name', 'none');
+  await expect(page.locator('.mark svg')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Quit', exact: true })).toBeVisible();
   await screenshot(page, 'error');
@@ -126,11 +126,17 @@ test('status errors expose retry and quit and retry restores the starting presen
   await expect(page.getByRole('button', { name: 'Quit', exact: true })).toBeHidden();
 });
 
-test('reduced motion disables both splash animations', async ({ page }) => {
+test('the shared brand mark stays still under reduced motion', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await load(page);
-  await expect(page.locator('.mark i').first()).toHaveCSS('animation-name', 'none');
-  await expect(page.locator('.mark i').last()).toHaveCSS('animation-name', 'none');
+  await expect(page.locator('.mark svg')).toBeVisible();
+  expect(
+    await page
+      .locator('.mark svg, .mark svg *')
+      .evaluateAll((nodes) =>
+        nodes.every((node) => getComputedStyle(node).animationName === 'none'),
+      ),
+  ).toBe(true);
   expect(await calls(page)).toEqual([]);
   await release(page);
 });

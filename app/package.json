@@ -5,6 +5,7 @@
   "description": "antiquota desktop app: a native shell around the antiquota engine",
   "scripts": {
     "tauri": "tauri",
+    "icons": "node scripts/icons.mjs",
     "test": "cargo test --locked --jobs 2 -p antiquota-desktop",
     "dev": "tauri dev",
     "build": "sh scripts/build-app.sh",

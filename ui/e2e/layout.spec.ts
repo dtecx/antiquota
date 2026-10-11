@@ -56,6 +56,13 @@ test('uses centralized warm dark and light palettes, visible keyboard focus, hid
   const one = await create(engine, 'Theme fixture');
   await open(page, engine, one.id);
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(14, 15, 17)');
+  await expect(page.locator('.brand')).toHaveText('antiquota');
+  await expect(page.locator('.brand-mark svg')).toBeVisible();
+  await expect(page.locator('.brand-mark .lift')).toHaveCSS('stroke', 'rgb(232, 230, 225)');
+  const favicon = await page.request.get(new URL('/assets/favicon.svg', engine.url).href);
+  expect(favicon.status()).toBe(200);
+  expect(favicon.headers()['content-type']).toContain('image/svg+xml');
+  await expect(page.locator('link[rel="icon"]')).toHaveAttribute('href', '/assets/favicon.svg');
   expect(
     await page.evaluate(() =>
       getComputedStyle(document.documentElement).getPropertyValue('--baton').trim(),
@@ -81,6 +88,8 @@ test('uses centralized warm dark and light palettes, visible keyboard focus, hid
   await shot(page, engine, 'desktop-dark');
   await page.emulateMedia({ colorScheme: 'light', reducedMotion: 'reduce' });
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(246, 245, 241)');
+  await expect(page.locator('.brand-mark .lift')).toHaveCSS('stroke', 'rgb(28, 27, 25)');
+  await expect(page.locator('.brand-mark .orbit').first()).toHaveCSS('stroke', 'rgb(181, 109, 10)');
   expect(
     await page.evaluate(() =>
       getComputedStyle(document.documentElement).getPropertyValue('--baton').trim(),

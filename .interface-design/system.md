@@ -1,0 +1,23 @@
+# antiquota interface
+
+## Direction and feel
+
+A quiet developer workbench for continuous agent work across accounts. Preserve the existing dense layout, warm graphite surfaces, amber action color and light theme. The owner requested a shared logo inspired by Antigravity and account rotation on 2026-10-11.
+
+The installed application is **Antiquota**. The GUI wordmark, page and window titles, splash and CLI use **antiquota**. Native application identity in the OS application menu and About panel uses **Antiquota**.
+
+## Depth and spacing
+
+Use the existing subtle borders and layered surfaces in `ui/src/styles/tokens.css`. Spacing uses a 4px base unit. This branding change does not change layout, component sizing or navigation.
+
+## Hierarchy
+
+Keep IBM Plex Sans for interface text and JetBrains Mono for technical detail. The sidebar wordmark stays 19px, weight 600, letter spacing -0.65px. The new mark is 30px with a 12px gap to the wordmark. The splash mark is 80px.
+
+## Shared brand mark
+
+`ui/src/assets/brand-mark.svg` is the canonical artwork: an ascending open A crossed by a tilted, segmented amber orbit with one account node. The A uses the existing ink token; the orbit and node use the existing amber token. Light mode uses its existing darker ink and amber colors.
+
+`npm --prefix app run icons` derives the splash, favicon, platform icons and monochrome tray images using the installed Tauri CLI. The app icon and favicon add a graphite rounded tile. The sidebar and splash use the mark without a tile. The tray keeps the same silhouette as a template image. Do not redraw these assets independently. The mark is static in both motion preferences.
+
+No raster reference shaped this design. The implemented warm palette and the owner's continuity and rotation request set its direction.

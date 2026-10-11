@@ -1,8 +1,8 @@
 # Feature inventory and rewrite acceptance
 
-This is the canonical checklist for parity and cutover. It contains 1009 baseline acceptance items: 397 engine/API/CLI items (F-001–F-397) and 612 UI/shell items (F-398–F-1009), including the requested zoom and window-persistence repairs. The 141 additional items (F-1010–F-1150) record explicit requirements from the user's rewrite task and the owner's later requests. They are requirements, not claims about legacy behavior. No feature has been dropped.
+This is the canonical checklist for parity and cutover. It contains 1009 baseline acceptance items: 397 engine/API/CLI items (F-001–F-397) and 612 UI/shell items (F-398–F-1009), including the requested zoom and window-persistence repairs. The 143 additional items (F-1010–F-1152) record explicit requirements from the user's rewrite task and the owner's later requests. They are requirements, not claims about legacy behavior. No feature has been dropped.
 
-Every row is independently reviewable and links to its [test report](TEST_REPORT.md). Slices 1, 3–8, 9a–9f, 11–15, 16, 16b, 17a and 17b and the proved Slice 10 subset have **862 Passed** acceptance items; the other **288 remain Pending**. Legacy test names and captured Python responses explain the baseline; they are not passing Rust or TypeScript proof. Mark a row complete only after its passing tests and evidence have been recorded. Store logs, screenshots and live-cost records in ignored `.handoff/evidence/`.
+Every row is independently reviewable and links to its [test report](TEST_REPORT.md). Slices 1, 3–8, 9a–9f, 11–15, 16, 16b, 17a, 17b and 18 and the proved Slice 10 subset have **884 Passed** acceptance items; the other **268 remain Pending**. Legacy test names and captured Python responses explain the baseline; they are not passing Rust or TypeScript proof. Mark a row complete only after its passing tests and evidence have been recorded. Store logs, screenshots and live-cost records in ignored `.handoff/evidence/`.
 
 Legacy sources were read in full at commit `17ec296`; [engine](source-read-engine.md) and [UI/shell](source-read-ui.md) manifests record coverage and hashes. The sourced subsidiary inventories are [FEATURES-engine.md](FEATURES-engine.md) and [FEATURES-ui.md](FEATURES-ui.md). The canonical rows below contain their full acceptance text. UI identifiers were renumbered once from F-400–F-1011 to F-398–F-1009 to remove the unused gap; engine identifiers were unchanged.
 
@@ -1018,8 +1018,8 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-872 | [ ] <a id="f-872"></a>Desktop scale uses native webview zoom rather than CSS zoom. | `antiquota/ui/app.js:81` | tests/ui.test.cjs:30 | [Pending](TEST_REPORT.md#f-872) |
-| F-873 | [ ] <a id="f-873"></a>Desktop scale persists per device and restores when the root webview opens. | `antiquota/ui/app.js:81` | tests/ui.test.cjs:30 | [Pending](TEST_REPORT.md#f-873) |
+| F-872 | [x] <a id="f-872"></a>Desktop scale uses native webview zoom rather than CSS zoom. | `antiquota/ui/app.js:81` | tests/ui.test.cjs:30 | [Passed](TEST_REPORT.md#f-872) |
+| F-873 | [x] <a id="f-873"></a>Desktop scale persists per device and restores when the root webview opens. | `antiquota/ui/app.js:81` | tests/ui.test.cjs:30 | [Passed](TEST_REPORT.md#f-873) |
 ### Embedded scale behavior
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
@@ -1039,15 +1039,15 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-877 | [ ] <a id="f-877"></a>antiquota > About antiquota shows native application metadata. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-877) |
-| F-878 | [ ] <a id="f-878"></a>antiquota > Settings… opens General; Cmd/Ctrl+Comma. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-878) |
-| F-879 | [ ] <a id="f-879"></a>antiquota > Accounts and Usage opens Usage. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-879) |
-| F-880 | [ ] <a id="f-880"></a>antiquota > Services exposes platform services. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-880) |
-| F-881 | [ ] <a id="f-881"></a>antiquota > Hide hides the application. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-881) |
-| F-882 | [ ] <a id="f-882"></a>antiquota > Hide Others hides other applications. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-882) |
-| F-883 | [ ] <a id="f-883"></a>antiquota > Show All restores hidden applications. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-883) |
-| F-884 | [ ] <a id="f-884"></a>antiquota > Quit antiquota uses work-aware quit; Cmd/Ctrl+Q. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-884) |
-| F-885 | [ ] <a id="f-885"></a>File > New Session opens session creation; Cmd/Ctrl+N. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-885) |
+| F-877 | [x] <a id="f-877"></a>Antiquota > About Antiquota shows native application metadata. | `app/src-tauri/src/menu.rs:11` | None identified | [Passed](TEST_REPORT.md#f-877) |
+| F-878 | [x] <a id="f-878"></a>Antiquota > Settings… opens General; Cmd/Ctrl+Comma. | `app/src-tauri/src/menu.rs:11` | None identified | [Passed](TEST_REPORT.md#f-878) |
+| F-879 | [x] <a id="f-879"></a>Antiquota > Accounts and Usage opens Usage. | `app/src-tauri/src/menu.rs:11` | None identified | [Passed](TEST_REPORT.md#f-879) |
+| F-880 | [x] <a id="f-880"></a>Antiquota > Services exposes platform services. | `app/src-tauri/src/menu.rs:11` | None identified | [Passed](TEST_REPORT.md#f-880) |
+| F-881 | [ ] <a id="f-881"></a>Antiquota > Hide hides the application. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-881) |
+| F-882 | [ ] <a id="f-882"></a>Antiquota > Hide Others hides other applications. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-882) |
+| F-883 | [ ] <a id="f-883"></a>Antiquota > Show All restores hidden applications. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-883) |
+| F-884 | [ ] <a id="f-884"></a>Antiquota > Quit Antiquota uses work-aware quit; Cmd/Ctrl+Q. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-884) |
+| F-885 | [x] <a id="f-885"></a>File > New Session opens session creation; Cmd/Ctrl+N. | `app/src-tauri/src/menu.rs:11` | None identified | [Passed](TEST_REPORT.md#f-885) |
 | F-886 | [ ] <a id="f-886"></a>File > Export Transcript… exports the transcript; Cmd/Ctrl+Shift+E. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-886) |
 | F-887 | [ ] <a id="f-887"></a>File > Close Window hides the main window into the tray. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-887) |
 | F-888 | [ ] <a id="f-888"></a>Edit > Undo uses native undo. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-888) |
@@ -1056,13 +1056,13 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | F-891 | [ ] <a id="f-891"></a>Edit > Copy copies focused content to the clipboard. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-891) |
 | F-892 | [ ] <a id="f-892"></a>Edit > Paste pastes clipboard content. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-892) |
 | F-893 | [ ] <a id="f-893"></a>Edit > Select All selects focused editable content. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-893) |
-| F-894 | [ ] <a id="f-894"></a>Edit > Find Session or Message focuses and selects search; Cmd/Ctrl+K. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-894) |
+| F-894 | [x] <a id="f-894"></a>Edit > Find Session or Message focuses and selects search; Cmd/Ctrl+K. | `app/src-tauri/src/menu.rs:11` | None identified | [Passed](TEST_REPORT.md#f-894) |
 | F-895 | [ ] <a id="f-895"></a>Edit > Dictate toggles dictation; Cmd/Ctrl+Shift+M. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-895) |
-| F-896 | [ ] <a id="f-896"></a>View > Zoom In increases native zoom; Cmd/Ctrl+Equal. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-896) |
-| F-897 | [ ] <a id="f-897"></a>View > Zoom Out decreases native zoom; Cmd/Ctrl+Minus. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-897) |
-| F-898 | [ ] <a id="f-898"></a>View > Actual Size resets native zoom; Cmd/Ctrl+0. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-898) |
+| F-896 | [x] <a id="f-896"></a>View > Zoom In increases native zoom; Cmd/Ctrl+Equal. | `app/src-tauri/src/menu.rs:11` | None identified | [Passed](TEST_REPORT.md#f-896) |
+| F-897 | [x] <a id="f-897"></a>View > Zoom Out decreases native zoom; Cmd/Ctrl+Minus. | `app/src-tauri/src/menu.rs:11` | None identified | [Passed](TEST_REPORT.md#f-897) |
+| F-898 | [x] <a id="f-898"></a>View > Actual Size resets native zoom; Cmd/Ctrl+0. | `app/src-tauri/src/menu.rs:11` | None identified | [Passed](TEST_REPORT.md#f-898) |
 | F-899 | [ ] <a id="f-899"></a>View > Side Panel toggles the drawer; Cmd/Ctrl+B. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-899) |
-| F-900 | [ ] <a id="f-900"></a>View > Side by Side toggles split; Cmd/Ctrl+Backslash. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-900) |
+| F-900 | [x] <a id="f-900"></a>View > Side by Side toggles split; Cmd/Ctrl+Backslash. | `app/src-tauri/src/menu.rs:11` | None identified | [Passed](TEST_REPORT.md#f-900) |
 | F-901 | [ ] <a id="f-901"></a>View > Expand All Steps toggles transcript expansion; Cmd/Ctrl+Shift+O. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-901) |
 | F-902 | [ ] <a id="f-902"></a>View > Reload reloads the page; Cmd/Ctrl+R. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-902) |
 | F-903 | [ ] <a id="f-903"></a>View > Fullscreen uses the platform fullscreen action. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-903) |
@@ -1070,8 +1070,8 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | F-905 | [ ] <a id="f-905"></a>Window > Maximize uses the platform maximize action. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-905) |
 | F-906 | [ ] <a id="f-906"></a>Window > Previous Session opens the previous session; Cmd/Ctrl+Shift+BracketLeft. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-906) |
 | F-907 | [ ] <a id="f-907"></a>Window > Next Session opens the next session; Cmd/Ctrl+Shift+BracketRight. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-907) |
-| F-908 | [ ] <a id="f-908"></a>Help > Keyboard Shortcuts opens shortcuts; Cmd/Ctrl+Slash. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-908) |
-| F-909 | [ ] <a id="f-909"></a>Help > Engine Log opens the engine log viewer. | `app/src-tauri/src/menu.rs:11` | None identified | [Pending](TEST_REPORT.md#f-909) |
+| F-908 | [x] <a id="f-908"></a>Help > Keyboard Shortcuts opens shortcuts; Cmd/Ctrl+Slash. | `app/src-tauri/src/menu.rs:11` | None identified | [Passed](TEST_REPORT.md#f-908) |
+| F-909 | [x] <a id="f-909"></a>Help > Engine Log opens the engine log viewer. | `app/src-tauri/src/menu.rs:11` | None identified | [Passed](TEST_REPORT.md#f-909) |
 ### Desktop lifecycle and window state
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
@@ -1092,7 +1092,7 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | F-923 | [ ] <a id="f-923"></a>Splash retry starts another boot in a worker thread. | `app/src-tauri/src/lib.rs:62` | None identified | [Pending](TEST_REPORT.md#f-923) |
 | F-924 | [ ] <a id="f-924"></a>The app-info command returns version and operating system. | `app/src-tauri/src/lib.rs:57` | None identified | [Pending](TEST_REPORT.md#f-924) |
 | F-925 | [ ] <a id="f-925"></a>Native save writes contents at the user-selected path or returns cancellation. | `app/src-tauri/src/lib.rs:68` | None identified | [Pending](TEST_REPORT.md#f-925) |
-| F-926 | [ ] <a id="f-926"></a>Quitting does not shut down an engine started outside the app. | `app/src-tauri/src/lib.rs:83` | None identified | [Pending](TEST_REPORT.md#f-926) |
+| F-926 | [x] <a id="f-926"></a>Quitting does not shut down an engine started outside the app. | `app/src-tauri/src/lib.rs:83` | None identified | [Passed](TEST_REPORT.md#f-926) |
 | F-927 | [ ] <a id="f-927"></a>Quitting an app-owned idle engine requests shutdown. | `app/src-tauri/src/lib.rs:83` | None identified | [Pending](TEST_REPORT.md#f-927) |
 | F-928 | [ ] <a id="f-928"></a>Quitting with active sessions or jobs presents the work-aware choice. | `app/src-tauri/src/lib.rs:83` | None identified | [Pending](TEST_REPORT.md#f-928) |
 | F-929 | [ ] <a id="f-929"></a>Keep running in background quits the shell and retains the engine. | `app/src-tauri/src/lib.rs:83` | None identified | [Pending](TEST_REPORT.md#f-929) |
@@ -1102,7 +1102,7 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
 | F-931 | [ ] <a id="f-931"></a>Discovery honors ANTIQUOTA_DIR or uses ~/.antiquota. | `app/src-tauri/src/engine.rs:28` | None identified | [Pending](TEST_REPORT.md#f-931) |
-| F-932 | [ ] <a id="f-932"></a>Discovery reads state/engine.json and GUI token to attach to the shared engine. | `app/src-tauri/src/engine.rs:64` | None identified | [Pending](TEST_REPORT.md#f-932) |
+| F-932 | [x] <a id="f-932"></a>Discovery reads state/engine.json and GUI token to attach to the shared engine. | `app/src-tauri/src/engine.rs:64` | None identified | [Passed](TEST_REPORT.md#f-932) |
 | F-933 | [x] <a id="f-933"></a>Discovery accepts only a health response identifying antiquota. | `app/src-tauri/src/engine.rs:51` | None identified | [Passed](TEST_REPORT.md#f-933) |
 | F-934 | [ ] <a id="f-934"></a>Ownership in engine.json controls shutdown behavior across later app starts. | `app/src-tauri/src/engine.rs:64` | None identified | [Pending](TEST_REPORT.md#f-934) |
 | F-935 | [ ] <a id="f-935"></a>Native engine requests have a five-second global timeout. | `app/src-tauri/src/engine.rs:39` | None identified | [Pending](TEST_REPORT.md#f-935) |
@@ -1210,10 +1210,10 @@ The authorized changes replace legacy Python/PyInstaller packaging with the Rust
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
 | --- | --- | --- | --- | --- |
-| F-1004 | [ ] <a id="f-1004"></a>Both split panes remain fully visible and equally scaled at 80, 100, 125 and 150 percent native zoom. | `antiquota/ui/app.js:81` | None identified | [Pending](TEST_REPORT.md#f-1004) |
+| F-1004 | [x] <a id="f-1004"></a>Both split panes remain fully visible and equally scaled at 80, 100, 125 and 150 percent native zoom. | `antiquota/ui/app.js:81` | None identified | [Passed](TEST_REPORT.md#f-1004) |
 | F-1005 | [ ] <a id="f-1005"></a>Context menus and usage tooltips track their intended position at every required zoom. | `antiquota/ui/app.js:81` | None identified | [Pending](TEST_REPORT.md#f-1005) |
 | F-1006 | [ ] <a id="f-1006"></a>Terminal fitting remains correct at every required zoom. | `antiquota/ui/app.js:81` | None identified | [Pending](TEST_REPORT.md#f-1006) |
-| F-1007 | [ ] <a id="f-1007"></a>Session sidebar content stays clear of macOS traffic lights at every required zoom. | `antiquota/ui/app.js:81` | None identified | [Pending](TEST_REPORT.md#f-1007) |
+| F-1007 | [x] <a id="f-1007"></a>Session sidebar content stays clear of macOS traffic lights at every required zoom. | `antiquota/ui/app.js:81` | None identified | [Passed](TEST_REPORT.md#f-1007) |
 ### Requested rewrite desktop persistence acceptance
 
 | Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
@@ -1302,7 +1302,7 @@ The following acceptance items come from the authorized rewrite task, not from a
 | F-1060 | [x] <a id="f-1060"></a>Keep app/src-tauri a thin shell that bundles the single Rust antiquota executable as a sidecar without Python or PyInstaller. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1060) |
 | F-1061 | [ ] <a id="f-1061"></a>Preserve engine.json discovery so CLI, browser and desktop clients share sessions with the same running engine. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1061) |
 | F-1062 | [ ] <a id="f-1062"></a>Keep native tray, application menus, notifications and autostart owned by the desktop shell. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1062) |
-| F-1063 | [ ] <a id="f-1063"></a>Implement desktop zoom through native webview setZoom; never apply CSS zoom to the desktop root or embedded split pane. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1063) |
+| F-1063 | [x] <a id="f-1063"></a>Implement desktop zoom through native webview setZoom; never apply CSS zoom to the desktop root or embedded split pane. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1063) |
 | F-1064 | [ ] <a id="f-1064"></a>Use tauri-plugin-window-state to restore size, position and maximized state while excluding visibility. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1064) |
 | F-1065 | [ ] <a id="f-1065"></a>A restored off-screen window falls back to a centered visible window, and --hidden remains hidden after saved state is restored. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1065) |
 
@@ -1378,7 +1378,7 @@ The following acceptance items come from the authorized rewrite task, not from a
 | F-1116 | [ ] <a id="f-1116"></a>Computer-use tests verify notifications, the autostart toggle and --hidden startup. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1116) |
 | F-1117 | [ ] <a id="f-1117"></a>Computer-use tests kill the engine and verify the shell respawns it. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1117) |
 | F-1118 | [ ] <a id="f-1118"></a>Computer-use tests install the app from the rebuilt DMG. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1118) |
-| F-1119 | [ ] <a id="f-1119"></a>Desktop evidence uses background-mode, window-targeted screenshots and clicks; full-screen control requires the user's permission. | User rewrite task | Not applicable | [Pending](TEST_REPORT.md#f-1119) |
+| F-1119 | [x] <a id="f-1119"></a>Desktop evidence uses background-mode, window-targeted screenshots and clicks; full-screen control requires the user's permission. | User rewrite task | Not applicable | [Passed](TEST_REPORT.md#f-1119) |
 
 ### Live-account and browser authorization proof
 
@@ -1430,6 +1430,13 @@ The following acceptance items come from the authorized rewrite task, not from a
 | F-1148 | [ ] <a id="f-1148"></a>Several sessions can run on one account at once: turns, the verifier, dictation and raw runs share the account lease; probes, checks and removal need it alone, and the account reads busy while any call runs. | Owner request 2026-10-09 | Not applicable | [Pending](TEST_REPORT.md#f-1148) |
 | F-1149 | [x] <a id="f-1149"></a>The Usage view refreshes itself shortly after a turn ends and every minute while visible, keeping the shown period; a failed background read keeps the last data without an error, and it never cancels a period change. | Owner request 2026-10-09 | Not applicable | [Passed](TEST_REPORT.md#f-1149) |
 | F-1150 | [x] <a id="f-1150"></a>A placement setting chooses where new sessions go: fill first (the default) keeps them on the first ranked account until it is walled or below the reserve; spread first prefers accounts without a running call, then the rotation order. A session keeps its own account in both. The default stays out of the settings wire format, and other values are rejected. | Owner request 2026-10-09 | Not applicable | [Passed](TEST_REPORT.md#f-1150) |
+
+### Owner requests of 2026-10-11
+
+| Feature ID | Acceptance behavior | Source or requirement | Related legacy test | Rewrite proof |
+| --- | --- | --- | --- | --- |
+| F-1151 | [x] <a id="f-1151"></a>One Antigravity and account-rotation mark supplies the sidebar, splash, browser favicon, platform app icons and monochrome tray assets. The sidebar remains legible in both existing themes; generated assets share the canonical geometry. | Owner request 2026-10-11 | Not applicable | [Passed](TEST_REPORT.md#f-1151) |
+| F-1152 | [x] <a id="f-1152"></a>The installed application and native application identity are named Antiquota. The GUI wordmark, splash, page and window titles and CLI remain lowercase antiquota. Remove the test display label Native Proof, while preserving internal identifiers, commands and storage compatibility. | Owner request 2026-10-11 | Not applicable | [Passed](TEST_REPORT.md#f-1152) |
 
 ## Source risks and completion boundaries
 

@@ -4,6 +4,7 @@
 set -eu
 root=$(cd "$(dirname "$0")/../.." && pwd)
 bundle="$root/target/release/bundle"
+product=$(node -p "JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')).productName" "$root/app/src-tauri/tauri.conf.json")
 mkdir -p "$HOME/Desktop/test"
 work=$(mktemp -d "$HOME/Desktop/test/antiquota-packages.XXXXXX")
 trap 'rm -rf "$work"' EXIT
@@ -11,9 +12,9 @@ trap 'rm -rf "$work"' EXIT
 check() {
   label=$1
   tree=$2
-  for path in usr/bin/antiquota-desktop usr/lib/antiquota/engine/antiquota \
-    usr/lib/antiquota/ui/index.html usr/lib/antiquota/ui/app.js \
-    usr/share/applications/antiquota.desktop; do
+  for path in usr/bin/antiquota-desktop "usr/lib/$product/engine/antiquota" \
+    "usr/lib/$product/ui/index.html" "usr/lib/$product/ui/app.js" \
+    "usr/share/applications/$product.desktop"; do
     test -s "$tree/$path" || { echo "$label: missing $path" >&2; exit 1; }
   done
   engines=$(find "$tree" -type f -name antiquota | wc -l)
@@ -22,7 +23,7 @@ check() {
     echo "$label: carries Python or PyInstaller files" >&2
     exit 1
   fi
-  engine="$tree/usr/lib/antiquota/engine/antiquota"
+  engine="$tree/usr/lib/$product/engine/antiquota"
   "$engine" --help >/dev/null
   "$engine" serve --help >/dev/null
   data="$work/$label-data"

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 -10 84 84" fill="none" color="#e8e6e1" stroke-linecap="round" stroke-linejoin="round"><rect x="-6" y="-6" width="76" height="76" rx="18" fill="#141518" stroke="#34332f" stroke-width=".6"/>
+  <path class="orbit" d="M8 43C0 35 18 23 36 18C45 16 54 17 57 21" stroke="#e8a33d" stroke-width="3" opacity=".5"/>
+  <path class="lift" d="M20 46L29.8 19Q32 13 34.2 19L44 46" stroke="currentColor" stroke-width="5.5"/>
+  <path class="orbit" d="M8 43C16 49 38 41 51 31" stroke="#e8a33d" stroke-width="3"/>
+  <circle class="node" cx="57" cy="26" r="3.5" fill="#e8a33d"/>
+</svg>
