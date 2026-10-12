@@ -67,12 +67,25 @@ test('switches grouped activity, independent steps, previews, thinking and times
   await mkdir(directory, { recursive: true });
   await page.screenshot({ path: join(directory, 'every-step.png'), fullPage: true });
   await appearance();
-  await page.getByLabel('Previews and thinking').uncheck();
+  await page
+    .getByRole('group', { name: 'Transcript mode' })
+    .last()
+    .getByRole('button', { name: 'Compact', exact: true })
+    .click();
   await page.getByLabel('Times on turns').uncheck();
   await page.getByRole('button', { name: 'Close settings' }).click();
+  // Compact keeps tools folded without previews and leaves thinking and turn ends out.
   await expect(page.locator('.tool .preview')).toHaveCount(0);
+  await expect(page.locator('.thinking')).toHaveCount(0);
+  await expect(page.locator('.turn-end')).toHaveCount(0);
+  await appearance();
+  await page
+    .getByRole('group', { name: 'Transcript mode' })
+    .last()
+    .getByRole('button', { name: 'Verbose', exact: true })
+    .click();
+  await page.getByRole('button', { name: 'Close settings' }).click();
   await expect(page.locator('.thinking')).toHaveCount(1);
-  await expect(page.locator('.thinking')).not.toHaveAttribute('open', '');
   await expect(page.locator('.turn-end time')).toHaveCount(0);
   await appearance();
   await page.getByRole('button', { name: 'Grouped steps', exact: true }).click();

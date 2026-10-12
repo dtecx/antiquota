@@ -41,11 +41,11 @@
 
 <style>
   .markdown {
-    line-height: 1.7;
+    line-height: 1.5;
     overflow-wrap: anywhere;
   }
   .markdown :global(p) {
-    margin: 0 0 var(--space-3);
+    margin: 0 0 var(--space-2);
   }
   .markdown :global(p:last-child) {
     margin-bottom: 0;

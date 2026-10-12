@@ -7,7 +7,8 @@
   const prefs = preferences.state;
   let { event, cwd = '', expand }: { event: ToolEvent; cwd?: string; expand: Expansion } = $props();
   const view = $derived(toolView(event, cwd));
-  let open = $state(false);
+  // Full mode opens every step; switching away closes them again.
+  let open = $derived($prefs.detail === 'full');
   $effect(() => {
     const intent = expand;
     if (intent.version > 0) open = intent.open;
@@ -31,7 +32,7 @@
       >{/if}
     {#if view.error}<span class="tool-error">{view.error.split('\n').slice(0, 2).join('\n')}</span
       >{/if}
-    {#if $prefs.detail === 'detailed' && view.preview}<span
+    {#if $prefs.detail !== 'compact' && view.preview}<span
         class="preview"
         class:diff={view.preview.kind === 'diff'}
         >{view.preview.text}{#if view.preview.more}<span class="more"
@@ -58,7 +59,7 @@
     align-items: center;
     gap: var(--space-2);
     cursor: pointer;
-    min-height: 36px;
+    min-height: 28px;
     font: 11px var(--mono);
     list-style: none;
   }

@@ -129,8 +129,7 @@
           aria-label="Agent reply"
         >
           <div class="speaker">
-            ANTIQUOTA {#if event.t === 'delta'}<span class="streaming">streaming</span
-              >{:else}<button
+            {#if event.t === 'delta'}<span class="streaming">streaming</span>{:else}<button
                 class="quiet copy-message"
                 aria-label="Copy message"
                 title="Copy reply"
@@ -177,6 +176,29 @@
 </article>
 
 <style>
+  /* Replies read as plain text between activity rows, with a quiet marker. */
+  .reply {
+    position: relative;
+    padding: var(--space-1) 0 var(--space-1) var(--space-4);
+    display: flow-root;
+  }
+  .reply::before {
+    content: '';
+    position: absolute;
+    left: 2px;
+    top: calc(var(--space-1) + 0.6em);
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--ink-3);
+  }
+  .reply.final::before {
+    background: var(--baton);
+  }
+  .reply .speaker {
+    float: right;
+    margin: 0 0 0 var(--space-2);
+  }
   .reply:not(.final) .copy-message {
     opacity: 0;
   }
@@ -194,7 +216,7 @@
     gap: var(--space-1);
   }
   .turn {
-    padding-bottom: var(--space-6);
+    padding-bottom: var(--space-4);
   }
   .speaker {
     font: 10px/1.5 var(--mono);
@@ -211,7 +233,7 @@
     background: var(--night-1);
     border: 1px solid var(--rule);
     border-radius: var(--r-md);
-    padding: var(--space-4);
+    padding: var(--space-3) var(--space-4);
   }
   .user-message .message {
     font-size: 13px;
@@ -305,9 +327,6 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .reply {
-    padding: var(--space-5) 0 var(--space-3);
-  }
   .copy-message {
     float: right;
     display: inline-flex;
@@ -325,7 +344,7 @@
     align-items: center;
     color: var(--ink-4);
     font: 10px var(--mono);
-    margin: var(--space-3) 0;
+    margin: var(--space-2) 0;
   }
   .routing .rewind {
     margin-left: auto;

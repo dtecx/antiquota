@@ -9,6 +9,7 @@ import {
   projectHistory,
   reduceTranscript,
   transcriptItems,
+  compactEvents,
   userPresentation,
 } from './transcript';
 
@@ -231,6 +232,88 @@ describe('event projection', () => {
     ]);
     const items = transcriptItems(events);
     expect(new Set(items.map((item) => item.key)).size).toBe(5);
+  });
+});
+
+describe('compact mode', () => {
+  it('keeps prompts, text, activity and outcomes and folds tools across engine bookkeeping', () => {
+    const at = (ts: number) => ({ ts, turn: 1 });
+    const run = (step: number): EventRecord => ({
+      t: 'tool',
+      ...at(step),
+      step,
+      name: 'run_command',
+      params: {},
+      state: 'done',
+    });
+    const notice = (kind: string, text: string, data: unknown = {}): EventRecord => ({
+      t: 'notice',
+      ts: 0,
+      kind,
+      text,
+      data: data as Extract<EventRecord, { t: 'notice' }>['data'],
+    });
+    const turn = (n: number, status = 'SUCCESS'): EventRecord[] => [
+      { t: 'turn_start', ts: n, turn: n, slot: 'one', model: 'm' },
+      {
+        t: 'turn_end',
+        ts: n,
+        turn: n,
+        slot: 'one',
+        status,
+        secs: 1,
+        usage: {
+          input_tokens: 1,
+          output_tokens: 1,
+          thinking_tokens: 0,
+          total_tokens: 2,
+          context: 0,
+        },
+      },
+    ];
+    const events: EventRecord[] = [
+      { t: 'user', ts: 1, text: 'Objective: ship it', kind: 'goal' },
+      notice('goal', 'Goal set: ship it'),
+      turn(1)[0]!,
+      { t: 'thinking', ...at(2), step: 2, text: 'Plan', tokens: 3 },
+      run(3),
+      { t: 'assistant', ...at(4), step: 4, text: 'Started the job.' },
+      { t: 'job', ts: 5, phase: 'started', job: {} },
+      turn(1)[1]!,
+      notice('goal', 'Waiting for background job'),
+      { t: 'user', ts: 6, text: 'Background job is still running', kind: 'job' },
+      turn(2)[0]!,
+      run(7),
+      turn(2)[1]!,
+      { t: 'user', ts: 8, text: 'Keep going', kind: 'nudge' },
+      run(9),
+      notice('check', 'Check passed', { passed: true }),
+      notice('verdict', 'Verifier', { done: false }),
+      ...turn(3, 'quota'),
+      notice('wall', 'Out of quota'),
+      notice('goal', 'Goal abandoned after 25 rounds.'),
+    ];
+    const compact = compactEvents(events);
+    expect(compact.map((event) => event.t + ('kind' in event ? `:${event.kind}` : ''))).toEqual([
+      'user:goal',
+      'tool',
+      'assistant',
+      'tool',
+      'tool',
+      'turn_end',
+      'notice:wall',
+      'notice:goal',
+    ]);
+    const groups = groupTranscript(compact);
+    expect(groups).toHaveLength(1);
+    expect(
+      transcriptItems(groups[0]!.events).map((item) =>
+        'events' in item ? item.events.length : item.event.t,
+      ),
+    ).toEqual([1, 'assistant', 2, 'turn_end', 'notice', 'notice']);
+    expect(
+      compactEvents([notice('goal', 'Goal met.', { met: true }), notice('goal', 'Round 3')]),
+    ).toHaveLength(1);
   });
 });
 

@@ -125,7 +125,11 @@ test('persists defaults, goals and device controls without replacing focused dra
   await expect.poll(async () => (await overview(engine)).defaults.verifier_model).toBe(last);
   await section(page, 'Appearance');
   await page.getByRole('button', { name: 'Every step', exact: true }).click();
-  await page.getByLabel('Previews and thinking').uncheck();
+  await page
+    .getByRole('group', { name: 'Transcript mode' })
+    .last()
+    .getByRole('button', { name: 'Full', exact: true })
+    .click();
   await page.getByLabel('Times on turns').uncheck();
   await expect(page.getByText('Use your browser’s zoom controls:', { exact: false })).toBeVisible();
   expect(await page.locator('body').evaluate((body) => getComputedStyle(body).zoom)).toBe('1');
@@ -140,7 +144,12 @@ test('persists defaults, goals and device controls without replacing focused dra
     'aria-pressed',
     'true',
   );
-  await expect(page.getByLabel('Previews and thinking')).not.toBeChecked();
+  await expect(
+    page
+      .getByRole('group', { name: 'Transcript mode' })
+      .last()
+      .getByRole('button', { name: 'Full', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByLabel('Times on turns')).not.toBeChecked();
   await section(page, 'Keyboard');
   for (const command of [

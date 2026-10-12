@@ -8,6 +8,13 @@ export const notificationLabels = {
   quota: 'Every account is out of quota',
 };
 export type NotificationKind = keyof typeof notificationLabels;
+/** Compact hides engine bookkeeping; verbose shows every event; full also opens every step. */
+export type TranscriptMode = 'compact' | 'verbose' | 'full';
+export const transcriptModes: [TranscriptMode, string][] = [
+  ['compact', 'Compact'],
+  ['verbose', 'Verbose'],
+  ['full', 'Full'],
+];
 export interface Preferences {
   collapsed: string[];
   split: string | null;
@@ -15,7 +22,7 @@ export interface Preferences {
   view: 'grouped' | 'steps';
   stamps: boolean;
   focused: boolean;
-  detail: 'detailed' | 'compact';
+  detail: TranscriptMode;
   notify: Record<NotificationKind, boolean>;
 }
 export function createPreferences(storage?: Pick<Storage, 'getItem' | 'setItem'>) {
@@ -26,7 +33,7 @@ export function createPreferences(storage?: Pick<Storage, 'getItem' | 'setItem'>
     view: 'grouped',
     stamps: true,
     focused: false,
-    detail: 'detailed',
+    detail: 'compact',
     notify: { turn: true, goal: true, approval: true, job: true, quota: true },
   };
   let initial = defaults;
@@ -55,7 +62,10 @@ export function createPreferences(storage?: Pick<Storage, 'getItem' | 'setItem'>
         ) as Preferences['notify'],
       };
     }
-    initial.detail = storage?.getItem('antiquota.detail') === 'compact' ? 'compact' : 'detailed';
+    const mode = storage?.getItem('antiquota.detail');
+    // 'detailed' is the previous name of verbose.
+    initial.detail =
+      mode === 'full' ? 'full' : mode === 'verbose' || mode === 'detailed' ? 'verbose' : 'compact';
   } catch {
     /* Device storage can be disabled or from an older version. */
   }

@@ -5,13 +5,13 @@
   import type { Login } from '../lib/login';
   import type { Api } from '../lib/api';
   import type { Workbench } from '../lib/workbench';
-  import { groupTranscript, nearBottom } from '../lib/transcript';
+  import { compactEvents, groupTranscript, nearBottom } from '../lib/transcript';
   import { conversationMarkdown } from '../lib/export';
   import { createTranscriptActions, type Expansion } from '../lib/transcript-actions';
   import { earlierSessions } from '../lib/session-start';
   import { draftFor, goalDialog } from '../lib/goals';
   import { get } from 'svelte/store';
-  import { preferences } from '../lib/preferences';
+  import { preferences, transcriptModes } from '../lib/preferences';
   import TurnGroup from './TurnGroup.svelte';
   import ConversationFind from './ConversationFind.svelte';
   import { isBusy } from '../lib/format';
@@ -20,7 +20,10 @@
   const events = $derived($view.events),
     sid = $derived($view.selected?.id ?? ''),
     loading = $derived($view.loading);
-  const groups = $derived(groupTranscript(events));
+  const prefs = preferences.state;
+  const groups = $derived(
+    groupTranscript($prefs.detail === 'compact' ? compactEvents(events) : events),
+  );
   const earlier = $derived(earlierSessions($view.selected, $view.snapshot?.sessions ?? []));
   function inherit(from: string, title: string) {
     const id = get(view).selected?.id;
@@ -31,8 +34,12 @@
       });
   }
   const actions = untrack(() => createTranscriptActions(api, workbench));
-  const prefs = preferences.state;
   let expand = $state<Expansion>({ version: 0, open: false });
+  // A new transcript mode starts from its own defaults, not an earlier Expand or Collapse all.
+  $effect(() => {
+    void $prefs.detail;
+    expand = { version: 0, open: false };
+  });
   onDestroy(actions.dispose);
   let scroller = $state.raw<HTMLDivElement>();
   let finder: { open: () => void } | undefined = $state();
@@ -130,13 +137,13 @@
               $view.selected && actions.copy(conversationMarkdown($view.selected, events))}
             >Copy conversation</button
           >
-          <button
-            class="quiet small"
-            aria-pressed={$prefs.detail === 'detailed'}
-            onclick={() =>
-              preferences.change({ detail: $prefs.detail === 'detailed' ? 'compact' : 'detailed' })}
-            >{$prefs.detail === 'detailed' ? 'Detailed' : 'Compact'}</button
-          >
+          <div class="modes" role="group" aria-label="Transcript mode">
+            {#each transcriptModes as [mode, label] (mode)}<button
+                class="quiet small"
+                aria-pressed={$prefs.detail === mode}
+                onclick={() => preferences.change({ detail: mode })}>{label}</button
+              >{/each}
+          </div>
           <button
             class="quiet small"
             aria-pressed={expand.open}
@@ -202,6 +209,13 @@
 </div>
 
 <style>
+  .modes {
+    display: inline-flex;
+    gap: 2px;
+  }
+  .modes [aria-pressed='true'] {
+    color: var(--baton);
+  }
   .transcript-shell {
     flex: 1;
     min-height: 0;

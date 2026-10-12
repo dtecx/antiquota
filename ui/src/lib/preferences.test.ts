@@ -9,7 +9,7 @@ describe('device preferences', () => {
         'antiquota.prefs',
         JSON.stringify({ view: 'steps', stamps: false, zoom: 4, notify: { job: false } }),
       ],
-      ['antiquota.detail', 'compact'],
+      ['antiquota.detail', 'detailed'],
     ]);
     const storage = {
       getItem: (key: string) => values.get(key) ?? null,
@@ -22,7 +22,7 @@ describe('device preferences', () => {
       view: 'steps',
       stamps: false,
       zoom: 1.6,
-      detail: 'compact',
+      detail: 'verbose',
       notify: { job: false, turn: true },
     });
     prefs.notify('approval', false);
@@ -44,7 +44,7 @@ describe('device preferences', () => {
       zoom: 1,
       view: 'grouped',
       stamps: true,
-      detail: 'detailed',
+      detail: 'compact',
     });
     expect(() => prefs.change({ stamps: false })).not.toThrow();
     expect(get(prefs.state).stamps).toBe(false);
@@ -85,4 +85,22 @@ it('normalizes invalid zoom changes and clamps extreme values at the shared boun
   expect(get(prefs.state).zoom).toBe(0.7);
   prefs.change({ zoom: 5 });
   expect(get(prefs.state).zoom).toBe(1.6);
+});
+
+it('maps stored transcript modes, including the old detailed name, and defaults to compact', () => {
+  const load = (value: string | null) =>
+    get(
+      createPreferences({
+        getItem: (key) => (key === 'antiquota.detail' ? value : null),
+        setItem: () => {},
+      }).state,
+    ).detail;
+  expect([null, 'compact', 'detailed', 'verbose', 'full', 'odd'].map(load)).toEqual([
+    'compact',
+    'compact',
+    'verbose',
+    'verbose',
+    'full',
+    'compact',
+  ]);
 });

@@ -604,31 +604,32 @@ test('groups adjacent tools with unique paths, readable names, previews, full er
     'turn-end',
   ]);
   await shot(page, engine, 'tools-expanded');
-  await page.getByRole('button', { name: 'Detailed', exact: true }).click();
+  const modes = page.getByRole('group', { name: 'Transcript mode' });
+  const mode = (name: string) => modes.getByRole('button', { name, exact: true });
+  await mode('Compact').click();
   await expect(page.locator('.tool .preview')).toHaveCount(0);
-  await expect(page.locator('.thinking[open]')).toHaveCount(0);
+  await expect(page.locator('.thinking')).toHaveCount(0);
   await page.reload();
-  await expect(page.getByRole('button', { name: 'Compact', exact: true })).toHaveAttribute(
-    'aria-pressed',
-    'false',
-  );
-  await expect(page.locator('.thinking[open]')).toHaveCount(0);
+  await expect(mode('Compact')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.thinking')).toHaveCount(0);
   await page.getByRole('button', { name: 'Expand all', exact: true }).click();
   await expect(page.locator('details.activity[open]')).toHaveCount(2);
   await expect(page.locator('details.tool[open]')).toHaveCount(12);
-  await expect(page.locator('details.thinking[open]')).toHaveCount(2);
   await page.getByRole('button', { name: 'Collapse all', exact: true }).click();
-  await expect(
-    page.locator('details.activity[open], details.tool[open], details.thinking[open]'),
-  ).toHaveCount(0);
-  await page.getByRole('button', { name: 'Compact', exact: true }).click();
+  await expect(page.locator('details.activity[open], details.tool[open]')).toHaveCount(0);
+  await mode('Verbose').click();
   await expect(page.locator('.thinking[open]')).toHaveCount(1);
   await shot(page, engine, 'tools-detailed-restored');
+  // Full gives every tool its own open row and opens all thinking.
+  await mode('Full').click();
+  await expect(page.locator('details.activity')).toHaveCount(0);
+  await expect(page.locator('details.tool[open]')).toHaveCount(12);
+  await expect(page.locator('details.thinking[open]')).toHaveCount(2);
   await page.reload();
-  await expect(page.getByRole('button', { name: 'Detailed', exact: true })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
+  await expect(mode('Full')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('details.tool[open]')).toHaveCount(12);
+  await mode('Verbose').click();
+  await expect(page.locator('details.tool[open]')).toHaveCount(0);
   await expect(page.locator('.thinking[open]')).toHaveCount(1);
 });
 
@@ -1027,4 +1028,68 @@ test('folds agy step replies into compact activity rows with loaded skills and o
   const path = join(engine.sandbox.repository, '.handoff/evidence/ui-slice25');
   await mkdir(path, { recursive: true });
   await page.screenshot({ path: join(path, 'compact-activity.png'), fullPage: true });
+});
+
+test('compact mode shows a goal as prompt, text, folded activity and the outcome only', async ({
+  page,
+  engine,
+}) => {
+  await page.addInitScript(() => localStorage.setItem('antiquota.detail', 'compact'));
+  await createSession(page, engine, 'Compact goal');
+  const quiet = { ...end, status: 'SUCCESS' };
+  const auto = (text: string, kind: string) => user(text, kind);
+  await history(page, engine, [
+    user('Objective: keep the simulations healthy.\n\nStanding instructions.', 'goal'),
+    notice('goal', 'Goal set: keep the simulations healthy.'),
+    start,
+    { t: 'thinking', ts, turn: 1, step: 1, text: 'Plan the first check.', tokens: 12 },
+    tool(2, 'view_file', {
+      AbsolutePath: `${engine.sandbox.project}/.agents/skills/scientist/SKILL.md`,
+    }),
+    reply('', 3),
+    tool(4, 'run_command', { CommandLine: './agents/wait.sh scientist 3600' }),
+    reply('Waiting for the executor.', 5),
+    quiet,
+    notice('goal', 'Waiting for background job `./agents/wait.sh scientist 3600`.'),
+    auto('Background job is still running (5m00s).', 'job'),
+    { ...start, turn: 2 },
+    tool(6, 'run_command', { CommandLine: 'tail -n 20 sim.log' }, { turn: 2 }),
+    reply('Simulations running normally.', 7),
+    { ...quiet, turn: 2 },
+    auto('Background job is still running (10m00s).', 'job'),
+    { ...start, turn: 3 },
+    tool(8, 'run_command', { CommandLine: 'tail -n 20 sim.log' }, { turn: 3 }),
+    tool(9, 'view_file', { AbsolutePath: `${engine.sandbox.project}/report.md` }, { turn: 3 }),
+    reply('All cells healthy; report updated.', 10),
+    { ...quiet, turn: 3 },
+    notice('check', 'Check `make test` exited 0.', { passed: true, rc: 0, output: '' }),
+    notice('verdict', 'Verifier agrees.', { done: true }),
+    notice('goal', 'Goal met.', { met: true }),
+  ]);
+  const transcript = page.getByRole('log').or(page.locator('.transcript')).first();
+  await expect(page.getByLabel('Your message')).toHaveCount(1);
+  await expect(page.getByLabel('Your message')).toContainText('keep the simulations healthy.');
+  await expect(page.getByText('Background job is still running')).toHaveCount(0);
+  await expect(page.locator('.routing')).toHaveCount(0);
+  await expect(page.locator('.turn-end')).toHaveCount(0);
+  await expect(page.getByText('Goal set:')).toHaveCount(0);
+  await expect(page.getByText('Waiting for background job')).toHaveCount(0);
+  await expect(page.getByText('Verifier agrees.')).toHaveCount(0);
+  await expect(page.getByText('Plan the first check.')).toHaveCount(0);
+  const activity = page.locator('details.activity > summary');
+  await expect(activity).toHaveText([
+    /Loaded skill scientist, ran 1 command\s*2 steps/,
+    /Ran 1 command\s*1 step/,
+    /Ran 1 command, read 1 file\s*2 steps/,
+  ]);
+  await expect(page.getByLabel('Agent reply')).toHaveText([
+    /Waiting for the executor\./,
+    /Simulations running normally\./,
+    /All cells healthy; report updated\./,
+  ]);
+  await expect(page.getByRole('region', { name: 'Goal met' })).toBeVisible();
+  void transcript;
+  const path = join(engine.sandbox.repository, '.handoff/evidence/ui-slice25');
+  await mkdir(path, { recursive: true });
+  await page.screenshot({ path: join(path, 'compact-goal.png'), fullPage: true });
 });

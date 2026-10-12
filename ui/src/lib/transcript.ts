@@ -152,6 +152,44 @@ export function nearBottom(distance: number): boolean {
   return distance <= 120;
 }
 
+const automatic = new Set(['job', 'nudge', 'loop']);
+const quietEnds = ['completed', 'success', 'stopped'];
+
+/** A goal notice worth keeping in compact mode: the goal was met or ran out of rounds. */
+function finalGoal(event: Extract<EventRecord, { t: 'notice' }>): boolean {
+  const data =
+    event.data && typeof event.data === 'object' && !Array.isArray(event.data)
+      ? (event.data as Record<string, unknown>)
+      : {};
+  return data.met === true || data.final === true || /^Goal abandoned\b/.test(event.text);
+}
+
+/**
+ * Compact mode keeps your prompts, the model's text, folded activity and outcomes. It drops engine
+ * bookkeeping: automatic job, goal and loop prompts, turn boundaries, thinking, job lines,
+ * check and verifier notes, and interim goal notes. Tools then fold across those boundaries.
+ */
+export function compactEvents(events: EventRecord[]): EventRecord[] {
+  return events.filter((event) => {
+    switch (event.t) {
+      case 'user':
+        return !automatic.has(event.kind);
+      case 'turn_start':
+      case 'thinking':
+      case 'job':
+        return false;
+      case 'turn_end':
+        return !quietEnds.includes(event.status.toLowerCase());
+      case 'notice':
+        return event.kind === 'goal'
+          ? finalGoal(event)
+          : !['check', 'verdict'].includes(event.kind);
+      default:
+        return true;
+    }
+  });
+}
+
 export interface TranscriptGroup {
   key: string;
   user: Extract<EventRecord, { t: 'user' }> | null;

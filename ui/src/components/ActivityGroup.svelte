@@ -17,10 +17,12 @@
 {#snippet rows()}
   {#each events as event (`${event.turn}-${event.step}`)}<ToolStep {event} {cwd} {expand} />{/each}
 {/snippet}
-{#if $prefs.view === 'steps'}{@render rows()}
+{#if $prefs.view === 'steps' || $prefs.detail === 'full'}{@render rows()}
 {:else}<details class="activity" class:running={!!summary.running} bind:open>
     <summary
-      ><span class="label">Agent activity</span><span>{summary.label}</span>
+      ><span class="label"
+        >{#if $prefs.detail !== 'compact'}Agent activity{/if}</span
+      ><span>{summary.label}</span>
       {#if summary.add}<span class="added">+{summary.add}</span>{/if}{#if summary.del}<span
           class="deleted">−{summary.del}</span
         >{/if}
@@ -32,7 +34,7 @@
 
 <style>
   .activity {
-    margin-top: var(--space-3);
+    margin: 0;
   }
   summary {
     display: flex;
@@ -41,8 +43,8 @@
     gap: var(--space-2);
     cursor: pointer;
     list-style: none;
-    min-height: 36px;
-    font-size: 11px;
+    min-height: 28px;
+    font-size: 12px;
     color: var(--ink-3);
   }
   summary::-webkit-details-marker {

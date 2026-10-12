@@ -2,7 +2,7 @@
 <script lang="ts">
   import { native } from '../lib/native';
   import { zoomBy } from '../lib/native-actions';
-  import { preferences } from '../lib/preferences';
+  import { preferences, transcriptModes } from '../lib/preferences';
   const prefs = preferences.state;
 </script>
 
@@ -17,6 +17,16 @@
       Use your browser’s zoom controls: ⌘/Ctrl= larger, ⌘/Ctrl− smaller, ⌘/Ctrl0 actual size.
     </p>{/if}
   <h3>Transcript</h3>
+  <div role="group" aria-label="Transcript mode">
+    {#each transcriptModes as [mode, label] (mode)}<button
+        aria-pressed={$prefs.detail === mode}
+        onclick={() => preferences.change({ detail: mode })}>{label}</button
+      >{/each}
+  </div>
+  <p>
+    Compact shows your prompts, the agent's text, one line per run of tools and the outcome. Verbose
+    adds turns, automatic prompts, checks, thinking and tool previews. Full also opens every step.
+  </p>
   <div role="group" aria-label="Transcript view">
     {#each [['grouped', 'Grouped steps'], ['steps', 'Every step']] as [value, label] (value)}<button
         aria-pressed={$prefs.view === value}
@@ -24,17 +34,10 @@
       >{/each}
   </div>
   <p>
-    Grouped steps fold activity between replies into one expandable line. Every step gives each tool
-    call its own row.
+    In verbose mode, grouped steps fold activity between replies into one expandable line, and every
+    step gives each tool call its own row.
   </p>
   <label
-    ><input
-      type="checkbox"
-      checked={$prefs.detail === 'detailed'}
-      onchange={(e) =>
-        preferences.change({ detail: e.currentTarget.checked ? 'detailed' : 'compact' })}
-    />Previews and thinking</label
-  ><label
     ><input
       type="checkbox"
       checked={$prefs.stamps}

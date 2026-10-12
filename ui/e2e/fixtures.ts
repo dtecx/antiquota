@@ -6,6 +6,18 @@ import { createSandbox } from '../scripts/sandbox.ts';
 import { FixtureEngine } from '../scripts/engine.ts';
 
 export const test = base.extend<{ engine: FixtureEngine }>({
+  // Existing scenarios assert the verbose transcript; compact and full tests opt in explicitly.
+  page: async ({ page }, use) => {
+    await page.addInitScript(() => {
+      try {
+        if (!localStorage.getItem('antiquota.detail'))
+          localStorage.setItem('antiquota.detail', 'verbose');
+      } catch {
+        /* Storage can be unavailable. */
+      }
+    });
+    await use(page);
+  },
   engine: async ({ browserName }, use, info) => {
     void browserName;
     const sandbox = await createSandbox('antiquota-ui-e2e');

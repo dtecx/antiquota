@@ -239,8 +239,12 @@ impl Service {
             |prompt: String| Some((rules::with_denials(prompt, &outcome.denied), "nudge".into()));
         Ok(match decision {
             AfterTurn::Done => None,
-            AfterTurn::WaitForJobs { notice } | AfterTurn::Abandon { notice } => {
+            AfterTurn::WaitForJobs { notice } => {
                 self.notice(id, "goal", &notice, json!({}))?;
+                None
+            }
+            AfterTurn::Abandon { notice } => {
+                self.notice(id, "goal", &notice, json!({"met": false, "final": true}))?;
                 None
             }
             AfterTurn::Nudge { notice, prompt } => {

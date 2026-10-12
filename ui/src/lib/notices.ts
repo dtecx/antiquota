@@ -61,7 +61,12 @@ export function noticeView(event: NoticeEvent) {
       tone = 'warning';
       break;
     case 'goal':
-      title = field('met') === true ? 'Goal met' : 'Goal not met';
+      title =
+        field('met') === true
+          ? 'Goal met'
+          : field('final') === true || /^Goal abandoned\b/.test(event.text)
+            ? 'Goal not met · round limit'
+            : 'Goal not met';
       tone = field('met') === true ? 'ok' : 'info';
       break;
     case 'check':

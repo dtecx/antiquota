@@ -73,7 +73,7 @@
   .notice {
     border-left: 2px solid var(--rule-3);
     padding: var(--space-2) var(--space-3);
-    margin-top: var(--space-3);
+    margin-top: var(--space-2);
     color: var(--ink-2);
     font-size: 12px;
     overflow-wrap: anywhere;

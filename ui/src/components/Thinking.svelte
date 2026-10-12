@@ -26,10 +26,10 @@
       open =
         intent.version > 0
           ? intent.open
-          : next === 'detailed' && untrack(() => event.text.length < 1200);
+          : next === 'full' || (next === 'verbose' && untrack(() => event.text.length < 1200));
       seen = intent.version;
     } else if (next !== detail)
-      open = next === 'detailed' && untrack(() => event.text.length < 1200);
+      open = next === 'full' || (next === 'verbose' && untrack(() => event.text.length < 1200));
     detail = next;
   });
 </script>
