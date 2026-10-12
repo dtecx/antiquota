@@ -82,6 +82,17 @@ async function history(page: Page, engine: FixtureEngine, events: EventRecord[])
   await expect(page.getByText('Engine connected')).toBeVisible();
   return id;
 }
+/** Opens the header's conversation menu and picks one item. */
+async function conversationMenu(page: Page, item: string) {
+  await page.getByRole('button', { name: 'Conversation options', exact: true }).first().click();
+  await page
+    .getByRole('menu')
+    .getByRole(/^(Compact|Verbose|Full)$/.test(item) ? 'menuitemradio' : 'menuitem', {
+      name: item,
+      exact: true,
+    })
+    .click();
+}
 async function shot(page: Page, engine: FixtureEngine, name: string) {
   const path = join(engine.sandbox.repository, '.handoff/evidence/ui-slice9e');
   await mkdir(path, { recursive: true });
@@ -208,7 +219,7 @@ test('finds literal conversation messages with keyboard navigation and follows l
   await input.press('Escape');
   await expect(find).toHaveCount(0);
   await expect(
-    page.getByRole('button', { name: 'Find in conversation', exact: true }),
+    page.getByRole('button', { name: 'Conversation options', exact: true }),
   ).toBeFocused();
   await expect.poll(() => scroller.evaluate((node) => node.scrollTop)).toBeGreaterThan(100);
   await scroller.evaluate((node) => {
@@ -378,7 +389,7 @@ test('highlights safe code, wraps long lines and copies only conversation messag
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(code);
   await block.evaluate((node) => node.scrollIntoView({ block: 'start' }));
   await page.screenshot({ path: join(directory, 'code-narrow-wrapped.png'), fullPage: true });
-  await page.getByRole('button', { name: 'Copy conversation', exact: true }).click();
+  await conversationMenu(page, 'Copy conversation');
   const copied = await page.evaluate(() => navigator.clipboard.readText());
   expect(copied).toContain(`## you\n\n${prompt}`);
   expect(copied).toContain(`## antiquota\n\n${text}`);
@@ -604,31 +615,37 @@ test('groups adjacent tools with unique paths, readable names, previews, full er
     'turn-end',
   ]);
   await shot(page, engine, 'tools-expanded');
-  const modes = page.getByRole('group', { name: 'Transcript mode' });
-  const mode = (name: string) => modes.getByRole('button', { name, exact: true });
-  await mode('Compact').click();
+  const checked = (name: string) =>
+    page.getByRole('menu').getByRole('menuitemradio', { name, exact: true });
+  await conversationMenu(page, 'Compact');
   await expect(page.locator('.tool .preview')).toHaveCount(0);
   await expect(page.locator('.thinking')).toHaveCount(0);
   await page.reload();
-  await expect(mode('Compact')).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Conversation options', exact: true }).click();
+  await expect(checked('Compact')).toHaveAttribute('aria-checked', 'true');
+  await expect(checked('Verbose')).toHaveAttribute('aria-checked', 'false');
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('menu')).toHaveCount(0);
   await expect(page.locator('.thinking')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Expand all', exact: true }).click();
+  await conversationMenu(page, 'Expand all');
   await expect(page.locator('details.activity[open]')).toHaveCount(2);
   await expect(page.locator('details.tool[open]')).toHaveCount(12);
-  await page.getByRole('button', { name: 'Collapse all', exact: true }).click();
+  await conversationMenu(page, 'Collapse all');
   await expect(page.locator('details.activity[open], details.tool[open]')).toHaveCount(0);
-  await mode('Verbose').click();
+  await conversationMenu(page, 'Verbose');
   await expect(page.locator('.thinking[open]')).toHaveCount(1);
   await shot(page, engine, 'tools-detailed-restored');
   // Full gives every tool its own open row and opens all thinking.
-  await mode('Full').click();
+  await conversationMenu(page, 'Full');
   await expect(page.locator('details.activity')).toHaveCount(0);
   await expect(page.locator('details.tool[open]')).toHaveCount(12);
   await expect(page.locator('details.thinking[open]')).toHaveCount(2);
   await page.reload();
-  await expect(mode('Full')).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Conversation options', exact: true }).click();
+  await expect(checked('Full')).toHaveAttribute('aria-checked', 'true');
+  await page.keyboard.press('Escape');
   await expect(page.locator('details.tool[open]')).toHaveCount(12);
-  await mode('Verbose').click();
+  await conversationMenu(page, 'Verbose');
   await expect(page.locator('details.tool[open]')).toHaveCount(0);
   await expect(page.locator('.thinking[open]')).toHaveCount(1);
 });
@@ -1092,4 +1109,18 @@ test('compact mode shows a goal as prompt, text, folded activity and the outcome
   const path = join(engine.sandbox.repository, '.handoff/evidence/ui-slice25');
   await mkdir(path, { recursive: true });
   await page.screenshot({ path: join(path, 'compact-goal.png'), fullPage: true });
+  // The header menu holds find, copy, the transcript view and expansion.
+  await page.getByRole('button', { name: 'Conversation options', exact: true }).click();
+  const menu = page.getByRole('menu');
+  await expect(menu.getByRole('menuitem')).toHaveText([
+    'Find in conversation',
+    'Copy conversation',
+    'Expand all',
+  ]);
+  await expect(menu.getByRole('menuitemradio')).toHaveText([/Compact/, /Verbose/, /Full/]);
+  await page.screenshot({ path: join(path, 'conversation-menu.png') });
+  await menu.getByRole('menuitem', { name: 'Find in conversation', exact: true }).click();
+  await expect(
+    page.getByRole('searchbox', { name: 'Find text in conversation', exact: true }),
+  ).toBeFocused();
 });

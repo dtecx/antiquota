@@ -1,5 +1,6 @@
 <!-- Owns the shared browser/webview shell and connects stores to focused views. -->
 <script lang="ts">
+  import { finders } from './lib/session-view';
   import { native, applyNativeZoom, connectNative, nativeAttention } from './lib/native';
   import { dispatchNative, zoomBy } from './lib/native-actions';
   import { onMount, tick } from 'svelte';
@@ -221,15 +222,10 @@
       !event.isComposing
     ) {
       const id = get(activeWorkbench.state).selected?.id;
-      const button = id
-        ? document
-            .getElementById(`prompt-${id}`)
-            ?.closest('.session-pane')
-            ?.querySelector<HTMLButtonElement>('[aria-label="Find in conversation"]')
-        : null;
-      if (button && !button.disabled) {
+      const find = id ? finders.get(id) : undefined;
+      if (find) {
         event.preventDefault();
-        button.click();
+        find();
       }
       return;
     }

@@ -1,7 +1,7 @@
 <!-- Owns scroll behavior and empty/loading presentation for the event projection. -->
 <script lang="ts">
   import { tick, onDestroy, untrack } from 'svelte';
-  import { scrollPositions } from '../lib/session-view';
+  import { finders, scrollPositions } from '../lib/session-view';
   import type { Login } from '../lib/login';
   import type { Api } from '../lib/api';
   import type { Workbench } from '../lib/workbench';
@@ -12,6 +12,7 @@
   import { draftFor, goalDialog } from '../lib/goals';
   import { get } from 'svelte/store';
   import { preferences, transcriptModes } from '../lib/preferences';
+  import type { MenuItem } from '../lib/context-menu';
   import TurnGroup from './TurnGroup.svelte';
   import ConversationFind from './ConversationFind.svelte';
   import { isBusy } from '../lib/format';
@@ -92,6 +93,44 @@
       restoring = false;
     });
   });
+  $effect(() => {
+    const id = sid;
+    if (!id || loading) return;
+    const open = () => finder?.open();
+    finders.set(id, open);
+    return () => {
+      if (finders.get(id) === open) finders.delete(id);
+    };
+  });
+  /** The header's conversation menu: find, copy, transcript mode and expansion. */
+  export function menu(): MenuItem[] {
+    const busy = loading || !groups.length;
+    return [
+      { label: 'Find in conversation', disabled: loading, action: () => finder?.open() },
+      {
+        label: 'Copy conversation',
+        disabled: busy,
+        action: () => {
+          const selected = get(view).selected;
+          if (selected) return actions.copy(conversationMarkdown(selected, events));
+        },
+      },
+      ...transcriptModes.map(([mode, label], index): MenuItem => ({
+        label,
+        ...(index ? {} : { heading: 'Transcript view' }),
+        checked: $prefs.detail === mode,
+        action: () => preferences.change({ detail: mode }),
+      })),
+      {
+        label: expand.open ? 'Collapse all' : 'Expand all',
+        heading: 'Steps',
+        disabled: busy,
+        action: () => {
+          expand = { version: expand.version + 1, open: !expand.open };
+        },
+      },
+    ];
+  }
   function scrolled() {
     if (!scroller || restoring || loading || !shown) return;
     follow = nearBottom(scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight);
@@ -108,7 +147,8 @@
     bind:this={finder}
     onclose={() =>
       scroller
-        ?.querySelector<HTMLButtonElement>('[aria-label="Find in conversation"]')
+        ?.closest('.session-pane')
+        ?.querySelector<HTMLButtonElement>('[aria-label="Conversation options"]')
         ?.focus({ preventScroll: true })}
   />
   <div
@@ -121,36 +161,6 @@
     aria-busy={loading}
   >
     <div class="content">
-      {#if groups.length}<div class="presentation" aria-label="Transcript presentation">
-          <button
-            class="quiet small"
-            aria-label="Find in conversation"
-            title="Find in this conversation (⌘F / Ctrl+F)"
-            disabled={loading}
-            onclick={() => finder?.open()}>Find</button
-          >
-          <button
-            class="quiet small"
-            disabled={loading}
-            title="Copy prompts and completed replies as Markdown"
-            onclick={() =>
-              $view.selected && actions.copy(conversationMarkdown($view.selected, events))}
-            >Copy conversation</button
-          >
-          <div class="modes" role="group" aria-label="Transcript mode">
-            {#each transcriptModes as [mode, label] (mode)}<button
-                class="quiet small"
-                aria-pressed={$prefs.detail === mode}
-                onclick={() => preferences.change({ detail: mode })}>{label}</button
-              >{/each}
-          </div>
-          <button
-            class="quiet small"
-            aria-pressed={expand.open}
-            onclick={() => (expand = { version: expand.version + 1, open: !expand.open })}
-            >{expand.open ? 'Collapse all' : 'Expand all'}</button
-          >
-        </div>{/if}
       {#if loading && !groups.length}<div class="empty">
           <span class="eyebrow">SESSION</span>
           <h2>Loading conversation…</h2>
@@ -209,13 +219,6 @@
 </div>
 
 <style>
-  .modes {
-    display: inline-flex;
-    gap: 2px;
-  }
-  .modes [aria-pressed='true'] {
-    color: var(--baton);
-  }
   .transcript-shell {
     flex: 1;
     min-height: 0;
@@ -243,13 +246,6 @@
   }
   .pickup button {
     text-align: left;
-  }
-  .presentation {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2);
-    justify-content: flex-end;
-    margin-bottom: var(--space-3);
   }
   .transcript {
     flex: 1;

@@ -48,14 +48,21 @@
     onkeydown={keys}
   >
     {#if $contextMenu.caption}<p>{$contextMenu.caption}</p>{/if}
-    {#each $contextMenu.items as item (item)}<button
-        role="menuitem"
+    {#each $contextMenu.items as item (item)}{#if item.heading}<p class="heading">
+          {item.heading}
+        </p>{/if}<button
+        role={item.checked === undefined ? 'menuitem' : 'menuitemradio'}
+        aria-checked={item.checked}
+        class:checked={item.checked}
         class:danger={item.danger}
         disabled={item.disabled}
         onclick={() => {
           closeMenu();
           void item.action();
-        }}>{item.label}</button
+        }}
+        >{#if item.checked !== undefined}<span class="check" aria-hidden="true"
+            >{item.checked ? '✓' : ''}</span
+          >{/if}{item.label}</button
       >{/each}
     {#if !$contextMenu.items.length}<p>No other session yet.</p>{/if}
   </div>{/if}
@@ -95,5 +102,15 @@
   }
   .danger {
     color: var(--bad);
+  }
+  .heading {
+    border-top: 1px solid var(--rule);
+    margin-top: var(--space-1);
+    padding-top: var(--space-3);
+  }
+  .check {
+    display: inline-block;
+    width: 1.4em;
+    color: var(--baton);
   }
 </style>

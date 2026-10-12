@@ -11,8 +11,10 @@
     onsplit,
     onclose,
     onswap,
+    onmore,
   }: {
     workbench: Workbench;
+    onmore?: ((e: MouseEvent) => void) | undefined;
     onsplit?: ((e: MouseEvent) => void) | undefined;
     onclose?: (() => void) | undefined;
     onswap?: (() => void) | undefined;
@@ -120,7 +122,13 @@
         title={$view.selected.pinned ? 'Unpin session' : 'Pin session'}
         onclick={() => workbench.update({ pinned: !$view.selected?.pinned })}
         disabled={$view.mutating}><Icon name="pin" /></button
-      >{#if !onclose}<button
+      >{#if onmore}<button
+          class="icon quiet"
+          aria-label="Conversation options"
+          title="Find, copy and transcript view"
+          aria-haspopup="menu"
+          onclick={onmore}><Icon name="more" /></button
+        >{/if}{#if !onclose}<button
           class="icon quiet"
           class:pinned={$drawer.open}
           aria-label="Changes and files"

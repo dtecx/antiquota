@@ -5,6 +5,10 @@ export interface MenuItem {
   action: () => void | Promise<unknown>;
   danger?: boolean;
   disabled?: boolean;
+  /** A choice in a set: shown with a check and announced as a radio item. */
+  checked?: boolean;
+  /** A small heading shown above this item, starting a new section. */
+  heading?: string;
 }
 export const contextMenu = writable<{
   x: number;

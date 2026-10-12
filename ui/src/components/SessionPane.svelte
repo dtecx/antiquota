@@ -7,6 +7,7 @@
   import type { Connection } from '../lib/stream';
   import SessionHeader from './SessionHeader.svelte';
   import Transcript from './Transcript.svelte';
+  import { openMenu, type MenuItem } from '../lib/context-menu';
   import GoalBar from './GoalBar.svelte';
   import JobBar from './JobBar.svelte';
   import Composer from './Composer.svelte';
@@ -36,6 +37,7 @@
     onswap?: () => void;
   } = $props();
   const view = $derived(workbench.state);
+  let transcript = $state<{ menu: () => MenuItem[] }>();
 </script>
 
 <section
@@ -43,7 +45,13 @@
   aria-label={onclose ? 'Right session' : 'Primary session'}
   onfocusin={onactivate}
 >
-  <SessionHeader {workbench} {onsplit} {onclose} {onswap} />
+  <SessionHeader
+    {workbench}
+    {onsplit}
+    {onclose}
+    {onswap}
+    onmore={(event) => openMenu(event, transcript?.menu() ?? [])}
+  />
   {#if connection === 'reconnecting'}<div class="connection-banner" role="status">
       Engine disconnected. Reconnecting; your draft is kept.
     </div>{/if}
@@ -56,7 +64,7 @@
         onclick={() => workbench.change({ error: '' })}><Icon name="close" /></button
       >
     </div>{/if}
-  {#if $view.selected}<Transcript {workbench} {login} {api} /><GoalBar
+  {#if $view.selected}<Transcript bind:this={transcript} {workbench} {login} {api} /><GoalBar
       {workbench}
       onrevise={() => {
         onactivate();
