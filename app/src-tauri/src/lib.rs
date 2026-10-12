@@ -4,6 +4,7 @@
 //! http://127.0.0.1:<port>/ once the engine answers. The engine keeps running when the window
 //! closes (the app stays in the tray), and quitting asks before stopping running work.
 
+mod dialogs;
 mod engine;
 mod menu;
 mod tray;
@@ -141,25 +142,6 @@ async fn restart_engine(app: AppHandle) -> Result<(), String> {
 
 /// Save text where the user picks (the web view cannot download files).
 #[tauri::command]
-async fn save_file(
-    app: AppHandle,
-    name: String,
-    contents: String,
-) -> Result<Option<String>, String> {
-    let Some(path) = app
-        .dialog()
-        .file()
-        .set_file_name(&name)
-        .blocking_save_file()
-    else {
-        return Ok(None);
-    };
-    let path = path.into_path().map_err(|e| e.to_string())?;
-    std::fs::write(&path, contents).map_err(|e| e.to_string())?;
-    Ok(Some(path.display().to_string()))
-}
-
-#[tauri::command]
 fn quit_app(app: AppHandle) {
     request_quit(app);
 }
@@ -273,7 +255,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             app_info,
             retry_engine,
-            save_file,
+            dialogs::save_file,
+            dialogs::pick_folder,
             quit_app,
             restart_engine
         ])

@@ -33,6 +33,8 @@ export const retryEngine = () => invoke<void>('retry_engine');
 export const quitApplication = () => invoke<void>('quit_app');
 export const saveNativeFile = (name: string, contents: string) =>
   invoke<string | null>('save_file', { name, contents });
+export const pickNativeFolder = (start: string) =>
+  invoke<string | null>('pick_folder', { start: start || null });
 export async function appInformation() {
   const value = await invoke<unknown>('app_info');
   if (

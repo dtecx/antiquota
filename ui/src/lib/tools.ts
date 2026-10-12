@@ -3,13 +3,28 @@ import type { EventRecord } from '../gen/EventRecord';
 import { relativePath } from './approvals';
 
 export type ToolEvent = Extract<EventRecord, { t: 'tool' }>;
-export type ToolKind = 'run' | 'read' | 'list' | 'search' | 'edit' | 'web' | 'mcp' | 'other';
+export type ToolKind =
+  'skill' | 'run' | 'read' | 'list' | 'search' | 'edit' | 'web' | 'mcp' | 'other';
 export type ToolInfo = { verb: string; arg: string; kind: ToolKind };
 
 function parameters(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : {};
+}
+
+/** The skill a `…/<name>/SKILL.md` path belongs to. */
+export function skillName(path: string): string | null {
+  return /(?:^|[/\\])([^/\\]+)[/\\]SKILL\.md$/i.exec(path)?.[1] ?? null;
+}
+
+/** A shell read of one SKILL.md, such as `cat …/caveman/SKILL.md`. */
+function commandSkill(command: string): string | null {
+  const read =
+    /^\s*(?:cat|head|tail|less|more|bat|sed\s+-n\s+\S+)\s+(?:-\S+\s+)*['"]?([^\s'";|&]+)['"]?\s*$/.exec(
+      command,
+    );
+  return read?.[1] ? skillName(read[1]) : null;
 }
 
 export function toolInfo(event: ToolEvent, cwd: string): ToolInfo {
@@ -21,6 +36,10 @@ export function toolInfo(event: ToolEvent, cwd: string): ToolInfo {
     return '';
   };
   const path = (...keys: string[]) => relativePath(field(...keys), cwd);
+  const skill =
+    skillName(event.name === 'view_file' ? field('AbsolutePath') : '') ??
+    (event.name === 'run_command' ? commandSkill(field('CommandLine')) : null);
+  if (skill) return { verb: 'Load skill', arg: skill, kind: 'skill' };
   switch (event.name) {
     case 'run_command':
       return { verb: 'Run', arg: field('CommandLine'), kind: 'run' };
@@ -135,6 +154,7 @@ export function toolView(event: ToolEvent, cwd: string) {
 }
 
 const labels: Record<ToolKind, [string, string, string]> = {
+  skill: ['Loaded', 'skill', 'skills'],
   run: ['Ran', 'command', 'commands'],
   read: ['Read', 'file', 'files'],
   edit: ['Edited', 'file', 'files'],
@@ -144,10 +164,11 @@ const labels: Record<ToolKind, [string, string, string]> = {
   mcp: ['Called', 'MCP tool', 'MCP tools'],
   other: ['Used', 'tool', 'tools'],
 };
-const order: ToolKind[] = ['edit', 'run', 'read', 'search', 'list', 'web', 'mcp', 'other'];
+const order: ToolKind[] = ['skill', 'edit', 'run', 'read', 'search', 'list', 'web', 'mcp', 'other'];
 
 export function activitySummary(events: readonly EventRecord[], cwd: string) {
   const counts: Record<ToolKind, number> = {
+    skill: 0,
     run: 0,
     read: 0,
     edit: 0,
@@ -157,7 +178,7 @@ export function activitySummary(events: readonly EventRecord[], cwd: string) {
     mcp: 0,
     other: 0,
   };
-  const files = { read: new Set<string>(), edit: new Set<string>() };
+  const files = { read: new Set<string>(), edit: new Set<string>(), skill: new Set<string>() };
   let add = 0,
     del = 0,
     failed = 0,
@@ -168,7 +189,8 @@ export function activitySummary(events: readonly EventRecord[], cwd: string) {
     const info = toolInfo(event, cwd),
       stats = diffStats(event.diff ?? ''),
       state = toolState(event);
-    if (info.kind === 'read' || info.kind === 'edit') files[info.kind].add(info.arg);
+    if (info.kind === 'read' || info.kind === 'edit' || info.kind === 'skill')
+      files[info.kind].add(info.arg);
     else counts[info.kind]++;
     add += stats.add;
     del += stats.del;
@@ -178,11 +200,16 @@ export function activitySummary(events: readonly EventRecord[], cwd: string) {
   }
   counts.read = files.read.size;
   counts.edit = files.edit.size;
+  counts.skill = files.skill.size;
   const parts = order
     .filter((kind) => counts[kind])
     .map((kind, index) => {
       const [verb, one, many] = labels[kind];
-      return `${index ? verb.toLowerCase() : verb} ${counts[kind]} ${counts[kind] === 1 ? one : many}`;
+      const text =
+        kind === 'skill'
+          ? `${verb} ${counts[kind] === 1 ? one : many} ${[...files.skill].join(', ')}`
+          : `${verb} ${counts[kind]} ${counts[kind] === 1 ? one : many}`;
+      return index ? text.charAt(0).toLowerCase() + text.slice(1) : text;
     });
   const current = running && toolInfo(running, cwd);
   const label = current ? `${current.verb} ${current.arg}`.trimEnd() + '…' : parts.join(', ');

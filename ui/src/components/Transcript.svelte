@@ -243,6 +243,10 @@
     overflow: auto;
     scroll-behavior: auto;
   }
+  /* tabindex=-1 only takes clicks and programmatic focus; a ring around the whole pane is noise. */
+  .transcript:focus-visible {
+    outline: none;
+  }
   .content {
     max-width: var(--transcript-width);
     padding: var(--space-5) var(--space-5) 0;

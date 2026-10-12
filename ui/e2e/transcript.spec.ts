@@ -986,3 +986,45 @@ test('a delayed drawer file cannot replace a newer Markdown viewer', async ({ pa
     release();
   }
 });
+
+test('folds agy step replies into compact activity rows with loaded skills and one final Copy', async ({
+  page,
+  engine,
+}) => {
+  await createSession(page, engine, 'Compact activity');
+  const empty = (step: number) => reply('', step);
+  await history(page, engine, [
+    user('Fix the build.'),
+    start,
+    empty(1),
+    tool(2, 'view_file', {
+      AbsolutePath: `${engine.sandbox.project}/.agents/skills/caveman/SKILL.md`,
+    }),
+    empty(3),
+    tool(4, 'run_command', { CommandLine: 'cargo build' }),
+    empty(5),
+    tool(6, 'run_command', { CommandLine: 'cargo test' }),
+    reply('The build failed in one crate.', 7),
+    tool(8, 'view_file', { AbsolutePath: `${engine.sandbox.project}/src/lib.rs` }),
+    empty(9),
+    reply('Fixed and tested.', 10),
+    end,
+  ]);
+  const activity = page.locator('details.activity > summary');
+  await expect(activity).toHaveCount(2);
+  await expect(activity.first()).toContainText('Loaded skill caveman, ran 2 commands');
+  await expect(activity.first()).toContainText('3 steps');
+  await expect(activity.nth(1)).toContainText('Read 1 file');
+  const replies = page.getByLabel('Agent reply');
+  await expect(replies).toHaveCount(2);
+  const copy = (index: number) => replies.nth(index).getByRole('button', { name: 'Copy message' });
+  await expect(copy(1)).toHaveCSS('opacity', '1');
+  await expect(copy(0)).toHaveCSS('opacity', '0');
+  await replies.nth(0).hover();
+  await expect(copy(0)).toHaveCSS('opacity', '1');
+  await activity.first().click();
+  await expect(page.locator('.tool .name.skill')).toHaveText('Load skill');
+  const path = join(engine.sandbox.repository, '.handoff/evidence/ui-slice25');
+  await mkdir(path, { recursive: true });
+  await page.screenshot({ path: join(path, 'compact-activity.png'), fullPage: true });
+});

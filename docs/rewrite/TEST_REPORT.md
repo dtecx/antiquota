@@ -345,6 +345,16 @@ Gates on macOS: `just check` passes. Rust passes 509 tests and Vitest passes 471
 
 No feature rows change; the ledger stays at **903 Passed and 259 Pending out of 1162**. Only synthetic accounts and fake agy under Desktop/test are used. Windows and Linux execution of the new commands is not claimed.
 
+## Slice 25: compact activity, live usage and the native folder picker
+
+The owner's requests of 2026-10-12 are delivered. agy's empty step replies no longer render, so adjacent tools fold into one activity row between the model's real text. Reads of `<name>/SKILL.md` show as "Load skill <name>" and lead the summary. Only the final reply keeps a visible Copy. Session token counters update after each completed step through an unstored `meta` event. The desktop app opens the system folder dialog for new sessions, and the dialog no longer chooses a model. See [ADR 0039](../adr/0039-compact-activity-live-usage-and-native-folder-picker.md).
+
+Vitest proves empty replies are dropped before grouping and skill classification, including the refusal of piped commands. The app test `queued_turns_replay_and_delete_retains_usage` proves live counters build on earlier turns, are published and are never stored. Chromium proves the compact rows, the skill label, hover Copy, and the mocked native picker with cancel and choose. The layout test proves the dialog has no model control and still sends the saved default. [Screenshot](../../.handoff/evidence/ui-slice25/compact-activity.png).
+
+The first full test run failed twice. The desktop `lib.rs` grew past the 500-line module limit, so the dialog commands moved to `dialogs.rs`. The captured `account-check-idle` replay saw a busy account once under full load; it passed five isolated reruns and the later full run, and is recorded as a flaky observation. [First run](../../.handoff/evidence/slice25-test-first.log).
+
+Final gates on macOS: `just check` passes; `just test` passes 509 Rust tests, 473 Vitest tests and all 130 Chromium scenarios with zero failures. [Check](../../.handoff/evidence/slice25-check.log), [test](../../.handoff/evidence/slice25-test.log). No feature rows change; the ledger stays at **903 Passed and 259 Pending out of 1162**. The real system dialogs on Windows and Linux are not exercised.
+
 Mark a row Passed only when its full acceptance has passing tests and evidence. Passing architecture requirements describe the current sources; each future feature must still prove its own behavior. Logs and screenshots live in ignored `.handoff/evidence/`; local tokens and backup contents must never enter committed fixtures or this report.
 
 | Feature ID | Tests | Status | Evidence path |

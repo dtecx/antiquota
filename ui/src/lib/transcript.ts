@@ -96,11 +96,15 @@ export function projectHistory(events: EventRecord[]): EventRecord[] {
 export type TranscriptItem =
   { key: string; events: ToolEvent[] } | { key: string; event: EventRecord };
 
-/** Groups only adjacent tools, preserving replies, thinking and boundaries in arrival order. */
+/**
+ * Groups adjacent tools, preserving replies, thinking and boundaries in arrival order. agy closes
+ * every tool step with an empty reply; those are dropped so a run of tools folds into one row.
+ */
 export function transcriptItems(events: EventRecord[]): TranscriptItem[] {
   const items: TranscriptItem[] = [];
   events.forEach((event, index) => {
     if (['meta', 'accounts', 'deleted'].includes(event.t)) return;
+    if ((event.t === 'assistant' || event.t === 'delta') && !event.text.trim()) return;
     if (event.t === 'tool') {
       const previous = items.at(-1);
       if (previous && 'events' in previous) previous.events.push(event);

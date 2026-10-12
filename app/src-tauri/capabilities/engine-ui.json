@@ -41,6 +41,7 @@
     "autostart:allow-disable",
     "autostart:allow-is-enabled",
     "allow-save-file",
+    "allow-pick-folder",
     "allow-app-info",
     "allow-quit-app",
     "allow-restart-engine"

@@ -90,6 +90,7 @@ impl AgentRunner for AgyRunner {
             let mut decoder = Decoder::new(request.turn);
             let mut file_diff = file_diff::FileDiff::new(PathBuf::from(&request.cwd));
             let mut reported_conversation = request.conversation_id.clone();
+            let mut reported_usage = antiquota_core::StepUsage::default();
             let mut status = None;
             let mut draining = None;
             let processing: Result<(), PortError> = async {
@@ -128,6 +129,10 @@ impl AgentRunner for AgyRunner {
                         for mut event in events {
                             file_diff.decorate(&mut event);
                             sink.event(event)?;
+                        }
+                        if decoder.usage() != &reported_usage {
+                            reported_usage = decoder.usage().clone();
+                            sink.usage(&reported_usage)?;
                         }
                     }
                 }

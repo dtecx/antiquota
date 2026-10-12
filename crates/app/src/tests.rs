@@ -153,6 +153,13 @@ impl AgentRunner for Runner {
                 step: 1,
                 text: request.prompt,
             })?;
+            sink.usage(&StepUsage {
+                input_tokens: 10,
+                output_tokens: 2,
+                thinking_tokens: 3,
+                context: 20,
+                ..Default::default()
+            })?;
             Ok(TurnResult {
                 status: "SUCCESS".into(),
                 conversation_id: Some("resumable".into()),
@@ -223,12 +230,24 @@ async fn queued_turns_replay_and_delete_retains_usage() {
     assert_eq!(store.usage.lock().unwrap().len(), 2);
     assert!(history.iter().all(|r| r.event.is_transcript()));
     let mut deltas = 0;
+    let mut live = vec![];
     while let Ok(event) = events.try_recv() {
-        if matches!(event.record.event, Event::Delta { .. }) {
-            deltas += 1;
+        match event.record.event {
+            Event::Delta { .. } => deltas += 1,
+            Event::Meta { meta } if meta.status == "running" && meta.usage.thinking > 0 => {
+                live.push((meta.usage.input, meta.usage.thinking, meta.context))
+            }
+            _ => {}
         }
     }
     assert_eq!(deltas, 2);
+    // Live counters build on earlier turns and are published, not stored.
+    assert_eq!(live, [(10, 3, 20), (20, 3, 20)]);
+    assert!(
+        !history
+            .iter()
+            .any(|r| matches!(&r.event, Event::Meta { meta } if meta.usage.thinking > 0))
+    );
     let restarted = Service::open(
         store.clone(),
         Settings::default(),

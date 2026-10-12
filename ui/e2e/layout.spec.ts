@@ -233,9 +233,8 @@ test('new-session form preserves current model mode parent folder and explicit w
   await expect(dialog.getByRole('textbox', { name: 'Project folder' })).toHaveValue(
     engine.sandbox.project,
   );
-  await expect(dialog.getByRole('combobox', { name: 'New session effort' })).toHaveValue(
-    'gemini-3.8-flash-low',
-  );
+  // The model is chosen after creation; the dialog sends the saved default.
+  await expect(dialog.getByRole('combobox', { name: /model|effort/i })).toHaveCount(0);
   await expect(dialog.getByRole('combobox', { name: 'New session mode', exact: true })).toHaveValue(
     'plan',
   );

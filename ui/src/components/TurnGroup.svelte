@@ -42,6 +42,10 @@
   const prefs = preferences.state;
   const items = $derived(transcriptItems(group.events));
   const user = $derived(group.user ? userPresentation(group.user) : null);
+  // Only the turn's final answer keeps a visible Copy; earlier replies show it on hover.
+  const finalReply = $derived(
+    [...items].reverse().find((item) => !('events' in item) && item.event.t === 'assistant')?.key,
+  );
 </script>
 
 <article class="turn">
@@ -119,6 +123,7 @@
         <section
           class="reply"
           class:live={event.t === 'delta'}
+          class:final={item.key === finalReply}
           class:find-match={selectedMatch === `${group.key}:${item.key}`}
           data-find-key={`${group.key}:${item.key}`}
           aria-label="Agent reply"
@@ -170,6 +175,13 @@
 </article>
 
 <style>
+  .reply:not(.final) .copy-message {
+    opacity: 0;
+  }
+  .reply:hover .copy-message,
+  .reply:focus-within .copy-message {
+    opacity: 1;
+  }
   .find-match {
     outline: 1px solid var(--code-keyword);
     outline-offset: 4px;

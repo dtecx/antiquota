@@ -97,6 +97,10 @@ pub trait Awake: Send + Sync {
 pub trait TurnSink: Send {
     fn event(&mut self, event: Event) -> Result<(), PortError>;
     fn conversation_id(&mut self, conversation_id: &str) -> Result<(), PortError>;
+    /// The turn's running usage after each completed step; the turn end stays authoritative.
+    fn usage(&mut self, _usage: &StepUsage) -> Result<(), PortError> {
+        Ok(())
+    }
 }
 pub trait AgentRunner: Send + Sync {
     fn run<'a>(

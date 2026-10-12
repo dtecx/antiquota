@@ -19,7 +19,10 @@
     <span class="glyph" class:active={view.state === 'running'}
       >{view.state === 'running' ? '◌' : view.state === 'error' ? '×' : '✓'}</span
     >
-    <span class="name">{view.verb}</span><span class="arg" title={view.arg}>{view.arg}</span>
+    <span class="name" class:skill={view.kind === 'skill'}>{view.verb}</span><span
+      class="arg"
+      title={view.arg}>{view.arg}</span
+    >
     {#if view.add}<span class="stats">+{view.add}</span>{/if}{#if view.del}<span class="deleted"
         >−{view.del}</span
       >{/if}
@@ -43,6 +46,9 @@
 </details>
 
 <style>
+  .name.skill {
+    color: var(--baton);
+  }
   .tool {
     border-top: 1px solid var(--rule);
   }

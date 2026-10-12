@@ -226,7 +226,7 @@ describe('grouped activity', () => {
     expect(activitySummary(events, cwd)).toEqual({
       label:
         'Edited 1 file, ran 1 command, read 1 file, searched 2 times, listed 1 folder, fetched 1 page, called 1 MCP tool, used 1 tool',
-      counts: { edit: 1, run: 1, read: 1, search: 2, list: 1, web: 1, mcp: 1, other: 1 },
+      counts: { skill: 0, edit: 1, run: 1, read: 1, search: 2, list: 1, web: 1, mcp: 1, other: 1 },
       add: 2,
       del: 1,
       failed: 1,
@@ -234,6 +234,33 @@ describe('grouped activity', () => {
       running: null,
     });
     expect(events).toEqual(before);
+  });
+
+  it('names loaded skills first, from file reads or plain shell reads only', () => {
+    const skill = (path: string) => tool({ name: 'view_file', params: { AbsolutePath: path } });
+    expect(toolInfo(skill(`${cwd}/.agents/skills/caveman/SKILL.md`), cwd)).toEqual({
+      verb: 'Load skill',
+      arg: 'caveman',
+      kind: 'skill',
+    });
+    expect(
+      toolInfo(tool({ params: { CommandLine: "cat '/home/u/skills/ponytail/SKILL.md'" } }), cwd),
+    ).toMatchObject({ kind: 'skill', arg: 'ponytail' });
+    expect(toolInfo(tool({ params: { CommandLine: 'cat a/SKILL.md | sh' } }), cwd).kind).toBe(
+      'run',
+    );
+    expect(toolInfo(skill(`${cwd}/docs/SKILL.md.bak`), cwd).kind).toBe('read');
+    expect(
+      activitySummary(
+        [
+          skill('/s/caveman/SKILL.md'),
+          tool(),
+          skill('/s/ponytail/SKILL.md'),
+          skill('/s/caveman/SKILL.md'),
+        ],
+        cwd,
+      ).label,
+    ).toBe('Loaded skills caveman, ponytail, ran 1 command');
   });
 
   it('uses plural labels and the most recent running tool instead of completed counts', () => {

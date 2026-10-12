@@ -234,6 +234,44 @@ describe('event projection', () => {
   });
 });
 
+describe('compact activity', () => {
+  it('drops empty step replies so a run of tools folds into one row between real text', () => {
+    const run = (step: number): EventRecord => ({
+      t: 'tool',
+      ts: step,
+      turn: 1,
+      step,
+      name: 'run_command',
+      params: {},
+      state: 'done',
+    });
+    const reply = (step: number, text: string): EventRecord => ({
+      t: 'assistant',
+      ts: step,
+      turn: 1,
+      step,
+      text,
+    });
+    const items = transcriptItems([
+      reply(1, ''),
+      run(2),
+      reply(3, ' \n'),
+      run(4),
+      { t: 'delta', ts: 5, turn: 1, step: 5, text: '' },
+      run(6),
+      reply(7, 'Found it.'),
+      run(8),
+      reply(9, 'Done.'),
+    ]);
+    expect(items.map((item) => ('events' in item ? item.events.length : item.event.t))).toEqual([
+      3,
+      'assistant',
+      1,
+      'assistant',
+    ]);
+  });
+});
+
 describe('chronological transcript presentation', () => {
   const tool: Extract<EventRecord, { t: 'tool' }> = {
     t: 'tool',

@@ -27,6 +27,9 @@ impl Decoder {
             errors: vec![],
         }
     }
+    pub fn usage(&self) -> &StepUsage {
+        &self.usage
+    }
     pub fn conversation_id(&self) -> Option<&str> {
         self.conversation.as_deref()
     }

@@ -12,6 +12,7 @@ type MockNative = {
   ready: boolean;
   clipboard: string;
   saveResult: string | null;
+  pickResult: string | null;
   holdPaths: boolean;
   rejectPath: (() => void) | null;
   emit: (action: string) => void;
@@ -37,6 +38,7 @@ async function install(page: Page) {
       ready: false,
       clipboard: '',
       saveResult: '/synthetic/export.md',
+      pickResult: null,
       holdPaths: false,
       rejectPath: null,
       emit(action) {
@@ -89,6 +91,8 @@ async function install(page: Page) {
               return;
             case 'save_file':
               return state.saveResult;
+            case 'pick_folder':
+              return state.pickResult;
             case 'restart_engine':
             case 'plugin:webview|set_webview_zoom':
             case 'plugin:opener|open_url':
@@ -397,4 +401,35 @@ test('mocked native folder failures stay with their original session and dispose
   await expect(page.getByText('Late native folder failure', { exact: false })).toHaveCount(0);
   expect(errors).toEqual([]);
   await shot(page, engine, 'folder-error-ownership');
+});
+
+test('mocked native new session uses the system folder picker and no model choice', async ({
+  page,
+  engine,
+}) => {
+  const session = await create(engine, 'Picker origin');
+  await open(page, engine, session.id);
+  await page
+    .getByRole('button', { name: /^New session/ })
+    .first()
+    .click();
+  const dialog = page.getByRole('dialog', { name: /^New session/ });
+  const folder = dialog.getByRole('textbox', { name: 'Project folder' });
+  await expect(dialog.getByRole('combobox', { name: /model|effort/i })).toHaveCount(0);
+  await expect(dialog.getByRole('button', { name: /\/$/ })).toHaveCount(0);
+  // Cancelling the picker keeps the typed folder.
+  await dialog.getByRole('button', { name: 'Choose folder…' }).click();
+  await expect.poll(async () => (await calls(page, 'pick_folder')).length).toBe(1);
+  await expect(folder).toHaveValue(engine.sandbox.project);
+  const picked = join(engine.sandbox.project, 'picked');
+  await mkdir(picked, { recursive: true });
+  await page.evaluate((path) => (window.mockNative.pickResult = path), picked);
+  await dialog.getByRole('button', { name: 'Choose folder…' }).click();
+  await expect(folder).toHaveValue(picked);
+  expect((await calls(page, 'pick_folder'))[1]!.args).toEqual({ start: engine.sandbox.project });
+  const created = page.waitForResponse(
+    (r) => new URL(r.url()).pathname === '/api/sessions' && r.request().method() === 'POST',
+  );
+  await dialog.getByRole('button', { name: 'Create session' }).click();
+  expect((await created).request().postDataJSON()).toMatchObject({ cwd: picked });
 });

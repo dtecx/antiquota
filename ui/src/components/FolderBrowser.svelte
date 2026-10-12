@@ -4,6 +4,7 @@
   import type { Api } from '../lib/api';
   import type { Session } from '../gen/Session';
   import { createFolders, recentFolders } from '../lib/folders';
+  import { native, pickNativeFolder } from '../lib/native';
   let {
     api,
     cwd,
@@ -20,9 +21,19 @@
   const recent = $derived(recentFolders(sessions));
   onMount(() => folders.browse(''));
   onDestroy(folders.dispose);
+  let pickError = $state('');
   function go(path: string) {
     onchange(path);
     folders.browse(path);
+  }
+  async function pick() {
+    pickError = '';
+    try {
+      const path = await pickNativeFolder(cwd);
+      if (path) go(path);
+    } catch (error) {
+      pickError = `The folder picker failed: ${String(error)}`;
+    }
   }
 </script>
 
@@ -38,6 +49,8 @@
     }}
   /><small>Agent commands run inside this folder.</small></label
 >
+{#if native}<button type="button" class="choose" onclick={pick}>Choose folder…</button>
+  {#if pickError}<small role="alert">{pickError}</small>{/if}{/if}
 <div class="browser" aria-label="Folder browser">
   {#if $view.recent}{#each recent as path (path)}<button
         type="button"
@@ -45,7 +58,7 @@
         title={path}
         onclick={() => go(path)}>★ {path}</button
       >{/each}{/if}
-  {#if $view.listing}
+  {#if $view.listing && !native}
     {@const listing = $view.listing}
     {#if listing.parent}<button
         type="button"
@@ -82,6 +95,11 @@
     min-height: 26px;
     padding: var(--space-1) var(--space-2);
     font: 10px var(--mono);
+  }
+  .choose {
+    justify-self: start;
+    font: inherit;
+    font-size: 12px;
   }
   .recent {
     width: 100%;
