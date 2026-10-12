@@ -3,7 +3,7 @@ import type { Session } from '../gen/Session';
 import type { Usage } from '../gen/Usage';
 import type { Worktree } from '../gen/Worktree';
 import { clockTime } from './account-format';
-import { formatTokens, statusLabel } from './format';
+import { formatTokens, statusLabel, inputTokens } from './format';
 
 export function shortHeaderPath(path: string): string {
   return path.replace(/^\/(?:(?:Users|home)\/[^/]+|root)(?=\/|$)/, '~');
@@ -28,6 +28,6 @@ export function headerStatus(session: Pick<Session, 'status' | 'status_until'>):
 
 export function headerUsage(usage: Usage): string {
   return usage.input || usage.output
-    ? `${formatTokens(usage.input)} in · ${formatTokens(usage.output)} out`
+    ? `${formatTokens(inputTokens(usage))} in · ${formatTokens(usage.output)} out`
     : '';
 }

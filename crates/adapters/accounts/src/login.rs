@@ -87,6 +87,8 @@ pub fn start(accounts: &FileAccounts) -> PortFuture<'_, LoginLink> {
             "/quota".into(),
             "--output-format".into(),
             "json".into(),
+            "--model".into(),
+            antiquota_core::DEFAULT_MODEL.into(),
             "--log-file".into(),
             log.to_string_lossy().into_owned(),
         ];

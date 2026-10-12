@@ -182,10 +182,11 @@ fn stop_cancels_a_slow_quota_probe_and_frees_the_account_lease() {
     let deadline = Instant::now() + Duration::from_secs(3);
     loop {
         let calls = setup::calls(&server);
-        if calls
-            .iter()
-            .any(|row| setup::argument(row, "-p") == Some("/quota"))
-            && server.call("GET", "/api/accounts", None).json()[0]["busy"] == true
+        if calls.iter().any(|row| {
+            setup::argument(row, "-p") == Some("/quota")
+                // Metadata calls name the model so agy never books them under an unknown one.
+                && setup::argument(row, "--model") == Some(antiquota_core::DEFAULT_MODEL)
+        }) && server.call("GET", "/api/accounts", None).json()[0]["busy"] == true
         {
             break;
         }

@@ -309,17 +309,26 @@ fn terminal_approval_is_explicit_once_and_stop_keeps_the_session() {
     cli.write("\u{3}").unwrap();
     wait(&cli, stop_offset, "Stopping…");
     wait(&cli, stop_offset, "❯");
-    let saved = server
-        .call("GET", &format!("/api/sessions/{sid}"), None)
-        .json();
-    assert_eq!(saved["meta"]["status"], "idle");
-    assert!(
-        saved["events"]
+    // The prompt can return before the stopped turn end is saved under load; poll the saved state.
+    let deadline = Instant::now() + Duration::from_secs(5);
+    loop {
+        let saved = server
+            .call("GET", &format!("/api/sessions/{sid}"), None)
+            .json();
+        let stopped = saved["events"]
             .as_array()
             .unwrap()
             .iter()
-            .any(|e| e["t"] == "turn_end" && e["status"] == "stopped")
-    );
+            .any(|e| e["t"] == "turn_end" && e["status"] == "stopped");
+        if stopped && saved["meta"]["status"] == "idle" {
+            break;
+        }
+        assert!(
+            Instant::now() < deadline,
+            "stopped turn was not saved: {saved}"
+        );
+        thread::sleep(Duration::from_millis(20));
+    }
     evidence("approval-stop", &cli);
     end(&cli);
     server.stop();

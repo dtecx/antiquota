@@ -134,9 +134,10 @@ fn restart_loads_valid_sessions_skips_broken_ones_and_fills_defaults() {
     // Recoverable work is kept, and nothing starts by itself.
     assert_eq!(old["conversation_id"], "conv-kept");
     assert_eq!(old["queue"], json!(["Queued before the crash."]));
+    // A goal interrupted by the restart is paused so the UI offers Resume.
     assert_eq!(
         (old["goal"]["state"].clone(), old["goal"]["round"].clone()),
-        (json!("active"), json!(2))
+        (json!("paused"), json!(2))
     );
     assert_eq!(old["loop"]["prompt"], "Check in.");
     std::thread::sleep(std::time::Duration::from_millis(500));

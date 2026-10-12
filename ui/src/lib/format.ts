@@ -5,6 +5,11 @@ export function formatTokens(value: number): string {
   return String(value);
 }
 
+/** All prompt tokens: fresh input plus the cached input agy reused. */
+export function inputTokens(usage: { input: number; cache?: number }): number {
+  return usage.input + (usage.cache ?? 0);
+}
+
 export function relativeTime(timestamp: number, now = Date.now() / 1_000): string {
   const difference = Math.max(0, now - timestamp);
   if (difference < 60) return 'now';

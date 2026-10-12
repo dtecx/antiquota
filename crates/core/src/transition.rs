@@ -48,9 +48,11 @@ pub fn reduce(session: &mut Session, record: &EventRecord) -> Result<(), DomainE
             let input = add(session.usage.input, usage.input_tokens)?;
             let output = add(session.usage.output, usage.output_tokens)?;
             let thinking = add(session.usage.thinking, usage.thinking_tokens)?;
+            let cache = add(session.usage.cache, usage.cache_read_tokens)?;
             session.usage.input = input;
             session.usage.output = output;
             session.usage.thinking = thinking;
+            session.usage.cache = cache;
             if usage.context > 0 {
                 session.context = usage.context;
             }

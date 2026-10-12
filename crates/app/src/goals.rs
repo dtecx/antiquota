@@ -62,7 +62,7 @@ impl Service {
         Ok(self.get(id)?.0)
     }
 
-    /// Restarts a goal from round 0 with a nudge.
+    /// Restarts a goal from round 0 with a nudge, also after an engine restart paused it.
     pub fn resume_goal(self: &Arc<Self>, id: &str) -> Result<(), AppError> {
         let mut resumed = None;
         self.update_goal(id, |slot| {
@@ -475,5 +475,14 @@ fn pool_name(bucket: &str) -> &'static str {
         "Claude / GPT"
     } else {
         "Gemini"
+    }
+}
+
+/// A goal that was working when the engine stopped waits for an explicit Resume.
+pub(crate) fn pause_interrupted(meta: &mut antiquota_core::Session) {
+    if let Some(goal) = &mut meta.goal
+        && goal.state == "active"
+    {
+        goal.state = "paused".into();
     }
 }

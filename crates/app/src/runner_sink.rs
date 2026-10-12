@@ -39,6 +39,7 @@ impl TurnSink for ApplicationSink {
         live.usage.input = live.usage.input.saturating_add(usage.input_tokens);
         live.usage.output = live.usage.output.saturating_add(usage.output_tokens);
         live.usage.thinking = live.usage.thinking.saturating_add(usage.thinking_tokens);
+        live.usage.cache = live.usage.cache.saturating_add(usage.cache_read_tokens);
         if usage.context > 0 {
             live.context = usage.context;
         }

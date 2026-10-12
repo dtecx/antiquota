@@ -171,8 +171,13 @@ impl FileAccounts {
         timeout: Duration,
     ) -> Result<Captured, PortError> {
         let mut command = Command::new(&self.executable);
+        command.args(args);
+        if args.iter().any(|a| a == "-p") {
+            // Without a model agy books slash commands under its own default, which usage
+            // readers then show as an unknown model.
+            command.args(["--model", antiquota_core::DEFAULT_MODEL]);
+        }
         command
-            .args(args)
             .current_dir(&slot.home)
             .env("HOME", &slot.home)
             .env("USERPROFILE", &slot.home)

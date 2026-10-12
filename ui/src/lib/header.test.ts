@@ -58,6 +58,7 @@ describe('session header labels', () => {
     [{ input: 100, output: 0, thinking: 0 }, '100 in · 0 out'],
     [{ input: 0, output: 100, thinking: 0 }, '0 in · 100 out'],
     [{ input: 1234, output: 2_500_000, thinking: 100 }, '1.2k in · 2.5M out'],
+    [{ input: 1000, output: 10, thinking: 0, cache: 9000 }, '10.0k in · 10 out'],
   ])('formats cumulative input and output for %j', (usage, label) => {
     expect(headerUsage(usage)).toBe(label);
   });

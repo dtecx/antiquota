@@ -330,6 +330,7 @@ impl Service {
             store.project_usage(&meta.id, &records)?;
             meta.status = "idle".into();
             meta.status_until = None;
+            goals::pause_interrupted(&mut meta);
             cells.insert(
                 meta.id.clone(),
                 Arc::new(Cell {

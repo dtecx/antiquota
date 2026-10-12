@@ -398,4 +398,50 @@ fn cached_input_reaches_the_ledger_and_the_usage_detail() {
     );
     assert_eq!(detail["accounts"]["two@example.com"], parts(5, 2, 1, 0, 1));
     assert_eq!(detail["models"]["other-model"], parts(5, 2, 1, 0, 1));
+    // Totals count cached input: 40+6+3+160, 10+1, 5+2+1.
+    assert_eq!(plain["days"][6]["total"], 228);
+    assert_eq!(plain["accounts"]["one@example.com"]["tokens"], 220);
+    assert_eq!(plain["accounts"]["one@example.com"]["today"], 220);
+    assert_eq!(plain["models"]["gemini-3.8-flash-high"], 220);
+}
+
+#[test]
+fn sessions_saved_before_cached_input_rebuild_it_from_turn_ends() {
+    let sandbox = Sandbox::new();
+    let store = FileStore::open(sandbox.0.clone()).unwrap();
+    let session = Session {
+        id: "s".into(),
+        usage: antiquota_core::Usage {
+            input: 40,
+            ..Default::default()
+        },
+        ..Default::default()
+    };
+    let end = |cache| Event::TurnEnd {
+        turn: 1,
+        slot: "one@example.com".into(),
+        status: "SUCCESS".into(),
+        usage: StepUsage {
+            input_tokens: 20,
+            cache_read_tokens: cache,
+            ..Default::default()
+        },
+        secs: 1.0,
+    };
+    for (ts, event) in [
+        (1.0, end(100)),
+        (2.0, end(60)),
+        (
+            3.0,
+            Event::Meta {
+                meta: Box::new(session.clone()),
+            },
+        ),
+    ] {
+        store.append("s", &EventRecord::new(ts, event)).unwrap();
+    }
+    store.save(&session).unwrap();
+    let loaded = store.load().unwrap();
+    assert_eq!(loaded[0].0.usage.input, 40);
+    assert_eq!(loaded[0].0.usage.cache, 160);
 }

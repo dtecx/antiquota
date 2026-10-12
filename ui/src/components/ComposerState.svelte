@@ -1,7 +1,7 @@
 <!-- Shows the current session state below the composer. -->
 <script lang="ts">
   import type { Workbench } from '../lib/workbench';
-  import { formatTokens, isBusy, statusLabel } from '../lib/format';
+  import { formatTokens, inputTokens, isBusy, statusLabel } from '../lib/format';
   let { workbench }: { workbench: Workbench } = $props();
   const view = $derived(workbench.state);
   const running = $derived(isBusy($view.selected?.status));
@@ -13,7 +13,7 @@
     ><span class="dot"></span>{statusLabel($view.selected?.status ?? 'idle')}</span
   >{#if $view.selected?.queue.length}<span>{$view.selected.queue.length} queued</span>{/if}<span
     class="tokens"
-    >{formatTokens($view.selected?.usage.input ?? 0)} in <span>/</span>
+    >{formatTokens($view.selected ? inputTokens($view.selected.usage) : 0)} in <span>/</span>
     {formatTokens($view.selected?.usage.output ?? 0)} out</span
   >
 </div>

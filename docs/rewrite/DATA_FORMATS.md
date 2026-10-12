@@ -41,7 +41,7 @@ The legacy reader can move an older predecessor data folder when the current roo
 | `status_until` | Numeric deadline/reset instant or null. |
 | `conversation_id`, `last_slot` | Strings or null. Conversation ids name files in the shared store. |
 | `turns`, `context` | Integer counters; context is the largest observed prompt/cache footprint of the turn. |
-| `usage` | Object with integer `input`, `output`, and `thinking` totals; older data may omit `thinking`. |
+| `usage` | Object with integer `input`, `output`, and `thinking` totals; older data may omit `thinking`. The rewrite adds an optional `cache`, the cached input across turns, written only when above zero. A session loaded without it rebuilds it from its turn ends. |
 | `queue` | Array mixing plain mid-turn user strings and objects containing `text`, `attachments`, and `kind`. |
 | `pending_note` | String inserted into a later turn for compaction, inheritance, shell output, or rewind. |
 | `goal`, `loop`, `worktree` | Structured objects described below, or null. |
@@ -107,7 +107,7 @@ The `antiquota` hook entry contains PreToolUse and PreInvocation configuration a
 | `walls/<slot>.<pool>` | Text: `<integer-expiry> <reason>\n`. Expired/malformed walls are inactive; preserve the readable reason. |
 | `paused/<slot>` | Empty marker file means the slot is excluded from automatic rotation. |
 | `verify/<slot>.json` | `{url, since}` for a signed-in account needing Google verification; retain token and parked state. |
-| `usage.jsonl` | One turn row: `t`, `slot`, `model`, `session`, `input`, `output`, and optional `thinking`. The rewrite adds an optional `cache`, the input tokens agy read from its cache (`cache_read_tokens`), written only when above zero. Local-day aggregation tolerates bad lines, and an unreadable `cache` counts as zero. |
+| `usage.jsonl` | One turn row: `t`, `slot`, `model`, `session`, `input`, `output`, and optional `thinking`. The rewrite adds an optional `cache`, the input tokens agy read from its cache (`cache_read_tokens`), written only when above zero. Local-day aggregation tolerates bad lines, and an unreadable `cache` counts as zero. Day, account and model totals include `cache`. |
 | `routing.jsonl` | Append-only decisions with `ts`, `event`, and variable contextual fields (slot, bucket, session, previous, reason). Current writer trims at about 2 MB to the latest 5,000 lines. |
 | `calls.jsonl` | CLI call ledger with `t`, `slot`, `bucket`, `rc`, `secs`, and boolean `walled`; optional when only GUI turns were run. |
 | `failures/` | Captured sign-in/call diagnostics; may include private identifiers, so retain locally and redact before sharing. |

@@ -167,7 +167,9 @@
             >{/if}
           <span class="end-dot"></span><span>{event.status}</span><span>{duration(event.secs)}</span
           ><span
-            >{formatTokens(event.usage.input_tokens)} in / {formatTokens(event.usage.output_tokens)} out</span
+            >{formatTokens(event.usage.input_tokens + (event.usage.cache_read_tokens ?? 0))} in / {formatTokens(
+              event.usage.output_tokens,
+            )} out</span
           ><span>{event.slot}</span>
         </div>{/if}
     {/if}

@@ -353,7 +353,13 @@ Vitest proves empty replies are dropped before grouping and skill classification
 
 The first full test run failed twice. The desktop `lib.rs` grew past the 500-line module limit, so the dialog commands moved to `dialogs.rs`. The captured `account-check-idle` replay saw a busy account once under full load; it passed five isolated reruns and the later full run, and is recorded as a flaky observation. [First run](../../.handoff/evidence/slice25-test-first.log).
 
-Final gates on macOS: `just check` passes; `just test` passes 509 Rust tests, 473 Vitest tests and all 130 Chromium scenarios with zero failures. [Check](../../.handoff/evidence/slice25-check.log), [test](../../.handoff/evidence/slice25-test.log). No feature rows change; the ledger stays at **903 Passed and 259 Pending out of 1162**. The real system dialogs on Windows and Linux are not exercised.
+Final gates on macOS: `just check` passes; `just test` passes 509 Rust tests, 473 Vitest tests and all 130 Chromium scenarios with zero failures. [Check](../../.handoff/evidence/slice25-check.log), [test](../../.handoff/evidence/slice25-test.log). Totals now include cached input everywhere: the ledger's day, account and model totals, session and turn "in" figures, and the CLI. `cached_input_reaches_the_ledger_and_the_usage_detail` proves the totals, and `sessions_saved_before_cached_input_rebuild_it_from_turn_ends` proves older sessions recover the count.
+
+Metadata calls (quota probes, skill and hook lists, sign-in) now pass the default model, so agy no longer books them under its own default; the lifecycle test checks the probe argv. A goal left active when the engine stops comes back paused with Resume available; `an_engine_restart_pauses_working_goals_and_resume_continues_them` proves nothing runs by itself and Resume reactivates the goal. The existing terminal Stop test now polls for the saved stopped turn instead of reading once; under full load it had read the session just before the turn end was written.
+
+The first final gate run passed check, 511 Rust and 474 Vitest checks but failed one Chromium scenario: the usage panel test still expected totals without cached input (375 instead of 1.3k). Its expected totals now include cached input, and it passes. The earlier contract that kept an interrupted goal active now expects it paused. [Run before the correction](../../.handoff/evidence/slice25b-test.log).
+
+No feature rows change; the ledger stays at **903 Passed and 259 Pending out of 1162**. The real system dialogs on Windows and Linux are not exercised.
 
 Mark a row Passed only when its full acceptance has passing tests and evidence. Passing architecture requirements describe the current sources; each future feature must still prove its own behavior. Logs and screenshots live in ignored `.handoff/evidence/`; local tokens and backup contents must never enter committed fixtures or this report.
 

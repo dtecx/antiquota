@@ -110,12 +110,14 @@ impl FileStore {
             let [Some(input), Some(output), Some(thinking)] = values else {
                 continue;
             };
+            // Older rows have no cache count; an unreadable one counts as none.
+            let cache = row["cache"].as_u64().unwrap_or(0);
+            // Totals count every token the model processed, including cached input.
             let n = input
                 .checked_add(output)
                 .and_then(|n| n.checked_add(thinking))
+                .and_then(|n| n.checked_add(cache))
                 .ok_or_else(|| PortError::Invalid("usage counter overflow".into()))?;
-            // Older rows have no cache count; an unreadable one counts as none.
-            let cache = row["cache"].as_u64().unwrap_or(0);
             let r = rows.get_mut(&day.to_string()).unwrap();
             add(&mut r["total"], n)?;
             add(&mut r["turns"], 1)?;

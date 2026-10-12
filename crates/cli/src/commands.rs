@@ -47,14 +47,15 @@ pub fn session_id(id: &str) -> anyhow::Result<&str> {
 pub fn status(meta: &Session) -> String {
     let mode = serde_json::to_value(meta.mode).unwrap();
     format!(
-        "{} · {} · {} · {}\n{}\n{} turns · {} input / {} output / {} thinking tokens · context {} · account {}",
+        "{} · {} · {} · {}\n{}\n{} turns · {} input ({} cached) / {} output / {} thinking tokens · context {} · account {}",
         meta.title,
         meta.id,
         meta.model,
         mode.as_str().unwrap(),
         meta.cwd,
         meta.turns,
-        meta.usage.input,
+        meta.usage.input + meta.usage.cache,
+        meta.usage.cache,
         meta.usage.output,
         meta.usage.thinking,
         meta.context,
@@ -203,6 +204,7 @@ pub async fn run(
                     a.today.input.unwrap_or(0)
                         + a.today.output.unwrap_or(0)
                         + a.today.thinking.unwrap_or(0)
+                        + a.today.cache.unwrap_or(0)
                         + a.today.cache.unwrap_or(0),
                     a.walls.values().filter(|until| **until > 0.0).count()
                 ))?;

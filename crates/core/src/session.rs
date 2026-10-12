@@ -20,6 +20,10 @@ pub struct Usage {
     pub input: u64,
     pub output: u64,
     pub thinking: u64,
+    /// Prompt tokens agy read from its cache, on top of `input`. Left out while zero.
+    #[serde(skip_serializing_if = "is_zero")]
+    #[ts(as = "Option<u64>", optional)]
+    pub cache: u64,
     #[serde(flatten)]
     #[ts(skip)]
     pub extra: BTreeMap<String, Value>,

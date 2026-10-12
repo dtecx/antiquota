@@ -550,3 +550,48 @@ async fn cancellation_before_runner_start_retains_one_user_event() {
         1
     );
 }
+
+#[tokio::test]
+async fn an_engine_restart_pauses_working_goals_and_resume_continues_them() {
+    let store = Arc::new(MemoryStore::default());
+    let session = Session {
+        id: "goal-session".into(),
+        cwd: "memory".into(),
+        model: "model".into(),
+        status: "running".into(),
+        goal: Some(antiquota_core::Goal {
+            objective: "Finish.".into(),
+            max_rounds: 5,
+            round: 3,
+            state: "active".into(),
+            ..Default::default()
+        }),
+        ..Default::default()
+    };
+    store.save(&session).unwrap();
+    let runner = Arc::new(Runner {
+        calls: AtomicU64::new(0),
+    });
+    let service = Service::open(
+        store.clone(),
+        Settings::default(),
+        Arc::new(Accounts),
+        runner.clone(),
+        Arc::new(FixedClock),
+    )
+    .unwrap();
+    let meta = service.get("goal-session").unwrap().0;
+    assert_eq!(meta.status, "idle");
+    assert_eq!(meta.goal.as_ref().unwrap().state, "paused");
+    assert_eq!(
+        runner.calls.load(Ordering::SeqCst),
+        0,
+        "nothing runs by itself"
+    );
+    service.resume_goal("goal-session").unwrap();
+    assert_eq!(
+        service.get("goal-session").unwrap().0.goal.unwrap().state,
+        "active"
+    );
+    assert!(runner.calls.load(Ordering::SeqCst) <= 1);
+}

@@ -82,8 +82,9 @@ test('shows every token part with the cache hit rate and refreshes as turns end'
   const account = accountTable.locator('tbody tr');
   await expect(account.locator('td')).toHaveText([
     'one@example.com',
-    '375',
-    '375',
+    // Totals include cached input: 300 + 900 + 50 + 25.
+    '1.3k',
+    '1.3k',
     '1',
     '300',
     '900',
@@ -105,7 +106,7 @@ test('shows every token part with the cache hit rate and refreshes as turns end'
   const model = modelTable.locator('tbody tr');
   await expect(model.locator('td')).toHaveText([
     'gemini-3.8-flash-high',
-    '375',
+    '1.3k',
     '100%',
     '300',
     '900',
@@ -135,8 +136,8 @@ test('shows every token part with the cache hit rate and refreshes as turns end'
   await expect(usage.locator('.stats')).toContainText('2 turns');
   await expect(account.locator('td')).toHaveText([
     'one@example.com',
-    '750',
-    '750',
+    '2.5k',
+    '2.5k',
     '2',
     '600',
     '1.8k',
@@ -146,7 +147,7 @@ test('shows every token part with the cache hit rate and refreshes as turns end'
   ]);
   await expect(model.locator('td')).toHaveText([
     'gemini-3.8-flash-high',
-    '750',
+    '2.5k',
     '100%',
     '600',
     '1.8k',

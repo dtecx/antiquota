@@ -96,6 +96,18 @@ impl SessionStore for FileStore {
                 continue;
             }
             session.id = sid;
+            if session.usage.cache == 0 {
+                // Snapshots from before cached input was counted: rebuild it from the turn ends.
+                session.usage.cache = records
+                    .iter()
+                    .filter_map(|r| match &r.event {
+                        antiquota_core::Event::TurnEnd { usage, .. } => {
+                            Some(usage.cache_read_tokens)
+                        }
+                        _ => None,
+                    })
+                    .fold(0u64, u64::saturating_add);
+            }
             loaded.push((session, records));
         }
         Ok(loaded)
