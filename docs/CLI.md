@@ -26,10 +26,19 @@ When a tool asks permission, inspect its name and arguments. Type `y` to allow t
 | `/model [ID]` | List cached models or select a model. |
 | `/mode [MODE]` | Select default, accept-edits or plan. |
 | `/accounts` | Cached quota, busy/paused/verification state, token totals and wall counts. |
+| `/accounts check SLOT` | Probe one account's quota now. |
+| `/accounts pause SLOT` / `/accounts resume SLOT` | Stop or restart automatic routing to one account. |
+| `/routing [N]` | Show the last N routing decisions (1 to 200, default 20), oldest first. |
+| `/attach PATH` | Upload a file (25 MB limit) and stage it for the next message. Relative paths use the session folder; quote paths with spaces. |
+| `/attachments` | List the staged files. |
+| `/detach N` / `/detach all` | Remove a staged file from the next message. The uploaded copy stays with the session. |
+| `/export PATH` | Write the full saved session as JSON, including tool events. The file is private and never overwrites an existing file. |
 | `/usage` | Detailed recorded usage, including cached input and thinking. |
 | `/diff` | Show the working-tree diff without applying changes. |
 | `/compact` | Prepare a summary for a fresh agent context; keep the saved transcript. |
 | `/exit` | Leave the terminal session. |
+
+With files staged, Enter sends them even when the prompt is empty. `/new`, `/fork` and `/resume` refuse to switch while files are staged. If a send fails, the draft and staged files are kept.
 
 This slice verifies the interactive terminal on macOS; Windows and Linux execution still need proof.
 

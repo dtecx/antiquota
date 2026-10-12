@@ -85,6 +85,9 @@ pub struct Editor {
     draft: String,
 }
 impl Editor {
+    pub fn restore(&mut self, text: &str) {
+        self.set(&safe(text));
+    }
     pub fn seed(&mut self, text: &str) {
         self.history.push(safe(text));
     }

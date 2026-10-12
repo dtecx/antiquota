@@ -114,11 +114,19 @@ impl Follow {
             self.deleted = true;
         }
         match &record.event {
-            Event::User { text, kind, .. } if self.interactive && kind == "user" => {
+            Event::User {
+                text,
+                kind,
+                attachments,
+                ..
+            } if self.interactive && kind == "user" => {
                 if self.echoed_user.as_deref() == Some(text) {
                     self.echoed_user = None;
                 } else {
                     let _ = writeln!(out, "\nyou\n{text}");
+                    for file in attachments.iter().flatten() {
+                        let _ = writeln!(out, "Attached: {}", file.name);
+                    }
                 }
             }
             Event::Delta { turn, step, text } => {

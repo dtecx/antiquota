@@ -387,3 +387,110 @@ fn terminal_background_engine_survives_exit_and_no_accounts_keeps_the_message() 
         thread::sleep(Duration::from_millis(20));
     }
 }
+
+fn paused(server: &Server, slot: &str) -> bool {
+    let overview = server.call("GET", "/api/accounts", None).json();
+    let accounts = overview
+        .as_array()
+        .or_else(|| overview["accounts"].as_array())
+        .unwrap()
+        .clone();
+    accounts.iter().find(|a| a["slot"] == slot).unwrap()["paused"]
+        .as_bool()
+        .unwrap()
+}
+
+#[test]
+fn terminal_files_exports_and_account_controls_use_the_engine_api() {
+    let mut server = Server::new("interactive-context");
+    fs::write(
+        &server.script,
+        json!({"reply":"Read the staged file.","delay_ms":50}).to_string(),
+    )
+    .unwrap();
+    fs::write(server.project.join("note λ.txt"), "Attached fixture.\n").unwrap();
+    let cli = launch(&server, &["-i"]);
+    wait(&cli, 0, "❯");
+    let sid = id(&server);
+    command(&cli, "/attach 'note λ.txt'");
+    assert!(cli.text().contains("Staged note λ.txt (18 bytes)"));
+    command(&cli, "/attach missing.txt");
+    assert!(cli.text().contains("the attachment is unavailable"));
+    command(&cli, "/attachments");
+    assert!(cli.text().contains("1. note λ.txt (18 bytes)"));
+    command(&cli, "/new");
+    assert!(cli.text().contains("send the staged files or /detach all"));
+    command(&cli, "/detach 2");
+    assert!(cli.text().contains("use a number from /attachments"));
+    let offset = cli.text().len();
+    cli.write("Summarize the file.\r").unwrap();
+    server.idle(&sid);
+    wait(&cli, offset, "Read the staged file.");
+    wait(&cli, cli.text().len().saturating_sub(8), "❯");
+    assert!(cli.text()[offset..].contains("Attached: note λ.txt"));
+    let saved = server
+        .call("GET", &format!("/api/sessions/{sid}"), None)
+        .json();
+    let user = saved["events"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|e| e["t"] == "user" && e["text"] == "Summarize the file.")
+        .unwrap()
+        .clone();
+    assert_eq!(user["attachments"][0]["name"], "note λ.txt");
+    command(&cli, "/attachments");
+    assert!(cli.text().contains("No files staged for the next message."));
+
+    command(&cli, "/export export.json");
+    let exported: serde_json::Value =
+        serde_json::from_slice(&fs::read(server.project.join("export.json")).unwrap()).unwrap();
+    assert_eq!(exported["meta"]["id"], sid);
+    assert!(
+        exported["events"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|e| e["t"] == "user")
+    );
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let mode = fs::metadata(server.project.join("export.json"))
+            .unwrap()
+            .permissions()
+            .mode();
+        assert_eq!(mode & 0o777, 0o600, "exports are private");
+    }
+    fs::write(server.project.join("export.json"), "kept").unwrap();
+    command(&cli, "/export export.json");
+    assert!(cli.text().contains("existing files are never overwritten"));
+    assert_eq!(
+        fs::read_to_string(server.project.join("export.json")).unwrap(),
+        "kept"
+    );
+
+    let slot = "one@example.com";
+    command(&cli, &format!("/accounts pause {slot}"));
+    assert!(paused(&server, slot));
+    command(&cli, &format!("/accounts resume {slot}"));
+    assert!(!paused(&server, slot));
+    command(&cli, "/accounts pause ../x");
+    command(&cli, "/accounts drop one@example.com");
+    assert!(cli.text().contains("use /accounts check|pause|resume SLOT"));
+    command(&cli, "/routing 0");
+    assert!(
+        cli.text()
+            .contains("routing count must be between 1 and 200")
+    );
+    command(&cli, "/routing 5");
+    let routing = server.call("GET", "/api/routing?n=5", None).json();
+    if routing.as_array().unwrap().is_empty() {
+        assert!(cli.text().contains("No recorded routing decisions."));
+    } else {
+        assert!(cli.text().contains(routing[0]["event"].as_str().unwrap()));
+    }
+    evidence("context", &cli);
+    end(&cli);
+    server.stop();
+}

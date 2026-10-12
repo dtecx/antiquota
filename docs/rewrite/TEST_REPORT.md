@@ -333,6 +333,18 @@ The current release build passes in **67.70 seconds**. The app bundle and read-o
 
 F-1159–F-1162 bring the ledger to **903 Passed and 259 Pending out of 1162**. Only synthetic accounts and fake agy under Desktop/test are used: zero live tokens and zero provider time. The legacy checkout, provider configuration, live Chrome engine and existing native shell are not operated during this slice. Actual native window/tray/permission/AAC proof remains unverified here. Commits use [skip ci]; no Actions minutes are requested.
 
+## Slice 24: terminal files, export and account controls
+
+`antiquota -i` gains `/attach PATH`, `/attachments`, `/detach N|all`, `/export PATH`, `/accounts check|pause|resume SLOT` and `/routing [N]`. Each command uses an existing authenticated engine route; no route, state or file format changes. Staged files are sent in the existing `attachments` field, block session switches and survive a failed send with the draft. Exports use create-new with mode 0600 and never overwrite. See [CLI usage](../CLI.md) and [ADR 0038](../adr/0038-terminal-files-export-and-account-controls.md).
+
+The first draft did not compile: the follower's user-event pattern missed the `steered` field. It now ignores the remaining fields. [Initial compile failure](../../.handoff/evidence/slice24-cli-initial.log).
+
+[`terminal_files_exports_and_account_controls_use_the_engine_api`](../../tests/rewrite/interactive.rs) drives the real CLI in a PTY against an isolated engine and fake agy. It proves Unicode filenames, a missing-file error, the staged list, the switch guard, bounded detach, the saved user event with its attachment, an empty list after sending, private export with the full session, refusal to overwrite, pause and resume through HTTP state, invalid slot and action errors, routing bounds and routing output. A unit test bounds account actions and routing counts.
+
+Gates on macOS: `just check` passes. Rust passes 509 tests and Vitest passes 471 tests in 45 files with zero failures. The first full test run failed every Chromium scenario at launch because Playwright's browser was not installed on this machine; after `playwright install chromium`, `just test-e2e` passes all 128 scenarios. An earlier check failed only because `pnpm` was not on the shell path. [Check](../../.handoff/evidence/slice24-check.log), [Rust and Vitest run](../../.handoff/evidence/slice24-test-no-browser.log), [browser run](../../.handoff/evidence/slice24-e2e.log).
+
+No feature rows change; the ledger stays at **903 Passed and 259 Pending out of 1162**. Only synthetic accounts and fake agy under Desktop/test are used. Windows and Linux execution of the new commands is not claimed.
+
 Mark a row Passed only when its full acceptance has passing tests and evidence. Passing architecture requirements describe the current sources; each future feature must still prove its own behavior. Logs and screenshots live in ignored `.handoff/evidence/`; local tokens and backup contents must never enter committed fixtures or this report.
 
 | Feature ID | Tests | Status | Evidence path |

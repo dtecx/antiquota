@@ -1,6 +1,7 @@
 //! Owns command-line dispatch; the hook runs before logging and Tokio startup.
 mod accounts;
 mod commands;
+mod context;
 mod engine;
 mod follow;
 mod goal;

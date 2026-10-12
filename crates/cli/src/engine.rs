@@ -10,21 +10,24 @@ pub(crate) struct Engine {
     pub(crate) http: reqwest::Client,
 }
 impl Engine {
+    pub(crate) fn request(&self, method: reqwest::Method, path: &str) -> reqwest::RequestBuilder {
+        self.http
+            .request(method, format!("{}{path}", self.base))
+            .header("X-Antiquota-Token", &self.token)
+            .timeout(Duration::from_secs(15))
+    }
+
     pub(crate) async fn call(
         &self,
         method: reqwest::Method,
         path: &str,
         body: Value,
     ) -> anyhow::Result<Value> {
-        let response = self
-            .http
-            .request(method, format!("{}{path}", self.base))
-            .header("X-Antiquota-Token", &self.token)
-            .timeout(Duration::from_secs(15))
-            .json(&body)
-            .send()
-            .await
-            .context("the engine did not answer")?;
+        Self::execute(self.request(method, path).json(&body)).await
+    }
+
+    pub(crate) async fn execute(request: reqwest::RequestBuilder) -> anyhow::Result<Value> {
+        let response = request.send().await.context("the engine did not answer")?;
         let status = response.status();
         let value: Value = response.json().await.unwrap_or(Value::Null);
         if !status.is_success() {
@@ -59,6 +62,13 @@ impl Engine {
         )
         .context("the saved session is unreadable")
     }
+}
+
+/// Encode a single path/header component, including literal percent signs.
+pub(crate) fn component(text: &str) -> String {
+    let mut url = reqwest::Url::parse("http://localhost/").unwrap();
+    url.path_segments_mut().unwrap().push(text);
+    url.path()[1..].to_owned()
 }
 
 /// The running engine, or one started in this process (returned as `true`).

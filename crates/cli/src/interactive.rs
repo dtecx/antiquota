@@ -62,6 +62,7 @@ async fn workspace(
     };
     let mut keys = EventStream::new();
     let mut editor = Editor::default();
+    let mut pending = vec![];
     let mut follow = load(engine, terminal, &mut editor, &meta.id).await?;
     loop {
         if follow.meta.status != "idle" && busy(engine, terminal, &mut keys, &mut follow).await? {
@@ -77,6 +78,12 @@ async fn workspace(
             meta.last_slot.as_deref().unwrap_or("automatic")
         ))?;
         terminal.line(&format!("{} · {}", meta.cwd, meta.id))?;
+        if !pending.is_empty() {
+            terminal.line(&format!(
+                "{} files staged · /attachments lists · /detach removes",
+                pending.len()
+            ))?;
+        }
         terminal.prompt(&editor, "❯")?;
         let line = loop {
             let event = keys.next().await.context("terminal input closed")??;
@@ -92,13 +99,13 @@ async fn workspace(
         let Some(line) = line else {
             break;
         };
-        if line.trim().is_empty() {
+        if line.trim().is_empty() && pending.is_empty() {
             continue;
         }
         terminal.heading("you")?;
         terminal.line(&line)?;
         if line.starts_with('/') {
-            match commands::run(engine, &meta, terminal, &line).await {
+            match commands::run(engine, &meta, terminal, &line, &mut pending).await {
                 Ok(Action::Exit) => break,
                 Ok(Action::Switch(session)) => {
                     meta = *session;
@@ -111,16 +118,27 @@ async fn workspace(
             continue;
         }
         // Open before sending, then confirm completion from saved state to cover short turns.
-        let mut stream = Some(engine.events().await?);
+        let mut stream = match engine.events().await {
+            Ok(stream) => Some(stream),
+            Err(error) => {
+                terminal.line(&format!("antiquota: {error}; draft and files kept."))?;
+                editor.restore(&line);
+                continue;
+            }
+        };
+        let attachments: Vec<_> = pending.iter().map(|a| a.path.clone()).collect();
         match engine
             .call(
                 Method::POST,
                 &format!("/api/sessions/{}/send", meta.id),
-                json!({"text":line}),
+                json!({"text":line, "attachments":attachments}),
             )
             .await
         {
             Ok(_) => {
+                for file in pending.drain(..) {
+                    terminal.line(&format!("Attached: {}", file.name))?;
+                }
                 follow.echoed_user = Some(line);
                 follow.accepted();
                 terminal.heading("assistant · Ctrl+C or Escape stops")?;
@@ -128,8 +146,16 @@ async fn workspace(
                     break;
                 }
             }
-            Err(error) => terminal.line(&format!("antiquota: {error}"))?,
+            Err(error) => {
+                terminal.line(&format!("antiquota: {error}; draft and files kept."))?;
+                editor.restore(&line);
+            }
         }
+    }
+    if !pending.is_empty() {
+        terminal.line(
+            "Unsent attachments left out of the draft; uploaded copies remain with this session.",
+        )?;
     }
     terminal.line(&format!(
         "\nSaved session {}. Resume with antiquota -i --resume {}",
@@ -154,6 +180,7 @@ async fn load(
     for record in &saved.events {
         if let RecordEvent::User { text, kind, .. } = &record.event
             && kind == "user"
+            && !text.trim().is_empty()
         {
             editor.seed(text);
         }
