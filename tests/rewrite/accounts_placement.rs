@@ -234,3 +234,62 @@ fn automatic_probes_exclude_new_shared_calls_until_the_reading_is_saved() {
         server.stop();
     }
 }
+
+#[test]
+fn periodic_refresh_reads_busy_accounts_under_a_shared_lease_but_leaves_walled_ones() {
+    let mut server = Server::new_stopped("busy-account-refresh", true);
+    setup::start(&mut server);
+    let lock = server
+        .data
+        .join(format!("state/leases/{}.lock", setup::ONE));
+    // An agent's model call holds the account for the whole test.
+    let held = antiquota_store::lock_file_shared(&lock).unwrap().unwrap();
+    stale_reading(&server);
+    let before = quota_calls(&server);
+    assert_eq!(
+        server
+            .call("POST", "/api/accounts/probe", Some(json!({})))
+            .status,
+        200
+    );
+    let deadline = Instant::now() + Duration::from_secs(8);
+    loop {
+        let accounts = server.call("GET", "/api/accounts", None).json();
+        if accounts[0]["probed"].as_f64().unwrap_or(0.0) > 0.0 {
+            break;
+        }
+        assert!(
+            Instant::now() < deadline,
+            "busy account was never refreshed"
+        );
+        thread::sleep(Duration::from_millis(20));
+    }
+    assert!(quota_calls(&server) > before);
+    // A walled busy account keeps its wall until an exclusive probe can run.
+    let until = (std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs()
+        + 3600) as f64;
+    let wall = server
+        .data
+        .join(format!("state/walls/{}.gemini", setup::ONE));
+    setup::write(&wall, &format!("{until} quota error\n"));
+    stale_reading(&server);
+    assert_eq!(
+        server
+            .call("POST", "/api/accounts/probe", Some(json!({})))
+            .status,
+        200
+    );
+    thread::sleep(Duration::from_millis(800));
+    let accounts = server.call("GET", "/api/accounts", None).json();
+    assert_eq!(
+        accounts[0]["probed"].as_f64(),
+        Some(0.0),
+        "walled busy account is not read"
+    );
+    assert!(accounts[0]["walls"]["gemini"].as_f64().unwrap() > 0.0);
+    drop(held);
+    server.stop();
+}

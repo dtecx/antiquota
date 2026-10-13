@@ -79,18 +79,29 @@ impl AccountService {
         drop(lease);
         self.announce_accounts()
     }
-    /// Probes idle accounts whose reading is at least max_age old; returns those with a new reading.
+    /// Probes accounts whose reading is at least max_age old; returns those with a new reading.
     pub async fn refresh_accounts(&self, max_age: f64) -> Result<Vec<String>, AppError> {
         let mut updated = vec![];
         for account in self.account_overview()? {
             if self.background_cancel.is_cancelled() {
                 break;
             }
-            if self.clock.now() - account.probed.unwrap_or(0.0) < max_age {
+            let now = self.clock.now();
+            if now - account.probed.unwrap_or(0.0) < max_age {
                 continue;
             }
-            let Some(lease) = self.accounts.lease_named(&account.slot)? else {
-                continue;
+            let lease = match self.accounts.lease_named(&account.slot)? {
+                Some(lease) => lease,
+                // A busy account would otherwise never refresh while agents run for hours, so it is
+                // read under a shared lease like another model call. A walled one waits for an
+                // exclusive probe, so this reading cannot clear a failure a running call published.
+                None if !account.walls.values().any(|until| *until > now) => {
+                    match self.accounts.share_named(&account.slot)? {
+                        Some(lease) => lease,
+                        None => continue,
+                    }
+                }
+                None => continue,
             };
             if matches!(
                 self.probe_account(&*lease, &self.background_cancel).await?,

@@ -365,6 +365,10 @@ The transcript toolbar moved into a "Conversation options" header menu. Chromium
 
 No feature rows change; the ledger stays at **903 Passed and 259 Pending out of 1162**. The real system dialogs on Windows and Linux are not exercised.
 
+## Slice 26: busy account quota refresh
+
+Account readings stayed hours old while agents held an account, because the periodic refresh skipped busy accounts. It now reads a busy account under a shared lease and leaves walled accounts to an exclusive probe. A first attempt also shortened the polling wait; `polling_uses_quota_poll_freshness_and_refreshes_only_stale_idle_accounts` pins the wait to the quota poll setting, so that change was reverted. See [ADR 0040](../adr/0040-busy-account-quota-refresh.md). [`periodic_refresh_reads_busy_accounts_under_a_shared_lease_but_leaves_walled_ones`](../../tests/rewrite/accounts_placement.rs) holds a shared lease on an account with a stale reading and proves a refresh reads it, then proves a walled busy account keeps its old reading and wall. The existing exclusive-probe contracts still pass. Final gates: `just check` passes; 512 Rust tests, 476 Vitest tests and all 131 Chromium scenarios pass. [Check](../../.handoff/evidence/slice26-check.log), [test](../../.handoff/evidence/slice26-test.log), [first run](../../.handoff/evidence/slice26-test-first.log). No feature rows change.
+
 Mark a row Passed only when its full acceptance has passing tests and evidence. Passing architecture requirements describe the current sources; each future feature must still prove its own behavior. Logs and screenshots live in ignored `.handoff/evidence/`; local tokens and backup contents must never enter committed fixtures or this report.
 
 | Feature ID | Tests | Status | Evidence path |
