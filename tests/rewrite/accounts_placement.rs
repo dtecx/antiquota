@@ -293,3 +293,40 @@ fn periodic_refresh_reads_busy_accounts_under_a_shared_lease_but_leaves_walled_o
     drop(held);
     server.stop();
 }
+
+#[test]
+fn an_offline_quota_check_neither_parks_nor_signs_out_the_account() {
+    let mut server = Server::new_stopped("offline-quota-check", true);
+    setup::start(&mut server);
+    setup::script(
+        &server,
+        json!({"metadata_by_slot":{setup::ONE:{"quota_error":"not signed in. Eligibility check failed: Post \"https://daily-cloudcode-pa.googleapis.com/v1internal:loadCodeAssist\": dial tcp: lookup daily-cloudcode-pa.googleapis.com: no such host"}}}),
+    );
+    assert_eq!(
+        server
+            .call(
+                "POST",
+                "/api/accounts/one@example.com/check",
+                Some(json!({}))
+            )
+            .status,
+        200
+    );
+    let accounts = server.call("GET", "/api/accounts", None).json();
+    assert!(
+        accounts[0]["verify"].is_null(),
+        "not parked for verification"
+    );
+    assert_eq!(accounts[0]["walls"]["gemini"].as_f64(), Some(0.0));
+    assert_eq!(accounts[0]["walls"]["cg"].as_f64(), Some(0.0));
+    let routes = server.call("GET", "/api/routing?n=200", None).json();
+    assert!(
+        !routes
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|r| r["event"] == "signed-out"),
+        "no false sign-out"
+    );
+    server.stop();
+}

@@ -8,6 +8,9 @@ use antiquota_features::{Feature, handoff::Handoff};
 use serde_json::json;
 use std::sync::Arc;
 const CONTINUE: &str = "Continue exactly where you stopped. Your previous attempt was cut off by an account quota limit; do not redo work that is already finished.";
+const RECONNECTED: &str = "Continue exactly where you stopped. Your previous attempt was cut off because the network dropped; do not redo work that is already finished.";
+/// Longest pause between reconnection attempts while the network is down.
+const OFFLINE_MAX_WAIT: f64 = 60.0;
 impl Service {
     pub(crate) async fn one_turn(
         self: &Arc<Self>,
@@ -40,6 +43,7 @@ impl Service {
         let mut prompt = original.to_owned();
         let mut retries = 0;
         let mut failovers = 0;
+        let mut offline_wait: f64 = 0.0;
         while failovers <= 2 * count + 1 && !cancel.is_cancelled() {
             let preferred = self.get(id)?.0.last_slot;
             let Some(lease) = self
@@ -68,6 +72,30 @@ impl Service {
             let result = self.attempt(id, &prompt, &*lease, &cancel).await?;
             if cancel.is_cancelled() {
                 return Ok(Default::default());
+            }
+            // A dropped network is nobody's fault: keep the account, spend no retry or failover,
+            // and try the same turn again with a growing pause until the connection returns.
+            if result.status == "offline" {
+                drop(lease);
+                if offline_wait == 0.0 {
+                    self.notice(
+                        id,
+                        "info",
+                        "The network is unavailable. Waiting to reconnect; the turn continues by itself.",
+                        json!({}),
+                    )?;
+                }
+                offline_wait = (offline_wait * 2.0).clamp(5.0, OFFLINE_MAX_WAIT);
+                self.set_status(id, "offline", None)?;
+                self.clock.wait(offline_wait, cancel.clone()).await?;
+                if self.get(id)?.0.conversation_id.is_some() {
+                    prompt = RECONNECTED.into();
+                }
+                continue;
+            }
+            if offline_wait > 0.0 {
+                offline_wait = 0.0;
+                self.notice(id, "info", "Reconnected.", json!({}))?;
             }
             let name = lease.slot().name.clone();
             let lease = if result.status == "quota" {

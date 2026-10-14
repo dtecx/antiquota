@@ -195,3 +195,5 @@ Slice 24 adds terminal attachments, session export and account controls to `anti
 Slice 25 tightens the transcript and the native shell. `transcriptItems` drops agy's empty step replies so adjacent tools fold into one activity row, and `tools.ts` classifies `SKILL.md` reads as skill loads. `TurnSink::usage` lets the agy runner report running usage; the application publishes it as an unstored `meta` event, and the turn end stays the only durable usage record. The desktop `pick_folder` command opens the system folder dialog for new sessions, and the new-session dialog no longer chooses a model. See ADR 0039. `compactEvents` in `transcript.ts` is the compact mode's projection; verbose and full render every event.
 
 Slice 26 lets the periodic quota refresh read a busy account under the shared model-call lease, while walled accounts, post-turn probes, manual checks and removal keep the exclusive lease. See ADR 0040.
+
+Slice 27 adds `Failure::Offline`. The agy decoder reports offline turns, and the turn loop waits and retries the same turn until the network returns without touching accounts; offline probes are unreadable. See ADR 0041.

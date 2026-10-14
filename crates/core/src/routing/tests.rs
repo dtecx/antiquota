@@ -380,7 +380,7 @@ fn next_reset_is_the_earliest_live_wall_of_the_requested_bucket() {
 }
 #[test]
 fn classification_prefers_auth_then_quota_then_transient() {
-    use Failure::{Auth, Quota as Spent, Transient};
+    use Failure::{Auth, Offline, Quota as Spent, Transient};
     for (text, expected) in [
         ("UNAUTHENTICATED", Some(Auth)),
         ("invalid_grant", Some(Auth)),
@@ -414,6 +414,17 @@ fn classification_prefers_auth_then_quota_then_transient() {
         ("request timed out", Some(Transient)),
         ("timeout", Some(Transient)),
         ("please try again", Some(Transient)),
+        // A network failure wins over everything: agy calls itself signed out when it cannot reach Google.
+        (
+            "Eligibility check failed: Post \"https://daily-cloudcode-pa.googleapis.com/v1internal:loadCodeAssist\": dial tcp: lookup daily-cloudcode-pa.googleapis.com: no such host",
+            Some(Offline),
+        ),
+        (
+            "not signed in: dial tcp 142.250.0.1:443: connect: network is unreachable",
+            Some(Offline),
+        ),
+        ("read tcp: i/o timeout", Some(Offline)),
+        ("net/http: TLS handshake timeout", Some(Offline)),
         // Precedence: an auth failure wins over quota and transient words, quota over transient.
         ("UNAUTHENTICATED after 429 and 503", Some(Auth)),
         ("503 then RESOURCE_EXHAUSTED", Some(Spent)),

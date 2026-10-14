@@ -80,7 +80,7 @@ impl Service {
         if resumed
             && result.status != "SUCCESS"
             && result.status != "stopped"
-            && !["quota", "auth", "transient"].contains(&result.status.as_str())
+            && !["quota", "auth", "transient", "offline"].contains(&result.status.as_str())
             && result.error.to_ascii_lowercase().contains("conversation")
         {
             result.status = "conversation_lost".into();
@@ -93,7 +93,7 @@ impl Service {
             state.meta.conversation_id = Some(conversation.clone());
         }
         if !result.error.is_empty()
-            && !["quota", "auth", "transient", "conversation_lost"]
+            && !["quota", "auth", "transient", "conversation_lost", "offline"]
                 .contains(&result.status.as_str())
         {
             self.append(

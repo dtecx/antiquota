@@ -181,6 +181,8 @@ pub fn error_frame(value: &serde_json::Value) -> bool {
 }
 pub fn classify_error(text: &str) -> Option<Failure> {
     // The pinned regex release caches literal regexes: https://docs.rs/regex/1.13.1/regex/macro.regex.html
+    // Offline first: agy reports a failed token refresh as not signed in when the network is down.
+    if regex::regex!(r"(?i)dial tcp|no such host|network is (unreachable|down)|no route to host|temporary failure in name resolution|could not resolve host|getaddrinfo|i/o timeout|TLS handshake timeout").is_match(text) { return Some(Failure::Offline); }
     if regex::regex!(r"(?i)UNAUTHENTICATED|invalid_grant|token (has been )?(expired|revoked)|Authentication required|not (signed|logged) in|re-?authenticate").is_match(text) { return Some(Failure::Auth); }
     if regex::regex!(r"(?i)RESOURCE_EXHAUSTED|quota|\b429\b|rate.?limit|usage limit").is_match(text)
     {

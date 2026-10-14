@@ -157,6 +157,7 @@ impl Decoder {
                 antiquota_core::Failure::Quota => "quota",
                 antiquota_core::Failure::Auth => "auth",
                 antiquota_core::Failure::Transient => "transient",
+                antiquota_core::Failure::Offline => "offline",
             }
             .into()
         } else {

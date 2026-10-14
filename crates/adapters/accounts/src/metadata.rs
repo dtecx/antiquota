@@ -361,6 +361,10 @@ impl QuotaProbe for FileAccounts {
                 return Ok(ProbeResult::Unreadable);
             };
             let errors = format!("{}{}", result.out, result.err);
+            // Offline output mentions the eligibility check and a Google URL; it is not a verdict.
+            if result.code != 0 && classify_error(&errors) == Some(Failure::Offline) {
+                return Ok(ProbeResult::Unreadable);
+            }
             if let Some(url) = google_url(&errors, true)
                 && errors.to_lowercase().contains("eligib")
             {

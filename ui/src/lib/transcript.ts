@@ -153,7 +153,7 @@ export function nearBottom(distance: number): boolean {
 }
 
 const automatic = new Set(['job', 'nudge', 'loop']);
-const quietEnds = ['completed', 'success', 'stopped'];
+const quietEnds = ['completed', 'success', 'stopped', 'offline'];
 
 /** A goal notice worth keeping in compact mode: the goal was met or ran out of rounds. */
 function finalGoal(event: Extract<EventRecord, { t: 'notice' }>): boolean {

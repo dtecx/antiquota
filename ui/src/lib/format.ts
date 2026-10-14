@@ -45,6 +45,7 @@ const STATUS: Record<string, string> = {
   checking: 'running check',
   verifying: 'verifier reviewing',
   sleeping: 'sleeping',
+  offline: 'waiting for network',
 };
 /** How a session status reads in the header and status line. */
 export function statusLabel(status: string): string {
@@ -52,5 +53,7 @@ export function statusLabel(status: string): string {
 }
 /** Statuses during which a turn is still in progress. */
 export function isBusy(status: string | undefined): boolean {
-  return ['running', 'approval', 'waiting', 'checking', 'verifying'].includes(status ?? '');
+  return ['running', 'approval', 'waiting', 'checking', 'verifying', 'offline'].includes(
+    status ?? '',
+  );
 }

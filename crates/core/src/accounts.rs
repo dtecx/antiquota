@@ -132,6 +132,8 @@ pub enum Failure {
     Quota,
     Auth,
     Transient,
+    /// The machine cannot reach Google at all; no account is at fault.
+    Offline,
 }
 
 /// Validates an existing slot name before a transport or adapter resolves its path.

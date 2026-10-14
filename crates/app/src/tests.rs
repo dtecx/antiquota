@@ -595,3 +595,112 @@ async fn an_engine_restart_pauses_working_goals_and_resume_continues_them() {
     );
     assert!(runner.calls.load(Ordering::SeqCst) <= 1);
 }
+
+struct WaitClock(Mutex<Vec<f64>>);
+impl Clock for WaitClock {
+    fn now(&self) -> f64 {
+        10.0
+    }
+    fn wait(&self, seconds: f64, _cancel: Cancellation) -> PortFuture<'_, ()> {
+        self.0.lock().unwrap().push(seconds);
+        Box::pin(async { Ok(()) })
+    }
+}
+struct OfflineRunner {
+    calls: AtomicU64,
+    prompts: Mutex<Vec<String>>,
+}
+impl AgentRunner for OfflineRunner {
+    fn run<'a>(
+        &'a self,
+        request: TurnRequest,
+        _cancel: Cancellation,
+        _sink: Box<dyn antiquota_core::TurnSink + 'a>,
+    ) -> PortFuture<'a, TurnResult> {
+        Box::pin(async move {
+            self.prompts.lock().unwrap().push(request.prompt.clone());
+            let call = self.calls.fetch_add(1, Ordering::SeqCst);
+            Ok(if call < 3 {
+                TurnResult {
+                    status: "offline".into(),
+                    conversation_id: Some("kept".into()),
+                    error: "dial tcp: lookup daily-cloudcode-pa.googleapis.com: no such host"
+                        .into(),
+                    ..Default::default()
+                }
+            } else {
+                TurnResult {
+                    status: "SUCCESS".into(),
+                    conversation_id: Some("kept".into()),
+                    ..Default::default()
+                }
+            })
+        })
+    }
+}
+#[tokio::test]
+async fn a_dropped_network_waits_and_retries_the_same_turn_without_failover() {
+    let runner = Arc::new(OfflineRunner {
+        calls: AtomicU64::new(0),
+        prompts: Mutex::new(vec![]),
+    });
+    let clock = Arc::new(WaitClock(Mutex::new(vec![])));
+    let service = Service::open(
+        Arc::new(MemoryStore::default()),
+        Settings::default(),
+        Arc::new(Accounts),
+        runner.clone(),
+        clock.clone(),
+    )
+    .unwrap();
+    let CommandResult::Session(session) = service
+        .execute(antiquota_core::Command::Create {
+            cwd: "memory".into(),
+            title: String::new(),
+            model: "model".into(),
+            mode: antiquota_core::Mode::Default,
+        })
+        .await
+        .unwrap()
+    else {
+        panic!("created session")
+    };
+    let mut events = service.subscribe();
+    service
+        .send(&session.id, "Work offline.".into(), vec![], "user".into())
+        .unwrap();
+    service.wait_idle(&session.id).await;
+    // Three offline attempts, then the same turn succeeds; the pause grows and is capped.
+    assert_eq!(runner.calls.load(Ordering::SeqCst), 4);
+    assert_eq!(*clock.0.lock().unwrap(), [5.0, 10.0, 20.0]);
+    let prompts = runner.prompts.lock().unwrap().clone();
+    assert!(prompts[0].ends_with("Work offline."));
+    assert!(prompts[1..].iter().all(|p| p.contains("network dropped")));
+    let (meta, history) = service.get(&session.id).unwrap();
+    assert_eq!(meta.status, "idle");
+    let notices: Vec<_> = history
+        .iter()
+        .filter_map(|r| match &r.event {
+            Event::Notice { kind, text, .. } => Some((kind.as_str(), text.as_str())),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(
+        notices,
+        [
+            (
+                "info",
+                "The network is unavailable. Waiting to reconnect; the turn continues by itself."
+            ),
+            ("info", "Reconnected.")
+        ],
+        "one notice per outage, no handoff or error"
+    );
+    let mut offline = false;
+    while let Ok(event) = events.try_recv() {
+        if let Event::Meta { meta } = event.record.event {
+            offline |= meta.status == "offline";
+        }
+    }
+    assert!(offline, "the session shows it is waiting for the network");
+}
