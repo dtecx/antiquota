@@ -170,6 +170,43 @@ fn auth_failure_parks_both_baskets_then_hands_off_without_token_changes() {
 }
 
 #[test]
+fn a_sign_in_failure_while_google_is_unreachable_waits_offline_without_parking() {
+    let mut server = Server::new_stopped("auth-offline", true);
+    // Offline, agy reports a token it cannot refresh as "not logged in".
+    server
+        .env
+        .push(("ANTIQUOTA_SIGNIN_PROBE".into(), "127.0.0.1:9".into()));
+    setup::script(&server, json!({"scenarios_by_slot":{setup::ONE:"auth"}}));
+    setup::start(&mut server);
+    let id = server.create();
+    setup::send(&server, &id, "Offline sign-in.");
+    let deadline = Instant::now() + Duration::from_secs(15);
+    loop {
+        let meta = server
+            .call("GET", &format!("/api/sessions/{id}"), None)
+            .json()["meta"]
+            .clone();
+        if meta["status"] == "offline" {
+            break;
+        }
+        assert!(
+            Instant::now() < deadline,
+            "never waited for the network: {meta}"
+        );
+        thread::sleep(Duration::from_millis(50));
+    }
+    let accounts = server.call("GET", "/api/accounts", None).json();
+    for bucket in ["gemini", "cg"] {
+        assert_eq!(
+            accounts[0]["why"][bucket], "",
+            "no sign-out wall while offline"
+        );
+    }
+    server.call("POST", &format!("/api/sessions/{id}/stop"), Some(json!({})));
+    server.stop();
+}
+
+#[test]
 fn stop_cancels_a_slow_quota_probe_and_frees_the_account_lease() {
     let mut server = Server::new_stopped("probe-cancel", true);
     setup::start(&mut server);

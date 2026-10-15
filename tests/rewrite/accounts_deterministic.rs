@@ -74,6 +74,7 @@ fn worker(name: &str, script: Value) -> bool {
             .env("ANTIQUOTA_DIR", &server.data)
             .env("ANTIQUOTA_AGY", &server.agy)
             .env("ANTIQUOTA_NO_USAGE_LINK", "1")
+            .env("ANTIQUOTA_SIGNIN_PROBE", "online")
             .env("TOKIO_WORKER_THREADS", "2")
             .env("FAKE_AGY_SCRIPT", &server.script)
             .env("FAKE_AGY_RECORD", server.root.join("fake-calls.jsonl"))

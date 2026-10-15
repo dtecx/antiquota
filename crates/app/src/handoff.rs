@@ -11,6 +11,8 @@ const CONTINUE: &str = "Continue exactly where you stopped. Your previous attemp
 const RECONNECTED: &str = "Continue exactly where you stopped. Your previous attempt was cut off because the network dropped; do not redo work that is already finished.";
 /// Longest pause between reconnection attempts while the network is down.
 const OFFLINE_MAX_WAIT: f64 = 60.0;
+/// Seconds a quota sleep waits before it looks at the accounts again.
+const SLEEP_RECHECK: f64 = 120.0;
 impl Service {
     pub(crate) async fn one_turn(
         self: &Arc<Self>,
@@ -245,6 +247,7 @@ impl Service {
             }
         }
         let started = self.clock.now();
+        let mut announced = None;
         loop {
             if cancel.is_cancelled() || self.background_cancel.is_cancelled() {
                 return Ok(None);
@@ -259,6 +262,9 @@ impl Service {
                 &self.accounts.routes(1000)?,
                 self.clock.now(),
             );
+            if !ranked.is_empty() && announced.take().is_some() {
+                self.set_status(id, "waiting", None)?;
+            }
             if ranked.is_empty() {
                 let pool = if bucket == "cg" {
                     "Claude / GPT"
@@ -274,23 +280,26 @@ impl Service {
                     .collect();
                 let reset = next_reset(&accounts, bucket, self.clock.now());
                 if held.is_empty() && self.goal_active(id)? {
-                    self.notice(
-                        id,
-                        "wall",
-                        &format!(
-                            "Every account is out of {pool} quota. Sleeping until {}, then the goal continues.",
-                            self.clock.local_hhmm(reset)
-                        ),
-                        json!({"reset":reset}),
-                    )?;
+                    if announced != Some(reset) {
+                        announced = Some(reset);
+                        self.notice(
+                            id,
+                            "wall",
+                            &format!(
+                                "Every account is out of {pool} quota. Sleeping until {}, then the goal continues.",
+                                self.clock.local_hhmm(reset)
+                            ),
+                            json!({"reset":reset}),
+                        )?;
+                    }
                     self.set_status(id, "sleeping", (reset > 0.0).then_some(reset))?;
+                    // A wall can lift before its reset (a probe, a new sign-in), so look again often.
                     let pause = if reset > 0.0 {
-                        (reset - self.clock.now() + 30.0).max(5.0)
+                        (reset - self.clock.now() + 30.0).clamp(5.0, SLEEP_RECHECK)
                     } else {
                         60.0
                     };
                     self.clock.wait(pause, cancel.clone()).await?;
-                    self.set_status(id, "waiting", None)?;
                     continue;
                 }
                 let text = if !held.is_empty() {

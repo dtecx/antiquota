@@ -330,3 +330,33 @@ fn an_offline_quota_check_neither_parks_nor_signs_out_the_account() {
     );
     server.stop();
 }
+
+#[test]
+fn a_not_logged_in_check_signs_out_only_while_google_answers() {
+    // The real message of 2026-10-15, when agy could not refresh its token offline.
+    let error = "error getting token source: You are not logged into Antigravity.";
+    for (probe, signed_out) in [("127.0.0.1:9", false), ("online", true)] {
+        let mut server = Server::new_stopped("not-logged-in-check", true);
+        server
+            .env
+            .push(("ANTIQUOTA_SIGNIN_PROBE".into(), probe.into()));
+        setup::start(&mut server);
+        setup::script(
+            &server,
+            json!({"metadata_by_slot":{setup::ONE:{"quota_error":error}}}),
+        );
+        server.call(
+            "POST",
+            "/api/accounts/one@example.com/check",
+            Some(json!({})),
+        );
+        let accounts = server.call("GET", "/api/accounts", None).json();
+        assert_eq!(
+            accounts[0]["why"]["gemini"] == "signed out: sign in again",
+            signed_out,
+            "{probe}: {}",
+            accounts[0]
+        );
+        server.stop();
+    }
+}

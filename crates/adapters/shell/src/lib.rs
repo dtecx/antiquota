@@ -9,6 +9,22 @@ use process_wrap::tokio::{CommandWrap, KillOnDrop};
 use std::{process::Stdio, time::Duration};
 use tokio::{io::AsyncReadExt, process::Command};
 
+/// Whether Google's sign-in host answers. Offline, agy reports a token it cannot refresh as
+/// "not logged in", so a sign-in failure is trusted only while this is true.
+/// `ANTIQUOTA_SIGNIN_PROBE` overrides the host for tests: `online`, or a `host:port` to try.
+pub async fn signin_reachable() -> bool {
+    let target = std::env::var("ANTIQUOTA_SIGNIN_PROBE")
+        .unwrap_or_else(|_| "oauth2.googleapis.com:443".into());
+    if target == "online" {
+        return true;
+    }
+    let connect = tokio::net::TcpStream::connect(target);
+    matches!(
+        tokio::time::timeout(Duration::from_secs(5), connect).await,
+        Ok(Ok(_))
+    )
+}
+
 /// A finished (or ended) child: exit code, bounded output tails, and why it ended early.
 #[derive(Debug, Default)]
 pub struct Captured {

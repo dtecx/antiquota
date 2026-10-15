@@ -143,11 +143,15 @@ impl AgentRunner for AgyRunner {
             let stderr = output.finish().await;
             processing?;
             let status = result?;
-            Ok(decoder.finish(
+            let mut turn = decoder.finish(
                 status.code().unwrap_or(-1),
                 cancel.is_cancelled(),
                 &String::from_utf8_lossy(&stderr),
-            ))
+            );
+            if turn.status == "auth" && !antiquota_shell::signin_reachable().await {
+                turn.status = "offline".into();
+            }
+            Ok(turn)
         })
     }
 }

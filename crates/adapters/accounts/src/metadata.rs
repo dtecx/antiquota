@@ -371,6 +371,9 @@ impl QuotaProbe for FileAccounts {
                 return Ok(ProbeResult::Verify(url));
             }
             if result.code != 0 && classify_error(&errors) == Some(Failure::Auth) {
+                if !antiquota_shell::signin_reachable().await {
+                    return Ok(ProbeResult::Unreadable);
+                }
                 return Ok(ProbeResult::SignedOut);
             }
             Ok(serde_json::from_str(&result.out)

@@ -186,6 +186,7 @@ impl Server {
             .env("ANTIQUOTA_DIR", &self.data)
             .env("ANTIQUOTA_AGY", &self.agy)
             .env("ANTIQUOTA_NO_USAGE_LINK", "1")
+            .env("ANTIQUOTA_SIGNIN_PROBE", "online")
             .env("TOKIO_WORKER_THREADS", "2")
             .env(
                 "ANTIQUOTA_BROWSER_RECORD",

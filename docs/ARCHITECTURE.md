@@ -199,3 +199,5 @@ Slice 26 lets the periodic quota refresh read a busy account under the shared mo
 Slice 27 adds `Failure::Offline`. The agy decoder reports offline turns, and the turn loop waits and retries the same turn until the network returns without touching accounts; offline probes are unreadable. See ADR 0041.
 
 Slice 29 comes from the first Rust test run on Windows. The sign-in console ends the code with `\r` on Windows, because ConPTY reads Enter as a carriage return. Paths shown to users drop the `\\?\` prefix through `antiquota_store::canonical`, checkpoint keys are rebuilt from path components, and the Terminal panel watches the shell process on Windows because ConPTY output stays open after the shell exits. See ADR 0042.
+
+Slice 30 makes sign-in failures and quota sleeps survive a network drop. The agy runner and the quota probe trust a sign-in failure only when `antiquota_shell::signin_reachable` can reach Google's sign-in host; otherwise the turn is offline and the probe unreadable. A quota sleep in `acquire_account` looks at the accounts at least every two minutes and posts one notice per sleep. See ADR 0043.

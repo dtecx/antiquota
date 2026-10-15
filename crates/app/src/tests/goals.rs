@@ -85,22 +85,33 @@ async fn a_goal_sleeps_until_the_wall_lifts_then_continues() {
         "met",
         "the reply claims completion"
     );
-    assert_eq!(
-        clock.waits.lock().unwrap()[0],
-        630.0,
-        "until reset plus 30 seconds"
+    let waits = clock.waits.lock().unwrap().clone();
+    assert!(
+        waits.iter().all(|w| *w <= 120.0),
+        "looks again often: {waits:?}"
     );
-    let sleeping = events.iter().find_map(|r| match &r.event {
-        Event::Notice { kind, text, data } if kind == "wall" => Some((text.clone(), data.clone())),
-        _ => None,
-    });
+    assert_eq!(
+        waits.iter().sum::<f64>(),
+        600.0,
+        "wakes once the wall has lifted"
+    );
+    let sleeping: Vec<_> = events
+        .iter()
+        .filter_map(|r| match &r.event {
+            Event::Notice { kind, text, data } if kind == "wall" => {
+                Some((text.clone(), data.clone()))
+            }
+            _ => None,
+        })
+        .collect();
     assert_eq!(
         sleeping,
-        Some((
+        [(
             "Every account is out of Gemini quota. Sleeping until @1600, then the goal continues."
                 .into(),
             json!({"reset": 1600.0})
-        ))
+        )],
+        "one notice for the whole sleep"
     );
     let statuses: Vec<String> = service
         .store
@@ -114,6 +125,66 @@ async fn a_goal_sleeps_until_the_wall_lifts_then_continues() {
         })
         .collect();
     assert!(statuses.iter().any(|s| s == "sleeping"));
+}
+
+/// One account walled far ahead whose wall is lifted early, as a probe or new sign-in does.
+struct LiftedEarly;
+impl AccountStore for LiftedEarly {
+    fn accounts(&self) -> Result<Vec<Account>, PortError> {
+        self.accounts_at(0.0)
+    }
+    fn accounts_at(&self, now: f64) -> Result<Vec<Account>, PortError> {
+        let until = if now < 1_200.0 { 100_000.0 } else { 0.0 };
+        Ok(vec![Account {
+            slot: "fake".into(),
+            walls: [("gemini".to_owned(), until)].into(),
+            ..Default::default()
+        }])
+    }
+    fn record_route(&self, _entry: &antiquota_core::RoutingEntry) -> Result<(), PortError> {
+        Ok(())
+    }
+    fn acquire(
+        &self,
+        _preferred: Option<&str>,
+    ) -> Result<Option<Box<dyn antiquota_core::AccountLease>>, PortError> {
+        Ok(Some(Box::new(Lease(Slot {
+            name: "fake".into(),
+            home: "memory".into(),
+        }))))
+    }
+}
+
+#[tokio::test]
+async fn a_sleeping_goal_wakes_when_a_wall_lifts_before_its_reset() {
+    let clock = Arc::new(SkippingClock {
+        now: Mutex::new(1_000.0),
+        waits: Mutex::new(vec![]),
+    });
+    let service = Service::open(
+        Arc::new(MemoryStore::default()),
+        Settings::default(),
+        Arc::new(LiftedEarly),
+        Arc::new(Runner {
+            calls: AtomicU64::new(0),
+        }),
+        clock.clone(),
+    )
+    .unwrap();
+    let id = service
+        .create("memory", "", "model", antiquota_core::Mode::Default)
+        .unwrap()
+        .id;
+    service
+        .set_goal(&id, "Finish.", "", false, "", 3, true)
+        .unwrap();
+    service.wait_idle(&id).await;
+    assert_eq!(service.get(&id).unwrap().0.goal.unwrap().state, "met");
+    assert_eq!(
+        clock.waits.lock().unwrap().iter().sum::<f64>(),
+        240.0,
+        "two looks, not a sleep until the far reset"
+    );
 }
 
 #[tokio::test]
