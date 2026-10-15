@@ -1,6 +1,6 @@
 # antiquota: agent guide for the Rust and TypeScript rewrite
 
-Read this file first. It is the complete handoff for an agent without memory, skills or local tools. The branch `rust` holds the rewrite; `main` holds the legacy Python app, which stays untouched.
+Read this file first. It is the complete handoff for an agent without memory, skills or local tools. On 2026-10-15 the owner approved the cutover: `main` (and `rust`) now hold the Rust and TypeScript app. The legacy Python app stays in `antiquota/` for reference and is not developed further.
 
 ## What antiquota is
 
@@ -97,7 +97,7 @@ On a Linux machine, the workspace needs Rust 1.99 or later (`rustup update stabl
 - Do not add references to third-party usage trackers in code, UI, docs or commits. Leave existing links as they are.
 - A proposed additive `chat` CLI command is not approved. Do not add it.
 - Tests and experiments write only under `~/Desktop/test`.
-- Git: work on a branch from `rust` and push only that branch. Never push to `main`, never rewrite pushed history, never merge into `main`, and never delete the legacy app. Cutover needs the owner's explicit OK after every row is Passed.
+- Git: work on a branch from `main` and push only that branch; merge into `main` only with the owner's OK. Never rewrite pushed history, and never delete the legacy app in `antiquota/`.
 - Write code, comments, docs, UI text and commit messages in normal English. Match the surrounding comment density and naming. Write docs as short, plain sentences.
 - Svelte 5: use `$state.raw` for objects changed outside Svelte (xterm instances, recorders, connections). Deep `$state` proxies break them.
 - The UI client (`ui/src/lib/api.ts`) refuses routes that the generated catalog does not mark implemented. When you add a route with a new path parameter, extend the catalog-path normalization there.
