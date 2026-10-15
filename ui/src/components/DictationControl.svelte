@@ -1,5 +1,6 @@
 <!-- Owns microphone lifecycle and cancels stale speech after pane changes. -->
 <script lang="ts">
+  import { shortcutLabel } from '../lib/commands';
   import { tick, onDestroy } from 'svelte';
   import { get } from 'svelte/store';
   import type { Api } from '../lib/api';
@@ -81,7 +82,7 @@
   );
   const micTitle = $derived(
     {
-      idle: 'Dictate a message (⌘⇧M)',
+      idle: `Dictate a message (${shortcutLabel('⌘⇧M')})`,
       listening: 'Listening: click to stop',
       recording: 'Recording: click to stop and transcribe',
       transcribing: 'Transcribing…',

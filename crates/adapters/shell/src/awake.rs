@@ -1,5 +1,6 @@
 //! Owns keeping the computer awake while agents or jobs run (the display may still sleep):
-//! `caffeinate` on macOS and `systemd-inhibit` on Linux when available.
+//! `caffeinate` on macOS, `systemd-inhibit` on Linux when available, and on Windows a hidden
+//! PowerShell that holds `SetThreadExecutionState` until it is killed.
 use antiquota_core::Awake;
 use std::{process::Child, sync::Mutex};
 
@@ -22,6 +23,20 @@ fn inhibitor() -> Option<Child> {
             "sleep",
             "infinity",
         ]);
+        c
+    } else if cfg!(windows) {
+        let mut c = std::process::Command::new("powershell");
+        c.args([
+            "-NoProfile",
+            "-NonInteractive",
+            "-Command",
+            "Add-Type -Name P -Namespace W -MemberDefinition '[DllImport(\"kernel32.dll\")] public static extern uint SetThreadExecutionState(uint f);'; [W.P]::SetThreadExecutionState(0x80000001) | Out-Null; while ($true) { Start-Sleep -Seconds 3600 }",
+        ]);
+        #[cfg(windows)]
+        {
+            use std::os::windows::process::CommandExt;
+            c.creation_flags(0x0800_0000); // CREATE_NO_WINDOW: no console window flashes up
+        }
         c
     } else {
         return None;

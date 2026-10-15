@@ -1,5 +1,6 @@
 <!-- Owns session identity, inline rename, status and basic metadata actions. -->
 <script lang="ts">
+  import { shortcutLabel } from '../lib/commands';
   import { tick } from 'svelte';
   import type { Workbench } from '../lib/workbench';
   import Icon from './Icon.svelte';
@@ -105,7 +106,7 @@
         >{:else if onsplit}<button
           class="quiet"
           aria-label="Split view"
-          title="Split view (⌘\\)"
+          title={`Split view (${shortcutLabel('⌘\\')})`}
           onclick={onsplit}>◫</button
         >{/if}
       <button
@@ -132,7 +133,7 @@
           class="icon quiet"
           class:pinned={$drawer.open}
           aria-label="Changes and files"
-          title="Changes and files (⌘B)"
+          title={`Changes and files (${shortcutLabel('⌘B')})`}
           aria-pressed={$drawer.open}
           onclick={() => drawer.update((d) => ({ ...d, open: !d.open }))}
           ><Icon name="panel" /></button

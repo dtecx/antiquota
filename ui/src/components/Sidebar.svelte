@@ -1,5 +1,6 @@
 <!-- Owns project groups, message search and session/project menu entry points. -->
 <script lang="ts">
+  import { shortcutLabel } from '../lib/commands';
   import { onDestroy, untrack } from 'svelte';
   import type { Workbench } from '../lib/workbench';
   import type { Accounts } from '../lib/accounts';
@@ -70,7 +71,7 @@
     >
   </div>
   <button class="new-session" onclick={() => workbench.openDialog('create')}
-    ><Icon name="plus" /><span>New session</span><kbd>⌘ N</kbd></button
+    ><Icon name="plus" /><span>New session</span><kbd>{shortcutLabel('⌘N')}</kbd></button
   >
   <div class="filter">
     <Icon name="search" /><input
@@ -153,7 +154,7 @@
       >{/if}
   </nav>
   <button class="quiet settings-link" onclick={() => accounts.open('general')}
-    >Settings <kbd>⌘ ,</kbd></button
+    >Settings <kbd>{shortcutLabel('⌘,')}</kbd></button
   >
   <AccountPill {accounts} {login} session={$view.selected} />
   <footer>
