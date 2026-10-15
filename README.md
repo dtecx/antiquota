@@ -44,17 +44,9 @@ antiquota treats those accounts as a single pool:
 
 ## How account switching works
 
-```mermaid
-flowchart LR
-    T[Agent turn] --> P{Pick account}
-    P -->|keeps its account while it has headroom| A[Account A]
-    A -->|quota spent| W[Wall A until its reset]
-    W --> N{Next account with quota}
-    N -->|soonest reset first| B[Account B]
-    B -->|same conversation, continues where it stopped| T
-    N -->|all accounts spent| S[Sleep until the earliest reset]
-    S --> T
-```
+<p align="center">
+  <img src="docs/images/account-switching.png" width="520" alt="Flow: an agent turn picks an account and keeps it while it has headroom; a spent quota walls that account until its reset; the next account with quota (soonest reset first) continues the same conversation; when every account is spent, the session sleeps until the earliest reset">
+</p>
 
 - **Quota-aware routing.** Each account's Gemini and Claude/GPT pools are tracked separately from agy's own
   quota panel. Readings refresh every 10 minutes and cost no tokens, even while agents work.

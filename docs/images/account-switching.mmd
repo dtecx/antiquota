@@ -1,0 +1,9 @@
+flowchart TD
+    T([Agent turn]) --> P{{Pick an account}}
+    P -->|keeps its account while it has headroom| A[Account A]
+    A -->|quota spent| W[Wall A until its reset]
+    W --> N{{Next account with quota}}
+    N -->|soonest reset first| B[Account B]
+    N -->|every account spent| S[Sleep until the earliest reset]
+    B -.->|same conversation, continues where it stopped| T
+    S -.->|quota is back| T
