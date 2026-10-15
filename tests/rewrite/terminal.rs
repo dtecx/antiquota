@@ -40,6 +40,7 @@ fn read_until(events: &mut Events, output: &mut String, needle: &str) -> bool {
 }
 
 #[test]
+#[cfg_attr(windows, ignore = "the captured fixtures run POSIX shell commands")]
 fn captured_terminal_routes_and_stream() {
     let mut server = Server::new("terminal-captured");
     let id = server.create();

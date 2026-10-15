@@ -128,6 +128,7 @@ fn concurrent_sessions_use_different_account_homes_and_skip_busy_probe() {
 }
 
 #[test]
+#[cfg_attr(windows, ignore = "the legacy Python app's fcntl locks are Unix-only")]
 fn python_account_lock_excludes_rust_probe_and_rust_lock_excludes_python() {
     let mut server = Server::new_stopped("python-lock", true);
     setup::start(&mut server);

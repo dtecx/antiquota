@@ -49,7 +49,7 @@ async fn workspace(
     let mut meta: Session = if let Some(id) = args.resume {
         engine.saved(&id).await?.meta
     } else {
-        let cwd = std::fs::canonicalize(args.cwd.as_deref().unwrap_or("."))
+        let cwd = antiquota_store::canonical(args.cwd.as_deref().unwrap_or("."))
             .context("the working folder is unavailable")?;
         let mut body = json!({"cwd":cwd});
         if let Some(model) = args.model {

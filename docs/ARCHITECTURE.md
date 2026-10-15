@@ -197,3 +197,5 @@ Slice 25 tightens the transcript and the native shell. `transcriptItems` drops a
 Slice 26 lets the periodic quota refresh read a busy account under the shared model-call lease, while walled accounts, post-turn probes, manual checks and removal keep the exclusive lease. See ADR 0040.
 
 Slice 27 adds `Failure::Offline`. The agy decoder reports offline turns, and the turn loop waits and retries the same turn until the network returns without touching accounts; offline probes are unreadable. See ADR 0041.
+
+Slice 29 comes from the first Rust test run on Windows. The sign-in console ends the code with `\r` on Windows, because ConPTY reads Enter as a carriage return. Paths shown to users drop the `\\?\` prefix through `antiquota_store::canonical`, checkpoint keys are rebuilt from path components, and the Terminal panel watches the shell process on Windows because ConPTY output stays open after the shell exits. See ADR 0042.

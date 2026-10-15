@@ -57,7 +57,7 @@ fn captured_settings_routes_keep_sources_read_only_and_reseed_keeps_the_hook() {
     );
     assert_eq!(
         reseed.json(),
-        json!({"path":server.data.join("stack/.gemini").to_string_lossy(),"skills":[],"hooks":["antiquota"],"mcp":[]})
+        json!({"path":server.data.join("stack").join(".gemini").to_string_lossy(),"skills":[],"hooks":["antiquota"],"mcp":[]})
     );
     assert_eq!(
         old_hooks,
@@ -171,6 +171,7 @@ fn captured_settings_routes_keep_sources_read_only_and_reseed_keeps_the_hook() {
     server.stop();
 }
 #[test]
+#[cfg_attr(windows, ignore = "the captured fixtures run POSIX shell commands")]
 fn captured_session_actions_preserve_transcript_and_inject_state_on_the_next_turn() {
     let mut server = Server::new_stopped("parity-sessions", false);
     setup::captured_home(&server);
@@ -308,7 +309,7 @@ fn shell_merges_output_and_preserves_pending_notes_without_an_agent_call() {
     );
     let colored = crate::support::shell_line(
         "printf '\\033[31mfirst\\033[0m\\n'; printf 'second\\n' >&2; printf '%s' \"$NO_COLOR\"",
-        "echo \u{1b}[31mfirst\u{1b}[0m& 1>&2 echo second& <nul set /p =%NO_COLOR%",
+        "echo \u{1b}[31mfirst\u{1b}[0m& 1>&2 echo second& <nul set /p =%NO_COLOR%& (call )",
     );
     let merged = crate::support::shell_line("first\nsecond\n1", "first\r\nsecond\r\n1");
     let response = server
@@ -419,7 +420,7 @@ fn stopped_sessions_can_run_shell_again_and_delete_waits_for_shell_cleanup() {
             &format!("/api/sessions/{id}/shell"),
             Some(json!({"cmd": crate::support::shell_line(
                 "sleep 0.1; printf FINISHED",
-                "ping -n 1 127.0.0.1 >nul& <nul set /p =FINISHED",
+                "ping -n 1 127.0.0.1 >nul& <nul set /p =FINISHED& (call )",
             )})),
         )
         .json();

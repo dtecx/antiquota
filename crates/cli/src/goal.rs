@@ -32,7 +32,7 @@ pub struct GoalArgs {
 
 /// Runs the goal and returns the exit code: 0 only when the goal is met.
 pub async fn run(args: GoalArgs) -> anyhow::Result<i32> {
-    let cwd = std::fs::canonicalize(&args.cwd)
+    let cwd = antiquota_store::canonical(&args.cwd)
         .with_context(|| format!("not a folder: {}", args.cwd))?
         .to_string_lossy()
         .into_owned();

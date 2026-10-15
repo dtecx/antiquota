@@ -146,7 +146,9 @@ fn captured_attachment_routes_with_the_decoding_correction() {
     );
     let folder = server
         .data
-        .join(format!("sessions/{id}/attachments"))
+        .join("sessions")
+        .join(&id)
+        .join("attachments")
         .to_string_lossy()
         .into_owned();
     assert!(argv.windows(2).any(|w| w == ["--add-dir", folder.as_str()]));

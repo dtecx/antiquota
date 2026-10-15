@@ -177,7 +177,9 @@ pub fn submit<'a>(
                         .unwrap_or_else(|| "this sign-in already finished".into()),
                 ));
             }
-            login.console.write(&format!("{code}\n"))?;
+            // ConPTY reads Enter as a carriage return; a bare newline never ends agy's line.
+            let enter = if cfg!(windows) { "\r" } else { "\n" };
+            login.console.write(&format!("{code}{enter}"))?;
         }
         let _ = tokio::time::timeout(Duration::from_secs(90), async {
             loop {
@@ -223,7 +225,13 @@ async fn stop(login: &Arc<Login>, reason: &str) -> Result<(), PortError> {
     })
     .await
     .map_err(|_| locked())?;
-    let _ = fs::remove_dir_all(&login.temp);
+    // Windows can hold a just-ended process's folder for a moment, so retry briefly.
+    for _ in 0..50 {
+        if fs::remove_dir_all(&login.temp).is_ok() || !login.temp.exists() {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(40)).await;
+    }
     Ok(())
 }
 async fn finish(accounts: FileAccounts, login: Arc<Login>) {

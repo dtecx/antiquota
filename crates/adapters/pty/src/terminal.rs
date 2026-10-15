@@ -178,6 +178,32 @@ impl ShellTerminal {
             }
             ended(&shared, &alive);
         });
+        // ConPTY keeps its output open after the shell exits, so watch the process itself.
+        #[cfg(windows)]
+        {
+            let watched = Arc::downgrade(&terminal);
+            thread::spawn(move || {
+                while let Some(terminal) = watched.upgrade() {
+                    if !terminal.alive.load(Ordering::SeqCst) {
+                        break;
+                    }
+                    let exited = terminal
+                        .child
+                        .lock()
+                        .map(|mut child| !matches!(child.try_wait(), Ok(None)))
+                        .unwrap_or(true);
+                    if exited {
+                        if let Ok(mut master) = terminal.master.lock() {
+                            master.take();
+                        }
+                        ended(&terminal.shared, &terminal.alive);
+                        break;
+                    }
+                    drop(terminal);
+                    thread::sleep(std::time::Duration::from_millis(200));
+                }
+            });
+        }
         Ok(terminal)
     }
 }

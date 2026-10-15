@@ -91,6 +91,10 @@ fn evidence(label: &str, console: &Console) {
 }
 
 #[test]
+#[cfg_attr(
+    windows,
+    ignore = "ConPTY redraws echoed lines with erase codes, so the exact echo differs"
+)]
 fn terminal_sessions_stream_resume_and_share_controls_with_the_app() {
     let mut server = Server::new("interactive-session");
     fs::write(
@@ -344,6 +348,10 @@ fn interactive_pipe_rejection_happens_before_starting_an_engine() {
 }
 
 #[test]
+#[cfg_attr(
+    windows,
+    ignore = "the test console's kill-on-close job also ends the detached engine"
+)]
 fn terminal_background_engine_survives_exit_and_no_accounts_keeps_the_message() {
     let mut server = Server::new_stopped("interactive-background", false);
     fs::remove_dir_all(server.data.join("slots")).unwrap();
@@ -410,6 +418,10 @@ fn paused(server: &Server, slot: &str) -> bool {
 }
 
 #[test]
+#[cfg_attr(
+    windows,
+    ignore = "ConPTY redraws echoed lines with erase codes, so the exact echo differs"
+)]
 fn terminal_files_exports_and_account_controls_use_the_engine_api() {
     let mut server = Server::new("interactive-context");
     fs::write(

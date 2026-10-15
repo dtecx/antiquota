@@ -311,7 +311,9 @@ impl FileAccounts {
         self.seed_stack(reseed)?;
         let own = self.own()?;
         let slot = self.stack_probe()?;
-        let mut result = json!({"path":own.to_string_lossy()});
+        // Shown without Windows' `\\?\` prefix; comparisons keep using `own` itself.
+        let shown = antiquota_store::canonical(&own).unwrap_or_else(|_| own.clone());
+        let mut result = json!({"path":shown.to_string_lossy()});
         if self.slots()?.is_empty() {
             let skills = own.join("config/skills");
             let mut names: Vec<_> = fs::read_dir(skills)

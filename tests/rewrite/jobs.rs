@@ -76,6 +76,7 @@ fn now() -> f64 {
 }
 
 #[test]
+#[cfg_attr(windows, ignore = "the captured fixtures run POSIX shell commands")]
 fn captured_job_loop_and_schedule_routes() {
     let mut server = Server::new("jobs-captured");
     let id = server.create();

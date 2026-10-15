@@ -322,7 +322,10 @@ async fn a_fake_vcs_carries_a_worktree_session_from_creation_to_removal() {
         )
         .unwrap();
     let id = session.id.clone();
-    let folder = format!("memory-worktrees/repo-{id}");
+    let folder = std::path::Path::new("memory-worktrees")
+        .join(format!("repo-{id}"))
+        .to_string_lossy()
+        .into_owned();
     assert_eq!(session.cwd, format!("{folder}/sub"));
     let branch = antiquota_core::worktree::branch_name("Parser", &id);
     assert_eq!(service.git_status(&id).unwrap()["branch"], "main");

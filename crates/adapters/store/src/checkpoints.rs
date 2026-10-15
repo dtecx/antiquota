@@ -56,11 +56,15 @@ fn target(cwd: &str, path: &str) -> Result<PathBuf, PortError> {
             "checkpoint must stay inside the project".into(),
         ));
     }
-    let target = canonical.join(
-        lexical
-            .strip_prefix(ancestor)
-            .map_err(|e| PortError::Invalid(e.to_string()))?,
-    );
+    // Rebuilt from components so `new/a.txt` and `new\a.txt` give one key on Windows.
+    let target: PathBuf = canonical
+        .join(
+            lexical
+                .strip_prefix(ancestor)
+                .map_err(|e| PortError::Invalid(e.to_string()))?,
+        )
+        .components()
+        .collect();
     if target.is_symlink() {
         return Err(PortError::Invalid(
             "checkpoint file cannot be linked".into(),

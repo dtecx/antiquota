@@ -7,6 +7,13 @@ use std::{
     time::{Duration, Instant},
 };
 
+/// A check that passes once the agent wrote `notes.txt`, in this platform's shell.
+const CHECK: &str = if cfg!(windows) {
+    "if exist notes.txt (exit 0) else (exit 1)"
+} else {
+    "test -f notes.txt"
+};
+
 fn script(server: &Server, value: Value) {
     fs::write(&server.script, value.to_string()).unwrap();
 }
@@ -92,12 +99,12 @@ fn a_goal_runs_its_check_and_verifier_until_met() {
     let started = set_goal(
         &server,
         &id,
-        json!({"objective": "  Complete fixture. ", "check": "test -f notes.txt", "verifier": true,
+        json!({"objective": "  Complete fixture. ", "check": CHECK, "verifier": true,
                "verifier_model": "gemini-3.8-flash-high", "max_rounds": 3}),
     );
     assert_eq!(
         started["goal"],
-        json!({"objective": "Complete fixture.", "check": "test -f notes.txt", "verifier": true,
+        json!({"objective": "Complete fixture.", "check": CHECK, "verifier": true,
                "verifier_model": "gemini-3.8-flash-high", "max_rounds": 3, "round": 0, "state": "active"})
     );
     let done = settled(&server, &id, "met");
@@ -118,7 +125,7 @@ fn a_goal_runs_its_check_and_verifier_until_met() {
     );
     let check = notices(&done, "check");
     assert_eq!(check.len(), 1);
-    assert_eq!(check[0]["text"], "Check `test -f notes.txt` exited 0.");
+    assert_eq!(check[0]["text"], format!("Check `{CHECK}` exited 0."));
     assert_eq!(
         check[0]["data"],
         json!({"rc": 0, "output": "", "passed": true})
@@ -499,7 +506,7 @@ fn goal_cli(server: &Server, extra: &[&str]) -> std::process::Output {
     command
         .args(["goal", "Complete fixture.", "--cwd"])
         .arg(&server.project)
-        .args(["--check", "test -f notes.txt"])
+        .args(["--check", CHECK])
         .args(extra);
     crate::support::bounded_output(&mut command)
 }
@@ -518,7 +525,7 @@ fn the_goal_command_starts_its_own_engine_and_exits_zero_when_met() {
     );
     assert!(stdout.contains("\n>> goal: Objective: Complete fixture."));
     assert!(stdout.contains("\n-- turn 1 on one@example.com (gemini-3.8-flash-high)"));
-    assert!(stdout.contains("== check: Check `test -f notes.txt` exited 0."));
+    assert!(stdout.contains(&format!("== check: Check `{CHECK}` exited 0.")));
     assert!(stdout.contains("== goal: Goal met."));
     assert!(
         !server.data.join("state/engine.json").exists(),
