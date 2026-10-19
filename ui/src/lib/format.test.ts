@@ -2,14 +2,12 @@
 import { describe, expect, it } from 'vitest';
 import { duration, formatTokens, projectName, relativeTime } from './format';
 describe('workbench formatting', () => {
-  it('keeps counters legible across thousands and millions', () => {
-    expect([0, 999, 1_000, 24_600, 1_000_000].map(formatTokens)).toEqual([
-      '0',
-      '999',
-      '1.0k',
-      '24.6k',
-      '1.0M',
-    ]);
+  it('keeps counters legible from thousands to trillions', () => {
+    expect(
+      [0, 999, 1_000, 24_600, 1_000_000, 948_800_000, 6_692_600_000, 1_200_000_000_000].map(
+        formatTokens,
+      ),
+    ).toEqual(['0', '999', '1.0k', '24.6k', '1.0M', '948.8M', '6.7B', '1.2T']);
   });
   it('handles future timestamps and minute/hour boundaries', () => {
     expect(relativeTime(110, 100)).toBe('now');
