@@ -1,0 +1,3 @@
+# Minified identifiers in vendored xterm.js, not secrets.
+adb50600f8cd4641370687e7650167e32bd5ccbd:antiquota/ui/vendor/xterm.js:generic-api-key:1
+da284e18e8992dee7473bdcebbfc4c1480cc0ce4:tests/fixtures/api/cases/static-vendor-xterm-js.json:generic-api-key:21

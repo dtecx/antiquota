@@ -9,7 +9,7 @@ The data fixture manifest records the source path and capture phase for actual s
 Before any new engine touched real data, the required `cp -a` backup was created locally at:
 
 ```text
-/Users/dtecx/.antiquota.bak-2026-10-07-152006
+~/.antiquota.bak-2026-10-07-152006
 ```
 
 Five signed-in token files were found. Each token was byte-identical in the backup and had mode `0600`. Token hashes, slot names, and the conversation-store link snapshot are retained only in ignored `.handoff/evidence/account-continuity-before.json`. The backup contains tokens and must remain local; neither it nor private continuity evidence belongs in git or an uploaded artifact. The backup preserves symbolic links as links.

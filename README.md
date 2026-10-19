@@ -4,7 +4,7 @@
 
 # antiquota
 
-**Keep your coding agent working around the clock across all your Google AI Pro accounts.**
+**Keep your coding agent working around the clock across your own Google AI Pro accounts.**
 
 antiquota runs Google's Antigravity CLI (`agy`) across every Google account you have. When one account
 runs out of quota, the same conversation continues on the next one, with no lost context and no babysitting.
@@ -22,11 +22,11 @@ runs out of quota, the same conversation continues on the next one, with no lost
 
 ## Why
 
-AI Pro promotions have left many people with several Google accounts: a student offer here, an
-18-month carrier deal (such as Jio's) there, a family member's spare seat. Each account has its own
-**5-hour and weekly quota**. A long agent run burns through one in a few hours, then stops and waits.
+Many people have more than one Google account with AI Pro, for example a personal and a work account.
+Each account has its own **5-hour and weekly quota**. A long agent run burns through one in a few hours,
+then stops and waits.
 
-antiquota treats those accounts as a single pool:
+antiquota treats the accounts you own as a single pool:
 
 - **One account is tired, the next one takes over.** A spent quota walls that account until it resets.
   The turn continues in **the same agy conversation** on the next account that has headroom.
@@ -188,4 +188,4 @@ you own or are allowed to use, and follow the terms of the services involved.
 
 ## License
 
-[MIT](Cargo.toml)
+[MIT](LICENSE)
